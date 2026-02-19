@@ -107,6 +107,7 @@ omit = [
     "*/tests/*",
     "*/__pycache__/*",
     "*/.venv/*",
+    "*/_version.py",
 ]
 
 [tool.coverage.report]
@@ -133,4 +134,5 @@ version_provider = "scm"
 [dependency-groups]
 dev = [
     "commitizen>=4.4.0",
+    "pip-audit>=2.10.0",
 ]
