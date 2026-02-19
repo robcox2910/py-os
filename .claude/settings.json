@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git init:*)",
+      "Bash(uv venv:*)",
+      "Bash(uv pip install:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(.venv/bin/pre-commit install:*)",
+      "Bash(.venv/bin/pytest)",
+      "Bash(.venv/bin/ruff check:*)",
+      "Bash(.venv/bin/ruff format:*)",
+      "Bash(gh repo create:*)",
+      "Bash(gh api:*)",
+      "Bash(gh repo edit:*)",
+      "Bash(git checkout:*)",
+      "Bash(.venv/bin/pre-commit clean:*)",
+      "Bash(git push:*)",
+      "Bash(gh pr:*)",
+      "Bash(git pull:*)",
+      "Bash(.venv/bin/pytest:*)",
+      "Bash(.venv/bin/pyright:*)",
+      "Bash(git rm:*)"
+    ]
+  }
+}
