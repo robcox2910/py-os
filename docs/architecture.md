@@ -181,6 +181,7 @@ In a real OS, user programs can't directly access kernel memory or hardware. The
 | 60    | Signals |
 | 70–73 | Environment variables |
 | 80    | System info |
+| 90    | Deadlock detection |
 
 ---
 
@@ -450,3 +451,63 @@ TIDs are scoped per-process: TID 0 is always the main thread, and additional thr
 ### Why Threads Need Synchronisation
 
 Because threads share memory, concurrent access to shared data can cause **race conditions** — the outcome depends on the order of execution. Solutions include mutexes, semaphores, and condition variables (topics for a future module).
+
+---
+
+## Deadlock Detection & Avoidance (`deadlock.py`)
+
+**Deadlock** occurs when processes are stuck in a circular wait — each holds a resource the next one needs, and none can proceed. Four conditions must ALL hold simultaneously:
+
+1. **Mutual exclusion** — resources can't be shared
+2. **Hold and wait** — processes hold resources while waiting for more
+3. **No preemption** — resources can't be forcibly taken
+4. **Circular wait** — a circular chain of waiting processes
+
+### Resource Allocation Matrices
+
+The `ResourceManager` tracks four data structures (the textbook Banker's matrices):
+
+| Matrix | Description | Example |
+|--------|-------------|---------|
+| **Available[r]** | Free instances of resource r | `Available["CPU"] = 3` |
+| **Maximum[p][r]** | Max instances process p might ever need | `Maximum[1]["CPU"] = 5` |
+| **Allocation[p][r]** | Instances process p currently holds | `Allocation[1]["CPU"] = 2` |
+| **Need[p][r]** | Maximum - Allocation (remaining need) | `Need[1]["CPU"] = 3` |
+
+### Banker's Algorithm (Avoidance)
+
+Named after a banker deciding whether to grant loans. Before granting a resource request, the algorithm *simulates* granting it and checks if the resulting state is **safe** — meaning there exists an ordering (safe sequence) in which all processes can complete.
+
+**Safety algorithm:**
+1. `work = copy of available resources`
+2. `finish = {pid: False}` for all processes
+3. Find an unfinished process whose need <= work
+4. Pretend it finishes: `work += its allocation`
+5. Repeat until no more can be found
+6. If all finished → safe (return the sequence)
+7. Otherwise → unsafe (return None)
+
+**`request_safe(pid, resource, amount)`:**
+1. Tentatively grant the request
+2. Run the safety algorithm
+3. If safe → commit; if unsafe → rollback and deny
+
+This prevents deadlock from ever occurring, at the cost of reduced concurrency (some requests are denied even though they wouldn't necessarily cause deadlock).
+
+### Detection vs Avoidance
+
+| Strategy | When It Runs | Effect |
+|----------|-------------|--------|
+| **Detection** (`detect_deadlock`) | On demand, after the fact | Finds processes that are stuck *right now* — requires recovery action |
+| **Avoidance** (`request_safe`) | Before granting each request | Prevents deadlock proactively — may deny safe requests conservatively |
+
+### Classic Example
+
+The textbook example with 3 resources (A=10, B=5, C=7) and 5 processes demonstrates a safe state where the sequence `<P1, P3, P4, P2, P0>` allows all processes to complete. Our tests reproduce this exact scenario.
+
+### Kernel Integration
+
+- `ResourceManager` is initialised at boot and torn down at shutdown
+- `terminate_process()` calls `remove_process()` to release all held resources
+- `SYS_DETECT_DEADLOCK` syscall exposes detection to user-space
+- Shell commands: `resources` (show allocation) and `deadlock` (run detection)

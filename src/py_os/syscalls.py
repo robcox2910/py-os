@@ -82,6 +82,9 @@ class SyscallNumber(IntEnum):
     # System info
     SYS_SYSINFO = 80
 
+    # Deadlock operations
+    SYS_DETECT_DEADLOCK = 90
+
     # Environment operations
     SYS_GET_ENV = 70
     SYS_SET_ENV = 71
@@ -148,6 +151,7 @@ def dispatch_syscall(
         SyscallNumber.SYS_LIST_ENV: _sys_list_env,
         SyscallNumber.SYS_DELETE_ENV: _sys_delete_env,
         SyscallNumber.SYS_SYSINFO: _sys_sysinfo,
+        SyscallNumber.SYS_DETECT_DEADLOCK: _sys_detect_deadlock,
     }
 
     handler = handlers.get(number)
@@ -466,3 +470,13 @@ def _sys_sysinfo(kernel: Any, **_kwargs: Any) -> dict[str, Any]:
         "env_count": len(kernel.env),
         "log_count": len(kernel.logger.entries),
     }
+
+
+# -- Deadlock syscall handlers -------------------------------------------------
+
+
+def _sys_detect_deadlock(kernel: Any, **_kwargs: Any) -> dict[str, Any]:
+    """Run deadlock detection and return results."""
+    assert kernel.resource_manager is not None  # noqa: S101
+    deadlocked = kernel.resource_manager.detect_deadlock()
+    return {"deadlocked": deadlocked}

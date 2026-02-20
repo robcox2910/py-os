@@ -94,6 +94,8 @@ class Shell:
             "fork": self._cmd_fork,
             "pstree": self._cmd_pstree,
             "threads": self._cmd_threads,
+            "resources": self._cmd_resources,
+            "deadlock": self._cmd_deadlock,
             "devices": self._cmd_devices,
             "devread": self._cmd_devread,
             "devwrite": self._cmd_devwrite,
@@ -490,6 +492,27 @@ class Shell:
         lines = [f"Threads for pid {pid}:"]
         lines.extend(f"  TID {t['tid']:<4} {t['state']!s:<11} {t['name']}" for t in threads)
         return "\n".join(lines)
+
+    def _cmd_resources(self, _args: list[str]) -> str:
+        """Show resource allocation status."""
+        rm = self._kernel.resource_manager
+        if rm is None:
+            return "Resource manager not available."
+        resources = rm.resources()
+        if not resources:
+            return "No resources registered."
+        lines = ["RESOURCE   AVAIL"]
+        lines.extend(f"{r:<10} {rm.available(r)}" for r in resources)
+        return "\n".join(lines)
+
+    def _cmd_deadlock(self, _args: list[str]) -> str:
+        """Run deadlock detection and report results."""
+        result: dict[str, object] = self._kernel.syscall(SyscallNumber.SYS_DETECT_DEADLOCK)
+        deadlocked: set[int] = result["deadlocked"]  # type: ignore[assignment]
+        if not deadlocked:
+            return "No deadlock detected — system is safe."
+        pids = sorted(deadlocked)
+        return f"DEADLOCK detected! Stuck processes: {pids}"
 
     def _cmd_devices(self, _args: list[str]) -> str:
         """List all registered devices."""
