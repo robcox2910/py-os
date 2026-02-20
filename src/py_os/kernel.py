@@ -40,6 +40,7 @@ from py_os.process import Process, ProcessState
 from py_os.scheduler import FCFSPolicy, Scheduler
 from py_os.signals import Signal, SignalError
 from py_os.syscalls import SyscallNumber, dispatch_syscall
+from py_os.threads import Thread
 from py_os.users import FilePermissions, UserManager
 from py_os.virtual_memory import VirtualMemory
 
@@ -350,6 +351,32 @@ class Kernel:
         self._scheduler.add(child)
         self._processes[child.pid] = child
         return child
+
+    def create_thread(self, *, pid: int, name: str) -> Thread:
+        """Create a new thread within a process.
+
+        Unlike fork, creating a thread is cheap — no memory is
+        allocated.  The thread shares the process's virtual memory.
+
+        Args:
+            pid: PID of the process to create the thread in.
+            name: Human-readable label for the thread.
+
+        Returns:
+            The newly created thread (in READY state).
+
+        Raises:
+            ValueError: If the process doesn't exist.
+
+        """
+        self._require_running()
+        process = self._processes.get(pid)
+        if process is None:
+            msg = f"Process {pid} not found"
+            raise ValueError(msg)
+        thread = process.create_thread(name)
+        thread.admit()
+        return thread
 
     def terminate_process(self, *, pid: int) -> None:
         """Terminate a process and free its resources.
