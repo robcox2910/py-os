@@ -38,6 +38,8 @@ class Shell:
     this invariant.
     """
 
+    EXIT_SENTINEL = "__EXIT__"
+
     def __init__(self, *, kernel: Kernel) -> None:
         """Create a shell attached to a running kernel.
 
@@ -68,6 +70,7 @@ class Shell:
             "whoami": self._cmd_whoami,
             "adduser": self._cmd_adduser,
             "su": self._cmd_su,
+            "exit": self._cmd_exit,
         }
 
     def execute(self, command: str) -> str:
@@ -215,3 +218,8 @@ class Shell:
             return f"Switched to {result['username']} (uid={result['uid']})"
         except SyscallError as e:
             return f"Error: {e}"
+
+    def _cmd_exit(self, _args: list[str]) -> str:
+        """Shut down the kernel and signal the REPL to stop."""
+        self._kernel.shutdown()
+        return self.EXIT_SENTINEL
