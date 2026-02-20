@@ -1,7 +1,7 @@
 """The kernel — core of the operating system.
 
 The kernel manages the system lifecycle and coordinates all subsystems:
-scheduler, memory manager, and file system.
+scheduler, memory manager, file system, and user manager.
 
 A real kernel is the first code that runs after the bootloader. It sets
 up hardware, initialises data structures, and enters a main loop. Our
@@ -12,10 +12,12 @@ simulated kernel mirrors these phases with an explicit state machine:
 Boot sequence (order matters):
     1. Memory manager — everything else needs memory.
     2. File system — processes may need file access.
-    3. Scheduler — ready to accept processes.
+    3. User manager — identity before scheduling.
+    4. Scheduler — ready to accept processes.
 
 Shutdown sequence (reverse order):
-    3. Scheduler — stop scheduling.
+    4. Scheduler — stop scheduling.
+    3. User manager — clear users.
     2. File system — unmount.
     1. Memory manager — release all frames.
 """
@@ -29,6 +31,7 @@ from py_os.memory import MemoryManager
 from py_os.process import Process
 from py_os.scheduler import FCFSPolicy, Scheduler
 from py_os.syscalls import SyscallNumber, dispatch_syscall
+from py_os.users import FilePermissions, UserManager
 
 DEFAULT_TOTAL_FRAMES = 64
 
@@ -64,6 +67,9 @@ class Kernel:
         self._scheduler: Scheduler | None = None
         self._memory: MemoryManager | None = None
         self._filesystem: FileSystem | None = None
+        self._user_manager: UserManager | None = None
+        self._current_uid: int = 0
+        self._file_permissions: dict[str, FilePermissions] = {}
         self._processes: dict[int, Process] = {}
 
     @property
@@ -92,6 +98,26 @@ class Kernel:
     def filesystem(self) -> FileSystem | None:
         """Return the file system, or None if not booted."""
         return self._filesystem
+
+    @property
+    def user_manager(self) -> UserManager | None:
+        """Return the user manager, or None if not booted."""
+        return self._user_manager
+
+    @property
+    def current_uid(self) -> int:
+        """Return the uid of the current user."""
+        return self._current_uid
+
+    @current_uid.setter
+    def current_uid(self, uid: int) -> None:
+        """Set the current user uid."""
+        self._current_uid = uid
+
+    @property
+    def file_permissions(self) -> dict[str, FilePermissions]:
+        """Return the file permissions table (path → permissions)."""
+        return self._file_permissions
 
     @property
     def processes(self) -> dict[int, Process]:
@@ -127,7 +153,11 @@ class Kernel:
         # 2. File system — processes may need files
         self._filesystem = FileSystem()
 
-        # 3. Scheduler — ready to accept processes
+        # 3. User manager — identity before scheduling
+        self._user_manager = UserManager()
+        self._current_uid = 0  # root
+
+        # 4. Scheduler — ready to accept processes
         self._scheduler = Scheduler(policy=FCFSPolicy())
 
         self._state = KernelState.RUNNING
@@ -149,6 +179,9 @@ class Kernel:
 
         # Tear down in reverse order
         self._scheduler = None
+        self._user_manager = None
+        self._current_uid = 0
+        self._file_permissions.clear()
         self._filesystem = None
         self._memory = None
         self._processes.clear()

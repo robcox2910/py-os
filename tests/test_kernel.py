@@ -114,12 +114,19 @@ class TestKernelSubsystems:
         assert kernel.filesystem is not None
         assert kernel.filesystem.exists("/")
 
+    def test_user_manager_available_after_boot(self) -> None:
+        """The user manager should be accessible after booting."""
+        kernel = Kernel()
+        kernel.boot()
+        assert kernel.user_manager is not None
+
     def test_subsystems_none_before_boot(self) -> None:
         """Subsystems should not be accessible before booting."""
         kernel = Kernel()
         assert kernel.scheduler is None
         assert kernel.memory is None
         assert kernel.filesystem is None
+        assert kernel.user_manager is None
 
     def test_subsystems_none_after_shutdown(self) -> None:
         """Subsystems should be torn down after shutdown."""
@@ -129,6 +136,7 @@ class TestKernelSubsystems:
         assert kernel.scheduler is None
         assert kernel.memory is None
         assert kernel.filesystem is None
+        assert kernel.user_manager is None
 
 
 class TestKernelCreateProcess:

@@ -65,6 +65,9 @@ class Shell:
             "cat": self._cmd_cat,
             "rm": self._cmd_rm,
             "kill": self._cmd_kill,
+            "whoami": self._cmd_whoami,
+            "adduser": self._cmd_adduser,
+            "su": self._cmd_su,
         }
 
     def execute(self, command: str) -> str:
@@ -180,3 +183,35 @@ class Shell:
         except SyscallError as e:
             return f"Error: {e}"
         return f"Process {pid} terminated."
+
+    def _cmd_whoami(self, _args: list[str]) -> str:
+        """Show the current user."""
+        result: dict[str, object] = self._kernel.syscall(SyscallNumber.SYS_WHOAMI)
+        return f"{result['username']} (uid={result['uid']})"
+
+    def _cmd_adduser(self, args: list[str]) -> str:
+        """Create a new user."""
+        if not args:
+            return "Usage: adduser <username>"
+        try:
+            result: dict[str, object] = self._kernel.syscall(
+                SyscallNumber.SYS_CREATE_USER, username=args[0]
+            )
+            return f"User '{result['username']}' created (uid={result['uid']})"
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_su(self, args: list[str]) -> str:
+        """Switch to another user by uid."""
+        if not args:
+            return "Usage: su <uid>"
+        try:
+            uid = int(args[0])
+        except ValueError:
+            return f"Error: invalid uid '{args[0]}'"
+        try:
+            self._kernel.syscall(SyscallNumber.SYS_SWITCH_USER, uid=uid)
+            result: dict[str, object] = self._kernel.syscall(SyscallNumber.SYS_WHOAMI)
+            return f"Switched to {result['username']} (uid={result['uid']})"
+        except SyscallError as e:
+            return f"Error: {e}"

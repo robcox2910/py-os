@@ -31,6 +31,9 @@ Why bother with this layer?
 from enum import IntEnum
 from typing import Any
 
+from py_os.users import FilePermissions
+from py_os.users import PermissionError as OsPermissionError
+
 
 class SyscallNumber(IntEnum):
     """Enumerate every system call the kernel supports.
@@ -54,6 +57,12 @@ class SyscallNumber(IntEnum):
 
     # Memory operations
     SYS_MEMORY_INFO = 20
+
+    # User operations
+    SYS_WHOAMI = 30
+    SYS_CREATE_USER = 31
+    SYS_LIST_USERS = 32
+    SYS_SWITCH_USER = 33
 
 
 class SyscallError(Exception):
@@ -98,6 +107,10 @@ def dispatch_syscall(
         SyscallNumber.SYS_DELETE_FILE: _sys_delete_file,
         SyscallNumber.SYS_LIST_DIR: _sys_list_dir,
         SyscallNumber.SYS_MEMORY_INFO: _sys_memory_info,
+        SyscallNumber.SYS_WHOAMI: _sys_whoami,
+        SyscallNumber.SYS_CREATE_USER: _sys_create_user,
+        SyscallNumber.SYS_LIST_USERS: _sys_list_users,
+        SyscallNumber.SYS_SWITCH_USER: _sys_switch_user,
     }
 
     handler = handlers.get(number)
@@ -137,12 +150,14 @@ def _sys_list_processes(kernel: Any, **_kwargs: Any) -> list[dict[str, Any]]:
 
 
 def _sys_create_file(kernel: Any, **kwargs: Any) -> None:
-    """Create a file."""
+    """Create a file and assign ownership to the current user."""
     assert kernel.filesystem is not None  # noqa: S101
+    path: str = kwargs["path"]
     try:
-        kernel.filesystem.create_file(kwargs["path"])
+        kernel.filesystem.create_file(path)
     except (FileNotFoundError, FileExistsError) as e:
         raise SyscallError(str(e)) from e
+    kernel.file_permissions[path] = FilePermissions(owner_uid=kernel.current_uid)
 
 
 def _sys_create_dir(kernel: Any, **kwargs: Any) -> None:
@@ -155,31 +170,47 @@ def _sys_create_dir(kernel: Any, **kwargs: Any) -> None:
 
 
 def _sys_read_file(kernel: Any, **kwargs: Any) -> bytes:
-    """Read file contents."""
+    """Read file contents (with permission check)."""
     assert kernel.filesystem is not None  # noqa: S101
+    path: str = kwargs["path"]
+    perms = kernel.file_permissions.get(path)
+    if perms is not None:
+        try:
+            perms.check_read(uid=kernel.current_uid)
+        except OsPermissionError as e:
+            raise SyscallError(str(e)) from e
     try:
-        return kernel.filesystem.read(kwargs["path"])
+        return kernel.filesystem.read(path)
     except FileNotFoundError as e:
-        msg = f"File not found: {kwargs['path']}"
+        msg = f"File not found: {path}"
         raise SyscallError(msg) from e
 
 
 def _sys_write_file(kernel: Any, **kwargs: Any) -> None:
-    """Write data to a file."""
+    """Write data to a file (with permission check)."""
     assert kernel.filesystem is not None  # noqa: S101
+    path: str = kwargs["path"]
+    perms = kernel.file_permissions.get(path)
+    if perms is not None:
+        try:
+            perms.check_write(uid=kernel.current_uid)
+        except OsPermissionError as e:
+            raise SyscallError(str(e)) from e
     try:
-        kernel.filesystem.write(kwargs["path"], kwargs["data"])
+        kernel.filesystem.write(path, kwargs["data"])
     except FileNotFoundError as e:
         raise SyscallError(str(e)) from e
 
 
 def _sys_delete_file(kernel: Any, **kwargs: Any) -> None:
-    """Delete a file or directory."""
+    """Delete a file or directory and clean up permissions."""
     assert kernel.filesystem is not None  # noqa: S101
+    path: str = kwargs["path"]
     try:
-        kernel.filesystem.delete(kwargs["path"])
+        kernel.filesystem.delete(path)
     except FileNotFoundError as e:
         raise SyscallError(str(e)) from e
+    kernel.file_permissions.pop(path, None)
 
 
 def _sys_list_dir(kernel: Any, **kwargs: Any) -> list[str]:
@@ -201,3 +232,42 @@ def _sys_memory_info(kernel: Any, **_kwargs: Any) -> dict[str, int]:
         "total_frames": kernel.memory.total_frames,
         "free_frames": kernel.memory.free_frames,
     }
+
+
+# -- User syscall handlers ---------------------------------------------------
+
+
+def _sys_whoami(kernel: Any, **_kwargs: Any) -> dict[str, Any]:
+    """Return the current user's info."""
+    assert kernel.user_manager is not None  # noqa: S101
+    user = kernel.user_manager.get_user(kernel.current_uid)
+    assert user is not None  # noqa: S101
+    return {"uid": user.uid, "username": user.username}
+
+
+def _sys_create_user(kernel: Any, **kwargs: Any) -> dict[str, Any]:
+    """Create a new user."""
+    assert kernel.user_manager is not None  # noqa: S101
+    username: str = kwargs["username"]
+    try:
+        user = kernel.user_manager.create_user(username)
+    except ValueError as e:
+        raise SyscallError(str(e)) from e
+    return {"uid": user.uid, "username": user.username}
+
+
+def _sys_list_users(kernel: Any, **_kwargs: Any) -> list[dict[str, Any]]:
+    """List all users."""
+    assert kernel.user_manager is not None  # noqa: S101
+    return [{"uid": u.uid, "username": u.username} for u in kernel.user_manager.list_users()]
+
+
+def _sys_switch_user(kernel: Any, **kwargs: Any) -> None:
+    """Switch the current user."""
+    assert kernel.user_manager is not None  # noqa: S101
+    uid: int = kwargs["uid"]
+    user = kernel.user_manager.get_user(uid)
+    if user is None:
+        msg = f"User {uid} not found"
+        raise SyscallError(msg)
+    kernel.current_uid = uid
