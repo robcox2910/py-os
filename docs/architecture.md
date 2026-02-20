@@ -648,3 +648,56 @@ Our sockets use in-memory `deque` buffers instead of actual network I/O. This te
 ### Multiple Clients
 
 A server can accept multiple clients. Each `accept()` creates a separate peer socket with independent data buffers. Data from client A never leaks to client B's peer — this isolation is fundamental to how real servers handle concurrent connections.
+
+---
+
+## Persistent Filesystem (`persistence.py`)
+
+Real filesystems write their data structures (superblock, inode table, data blocks) to a storage medium so files survive reboots. Common on-disk formats include ext4, NTFS, APFS, and Btrfs. Our persistence layer serializes the in-memory filesystem to **JSON** and restores it on load — a simplified analogue of mount/unmount.
+
+### Operations
+
+- **`dump_filesystem(fs, path)`** — save the filesystem to a JSON file (like `sync` or unmount)
+- **`load_filesystem(path)`** — restore from a JSON file (like `mount`)
+
+### Serialization Format
+
+The JSON format mirrors a simplified on-disk structure:
+
+```json
+{
+  "root_ino": 0,
+  "inodes": {
+    "0": {
+      "inode_number": 0,
+      "file_type": "directory",
+      "data": "",
+      "children": {"hello.txt": 1}
+    },
+    "1": {
+      "inode_number": 1,
+      "file_type": "file",
+      "data": "d29ybGQ=",
+      "children": {}
+    }
+  }
+}
+```
+
+### Base64 Encoding
+
+File data is stored as bytes internally, but JSON only supports text. Binary data (like images or compiled code) would break JSON encoding. **Base64** converts arbitrary bytes to safe ASCII characters at a ~33% size overhead. This is the same encoding used in email attachments (MIME), data URIs, and JWT tokens.
+
+### Real-World Comparison
+
+| Our Persistence | Real Filesystem |
+|-----------------|-----------------|
+| JSON text file | Binary superblock + inode table + data blocks |
+| `dump_filesystem` | `sync` / unmount (flush dirty pages) |
+| `load_filesystem` | `mount` (read superblock, build in-memory structures) |
+| Full save | Only dirty blocks written (journaling) |
+| No crash recovery | **Journaling** — log operations before applying them |
+
+### Journaling (Not Implemented)
+
+Real filesystems don't write all data at once. They use a **journal** (write-ahead log): operations are recorded in the journal *before* being applied to the main data structures. If the system crashes mid-write, the journal can be replayed to recover to a consistent state. ext4 journals metadata by default; ZFS and Btrfs use copy-on-write with checksums for even stronger guarantees.
