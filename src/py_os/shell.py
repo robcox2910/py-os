@@ -71,6 +71,9 @@ class Shell:
             "adduser": self._cmd_adduser,
             "su": self._cmd_su,
             "exit": self._cmd_exit,
+            "devices": self._cmd_devices,
+            "devread": self._cmd_devread,
+            "devwrite": self._cmd_devwrite,
         }
 
     def execute(self, command: str) -> str:
@@ -223,3 +226,30 @@ class Shell:
         """Shut down the kernel and signal the REPL to stop."""
         self._kernel.shutdown()
         return self.EXIT_SENTINEL
+
+    def _cmd_devices(self, _args: list[str]) -> str:
+        """List all registered devices."""
+        names: list[str] = self._kernel.syscall(SyscallNumber.SYS_LIST_DEVICES)
+        return "\n".join(names) if names else "No devices registered."
+
+    def _cmd_devread(self, args: list[str]) -> str:
+        """Read from a device."""
+        if not args:
+            return "Usage: devread <device>"
+        try:
+            data: bytes = self._kernel.syscall(SyscallNumber.SYS_DEVICE_READ, device=args[0])
+            return data.decode() if data else "(empty)"
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_devwrite(self, args: list[str]) -> str:
+        """Write to a device."""
+        if len(args) < 2:  # noqa: PLR2004
+            return "Usage: devwrite <device> <data...>"
+        device = args[0]
+        data = " ".join(args[1:])
+        try:
+            self._kernel.syscall(SyscallNumber.SYS_DEVICE_WRITE, device=device, data=data.encode())
+        except SyscallError as e:
+            return f"Error: {e}"
+        return ""

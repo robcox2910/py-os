@@ -142,11 +142,12 @@ class RandomDevice:
         """Random device is always ready."""
         return DeviceState.READY
 
-    def read(self, *, size: int = DEFAULT_RANDOM_SIZE) -> bytes:
-        """Return ``size`` random bytes."""
+    def read(self, **kwargs: int) -> bytes:
+        """Return random bytes. Pass ``size=N`` to control length."""
+        size = kwargs.get("size", DEFAULT_RANDOM_SIZE)
         return urandom(size)
 
-    def write(self, _data: bytes) -> None:
+    def write(self, data: bytes) -> None:  # noqa: ARG002
         """Raise — random is a read-only device."""
         msg = "Cannot write to read-only device 'random'"
         raise OSError(msg)
