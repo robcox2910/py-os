@@ -10,16 +10,20 @@ simulated kernel mirrors these phases with an explicit state machine:
     SHUTDOWN  →  BOOTING  →  RUNNING  →  SHUTTING_DOWN  →  SHUTDOWN
 
 Boot sequence (order matters):
+    0. Logger — capture events from the start.
     1. Memory manager — everything else needs memory.
     2. File system — processes may need file access.
     3. User manager — identity before scheduling.
-    4. Scheduler — ready to accept processes.
+    4. Device manager — register default devices.
+    5. Scheduler — ready to accept processes.
 
 Shutdown sequence (reverse order):
-    4. Scheduler — stop scheduling.
+    5. Scheduler — stop scheduling.
+    4. Device manager — unregister devices.
     3. User manager — clear users.
     2. File system — unmount.
     1. Memory manager — release all frames.
+    0. Logger — last to go (captures shutdown events).
 """
 
 from enum import StrEnum
@@ -28,6 +32,7 @@ from typing import Any
 
 from py_os.devices import ConsoleDevice, DeviceManager, NullDevice, RandomDevice
 from py_os.filesystem import FileSystem
+from py_os.logging import Logger, LogLevel
 from py_os.memory import MemoryManager
 from py_os.process import Process
 from py_os.scheduler import FCFSPolicy, Scheduler
@@ -70,6 +75,7 @@ class Kernel:
         self._filesystem: FileSystem | None = None
         self._user_manager: UserManager | None = None
         self._device_manager: DeviceManager | None = None
+        self._logger: Logger | None = None
         self._current_uid: int = 0
         self._file_permissions: dict[str, FilePermissions] = {}
         self._processes: dict[int, Process] = {}
@@ -110,6 +116,11 @@ class Kernel:
     def device_manager(self) -> DeviceManager | None:
         """Return the device manager, or None if not booted."""
         return self._device_manager
+
+    @property
+    def logger(self) -> Logger | None:
+        """Return the logger, or None if not booted."""
+        return self._logger
 
     @property
     def current_uid(self) -> int:
@@ -154,6 +165,9 @@ class Kernel:
         self._state = KernelState.BOOTING
         self._boot_time = monotonic()
 
+        # 0. Logger — capture events from the start
+        self._logger = Logger()
+
         # 1. Memory — everything else needs it
         self._memory = MemoryManager(total_frames=DEFAULT_TOTAL_FRAMES)
 
@@ -164,16 +178,17 @@ class Kernel:
         self._user_manager = UserManager()
         self._current_uid = 0  # root
 
-        # 4. Device manager — register default devices
+        # 5. Device manager — register default devices
         self._device_manager = DeviceManager()
         self._device_manager.register(NullDevice())
         self._device_manager.register(ConsoleDevice())
         self._device_manager.register(RandomDevice())
 
-        # 5. Scheduler — ready to accept processes
+        # 6. Scheduler — ready to accept processes
         self._scheduler = Scheduler(policy=FCFSPolicy())
 
         self._state = KernelState.RUNNING
+        self._logger.log(LogLevel.INFO, "Kernel boot complete", source="kernel")
 
     def shutdown(self) -> None:
         """Transition the kernel from RUNNING → SHUTDOWN.
@@ -200,6 +215,7 @@ class Kernel:
         self._memory = None
         self._processes.clear()
 
+        self._logger = None
         self._boot_time = None
         self._state = KernelState.SHUTDOWN
 
@@ -281,4 +297,12 @@ class Kernel:
 
         """
         self._require_running()
+        if self._logger is not None:
+            label = number.name if hasattr(number, "name") else str(number)
+            self._logger.log(
+                LogLevel.DEBUG,
+                f"syscall {label}",
+                source="syscall",
+                uid=self._current_uid,
+            )
         return dispatch_syscall(self, number, **kwargs)

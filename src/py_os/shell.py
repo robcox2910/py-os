@@ -71,6 +71,7 @@ class Shell:
             "adduser": self._cmd_adduser,
             "su": self._cmd_su,
             "exit": self._cmd_exit,
+            "log": self._cmd_log,
             "devices": self._cmd_devices,
             "devread": self._cmd_devread,
             "devwrite": self._cmd_devwrite,
@@ -221,6 +222,11 @@ class Shell:
             return f"Switched to {result['username']} (uid={result['uid']})"
         except SyscallError as e:
             return f"Error: {e}"
+
+    def _cmd_log(self, _args: list[str]) -> str:
+        """Show recent log entries."""
+        entries: list[str] = self._kernel.syscall(SyscallNumber.SYS_READ_LOG)
+        return "\n".join(entries) if entries else "No log entries."
 
     def _cmd_exit(self, _args: list[str]) -> str:
         """Shut down the kernel and signal the REPL to stop."""
