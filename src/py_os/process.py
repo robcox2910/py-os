@@ -20,6 +20,8 @@ from enum import StrEnum
 from itertools import count
 from typing import TYPE_CHECKING
 
+from py_os.threads import Thread
+
 if TYPE_CHECKING:
     from py_os.virtual_memory import VirtualMemory
 
@@ -83,6 +85,12 @@ class Process:
         self._parent_pid: int | None = parent_pid
         self._virtual_memory: VirtualMemory | None = None
 
+        # Thread management — every process has at least one thread
+        self._next_tid = count(start=1)
+        self._threads: dict[int, Thread] = {
+            0: Thread(tid=0, name="main", pid=self._pid),
+        }
+
     @property
     def pid(self) -> int:
         """Return the unique process identifier."""
@@ -117,6 +125,35 @@ class Process:
     def parent_pid(self) -> int | None:
         """Return the parent's PID, or None for root processes."""
         return self._parent_pid
+
+    @property
+    def threads(self) -> dict[int, Thread]:
+        """Return the thread table (TID → Thread mapping)."""
+        return dict(self._threads)
+
+    @property
+    def main_thread(self) -> Thread:
+        """Return the main thread (TID 0)."""
+        return self._threads[0]
+
+    def create_thread(self, name: str) -> Thread:
+        """Create a new thread within this process.
+
+        The thread shares this process's virtual memory — no new
+        memory is allocated.  Thread IDs are assigned sequentially
+        starting from 1 (TID 0 is reserved for the main thread).
+
+        Args:
+            name: Human-readable label for the thread.
+
+        Returns:
+            The newly created thread (in NEW state).
+
+        """
+        tid = next(self._next_tid)
+        thread = Thread(tid=tid, name=name, pid=self._pid)
+        self._threads[tid] = thread
+        return thread
 
     def _transition(self, action: str, expected: ProcessState, target: ProcessState) -> None:
         """Enforce a state transition.

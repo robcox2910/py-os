@@ -70,6 +70,7 @@ See [docs/architecture.md](docs/architecture.md) for detailed module description
 | Jobs | `jobs.py` | Background/foreground, job control (bg, fg, jobs) |
 | Swap & Page Replacement | `swap.py` | Demand paging, FIFO/LRU/Clock policies, swap space |
 | Fork | `kernel.py` | Process forking, memory copy, parent-child trees |
+| Threads | `threads.py` | Lightweight execution units, shared memory, thread lifecycle |
 | REPL | `repl.py` | Interactive terminal, boot banner |
 
 ## Shell Commands
@@ -101,6 +102,7 @@ bg pid      Move a process to background
 fg job_id   Bring a job to foreground
 fork pid    Fork a process (create a child copy)
 pstree      Show the process tree hierarchy
+threads pid List threads of a process
 devices     List registered devices
 devread     Read from a device
 devwrite    Write to a device

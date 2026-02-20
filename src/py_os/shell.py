@@ -93,6 +93,7 @@ class Shell:
             "unalias": self._cmd_unalias,
             "fork": self._cmd_fork,
             "pstree": self._cmd_pstree,
+            "threads": self._cmd_threads,
             "devices": self._cmd_devices,
             "devread": self._cmd_devread,
             "devwrite": self._cmd_devwrite,
@@ -471,6 +472,24 @@ class Shell:
             _walk(root_pid, "", is_last=i == len(roots) - 1)
 
         return "\n".join(lines) if lines else "No processes."
+
+    def _cmd_threads(self, args: list[str]) -> str:
+        """List threads of a process."""
+        if not args:
+            return "Usage: threads <pid>"
+        try:
+            pid = int(args[0])
+        except ValueError:
+            return f"Error: invalid PID '{args[0]}'"
+        try:
+            threads: list[dict[str, object]] = self._kernel.syscall(
+                SyscallNumber.SYS_LIST_THREADS, pid=pid
+            )
+        except SyscallError as e:
+            return f"Error: {e}"
+        lines = [f"Threads for pid {pid}:"]
+        lines.extend(f"  TID {t['tid']:<4} {t['state']!s:<11} {t['name']}" for t in threads)
+        return "\n".join(lines)
 
     def _cmd_devices(self, _args: list[str]) -> str:
         """List all registered devices."""

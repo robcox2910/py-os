@@ -419,3 +419,34 @@ Every Unix system has a process tree rooted at PID 1 (`init` or `systemd`). All 
 ### fork() + exec() Pattern
 
 In real Unix, `fork()` is almost always followed by `exec()` — replace the child's code with a new program. This two-step pattern separates *process creation* from *program loading*, giving the shell a window to set up redirections, pipes, and environment changes between fork and exec.
+
+---
+
+## Threads (`threads.py`)
+
+Threads are **lightweight execution units within a process**. Where a process is a resource container (memory, files, PID), a thread is an execution context (state, program counter, stack).
+
+### Threads vs Processes vs Fork
+
+| Operation | Memory | Cost | Use Case |
+|-----------|--------|------|----------|
+| **fork()** | Deep copy (new frames) | Expensive | Independent child processes |
+| **Thread** | Shared (same VM) | Cheap | Parallel work within one program |
+
+### Key Properties
+
+1. **Shared memory** — all threads in a process see the same `VirtualMemory`. A write from one thread is immediately visible to all others. This is powerful (efficient communication) but dangerous (race conditions).
+
+2. **Independent state** — each thread has its own `ThreadState` (NEW, READY, RUNNING, WAITING, TERMINATED) and TID. Threads follow the same five-state lifecycle as processes.
+
+3. **Main thread** — every process starts with TID 0 ("main"). In real OSes, when the main thread exits, the process terminates and all threads are cleaned up.
+
+4. **No memory allocation** — creating a thread does not allocate new physical frames. This is why threads are called "lightweight" — the expensive part (memory setup) is already done by the process.
+
+### Thread IDs
+
+TIDs are scoped per-process: TID 0 is always the main thread, and additional threads get sequential IDs (1, 2, 3...). In Linux, threads actually have globally-unique task IDs (the `tid` is really a PID internally), but per-process TIDs are clearer for learning.
+
+### Why Threads Need Synchronisation
+
+Because threads share memory, concurrent access to shared data can cause **race conditions** — the outcome depends on the order of execution. Solutions include mutexes, semaphores, and condition variables (topics for a future module).

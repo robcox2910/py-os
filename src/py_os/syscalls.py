@@ -48,6 +48,8 @@ class SyscallNumber(IntEnum):
     SYS_TERMINATE_PROCESS = 2
     SYS_LIST_PROCESSES = 3
     SYS_FORK = 4
+    SYS_CREATE_THREAD = 5
+    SYS_LIST_THREADS = 6
 
     # File-system operations
     SYS_CREATE_FILE = 10
@@ -123,6 +125,8 @@ def dispatch_syscall(
         SyscallNumber.SYS_TERMINATE_PROCESS: _sys_terminate_process,
         SyscallNumber.SYS_LIST_PROCESSES: _sys_list_processes,
         SyscallNumber.SYS_FORK: _sys_fork,
+        SyscallNumber.SYS_CREATE_THREAD: _sys_create_thread,
+        SyscallNumber.SYS_LIST_THREADS: _sys_list_threads,
         SyscallNumber.SYS_CREATE_FILE: _sys_create_file,
         SyscallNumber.SYS_CREATE_DIR: _sys_create_dir,
         SyscallNumber.SYS_READ_FILE: _sys_read_file,
@@ -200,6 +204,32 @@ def _sys_fork(kernel: Any, **kwargs: Any) -> dict[str, Any]:
         "name": child.name,
         "state": child.state,
     }
+
+
+def _sys_create_thread(kernel: Any, **kwargs: Any) -> dict[str, Any]:
+    """Create a thread within a process."""
+    pid: int = kwargs["pid"]
+    name: str = kwargs["name"]
+    try:
+        thread = kernel.create_thread(pid=pid, name=name)
+    except ValueError as e:
+        raise SyscallError(str(e)) from e
+    return {
+        "tid": thread.tid,
+        "pid": thread.pid,
+        "name": thread.name,
+        "state": thread.state,
+    }
+
+
+def _sys_list_threads(kernel: Any, **kwargs: Any) -> list[dict[str, Any]]:
+    """List all threads for a process."""
+    pid: int = kwargs["pid"]
+    if pid not in kernel.processes:
+        msg = f"Process {pid} not found"
+        raise SyscallError(msg)
+    process = kernel.processes[pid]
+    return [{"tid": t.tid, "name": t.name, "state": t.state} for t in process.threads.values()]
 
 
 # -- File-system syscall handlers --------------------------------------------
