@@ -23,6 +23,7 @@ Design choices:
 
 from collections.abc import Callable
 
+from py_os.jobs import JobManager
 from py_os.kernel import Kernel, KernelState
 from py_os.signals import Signal
 from py_os.syscalls import SyscallError, SyscallNumber
@@ -57,6 +58,7 @@ class Shell:
 
         self._kernel = kernel
         self._pipe_input: str = ""
+        self._jobs = JobManager()
 
         # Command dispatch table — maps command names to handler methods.
         self._commands: dict[str, _Handler] = {
@@ -80,6 +82,9 @@ class Shell:
             "unset": self._cmd_unset,
             "grep": self._cmd_grep,
             "wc": self._cmd_wc,
+            "jobs": self._cmd_jobs,
+            "bg": self._cmd_bg,
+            "fg": self._cmd_fg,
             "devices": self._cmd_devices,
             "devread": self._cmd_devread,
             "devwrite": self._cmd_devwrite,
@@ -308,6 +313,44 @@ class Shell:
             return "Usage: wc (pipe input required)"
         lines = self._pipe_input.splitlines()
         return f"{len(lines)} lines"
+
+    def _cmd_jobs(self, _args: list[str]) -> str:
+        """List background jobs."""
+        jobs = self._jobs.list_jobs()
+        if not jobs:
+            return "No background jobs."
+        return "\n".join(str(j) for j in jobs)
+
+    def _cmd_bg(self, args: list[str]) -> str:
+        """Add a process as a background job."""
+        if not args:
+            return "Usage: bg <pid>"
+        try:
+            pid = int(args[0])
+        except ValueError:
+            return f"Error: invalid PID '{args[0]}'"
+        # Verify the process exists
+        procs: list[dict[str, object]] = self._kernel.syscall(SyscallNumber.SYS_LIST_PROCESSES)
+        proc = next((p for p in procs if p["pid"] == pid), None)
+        if proc is None:
+            return f"Error: process {pid} not found"
+        name = str(proc["name"])
+        job = self._jobs.add(pid=pid, name=name)
+        return str(job)
+
+    def _cmd_fg(self, args: list[str]) -> str:
+        """Bring a background job to the foreground."""
+        if not args:
+            return "Usage: fg <job_id>"
+        try:
+            job_id = int(args[0])
+        except ValueError:
+            return f"Error: invalid job id '{args[0]}'"
+        job = self._jobs.get(job_id)
+        if job is None:
+            return f"Error: job {job_id} not found"
+        self._jobs.remove(job_id)
+        return f"{job.name} (pid={job.pid}) moved to foreground."
 
     def _cmd_log(self, _args: list[str]) -> str:
         """Show recent log entries."""
