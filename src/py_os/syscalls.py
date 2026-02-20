@@ -31,6 +31,7 @@ Why bother with this layer?
 from enum import IntEnum
 from typing import Any
 
+from py_os.signals import SignalError
 from py_os.users import FilePermissions
 from py_os.users import PermissionError as OsPermissionError
 
@@ -71,6 +72,9 @@ class SyscallNumber(IntEnum):
 
     # Logging operations
     SYS_READ_LOG = 50
+
+    # Signal operations
+    SYS_SEND_SIGNAL = 60
 
 
 class SyscallError(Exception):
@@ -123,6 +127,7 @@ def dispatch_syscall(
         SyscallNumber.SYS_DEVICE_WRITE: _sys_device_write,
         SyscallNumber.SYS_LIST_DEVICES: _sys_list_devices,
         SyscallNumber.SYS_READ_LOG: _sys_read_log,
+        SyscallNumber.SYS_SEND_SIGNAL: _sys_send_signal,
     }
 
     handler = handlers.get(number)
@@ -327,3 +332,14 @@ def _sys_read_log(kernel: Any, **_kwargs: Any) -> list[str]:
     """Return recent log entries as formatted strings."""
     assert kernel.logger is not None  # noqa: S101
     return [str(entry) for entry in kernel.logger.entries]
+
+
+# -- Signal syscall handlers ---------------------------------------------------
+
+
+def _sys_send_signal(kernel: Any, **kwargs: Any) -> None:
+    """Send a signal to a process."""
+    try:
+        kernel.send_signal(kwargs["pid"], kwargs["signal"])
+    except SignalError as e:
+        raise SyscallError(str(e)) from e

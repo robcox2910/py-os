@@ -142,6 +142,24 @@ class Process:
         """Transition RUNNING → TERMINATED. End the process."""
         self._transition("terminate", ProcessState.RUNNING, ProcessState.TERMINATED)
 
+    def force_terminate(self) -> None:
+        """Force termination from any non-terminated state.
+
+        This is the SIGKILL path — the process is killed unconditionally.
+        Unlike terminate(), this works from READY, RUNNING, or WAITING.
+
+        Raises:
+            RuntimeError: If the process is already TERMINATED or NEW.
+
+        """
+        if self._state is ProcessState.TERMINATED:
+            msg = f"Cannot force_terminate: process {self._pid} is already terminated"
+            raise RuntimeError(msg)
+        if self._state is ProcessState.NEW:
+            msg = f"Cannot force_terminate: process {self._pid} is not yet admitted"
+            raise RuntimeError(msg)
+        self._state = ProcessState.TERMINATED
+
     def __repr__(self) -> str:
         """Return a debug-friendly representation."""
         return f"Process(pid={self._pid}, name={self._name!r}, state={self._state})"
