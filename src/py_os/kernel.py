@@ -91,6 +91,11 @@ class Kernel:
         """Return the file system, or None if not booted."""
         return self._filesystem
 
+    @property
+    def processes(self) -> dict[int, Process]:
+        """Return the process table (PID → Process mapping)."""
+        return dict(self._processes)
+
     def _require_running(self) -> None:
         """Raise if the kernel is not in the RUNNING state."""
         if self._state is not KernelState.RUNNING:
