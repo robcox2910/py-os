@@ -59,6 +59,8 @@ class Shell:
         self._kernel = kernel
         self._pipe_input: str = ""
         self._jobs = JobManager()
+        self._history: list[str] = []
+        self._aliases: dict[str, str] = {}
 
         # Command dispatch table — maps command names to handler methods.
         self._commands: dict[str, _Handler] = {
@@ -86,6 +88,9 @@ class Shell:
             "jobs": self._cmd_jobs,
             "bg": self._cmd_bg,
             "fg": self._cmd_fg,
+            "history": self._cmd_history,
+            "alias": self._cmd_alias,
+            "unalias": self._cmd_unalias,
             "devices": self._cmd_devices,
             "devread": self._cmd_devread,
             "devwrite": self._cmd_devwrite,
@@ -106,16 +111,30 @@ class Shell:
             The command output as a string, or an error message.
 
         """
+        # Record in history
+        stripped = command.strip()
+        if stripped:
+            self._history.append(stripped)
+
+        # Expand aliases in each pipeline stage
         stages = [s.strip() for s in command.split("|")]
         output = ""
         for i, stage in enumerate(stages):
             self._pipe_input = output if i > 0 else ""
-            output = self._execute_single(stage)
+            expanded = self._expand_alias(stage)
+            output = self._execute_single(expanded)
             # Stop the pipeline if a command produces an error
             if output.startswith(("Unknown command:", "Error:")):
                 break
         self._pipe_input = ""
         return output
+
+    def _expand_alias(self, command: str) -> str:
+        """Expand an alias if the first word matches."""
+        parts = command.strip().split()
+        if parts and parts[0] in self._aliases:
+            return self._aliases[parts[0]]
+        return command
 
     def _execute_single(self, command: str) -> str:
         """Execute a single (non-piped) command."""
@@ -378,6 +397,33 @@ class Shell:
         """Shut down the kernel and signal the REPL to stop."""
         self._kernel.shutdown()
         return self.EXIT_SENTINEL
+
+    def _cmd_history(self, _args: list[str]) -> str:
+        """Show command history."""
+        if not self._history:
+            return "No history."
+        lines = [f"  {i + 1}  {cmd}" for i, cmd in enumerate(self._history)]
+        return "\n".join(lines)
+
+    def _cmd_alias(self, args: list[str]) -> str:
+        """Create or list command aliases."""
+        if not args:
+            if not self._aliases:
+                return "No aliases defined."
+            return "\n".join(f"{name}={cmd}" for name, cmd in sorted(self._aliases.items()))
+        pair = " ".join(args)
+        if "=" not in pair:
+            return "Usage: alias NAME=COMMAND"
+        name, cmd = pair.split("=", 1)
+        self._aliases[name.strip()] = cmd.strip()
+        return ""
+
+    def _cmd_unalias(self, args: list[str]) -> str:
+        """Remove a command alias."""
+        if not args:
+            return "Usage: unalias <name>"
+        self._aliases.pop(args[0], None)
+        return ""
 
     def _cmd_devices(self, _args: list[str]) -> str:
         """List all registered devices."""
