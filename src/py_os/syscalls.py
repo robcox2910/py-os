@@ -47,6 +47,7 @@ class SyscallNumber(IntEnum):
     SYS_CREATE_PROCESS = 1
     SYS_TERMINATE_PROCESS = 2
     SYS_LIST_PROCESSES = 3
+    SYS_FORK = 4
 
     # File-system operations
     SYS_CREATE_FILE = 10
@@ -121,6 +122,7 @@ def dispatch_syscall(
         SyscallNumber.SYS_CREATE_PROCESS: _sys_create_process,
         SyscallNumber.SYS_TERMINATE_PROCESS: _sys_terminate_process,
         SyscallNumber.SYS_LIST_PROCESSES: _sys_list_processes,
+        SyscallNumber.SYS_FORK: _sys_fork,
         SyscallNumber.SYS_CREATE_FILE: _sys_create_file,
         SyscallNumber.SYS_CREATE_DIR: _sys_create_dir,
         SyscallNumber.SYS_READ_FILE: _sys_read_file,
@@ -174,7 +176,30 @@ def _sys_terminate_process(kernel: Any, **kwargs: Any) -> None:
 
 def _sys_list_processes(kernel: Any, **_kwargs: Any) -> list[dict[str, Any]]:
     """List all processes."""
-    return [{"pid": p.pid, "name": p.name, "state": p.state} for p in kernel.processes.values()]
+    return [
+        {
+            "pid": p.pid,
+            "name": p.name,
+            "state": p.state,
+            "parent_pid": p.parent_pid,
+        }
+        for p in kernel.processes.values()
+    ]
+
+
+def _sys_fork(kernel: Any, **kwargs: Any) -> dict[str, Any]:
+    """Fork a process, creating a child copy."""
+    parent_pid: int = kwargs["parent_pid"]
+    try:
+        child = kernel.fork_process(parent_pid=parent_pid)
+    except (ValueError, MemoryError) as e:
+        raise SyscallError(str(e)) from e
+    return {
+        "child_pid": child.pid,
+        "parent_pid": parent_pid,
+        "name": child.name,
+        "state": child.state,
+    }
 
 
 # -- File-system syscall handlers --------------------------------------------

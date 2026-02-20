@@ -91,6 +91,8 @@ class Shell:
             "history": self._cmd_history,
             "alias": self._cmd_alias,
             "unalias": self._cmd_unalias,
+            "fork": self._cmd_fork,
+            "pstree": self._cmd_pstree,
             "devices": self._cmd_devices,
             "devread": self._cmd_devread,
             "devwrite": self._cmd_devwrite,
@@ -424,6 +426,51 @@ class Shell:
             return "Usage: unalias <name>"
         self._aliases.pop(args[0], None)
         return ""
+
+    def _cmd_fork(self, args: list[str]) -> str:
+        """Fork a process, creating a child copy."""
+        if not args:
+            return "Usage: fork <pid>"
+        try:
+            pid = int(args[0])
+        except ValueError:
+            return f"Error: invalid PID '{args[0]}'"
+        try:
+            result: dict[str, object] = self._kernel.syscall(SyscallNumber.SYS_FORK, parent_pid=pid)
+            return f"Forked pid {pid} → child pid {result['child_pid']} ({result['name']})"
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_pstree(self, _args: list[str]) -> str:
+        """Show the process tree (parent-child hierarchy)."""
+        procs: list[dict[str, object]] = self._kernel.syscall(SyscallNumber.SYS_LIST_PROCESSES)
+        if not procs:
+            return "No processes."
+        # Build parent → children mapping
+        by_pid: dict[int, dict[str, object]] = {int(str(p["pid"])): p for p in procs}
+        children: dict[int | None, list[int]] = {}
+        for p in procs:
+            parent_pid = p["parent_pid"]
+            parent_key: int | None = int(str(parent_pid)) if parent_pid is not None else None
+            children.setdefault(parent_key, []).append(int(str(p["pid"])))
+
+        lines: list[str] = []
+
+        def _walk(pid: int, prefix: str, *, is_last: bool) -> None:
+            proc = by_pid[pid]
+            connector = "└── " if is_last else "├── "
+            lines.append(f"{prefix}{connector}{proc['name']} (pid={pid})")
+            kids = children.get(pid, [])
+            for i, child_pid in enumerate(kids):
+                extension = "    " if is_last else "│   "
+                _walk(child_pid, prefix + extension, is_last=i == len(kids) - 1)
+
+        # Start from root processes (no parent)
+        roots = children.get(None, [])
+        for i, root_pid in enumerate(roots):
+            _walk(root_pid, "", is_last=i == len(roots) - 1)
+
+        return "\n".join(lines) if lines else "No processes."
 
     def _cmd_devices(self, _args: list[str]) -> str:
         """List all registered devices."""

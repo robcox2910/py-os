@@ -69,6 +69,7 @@ See [docs/architecture.md](docs/architecture.md) for detailed module description
 | Environment | `env.py` | KEY=VALUE config, copy-on-fork semantics |
 | Jobs | `jobs.py` | Background/foreground, job control (bg, fg, jobs) |
 | Swap & Page Replacement | `swap.py` | Demand paging, FIFO/LRU/Clock policies, swap space |
+| Fork | `kernel.py` | Process forking, memory copy, parent-child trees |
 | REPL | `repl.py` | Interactive terminal, boot banner |
 
 ## Shell Commands
@@ -98,6 +99,8 @@ unalias N   Remove a command alias
 jobs        List background jobs
 bg pid      Move a process to background
 fg job_id   Bring a job to foreground
+fork pid    Fork a process (create a child copy)
+pstree      Show the process tree hierarchy
 devices     List registered devices
 devread     Read from a device
 devwrite    Write to a device

@@ -282,6 +282,75 @@ class Kernel:
         self._processes[process.pid] = process
         return process
 
+    def fork_process(self, *, parent_pid: int) -> Process:
+        """Fork a process — create a child that is a copy of the parent.
+
+        In Unix, fork() is how every new process is born.  The child gets:
+        - A new unique PID with parent_pid set to the parent's PID.
+        - A copy of the parent's virtual memory (new physical frames,
+          same data — eager copy, not copy-on-write).
+        - The same name (suffixed with " (fork)") and priority.
+        - READY state — admitted to the scheduler immediately.
+
+        Args:
+            parent_pid: PID of the process to fork.
+
+        Returns:
+            The newly created child process.
+
+        Raises:
+            ValueError: If the parent doesn't exist or is terminated.
+            OutOfMemoryError: If insufficient memory for the copy.
+
+        """
+        self._require_running()
+        assert self._memory is not None  # noqa: S101
+        assert self._scheduler is not None  # noqa: S101
+
+        parent = self._processes.get(parent_pid)
+        if parent is None:
+            msg = f"Process {parent_pid} not found"
+            raise ValueError(msg)
+        if parent.state is ProcessState.TERMINATED:
+            msg = f"Cannot fork: process {parent_pid} is terminated"
+            raise ValueError(msg)
+
+        # Determine how many pages the parent has
+        parent_frames = self._memory.pages_for(parent_pid)
+        num_pages = len(parent_frames)
+
+        # Create the child process
+        child = Process(
+            name=f"{parent.name} (fork)",
+            priority=parent.priority,
+            parent_pid=parent_pid,
+        )
+
+        # Allocate new physical frames for the child
+        child_frames = self._memory.allocate(child.pid, num_pages=num_pages)
+
+        # Set up virtual memory: copy page table structure and data
+        child_vm = VirtualMemory()
+        parent_vm = parent.virtual_memory
+        if parent_vm is not None:
+            parent_mappings = parent_vm.page_table.mappings()
+            for vpn, _parent_frame in sorted(parent_mappings.items()):
+                child_frame = child_frames[vpn] if vpn < len(child_frames) else child_frames[0]
+                child_vm.page_table.map(virtual_page=vpn, physical_frame=child_frame)
+
+                # Copy the page data from parent to child
+                addr = vpn * parent_vm.page_size
+                data = parent_vm.read(virtual_address=addr, size=parent_vm.page_size)
+                child_vm.write(virtual_address=addr, data=data)
+
+        child.virtual_memory = child_vm
+
+        # Admit to scheduler and register in process table
+        child.admit()
+        self._scheduler.add(child)
+        self._processes[child.pid] = child
+        return child
+
     def terminate_process(self, *, pid: int) -> None:
         """Terminate a process and free its resources.
 

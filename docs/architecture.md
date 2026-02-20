@@ -380,3 +380,42 @@ The `Pager` ties everything together:
 - Data survives multiple eviction/reload cycles via swap
 
 This mirrors how real OSes handle memory pressure: the page fault handler runs in kernel mode, invokes the replacement policy, performs the swap I/O, updates page tables, and resumes the faulting process — all transparently.
+
+---
+
+## Process Forking (`fork()`)
+
+In Unix, **every process is born from `fork()`**. The parent calls `fork()`, and the kernel creates a child that is a near-exact copy of the parent. The only difference is the return value: the parent gets the child's PID, the child gets 0.
+
+### What Gets Copied
+
+| Resource | Copied? | Details |
+|----------|---------|---------|
+| PID | New | Child gets a unique PID; `parent_pid` records the parent |
+| Memory | Deep copy | New physical frames with identical data — writes in child don't affect parent |
+| Priority | Inherited | Same scheduling priority as the parent |
+| Name | Derived | Suffixed with "(fork)" for clarity |
+| State | READY | Child is immediately eligible to run |
+
+### Eager Copy vs Copy-on-Write
+
+Our implementation does an **eager copy** — all of the parent's memory pages are copied to new physical frames at fork time. This is simple and correct.
+
+Real OSes use **copy-on-write (COW)**: parent and child initially *share* the same physical frames (marked read-only). Only when one of them *writes* does the kernel copy that single page. This is much more efficient — most forked children call `exec()` immediately, so they never modify most pages.
+
+### Process Trees
+
+Forking creates a tree structure. The `pstree` command visualises this:
+
+```
+└── server (pid=1)
+    ├── server (fork) (pid=2)
+    └── server (fork) (pid=3)
+        └── server (fork) (fork) (pid=4)
+```
+
+Every Unix system has a process tree rooted at PID 1 (`init` or `systemd`). All other processes are descendants, created by successive `fork()` calls.
+
+### fork() + exec() Pattern
+
+In real Unix, `fork()` is almost always followed by `exec()` — replace the child's code with a new program. This two-step pattern separates *process creation* from *program loading*, giving the shell a window to set up redirections, pipes, and environment changes between fork and exec.
