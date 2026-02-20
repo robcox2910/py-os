@@ -601,3 +601,50 @@ The condition is a regular shell command. **Success** means the output does not 
 ### Error Handling
 
 Script execution is **non-stopping** — if one command fails, the next one still runs. This matches the default behaviour of shell scripts (unless `set -e` is used). Each command's output is collected in a list for inspection.
+
+---
+
+## Networking (`networking.py`)
+
+Sockets are the standard OS API for network communication. A socket is an **endpoint** identified by an address and port. Two processes communicate by each holding one end of a connection.
+
+### Socket Lifecycle
+
+```
+Server: socket() → bind(addr, port) → listen() → accept() → recv/send
+Client: socket() → connect(addr, port) → send/recv
+```
+
+### Socket States
+
+| State | Meaning |
+|-------|---------|
+| **CREATED** | Socket exists but is not yet bound |
+| **BOUND** | Address and port assigned |
+| **LISTENING** | Passive mode, waiting for incoming connections |
+| **CONNECTED** | Active connection established |
+| **CLOSED** | Socket released |
+
+### Key Operations
+
+- **bind()** — associate a socket with a local address and port, so clients know where to find it
+- **listen()** — put the socket in passive mode, creating a backlog queue for pending connections
+- **connect()** — client initiates connection to a listening server (in real TCP, this triggers the three-way handshake)
+- **accept()** — server dequeues the next pending connection, returning a new peer socket for communication (the listening socket stays listening)
+- **send/recv** — transfer data over the established connection
+
+### SocketManager
+
+The `SocketManager` is the kernel's simplified network stack. It:
+- Creates and tracks all sockets
+- Routes `connect()` calls to matching listeners (by address and port)
+- Manages pending connection queues (the backlog)
+- Maintains per-connection bidirectional data buffers
+
+### In-Memory Simulation
+
+Our sockets use in-memory `deque` buffers instead of actual network I/O. This teaches the socket abstraction — the API semantics, state machine, and client-server protocol — without needing a TCP/IP stack, packet routing, or physical network interfaces.
+
+### Multiple Clients
+
+A server can accept multiple clients. Each `accept()` creates a separate peer socket with independent data buffers. Data from client A never leaks to client B's peer — this isolation is fundamental to how real servers handle concurrent connections.
