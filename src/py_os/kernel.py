@@ -26,6 +26,7 @@ from enum import StrEnum
 from time import monotonic
 from typing import Any
 
+from py_os.devices import ConsoleDevice, DeviceManager, NullDevice, RandomDevice
 from py_os.filesystem import FileSystem
 from py_os.memory import MemoryManager
 from py_os.process import Process
@@ -68,6 +69,7 @@ class Kernel:
         self._memory: MemoryManager | None = None
         self._filesystem: FileSystem | None = None
         self._user_manager: UserManager | None = None
+        self._device_manager: DeviceManager | None = None
         self._current_uid: int = 0
         self._file_permissions: dict[str, FilePermissions] = {}
         self._processes: dict[int, Process] = {}
@@ -103,6 +105,11 @@ class Kernel:
     def user_manager(self) -> UserManager | None:
         """Return the user manager, or None if not booted."""
         return self._user_manager
+
+    @property
+    def device_manager(self) -> DeviceManager | None:
+        """Return the device manager, or None if not booted."""
+        return self._device_manager
 
     @property
     def current_uid(self) -> int:
@@ -157,7 +164,13 @@ class Kernel:
         self._user_manager = UserManager()
         self._current_uid = 0  # root
 
-        # 4. Scheduler — ready to accept processes
+        # 4. Device manager — register default devices
+        self._device_manager = DeviceManager()
+        self._device_manager.register(NullDevice())
+        self._device_manager.register(ConsoleDevice())
+        self._device_manager.register(RandomDevice())
+
+        # 5. Scheduler — ready to accept processes
         self._scheduler = Scheduler(policy=FCFSPolicy())
 
         self._state = KernelState.RUNNING
@@ -179,6 +192,7 @@ class Kernel:
 
         # Tear down in reverse order
         self._scheduler = None
+        self._device_manager = None
         self._user_manager = None
         self._current_uid = 0
         self._file_permissions.clear()

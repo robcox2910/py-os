@@ -64,6 +64,11 @@ class SyscallNumber(IntEnum):
     SYS_LIST_USERS = 32
     SYS_SWITCH_USER = 33
 
+    # Device operations
+    SYS_DEVICE_READ = 40
+    SYS_DEVICE_WRITE = 41
+    SYS_LIST_DEVICES = 42
+
 
 class SyscallError(Exception):
     """Raised when a system call fails.
@@ -111,6 +116,9 @@ def dispatch_syscall(
         SyscallNumber.SYS_CREATE_USER: _sys_create_user,
         SyscallNumber.SYS_LIST_USERS: _sys_list_users,
         SyscallNumber.SYS_SWITCH_USER: _sys_switch_user,
+        SyscallNumber.SYS_DEVICE_READ: _sys_device_read,
+        SyscallNumber.SYS_DEVICE_WRITE: _sys_device_write,
+        SyscallNumber.SYS_LIST_DEVICES: _sys_list_devices,
     }
 
     handler = handlers.get(number)
@@ -271,3 +279,38 @@ def _sys_switch_user(kernel: Any, **kwargs: Any) -> None:
         msg = f"User {uid} not found"
         raise SyscallError(msg)
     kernel.current_uid = uid
+
+
+# -- Device syscall handlers -------------------------------------------------
+
+
+def _sys_device_read(kernel: Any, **kwargs: Any) -> bytes:
+    """Read from a named device."""
+    assert kernel.device_manager is not None  # noqa: S101
+    name: str = kwargs["device"]
+    device = kernel.device_manager.get(name)
+    if device is None:
+        msg = f"Device '{name}' not found"
+        raise SyscallError(msg)
+    return device.read()
+
+
+def _sys_device_write(kernel: Any, **kwargs: Any) -> None:
+    """Write to a named device."""
+    assert kernel.device_manager is not None  # noqa: S101
+    name: str = kwargs["device"]
+    data: bytes = kwargs["data"]
+    device = kernel.device_manager.get(name)
+    if device is None:
+        msg = f"Device '{name}' not found"
+        raise SyscallError(msg)
+    try:
+        device.write(data)
+    except OSError as e:
+        raise SyscallError(str(e)) from e
+
+
+def _sys_list_devices(kernel: Any, **_kwargs: Any) -> list[str]:
+    """List all registered device names."""
+    assert kernel.device_manager is not None  # noqa: S101
+    return kernel.device_manager.list_devices()
