@@ -14,8 +14,14 @@ State machine::
                   WAITING
 """
 
+from __future__ import annotations
+
 from enum import StrEnum
 from itertools import count
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from py_os.virtual_memory import VirtualMemory
 
 
 class ProcessState(StrEnum):
@@ -75,6 +81,7 @@ class Process:
         self._state: ProcessState = ProcessState.NEW
         self._priority: int = priority
         self._parent_pid: int | None = parent_pid
+        self._virtual_memory: VirtualMemory | None = None
 
     @property
     def pid(self) -> int:
@@ -95,6 +102,16 @@ class Process:
     def priority(self) -> int:
         """Return the scheduling priority."""
         return self._priority
+
+    @property
+    def virtual_memory(self) -> VirtualMemory | None:
+        """Return the process's virtual memory, or None if not assigned."""
+        return self._virtual_memory
+
+    @virtual_memory.setter
+    def virtual_memory(self, vm: VirtualMemory | None) -> None:
+        """Set the process's virtual memory."""
+        self._virtual_memory = vm
 
     @property
     def parent_pid(self) -> int | None:

@@ -41,6 +41,7 @@ from py_os.scheduler import FCFSPolicy, Scheduler
 from py_os.signals import Signal, SignalError
 from py_os.syscalls import SyscallNumber, dispatch_syscall
 from py_os.users import FilePermissions, UserManager
+from py_os.virtual_memory import VirtualMemory
 
 DEFAULT_TOTAL_FRAMES = 64
 
@@ -268,7 +269,14 @@ class Kernel:
         assert self._scheduler is not None  # noqa: S101
 
         process = Process(name=name)
-        self._memory.allocate(process.pid, num_pages=num_pages)
+        frames = self._memory.allocate(process.pid, num_pages=num_pages)
+
+        # Set up virtual memory: map virtual pages 0..N-1 to physical frames
+        vm = VirtualMemory()
+        for vpn, frame in enumerate(frames):
+            vm.page_table.map(virtual_page=vpn, physical_frame=frame)
+        process.virtual_memory = vm
+
         process.admit()
         self._scheduler.add(process)
         self._processes[process.pid] = process
