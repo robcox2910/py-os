@@ -4,11 +4,10 @@ The shell is the user's interface to the kernel.  It reads a command
 string, parses it into a command name and arguments, dispatches to the
 appropriate handler, and returns a string result.
 
-In a real OS the shell is itself a user-space process, but here we keep
-it simple: the shell holds a reference to a **booted** kernel and calls
-its subsystems directly.  Every command handler is a pure function of
-its arguments and the kernel state, returning a string — making the
-shell trivially testable without any I/O.
+In a real OS the shell is a user-space process that communicates with
+the kernel exclusively through **system calls**.  Our shell mirrors
+this: every command handler invokes ``kernel.syscall()`` rather than
+reaching directly into kernel subsystems.
 
 Design choices:
     - **Returns strings, not prints.**  This keeps the shell fully
@@ -17,14 +16,15 @@ Design choices:
     - **Command dispatch via a dict.**  Clean, extensible, O(1) lookup.
       Adding a new command means writing a method and adding one dict
       entry — no cascading if/elif chains.
-    - **All commands are methods on Shell.**  Keeps related state
-      (the kernel reference) close and avoids a separate "commands"
-      module for a handful of functions.
+    - **All kernel interaction goes through syscalls.**  The shell
+      never touches ``kernel.filesystem``, ``kernel.memory``, or
+      ``kernel.scheduler`` directly — it uses the official gateway.
 """
 
 from collections.abc import Callable
 
 from py_os.kernel import Kernel, KernelState
+from py_os.syscalls import SyscallError, SyscallNumber
 
 # Type alias for a command handler: takes a list of args, returns output.
 type _Handler = Callable[[list[str]], str]
@@ -98,36 +98,27 @@ class Shell:
 
     def _cmd_ps(self, _args: list[str]) -> str:
         """Show running processes."""
+        procs: list[dict[str, object]] = self._kernel.syscall(SyscallNumber.SYS_LIST_PROCESSES)
         lines = ["PID    STATE       NAME"]
-        lines.extend(
-            f"{p.pid:<6} {p.state.value:<11} {p.name}" for p in self._kernel.processes.values()
-        )
+        lines.extend(f"{p['pid']:<6} {p['state']!s:<11} {p['name']}" for p in procs)
         return "\n".join(lines)
 
     def _cmd_ls(self, args: list[str]) -> str:
         """List directory contents."""
         path = args[0] if args else "/"
-        fs = self._kernel.filesystem
-        assert fs is not None  # noqa: S101
-
         try:
-            entries = fs.list_dir(path)
-        except FileNotFoundError as e:
+            entries: list[str] = self._kernel.syscall(SyscallNumber.SYS_LIST_DIR, path=path)
+        except SyscallError as e:
             return f"Error: {e}"
-
         return "\n".join(entries) if entries else ""
 
     def _cmd_mkdir(self, args: list[str]) -> str:
         """Create a directory."""
         if not args:
             return "Usage: mkdir <path>"
-
-        fs = self._kernel.filesystem
-        assert fs is not None  # noqa: S101
-
         try:
-            fs.create_dir(args[0])
-        except (FileNotFoundError, FileExistsError) as e:
+            self._kernel.syscall(SyscallNumber.SYS_CREATE_DIR, path=args[0])
+        except SyscallError as e:
             return f"Error: {e}"
         return ""
 
@@ -135,13 +126,9 @@ class Shell:
         """Create an empty file."""
         if not args:
             return "Usage: touch <path>"
-
-        fs = self._kernel.filesystem
-        assert fs is not None  # noqa: S101
-
         try:
-            fs.create_file(args[0])
-        except (FileNotFoundError, FileExistsError) as e:
+            self._kernel.syscall(SyscallNumber.SYS_CREATE_FILE, path=args[0])
+        except SyscallError as e:
             return f"Error: {e}"
         return ""
 
@@ -152,12 +139,9 @@ class Shell:
 
         path = args[0]
         content = " ".join(args[1:])
-        fs = self._kernel.filesystem
-        assert fs is not None  # noqa: S101
-
         try:
-            fs.write(path, content.encode())
-        except FileNotFoundError as e:
+            self._kernel.syscall(SyscallNumber.SYS_WRITE_FILE, path=path, data=content.encode())
+        except SyscallError as e:
             return f"Error: {e}"
         return ""
 
@@ -165,26 +149,19 @@ class Shell:
         """Read file contents."""
         if not args:
             return "Usage: cat <path>"
-
-        fs = self._kernel.filesystem
-        assert fs is not None  # noqa: S101
-
         try:
-            return fs.read(args[0]).decode()
-        except FileNotFoundError as e:
+            data: bytes = self._kernel.syscall(SyscallNumber.SYS_READ_FILE, path=args[0])
+            return data.decode()
+        except SyscallError as e:
             return f"Error: not found — {e}"
 
     def _cmd_rm(self, args: list[str]) -> str:
         """Remove a file or directory."""
         if not args:
             return "Usage: rm <path>"
-
-        fs = self._kernel.filesystem
-        assert fs is not None  # noqa: S101
-
         try:
-            fs.delete(args[0])
-        except FileNotFoundError as e:
+            self._kernel.syscall(SyscallNumber.SYS_DELETE_FILE, path=args[0])
+        except SyscallError as e:
             return f"Error: {e}"
         return ""
 
@@ -199,7 +176,7 @@ class Shell:
             return f"Error: invalid PID '{args[0]}'"
 
         try:
-            self._kernel.terminate_process(pid=pid)
-        except (RuntimeError, KeyError) as e:
+            self._kernel.syscall(SyscallNumber.SYS_TERMINATE_PROCESS, pid=pid)
+        except SyscallError as e:
             return f"Error: {e}"
         return f"Process {pid} terminated."
