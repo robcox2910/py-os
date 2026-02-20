@@ -1,13 +1,14 @@
 """Tests for the kernel module.
 
 The kernel is the core of the OS. It bootstraps subsystems, manages
-the system lifecycle (boot → run → shutdown), and will eventually
-coordinate all other modules (scheduler, memory, file system, etc.).
+the system lifecycle (boot → run → shutdown), and coordinates all
+other modules (scheduler, memory, file system).
 """
 
 import pytest
 
 from py_os.kernel import Kernel, KernelState
+from py_os.process import ProcessState
 
 
 class TestKernelInitialisation:
@@ -84,3 +85,125 @@ class TestKernelReboot:
         kernel.shutdown()
         kernel.boot()
         assert kernel.state is KernelState.RUNNING
+
+
+TOTAL_FRAMES = 64
+NUM_MEMORY_PAGES = 4
+
+
+class TestKernelSubsystems:
+    """Verify that boot initialises and exposes subsystems."""
+
+    def test_scheduler_available_after_boot(self) -> None:
+        """The scheduler should be accessible after booting."""
+        kernel = Kernel()
+        kernel.boot()
+        assert kernel.scheduler is not None
+
+    def test_memory_manager_available_after_boot(self) -> None:
+        """The memory manager should be accessible after booting."""
+        kernel = Kernel()
+        kernel.boot()
+        assert kernel.memory is not None
+        assert kernel.memory.total_frames == TOTAL_FRAMES
+
+    def test_filesystem_available_after_boot(self) -> None:
+        """The file system should be accessible after booting."""
+        kernel = Kernel()
+        kernel.boot()
+        assert kernel.filesystem is not None
+        assert kernel.filesystem.exists("/")
+
+    def test_subsystems_none_before_boot(self) -> None:
+        """Subsystems should not be accessible before booting."""
+        kernel = Kernel()
+        assert kernel.scheduler is None
+        assert kernel.memory is None
+        assert kernel.filesystem is None
+
+    def test_subsystems_none_after_shutdown(self) -> None:
+        """Subsystems should be torn down after shutdown."""
+        kernel = Kernel()
+        kernel.boot()
+        kernel.shutdown()
+        assert kernel.scheduler is None
+        assert kernel.memory is None
+        assert kernel.filesystem is None
+
+
+class TestKernelCreateProcess:
+    """Verify the kernel's coordinated process creation."""
+
+    def test_create_process_returns_process(self) -> None:
+        """Creating a process should return a Process object."""
+        kernel = Kernel()
+        kernel.boot()
+        process = kernel.create_process(name="init", num_pages=NUM_MEMORY_PAGES)
+        assert process.name == "init"
+
+    def test_created_process_is_ready(self) -> None:
+        """A newly created process should be admitted and READY."""
+        kernel = Kernel()
+        kernel.boot()
+        process = kernel.create_process(name="init", num_pages=NUM_MEMORY_PAGES)
+        assert process.state is ProcessState.READY
+
+    def test_created_process_has_memory(self) -> None:
+        """The kernel should allocate memory for the new process."""
+        kernel = Kernel()
+        kernel.boot()
+        process = kernel.create_process(name="init", num_pages=NUM_MEMORY_PAGES)
+        assert kernel.memory is not None
+        assert len(kernel.memory.pages_for(process.pid)) == NUM_MEMORY_PAGES
+
+    def test_created_process_is_in_scheduler(self) -> None:
+        """The new process should be added to the scheduler's ready queue."""
+        kernel = Kernel()
+        kernel.boot()
+        kernel.create_process(name="init", num_pages=NUM_MEMORY_PAGES)
+        assert kernel.scheduler is not None
+        expected_count = 1
+        assert kernel.scheduler.ready_count == expected_count
+
+    def test_create_process_before_boot_raises(self) -> None:
+        """Cannot create a process if the kernel hasn't booted."""
+        kernel = Kernel()
+        with pytest.raises(RuntimeError, match="not running"):
+            kernel.create_process(name="init", num_pages=NUM_MEMORY_PAGES)
+
+    def test_create_multiple_processes(self) -> None:
+        """Multiple processes can be created and tracked independently."""
+        kernel = Kernel()
+        kernel.boot()
+        p1 = kernel.create_process(name="shell", num_pages=NUM_MEMORY_PAGES)
+        p2 = kernel.create_process(name="daemon", num_pages=NUM_MEMORY_PAGES)
+        assert p1.pid != p2.pid
+        assert kernel.scheduler is not None
+        expected_count = 2
+        assert kernel.scheduler.ready_count == expected_count
+
+
+class TestKernelTerminateProcess:
+    """Verify the kernel's coordinated process termination."""
+
+    def test_terminate_frees_memory(self) -> None:
+        """Terminating a process should release its memory frames."""
+        kernel = Kernel()
+        kernel.boot()
+        process = kernel.create_process(name="init", num_pages=NUM_MEMORY_PAGES)
+        assert kernel.memory is not None
+        free_before = kernel.memory.free_frames
+
+        # Must dispatch first (only RUNNING processes can be terminated)
+        assert kernel.scheduler is not None
+        kernel.scheduler.dispatch()
+        kernel.terminate_process(pid=process.pid)
+
+        assert kernel.memory.free_frames == free_before + NUM_MEMORY_PAGES
+        assert kernel.memory.pages_for(process.pid) == []
+
+    def test_terminate_before_boot_raises(self) -> None:
+        """Cannot terminate a process if the kernel hasn't booted."""
+        kernel = Kernel()
+        with pytest.raises(RuntimeError, match="not running"):
+            kernel.terminate_process(pid=1)
