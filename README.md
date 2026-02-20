@@ -79,6 +79,7 @@ See [docs/architecture.md](docs/architecture.md) for detailed module description
 | Disk Scheduling | `disk.py` | FCFS, SSTF, SCAN, C-SCAN disk I/O scheduling, seek time minimisation |
 | Shell Scripting | `shell.py` | Scripts, comments, $VAR substitution, if/then/else/fi, source |
 | Networking | `networking.py` | Sockets, bind/listen/connect/accept, send/recv, client-server model |
+| Persistence | `persistence.py` | Serialization, deserialization, JSON on-disk format, base64 encoding |
 | REPL | `repl.py` | Interactive terminal, boot banner |
 
 ## Shell Commands

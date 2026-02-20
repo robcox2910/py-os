@@ -21,9 +21,11 @@ Why inodes instead of nested dicts?
 
 from __future__ import annotations
 
+import base64
 from dataclasses import dataclass, field
 from enum import StrEnum
 from itertools import count
+from typing import Any
 
 
 class FileType(StrEnum):
@@ -281,3 +283,41 @@ class FileSystem:
             raise FileNotFoundError(msg)
         del parent.children[name]
         del self._inodes[inode.inode_number]
+
+    def to_dict(self) -> dict[str, Any]:
+        """Serialize the filesystem to a dictionary.
+
+        File data is base64-encoded so binary content survives JSON
+        serialization.  In real filesystems, the on-disk format is
+        a binary superblock + inode table + data blocks.  Our JSON
+        format is the teaching equivalent.
+        """
+        inodes = {}
+        for ino_num, inode in self._inodes.items():
+            inodes[str(ino_num)] = {
+                "inode_number": inode.inode_number,
+                "file_type": inode.file_type.value,
+                "data": base64.b64encode(inode.data).decode("ascii"),
+                "children": inode.children,
+            }
+        return {"root_ino": self._root_ino, "inodes": inodes}
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> FileSystem:
+        """Deserialize a filesystem from a dictionary.
+
+        Reconstructs the inode table and root reference from the
+        serialized format produced by ``to_dict()``.
+        """
+        fs = object.__new__(cls)
+        fs._root_ino = data["root_ino"]
+        fs._inodes = {}
+        for ino_data in data["inodes"].values():
+            inode = _Inode(
+                inode_number=ino_data["inode_number"],
+                file_type=FileType(ino_data["file_type"]),
+                data=base64.b64decode(ino_data["data"]),
+                children=ino_data.get("children", {}),
+            )
+            fs._inodes[inode.inode_number] = inode
+        return fs
