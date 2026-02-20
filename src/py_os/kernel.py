@@ -32,6 +32,7 @@ from time import monotonic
 from typing import Any
 
 from py_os.devices import ConsoleDevice, DeviceManager, NullDevice, RandomDevice
+from py_os.env import Environment
 from py_os.filesystem import FileSystem
 from py_os.logging import Logger, LogLevel
 from py_os.memory import MemoryManager
@@ -77,6 +78,7 @@ class Kernel:
         self._filesystem: FileSystem | None = None
         self._user_manager: UserManager | None = None
         self._device_manager: DeviceManager | None = None
+        self._env: Environment | None = None
         self._logger: Logger | None = None
         self._current_uid: int = 0
         self._file_permissions: dict[str, FilePermissions] = {}
@@ -119,6 +121,11 @@ class Kernel:
     def device_manager(self) -> DeviceManager | None:
         """Return the device manager, or None if not booted."""
         return self._device_manager
+
+    @property
+    def env(self) -> Environment | None:
+        """Return the global environment, or None if not booted."""
+        return self._env
 
     @property
     def logger(self) -> Logger | None:
@@ -181,13 +188,22 @@ class Kernel:
         self._user_manager = UserManager()
         self._current_uid = 0  # root
 
-        # 5. Device manager — register default devices
+        # 5. Environment — default variables
+        self._env = Environment(
+            initial={
+                "PATH": "/bin:/usr/bin",
+                "HOME": "/root",
+                "USER": "root",
+            }
+        )
+
+        # 6. Device manager — register default devices
         self._device_manager = DeviceManager()
         self._device_manager.register(NullDevice())
         self._device_manager.register(ConsoleDevice())
         self._device_manager.register(RandomDevice())
 
-        # 6. Scheduler — ready to accept processes
+        # 7. Scheduler — ready to accept processes
         self._scheduler = Scheduler(policy=FCFSPolicy())
 
         self._state = KernelState.RUNNING
@@ -211,6 +227,7 @@ class Kernel:
         # Tear down in reverse order
         self._scheduler = None
         self._device_manager = None
+        self._env = None
         self._user_manager = None
         self._current_uid = 0
         self._file_permissions.clear()

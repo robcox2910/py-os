@@ -74,6 +74,9 @@ class Shell:
             "exit": self._cmd_exit,
             "log": self._cmd_log,
             "signal": self._cmd_signal,
+            "env": self._cmd_env,
+            "export": self._cmd_export,
+            "unset": self._cmd_unset,
             "devices": self._cmd_devices,
             "devread": self._cmd_devread,
             "devwrite": self._cmd_devwrite,
@@ -242,6 +245,32 @@ class Shell:
         except SyscallError as e:
             return f"Error: {e}"
         return f"Signal {sig.name} delivered to pid {pid}."
+
+    def _cmd_env(self, _args: list[str]) -> str:
+        """List all environment variables."""
+        items: list[tuple[str, str]] = self._kernel.syscall(SyscallNumber.SYS_LIST_ENV)
+        return "\n".join(f"{k}={v}" for k, v in sorted(items)) if items else "No variables set."
+
+    def _cmd_export(self, args: list[str]) -> str:
+        """Set an environment variable (KEY=VALUE)."""
+        if not args:
+            return "Usage: export KEY=VALUE"
+        pair = args[0]
+        if "=" not in pair:
+            return "Usage: export KEY=VALUE"
+        key, value = pair.split("=", 1)
+        self._kernel.syscall(SyscallNumber.SYS_SET_ENV, key=key, value=value)
+        return ""
+
+    def _cmd_unset(self, args: list[str]) -> str:
+        """Remove an environment variable."""
+        if not args:
+            return "Usage: unset KEY"
+        try:
+            self._kernel.syscall(SyscallNumber.SYS_DELETE_ENV, key=args[0])
+        except SyscallError as e:
+            return f"Error: {e}"
+        return ""
 
     def _cmd_log(self, _args: list[str]) -> str:
         """Show recent log entries."""
