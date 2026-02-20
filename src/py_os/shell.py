@@ -56,6 +56,7 @@ class Shell:
             raise RuntimeError(msg)
 
         self._kernel = kernel
+        self._pipe_input: str = ""
 
         # Command dispatch table — maps command names to handler methods.
         self._commands: dict[str, _Handler] = {
@@ -77,21 +78,41 @@ class Shell:
             "env": self._cmd_env,
             "export": self._cmd_export,
             "unset": self._cmd_unset,
+            "grep": self._cmd_grep,
+            "wc": self._cmd_wc,
             "devices": self._cmd_devices,
             "devread": self._cmd_devread,
             "devwrite": self._cmd_devwrite,
         }
 
     def execute(self, command: str) -> str:
-        """Parse and execute a shell command.
+        """Parse and execute a shell command, with pipe support.
+
+        Commands can be chained with ``|``.  The output of each stage
+        becomes the piped input for the next.  For example::
+
+            ls / | grep txt | wc
 
         Args:
-            command: The raw command string (e.g. "ls /docs").
+            command: The raw command string (e.g. "ls / | grep txt").
 
         Returns:
             The command output as a string, or an error message.
 
         """
+        stages = [s.strip() for s in command.split("|")]
+        output = ""
+        for i, stage in enumerate(stages):
+            self._pipe_input = output if i > 0 else ""
+            output = self._execute_single(stage)
+            # Stop the pipeline if a command produces an error
+            if output.startswith(("Unknown command:", "Error:")):
+                break
+        self._pipe_input = ""
+        return output
+
+    def _execute_single(self, command: str) -> str:
+        """Execute a single (non-piped) command."""
         parts = command.strip().split()
         if not parts:
             return ""
@@ -271,6 +292,22 @@ class Shell:
         except SyscallError as e:
             return f"Error: {e}"
         return ""
+
+    def _cmd_grep(self, args: list[str]) -> str:
+        """Filter piped input lines matching a pattern."""
+        if not args:
+            return "Usage: grep <pattern>"
+        pattern = args[0]
+        lines = self._pipe_input.splitlines() if self._pipe_input else []
+        matched = [line for line in lines if pattern in line]
+        return "\n".join(matched)
+
+    def _cmd_wc(self, _args: list[str]) -> str:
+        """Count lines in piped input."""
+        if not self._pipe_input:
+            return "Usage: wc (pipe input required)"
+        lines = self._pipe_input.splitlines()
+        return f"{len(lines)} lines"
 
     def _cmd_log(self, _args: list[str]) -> str:
         """Show recent log entries."""
