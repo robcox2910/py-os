@@ -557,3 +557,47 @@ The standard example uses 8 requests `[98, 183, 37, 122, 14, 124, 65, 67]` with 
 - **FCFS**: 640 total head movement (zigzags across the disk)
 - **SSTF**: significantly less (greedy nearest-first)
 - **SCAN/C-SCAN**: predictable sweep pattern with good overall performance
+
+---
+
+## Shell Scripting (`shell.py`)
+
+Real shells can execute **scripts** — files containing a sequence of commands. This is how system automation works: boot scripts (`/etc/init.d/*`), user config (`.bashrc`), cron jobs, and deployment scripts are all shell scripts.
+
+### Features
+
+| Feature | Syntax | Description |
+|---------|--------|-------------|
+| **Multi-line execution** | `run_script(text)` | Execute commands sequentially, collecting all output |
+| **Comments** | `# comment` | Lines starting with `#` are skipped |
+| **Variable substitution** | `$VAR` | Replaced with the environment variable's value |
+| **Conditionals** | `if`/`then`/`else`/`fi` | Branch based on command success/failure |
+| **Source** | `source path` | Load and execute a script from a file |
+| **Echo** | `echo args...` | Print arguments (essential for scripts) |
+
+### Variable Substitution
+
+`$VAR` in any command is replaced with the matching environment variable. Undefined variables expand to empty string (like bash with unset variables). Uses regex `\$([A-Za-z_][A-Za-z0-9_]*)` to find variable references.
+
+### Conditionals
+
+The `if`/`then`/`else`/`fi` syntax mirrors bash:
+
+```bash
+if ls /data
+then
+  touch /data/ok.txt
+else
+  echo "data directory missing"
+fi
+```
+
+The condition is a regular shell command. **Success** means the output does not start with `"Error:"`. This is a simplification of Unix's exit code convention (0 = success, non-zero = failure).
+
+### Source Command
+
+`source /path/to/script.sh` reads a file and executes its contents as a script. In real Unix, `source` (or `.`) runs a script in the **current shell** — meaning variables set in the script persist. This is how `.bashrc` works: it's sourced (not executed as a subprocess), so the aliases and exports it defines take effect in your shell.
+
+### Error Handling
+
+Script execution is **non-stopping** — if one command fails, the next one still runs. This matches the default behaviour of shell scripts (unless `set -e` is used). Each command's output is collected in a list for inspection.

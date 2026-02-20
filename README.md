@@ -77,6 +77,7 @@ See [docs/architecture.md](docs/architecture.md) for detailed module description
 | Threads | `threads.py` | Lightweight execution units, shared memory, thread lifecycle |
 | Deadlock | `deadlock.py` | Deadlock detection, Banker's algorithm, safe sequences, resource allocation matrices |
 | Disk Scheduling | `disk.py` | FCFS, SSTF, SCAN, C-SCAN disk I/O scheduling, seek time minimisation |
+| Shell Scripting | `shell.py` | Scripts, comments, $VAR substitution, if/then/else/fi, source |
 | REPL | `repl.py` | Interactive terminal, boot banner |
 
 ## Shell Commands
@@ -114,12 +115,31 @@ deadlock    Run deadlock detection
 devices     List registered devices
 devread     Read from a device
 devwrite    Write to a device
+echo args   Print arguments to output
+source path Run a script from a file
 grep pat    Filter piped input (used with |)
 wc          Count lines in piped input
 exit        Shut down the kernel
 ```
 
 Commands can be piped: `ls / | grep txt | wc`
+
+### Scripting
+
+The shell supports scripts — multi-line sequences of commands with comments, variable substitution, and conditionals:
+
+```bash
+# Setup script
+mkdir /data
+export NAME=hello
+echo $NAME
+if ls /data
+then
+  touch /data/$NAME.txt
+fi
+```
+
+Scripts can be run from files with `source /path/to/script.sh`.
 
 ## Development
 

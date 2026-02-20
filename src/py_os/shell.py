@@ -21,6 +21,7 @@ Design choices:
       ``kernel.scheduler`` directly — it uses the official gateway.
 """
 
+import re
 from collections.abc import Callable
 
 from py_os.jobs import JobManager
@@ -99,6 +100,8 @@ class Shell:
             "devices": self._cmd_devices,
             "devread": self._cmd_devread,
             "devwrite": self._cmd_devwrite,
+            "echo": self._cmd_echo,
+            "source": self._cmd_source,
         }
 
     def execute(self, command: str) -> str:
@@ -133,6 +136,87 @@ class Shell:
                 break
         self._pipe_input = ""
         return output
+
+    def run_script(self, script: str) -> list[str]:
+        """Execute a multi-line script, returning output from each command.
+
+        Supports comments (``#``), variable substitution (``$VAR``),
+        and conditionals (``if``/``then``/``else``/``fi``).
+
+        In real shells, scripts are the foundation of system automation.
+        Boot scripts, cron jobs, and ``.bashrc`` are all shell scripts.
+
+        Args:
+            script: Multi-line string of commands.
+
+        Returns:
+            List of output strings, one per executed command.
+
+        """
+        lines = script.splitlines()
+        results: list[str] = []
+        i = 0
+        while i < len(lines):
+            line = lines[i].strip()
+            i += 1
+
+            # Skip blanks and comments
+            if not line or line.startswith("#"):
+                continue
+
+            # Handle if/then/else/fi blocks
+            if line.startswith("if "):
+                condition_cmd = self._expand_variables(line[3:])
+                then_block: list[str] = []
+                else_block: list[str] = []
+                in_else = False
+                # Collect lines until fi
+                while i < len(lines):
+                    block_line = lines[i].strip()
+                    i += 1
+                    if block_line == "fi":
+                        break
+                    if block_line == "then":
+                        continue
+                    if block_line == "else":
+                        in_else = True
+                        continue
+                    if in_else:
+                        else_block.append(block_line)
+                    else:
+                        then_block.append(block_line)
+
+                # Evaluate condition: success = no error prefix
+                cond_result = self.execute(condition_cmd)
+                condition_passed = not cond_result.startswith("Error:")
+                block = then_block if condition_passed else else_block
+                for cmd in block:
+                    expanded = self._expand_variables(cmd)
+                    result = self.execute(expanded)
+                    results.append(result)
+                continue
+
+            # Regular command — expand variables, then execute
+            expanded = self._expand_variables(line)
+            result = self.execute(expanded)
+            results.append(result)
+
+        return results
+
+    def _expand_variables(self, command: str) -> str:
+        """Replace $VAR references with environment variable values.
+
+        In real shells, ``$HOME`` becomes ``/home/user``, ``$PATH``
+        becomes the search path, etc.  Undefined variables expand
+        to empty string (like bash with unset variables).
+        """
+
+        def _replace(match: re.Match[str]) -> str:
+            var_name = match.group(1)
+            value = self._kernel.syscall(SyscallNumber.SYS_GET_ENV, key=var_name)
+            return value if value is not None else ""
+
+        return re.sub(r"\$([A-Za-z_][A-Za-z0-9_]*)", _replace, command)
 
     def _expand_alias(self, command: str) -> str:
         """Expand an alias if the first word matches."""
@@ -540,3 +624,19 @@ class Shell:
         except SyscallError as e:
             return f"Error: {e}"
         return ""
+
+    def _cmd_echo(self, args: list[str]) -> str:
+        """Echo arguments back as output."""
+        return " ".join(args)
+
+    def _cmd_source(self, args: list[str]) -> str:
+        """Load and execute a script from a file."""
+        if not args:
+            return "Usage: source <path>"
+        try:
+            data: bytes = self._kernel.syscall(SyscallNumber.SYS_READ_FILE, path=args[0])
+            script = data.decode()
+        except SyscallError as e:
+            return f"Error: {e}"
+        results = self.run_script(script)
+        return "\n".join(r for r in results if r)
