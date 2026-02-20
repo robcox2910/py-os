@@ -22,11 +22,13 @@ Shutdown sequence (reverse order):
 
 from enum import StrEnum
 from time import monotonic
+from typing import Any
 
 from py_os.filesystem import FileSystem
 from py_os.memory import MemoryManager
 from py_os.process import Process
 from py_os.scheduler import FCFSPolicy, Scheduler
+from py_os.syscalls import SyscallNumber, dispatch_syscall
 
 DEFAULT_TOTAL_FRAMES = 64
 
@@ -211,3 +213,25 @@ class Kernel:
             process.terminate()
             self._memory.free(pid)
             del self._processes[pid]
+
+    def syscall(self, number: SyscallNumber, **kwargs: Any) -> Any:
+        """Execute a system call — the user-space → kernel-space gateway.
+
+        This is the single entry point for all user-space requests.
+        It validates that the kernel is running, then dispatches to
+        the appropriate handler via the syscall dispatch table.
+
+        Args:
+            number: The syscall number identifying the operation.
+            **kwargs: Arguments specific to the syscall.
+
+        Returns:
+            The syscall result (type depends on the operation).
+
+        Raises:
+            RuntimeError: If the kernel is not running.
+            SyscallError: If the syscall fails.
+
+        """
+        self._require_running()
+        return dispatch_syscall(self, number, **kwargs)
