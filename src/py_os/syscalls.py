@@ -76,6 +76,9 @@ class SyscallNumber(IntEnum):
     # Signal operations
     SYS_SEND_SIGNAL = 60
 
+    # System info
+    SYS_SYSINFO = 80
+
     # Environment operations
     SYS_GET_ENV = 70
     SYS_SET_ENV = 71
@@ -138,6 +141,7 @@ def dispatch_syscall(
         SyscallNumber.SYS_SET_ENV: _sys_set_env,
         SyscallNumber.SYS_LIST_ENV: _sys_list_env,
         SyscallNumber.SYS_DELETE_ENV: _sys_delete_env,
+        SyscallNumber.SYS_SYSINFO: _sys_sysinfo,
     }
 
     handler = handlers.get(number)
@@ -383,3 +387,27 @@ def _sys_delete_env(kernel: Any, **kwargs: Any) -> None:
         kernel.env.delete(kwargs["key"])
     except KeyError as e:
         raise SyscallError(str(e)) from e
+
+
+# -- System info syscall handlers ----------------------------------------------
+
+
+def _sys_sysinfo(kernel: Any, **_kwargs: Any) -> dict[str, Any]:
+    """Aggregate system status from all subsystems."""
+    assert kernel.memory is not None  # noqa: S101
+    assert kernel.device_manager is not None  # noqa: S101
+    assert kernel.user_manager is not None  # noqa: S101
+    assert kernel.env is not None  # noqa: S101
+    assert kernel.logger is not None  # noqa: S101
+
+    user = kernel.user_manager.get_user(kernel.current_uid)
+    return {
+        "uptime": kernel.uptime,
+        "memory_total": kernel.memory.total_frames,
+        "memory_free": kernel.memory.free_frames,
+        "process_count": len(kernel.processes),
+        "device_count": len(kernel.device_manager.list_devices()),
+        "current_user": user.username if user else "unknown",
+        "env_count": len(kernel.env),
+        "log_count": len(kernel.logger.entries),
+    }

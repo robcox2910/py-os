@@ -80,6 +80,7 @@ class Shell:
             "env": self._cmd_env,
             "export": self._cmd_export,
             "unset": self._cmd_unset,
+            "top": self._cmd_top,
             "grep": self._cmd_grep,
             "wc": self._cmd_wc,
             "jobs": self._cmd_jobs,
@@ -297,6 +298,22 @@ class Shell:
         except SyscallError as e:
             return f"Error: {e}"
         return ""
+
+    def _cmd_top(self, _args: list[str]) -> str:
+        """Show system status dashboard."""
+        info: dict[str, object] = self._kernel.syscall(SyscallNumber.SYS_SYSINFO)
+        uptime = float(str(info["uptime"]))
+        lines = [
+            "=== PyOS System Monitor ===",
+            f"Uptime:      {uptime:.2f}s",
+            f"Memory:      {info['memory_free']}/{info['memory_total']} frames free",
+            f"Processes:   {info['process_count']}",
+            f"Devices:     {info['device_count']}",
+            f"User:        {info['current_user']}",
+            f"Env vars:    {info['env_count']}",
+            f"Log entries: {info['log_count']}",
+        ]
+        return "\n".join(lines)
 
     def _cmd_grep(self, args: list[str]) -> str:
         """Filter piped input lines matching a pattern."""
