@@ -85,6 +85,10 @@ class SyscallNumber(IntEnum):
     # Deadlock operations
     SYS_DETECT_DEADLOCK = 90
 
+    # Execution operations
+    SYS_EXEC = 100
+    SYS_RUN = 101
+
     # Environment operations
     SYS_GET_ENV = 70
     SYS_SET_ENV = 71
@@ -152,6 +156,8 @@ def dispatch_syscall(
         SyscallNumber.SYS_DELETE_ENV: _sys_delete_env,
         SyscallNumber.SYS_SYSINFO: _sys_sysinfo,
         SyscallNumber.SYS_DETECT_DEADLOCK: _sys_detect_deadlock,
+        SyscallNumber.SYS_EXEC: _sys_exec,
+        SyscallNumber.SYS_RUN: _sys_run,
     }
 
     handler = handlers.get(number)
@@ -480,3 +486,22 @@ def _sys_detect_deadlock(kernel: Any, **_kwargs: Any) -> dict[str, Any]:
     assert kernel.resource_manager is not None  # noqa: S101
     deadlocked = kernel.resource_manager.detect_deadlock()
     return {"deadlocked": deadlocked}
+
+
+# -- Execution syscall handlers ------------------------------------------------
+
+
+def _sys_exec(kernel: Any, **kwargs: Any) -> None:
+    """Load a program into a process."""
+    try:
+        kernel.exec_process(pid=kwargs["pid"], program=kwargs["program"])
+    except ValueError as e:
+        raise SyscallError(str(e)) from e
+
+
+def _sys_run(kernel: Any, **kwargs: Any) -> dict[str, Any]:
+    """Run a process and return its output and exit code."""
+    try:
+        return kernel.run_process(pid=kwargs["pid"])
+    except ValueError as e:
+        raise SyscallError(str(e)) from e

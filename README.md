@@ -80,6 +80,7 @@ See [docs/architecture.md](docs/architecture.md) for detailed module description
 | Shell Scripting | `shell.py` | Scripts, comments, $VAR substitution, if/then/else/fi, source |
 | Networking | `networking.py` | Sockets, bind/listen/connect/accept, send/recv, client-server model |
 | Persistence | `persistence.py` | Serialization, deserialization, JSON on-disk format, base64 encoding |
+| Execution | `process.py`, `kernel.py` | Programs as callables, exec/run lifecycle, exit codes, output capture |
 | REPL | `repl.py` | Interactive terminal, boot banner |
 
 ## Shell Commands
@@ -119,6 +120,7 @@ devread     Read from a device
 devwrite    Write to a device
 echo args   Print arguments to output
 source path Run a script from a file
+run prog    Run a built-in program (hello, counter)
 grep pat    Filter piped input (used with |)
 wc          Count lines in piped input
 exit        Shut down the kernel

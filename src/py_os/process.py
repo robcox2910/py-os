@@ -23,6 +23,8 @@ from typing import TYPE_CHECKING
 from py_os.threads import Thread
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from py_os.virtual_memory import VirtualMemory
 
 
@@ -84,6 +86,9 @@ class Process:
         self._priority: int = priority
         self._parent_pid: int | None = parent_pid
         self._virtual_memory: VirtualMemory | None = None
+        self._program: Callable[[], str] | None = None
+        self._output: str | None = None
+        self._exit_code: int | None = None
 
         # Thread management — every process has at least one thread
         self._next_tid = count(start=1)
@@ -125,6 +130,50 @@ class Process:
     def parent_pid(self) -> int | None:
         """Return the parent's PID, or None for root processes."""
         return self._parent_pid
+
+    @property
+    def program(self) -> Callable[[], str] | None:
+        """Return the loaded program, or None if no program is set."""
+        return self._program
+
+    @program.setter
+    def program(self, prog: Callable[[], str] | None) -> None:
+        """Load a program (callable) into this process."""
+        self._program = prog
+
+    @property
+    def output(self) -> str | None:
+        """Return the program's output, or None if not yet executed."""
+        return self._output
+
+    @property
+    def exit_code(self) -> int | None:
+        """Return the exit code, or None if not yet executed."""
+        return self._exit_code
+
+    def execute(self) -> None:
+        """Run the loaded program and capture its output and exit code.
+
+        The process must be in RUNNING state with a program loaded.
+        On success, exit_code is 0 and output is the return value.
+        On failure (exception), exit_code is 1 and output is the error message.
+
+        Raises:
+            RuntimeError: If the process is not running or has no program.
+
+        """
+        if self._state is not ProcessState.RUNNING:
+            msg = f"Cannot execute: process {self._pid} is not running"
+            raise RuntimeError(msg)
+        if self._program is None:
+            msg = f"No program loaded in process {self._pid}"
+            raise RuntimeError(msg)
+        try:
+            self._output = self._program()
+            self._exit_code = 0
+        except Exception as e:
+            self._output = str(e)
+            self._exit_code = 1
 
     @property
     def threads(self) -> dict[int, Thread]:

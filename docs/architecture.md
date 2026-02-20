@@ -182,6 +182,7 @@ In a real OS, user programs can't directly access kernel memory or hardware. The
 | 70–73 | Environment variables |
 | 80    | System info |
 | 90    | Deadlock detection |
+| 100–101 | Process execution |
 
 ---
 
@@ -701,3 +702,75 @@ File data is stored as bytes internally, but JSON only supports text. Binary dat
 ### Journaling (Not Implemented)
 
 Real filesystems don't write all data at once. They use a **journal** (write-ahead log): operations are recorded in the journal *before* being applied to the main data structures. If the system crashes mid-write, the journal can be replayed to recover to a consistent state. ext4 journals metadata by default; ZFS and Btrfs use copy-on-write with checksums for even stronger guarantees.
+
+---
+
+## Process Execution (`process.py`, `kernel.py`)
+
+Until now, our processes had state transitions (NEW, READY, RUNNING, TERMINATED) but never actually executed code. This module makes processes truly executable by letting them carry a **program** — a Python callable.
+
+### The exec() Model
+
+In real Unix, process creation and program loading are separate operations:
+
+1. **`fork()`** — create a new process (copy of the parent)
+2. **`exec()`** — replace the process's code with a new program
+
+This two-step pattern exists so the shell can set up redirections, pipes, and environment changes between fork and exec. Our model mirrors this:
+
+1. `create_process()` — allocate memory and register the process
+2. `exec_process()` — load a callable into the process
+3. `run_process()` — dispatch, execute, and terminate
+
+### Programs as Callables
+
+A program is a `Callable[[], str]` — a function that takes no arguments and returns a string (its output). This is our simplified analogue of a compiled binary:
+
+| Our Model | Real OS |
+|-----------|---------|
+| `Callable[[], str]` | ELF binary loaded into address space |
+| Return value | Process writing to stdout |
+| Exception raised | Process crashing (SIGSEGV, abort) |
+| Exit code 0 | Successful exit (`exit(0)`) |
+| Exit code 1 | Error exit (`exit(1)`) |
+
+### Exit Codes
+
+Every process gets an **exit code** after execution:
+
+- **0** — success (the callable returned normally)
+- **1** — failure (the callable raised an exception)
+
+This mirrors Unix's `$?` variable. In real systems, exit codes range from 0–255, and specific values have conventional meanings (1 = general error, 2 = misuse of command, 126 = not executable, 127 = command not found, 128+N = killed by signal N).
+
+### Full Lifecycle
+
+`run_process()` orchestrates the complete lifecycle:
+
+```
+READY → RUNNING → execute() → TERMINATED → cleanup
+```
+
+After execution, the kernel:
+1. Captures the output and exit code
+2. Terminates the process (RUNNING → TERMINATED)
+3. Frees the process's memory frames
+4. Removes the process from the process table and resource manager
+
+### Shell Integration
+
+The `run` command provides built-in programs:
+
+```
+run hello      → "Hello from PyOS!" [exit code: 0]
+run counter    → "1\n2\n3\n4\n5" [exit code: 0]
+```
+
+This is analogous to how a real shell resolves commands via `$PATH` — looking up program names in a registry of available executables.
+
+### Syscalls
+
+| Number | Name | Description |
+|--------|------|-------------|
+| 100 | `SYS_EXEC` | Load a program (callable) into an existing process |
+| 101 | `SYS_RUN` | Dispatch, execute, and clean up a process |
