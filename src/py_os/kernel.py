@@ -26,6 +26,7 @@ Shutdown sequence (reverse order):
     0. Logger — last to go (captures shutdown events).
 """
 
+from collections.abc import Callable
 from enum import StrEnum
 from time import monotonic
 from typing import Any
@@ -34,8 +35,9 @@ from py_os.devices import ConsoleDevice, DeviceManager, NullDevice, RandomDevice
 from py_os.filesystem import FileSystem
 from py_os.logging import Logger, LogLevel
 from py_os.memory import MemoryManager
-from py_os.process import Process
+from py_os.process import Process, ProcessState
 from py_os.scheduler import FCFSPolicy, Scheduler
+from py_os.signals import Signal, SignalError
 from py_os.syscalls import SyscallNumber, dispatch_syscall
 from py_os.users import FilePermissions, UserManager
 
@@ -79,6 +81,7 @@ class Kernel:
         self._current_uid: int = 0
         self._file_permissions: dict[str, FilePermissions] = {}
         self._processes: dict[int, Process] = {}
+        self._signal_handlers: dict[tuple[int, Signal], Callable[[], None]] = {}
 
     @property
     def state(self) -> KernelState:
@@ -214,6 +217,7 @@ class Kernel:
         self._filesystem = None
         self._memory = None
         self._processes.clear()
+        self._signal_handlers.clear()
 
         self._logger = None
         self._boot_time = None
@@ -276,6 +280,75 @@ class Kernel:
             process.terminate()
             self._memory.free(pid)
             del self._processes[pid]
+
+    def register_signal_handler(
+        self,
+        pid: int,
+        signal: Signal,
+        handler: Callable[[], None],
+    ) -> None:
+        """Register a handler to be called when a signal is delivered.
+
+        Args:
+            pid: The target process.
+            signal: The signal to handle.
+            handler: A callable invoked before the signal's default action.
+
+        Raises:
+            SignalError: If the process does not exist.
+
+        """
+        self._require_running()
+        if pid not in self._processes:
+            msg = f"Process {pid} not found"
+            raise SignalError(msg)
+        self._signal_handlers[(pid, signal)] = handler
+
+    def send_signal(self, pid: int, signal: Signal) -> None:
+        """Deliver a signal to a process.
+
+        Signal behaviour:
+            - SIGKILL: force-terminate (uncatchable, no handler).
+            - SIGTERM: invoke handler if registered, then terminate.
+            - SIGSTOP: pause (RUNNING → WAITING).
+            - SIGCONT: resume (WAITING → READY), no-op otherwise.
+
+        Args:
+            pid: The target process.
+            signal: The signal to deliver.
+
+        Raises:
+            SignalError: If the process doesn't exist or is terminated.
+
+        """
+        self._require_running()
+        process = self._processes.get(pid)
+        if process is None:
+            msg = f"Process {pid} not found"
+            raise SignalError(msg)
+        if process.state is ProcessState.TERMINATED:
+            msg = f"Process {pid} is already terminated"
+            raise SignalError(msg)
+
+        if self._logger is not None:
+            self._logger.log(
+                LogLevel.INFO,
+                f"Signal {signal.name} → pid {pid}",
+                source="signal",
+                uid=self._current_uid,
+            )
+
+        if signal is Signal.SIGKILL:
+            process.force_terminate()
+        elif signal is Signal.SIGTERM:
+            handler = self._signal_handlers.get((pid, signal))
+            if handler is not None:
+                handler()
+            process.force_terminate()
+        elif signal is Signal.SIGSTOP:
+            process.wait()
+        elif signal is Signal.SIGCONT and process.state is ProcessState.WAITING:
+            process.wake()
 
     def syscall(self, number: SyscallNumber, **kwargs: Any) -> Any:
         """Execute a system call — the user-space → kernel-space gateway.

@@ -24,6 +24,7 @@ Design choices:
 from collections.abc import Callable
 
 from py_os.kernel import Kernel, KernelState
+from py_os.signals import Signal
 from py_os.syscalls import SyscallError, SyscallNumber
 
 # Type alias for a command handler: takes a list of args, returns output.
@@ -72,6 +73,7 @@ class Shell:
             "su": self._cmd_su,
             "exit": self._cmd_exit,
             "log": self._cmd_log,
+            "signal": self._cmd_signal,
             "devices": self._cmd_devices,
             "devread": self._cmd_devread,
             "devwrite": self._cmd_devwrite,
@@ -222,6 +224,24 @@ class Shell:
             return f"Switched to {result['username']} (uid={result['uid']})"
         except SyscallError as e:
             return f"Error: {e}"
+
+    def _cmd_signal(self, args: list[str]) -> str:
+        """Send a signal to a process."""
+        if len(args) < 2:  # noqa: PLR2004
+            return "Usage: signal <pid> <SIGNAL>"
+        try:
+            pid = int(args[0])
+        except ValueError:
+            return f"Error: invalid PID '{args[0]}'"
+        try:
+            sig = Signal[args[1]]
+        except KeyError:
+            return f"Error: unknown signal '{args[1]}'"
+        try:
+            self._kernel.syscall(SyscallNumber.SYS_SEND_SIGNAL, pid=pid, signal=sig)
+        except SyscallError as e:
+            return f"Error: {e}"
+        return f"Signal {sig.name} delivered to pid {pid}."
 
     def _cmd_log(self, _args: list[str]) -> str:
         """Show recent log entries."""
