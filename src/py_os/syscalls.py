@@ -76,6 +76,12 @@ class SyscallNumber(IntEnum):
     # Signal operations
     SYS_SEND_SIGNAL = 60
 
+    # Environment operations
+    SYS_GET_ENV = 70
+    SYS_SET_ENV = 71
+    SYS_LIST_ENV = 72
+    SYS_DELETE_ENV = 73
+
 
 class SyscallError(Exception):
     """Raised when a system call fails.
@@ -128,6 +134,10 @@ def dispatch_syscall(
         SyscallNumber.SYS_LIST_DEVICES: _sys_list_devices,
         SyscallNumber.SYS_READ_LOG: _sys_read_log,
         SyscallNumber.SYS_SEND_SIGNAL: _sys_send_signal,
+        SyscallNumber.SYS_GET_ENV: _sys_get_env,
+        SyscallNumber.SYS_SET_ENV: _sys_set_env,
+        SyscallNumber.SYS_LIST_ENV: _sys_list_env,
+        SyscallNumber.SYS_DELETE_ENV: _sys_delete_env,
     }
 
     handler = handlers.get(number)
@@ -342,4 +352,34 @@ def _sys_send_signal(kernel: Any, **kwargs: Any) -> None:
     try:
         kernel.send_signal(kwargs["pid"], kwargs["signal"])
     except SignalError as e:
+        raise SyscallError(str(e)) from e
+
+
+# -- Environment syscall handlers ----------------------------------------------
+
+
+def _sys_get_env(kernel: Any, **kwargs: Any) -> str | None:
+    """Get an environment variable."""
+    assert kernel.env is not None  # noqa: S101
+    return kernel.env.get(kwargs["key"])
+
+
+def _sys_set_env(kernel: Any, **kwargs: Any) -> None:
+    """Set an environment variable."""
+    assert kernel.env is not None  # noqa: S101
+    kernel.env.set(kwargs["key"], kwargs["value"])
+
+
+def _sys_list_env(kernel: Any, **_kwargs: Any) -> list[tuple[str, str]]:
+    """List all environment variables."""
+    assert kernel.env is not None  # noqa: S101
+    return kernel.env.items()
+
+
+def _sys_delete_env(kernel: Any, **kwargs: Any) -> None:
+    """Delete an environment variable."""
+    assert kernel.env is not None  # noqa: S101
+    try:
+        kernel.env.delete(kwargs["key"])
+    except KeyError as e:
         raise SyscallError(str(e)) from e
