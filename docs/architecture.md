@@ -339,3 +339,44 @@ Key design choices:
 - **Expansion happens at the pipeline stage level** — each stage in `ls | grep foo` is independently expanded
 - **Aliases are shell-local** — they live in the shell instance, not the kernel (just like real Unix)
 - **No recursive expansion** — if `ll` expands to `ls /`, and `ls` is also aliased, only the first level expands. This prevents infinite loops.
+
+---
+
+## Page Replacement & Swap Space (`swap.py`)
+
+When physical memory is full, the OS must decide which page to evict to make room for a new one. This is the **page replacement problem**.
+
+### Swap Space
+
+Swap is secondary storage (disk) used to hold evicted pages. When a page is evicted from RAM, its data is written to swap. When it's needed again, it's read back. Our `SwapSpace` class is a simple key-value store — the abstraction matters more than the backing medium.
+
+In real systems, swap can be a dedicated partition (`/dev/sda2`) or a swap file. The kernel tracks which pages are in RAM vs swap using "present" bits in the page table.
+
+### Replacement Policies (Strategy Pattern)
+
+Like the scheduler, page replacement uses the **Strategy pattern** — the policy is separated from the mechanism:
+
+| Policy | How It Works | Trade-offs |
+|--------|-------------|------------|
+| **FIFO** | Evict the oldest loaded page | Simple (queue), but suffers **Belady's anomaly** — more frames can mean more faults |
+| **LRU** | Evict the least recently accessed | Near-optimal, no Belady's anomaly, but expensive to track (OrderedDict) |
+| **Clock** | Circular buffer with reference bits; gives pages a "second chance" | Nearly as good as LRU, but much cheaper — just one bit per page |
+
+### Clock Algorithm Detail
+
+The clock hand sweeps through a circular buffer of pages:
+1. If the page's reference bit is **set** (1): clear it and move on (second chance)
+2. If the reference bit is **clear** (0): evict this page
+
+This is the most widely used algorithm in real operating systems (Linux, Windows, BSD) because it balances effectiveness with low overhead.
+
+### Pager (Demand Paging Orchestrator)
+
+The `Pager` ties everything together:
+- Manages a **virtual address space** larger than physical memory
+- Pre-maps the first N pages (up to physical frame count) at creation
+- On access to a non-resident page: **page fault** → evict a victim → swap in the requested page
+- Tracks page fault count for monitoring/debugging
+- Data survives multiple eviction/reload cycles via swap
+
+This mirrors how real OSes handle memory pressure: the page fault handler runs in kernel mode, invokes the replacement policy, performs the swap I/O, updates page tables, and resumes the faulting process — all transparently.

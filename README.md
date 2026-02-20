@@ -68,6 +68,7 @@ See [docs/architecture.md](docs/architecture.md) for detailed module description
 | Logging | `logging.py` | Kernel log buffer, structured entries, audit trail |
 | Environment | `env.py` | KEY=VALUE config, copy-on-fork semantics |
 | Jobs | `jobs.py` | Background/foreground, job control (bg, fg, jobs) |
+| Swap & Page Replacement | `swap.py` | Demand paging, FIFO/LRU/Clock policies, swap space |
 | REPL | `repl.py` | Interactive terminal, boot banner |
 
 ## Shell Commands
