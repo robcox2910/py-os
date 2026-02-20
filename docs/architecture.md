@@ -511,3 +511,49 @@ The textbook example with 3 resources (A=10, B=5, C=7) and 5 processes demonstra
 - `terminate_process()` calls `remove_process()` to release all held resources
 - `SYS_DETECT_DEADLOCK` syscall exposes detection to user-space
 - Shell commands: `resources` (show allocation) and `deadlock` (run detection)
+
+---
+
+## Disk Scheduling (`disk.py`)
+
+When multiple processes request disk I/O, the OS must decide the **order** in which to service those requests. The disk arm moves across tracks (cylinders), and the dominant cost is **seek time** — how far the arm must travel. Disk scheduling algorithms aim to minimise total head movement.
+
+### The Disk Arm Analogy
+
+Think of a disk arm like an elevator in a building. Passengers (I/O requests) press buttons for different floors (cylinders). The scheduling algorithm decides which floor the elevator visits next.
+
+### Algorithms
+
+| Policy | How It Works | Trade-offs |
+|--------|-------------|------------|
+| **FCFS** | Service in arrival order | Fair, simple, but the arm zigzags wildly — high total seek time |
+| **SSTF** | Always go to the nearest request (greedy) | Low immediate cost, but can **starve** distant requests |
+| **SCAN** | Sweep one direction, then reverse (elevator) | Bounded wait, no starvation, predictable sweep pattern |
+| **C-SCAN** | Sweep one direction, jump back to start | **Uniform wait times** — no favouring middle tracks |
+
+### FCFS (First Come, First Served)
+
+Service requests in the order they arrived. Simple and fair, but the arm might zigzag from cylinder 14 to 183 to 37 — terrible seek time.
+
+### SSTF (Shortest Seek Time First)
+
+Always move to the **nearest** pending request. A greedy algorithm that minimises immediate seek cost. The problem: if new requests keep arriving near the current position, requests at the far end of the disk starve indefinitely.
+
+### SCAN (Elevator Algorithm)
+
+The arm sweeps in one direction, servicing all requests along the way, then reverses. Named "elevator" because it works exactly like a building elevator: go all the way up, then all the way down. This guarantees **bounded wait** — no request waits more than two full sweeps.
+
+### C-SCAN (Circular SCAN)
+
+Like SCAN, but after reaching the end, the arm **jumps back** to the start and sweeps the same direction again (instead of reversing). This eliminates the bias that regular SCAN has towards middle tracks — the arm passes middle positions twice per cycle in SCAN, but only once in C-SCAN, giving more **uniform wait times**.
+
+### Strategy Pattern
+
+All policies implement the `DiskPolicy` protocol — the same Strategy pattern used in the CPU scheduler and page replacement. The `DiskScheduler` class ties a policy to a request queue, and the policy can be swapped at runtime.
+
+### Classic Textbook Example
+
+The standard example uses 8 requests `[98, 183, 37, 122, 14, 124, 65, 67]` with head at cylinder 53:
+- **FCFS**: 640 total head movement (zigzags across the disk)
+- **SSTF**: significantly less (greedy nearest-first)
+- **SCAN/C-SCAN**: predictable sweep pattern with good overall performance
