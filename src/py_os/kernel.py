@@ -31,6 +31,7 @@ from enum import StrEnum
 from time import monotonic
 from typing import Any
 
+from py_os.deadlock import ResourceManager
 from py_os.devices import ConsoleDevice, DeviceManager, NullDevice, RandomDevice
 from py_os.env import Environment
 from py_os.filesystem import FileSystem
@@ -86,6 +87,7 @@ class Kernel:
         self._file_permissions: dict[str, FilePermissions] = {}
         self._processes: dict[int, Process] = {}
         self._signal_handlers: dict[tuple[int, Signal], Callable[[], None]] = {}
+        self._resource_manager: ResourceManager | None = None
 
     @property
     def state(self) -> KernelState:
@@ -154,6 +156,11 @@ class Kernel:
         """Return the process table (PID → Process mapping)."""
         return dict(self._processes)
 
+    @property
+    def resource_manager(self) -> ResourceManager | None:
+        """Return the resource manager, or None if not booted."""
+        return self._resource_manager
+
     def _require_running(self) -> None:
         """Raise if the kernel is not in the RUNNING state."""
         if self._state is not KernelState.RUNNING:
@@ -205,7 +212,10 @@ class Kernel:
         self._device_manager.register(ConsoleDevice())
         self._device_manager.register(RandomDevice())
 
-        # 7. Scheduler — ready to accept processes
+        # 7. Resource manager — deadlock detection and avoidance
+        self._resource_manager = ResourceManager()
+
+        # 8. Scheduler — ready to accept processes
         self._scheduler = Scheduler(policy=FCFSPolicy())
 
         self._state = KernelState.RUNNING
@@ -228,6 +238,7 @@ class Kernel:
 
         # Tear down in reverse order
         self._scheduler = None
+        self._resource_manager = None
         self._device_manager = None
         self._env = None
         self._user_manager = None
@@ -400,6 +411,8 @@ class Kernel:
         if process is not None:
             process.terminate()
             self._memory.free(pid)
+            if self._resource_manager is not None:
+                self._resource_manager.remove_process(pid)
             del self._processes[pid]
 
     def register_signal_handler(

@@ -44,6 +44,10 @@ PyOS follows real OS architecture: a **kernel** coordinates subsystems, a **sysc
 │  │ Signals  │ │   Env    │ │   IPC    │    │
 │  │(TERM,KILL│ │(KEY=VAL) │ │(pipe,mq) │    │
 │  └──────────┘ └──────────┘ └──────────┘    │
+│  ┌──────────┐                              │
+│  │ Deadlock │                              │
+│  │(Banker's)│                              │
+│  └──────────┘                              │
 └─────────────────────────────────────────────┘
 ```
 
@@ -71,6 +75,7 @@ See [docs/architecture.md](docs/architecture.md) for detailed module description
 | Swap & Page Replacement | `swap.py` | Demand paging, FIFO/LRU/Clock policies, swap space |
 | Fork | `kernel.py` | Process forking, memory copy, parent-child trees |
 | Threads | `threads.py` | Lightweight execution units, shared memory, thread lifecycle |
+| Deadlock | `deadlock.py` | Deadlock detection, Banker's algorithm, safe sequences, resource allocation matrices |
 | REPL | `repl.py` | Interactive terminal, boot banner |
 
 ## Shell Commands
@@ -103,6 +108,8 @@ fg job_id   Bring a job to foreground
 fork pid    Fork a process (create a child copy)
 pstree      Show the process tree hierarchy
 threads pid List threads of a process
+resources   Show resource allocation status
+deadlock    Run deadlock detection
 devices     List registered devices
 devread     Read from a device
 devwrite    Write to a device
