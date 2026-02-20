@@ -91,6 +91,9 @@ export K=V  Set an environment variable
 unset key   Remove an environment variable
 log         Show kernel log entries
 top         System status dashboard
+history     Show command history
+alias N=CMD Create a command alias
+unalias N   Remove a command alias
 jobs        List background jobs
 bg pid      Move a process to background
 fg job_id   Bring a job to foreground

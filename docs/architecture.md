@@ -320,3 +320,22 @@ The `JobManager` lives in the shell (user-space), not the kernel. In real Unix, 
 ## System Monitoring (SYS_SYSINFO / `top`)
 
 The `top` command aggregates data from all subsystems into a single dashboard view — uptime, memory, processes, devices, current user, env vars, and log entries. This is the equivalent of Linux `top` or reading from `/proc`.
+
+---
+
+## Command History & Aliases
+
+### History
+
+The shell records every command in an ordered list, accessible via the `history` command. This mirrors Unix `~/.bash_history` — a chronological audit trail of what the user typed. History entries are numbered for easy reference.
+
+In real shells, history enables features like `!!` (repeat last command) and `!n` (repeat command n). Our implementation keeps it simple: record and display.
+
+### Aliases
+
+Aliases are user-defined shortcuts: `alias ll=ls /` makes `ll` expand to `ls /`. The shell expands aliases before executing each pipeline stage.
+
+Key design choices:
+- **Expansion happens at the pipeline stage level** — each stage in `ls | grep foo` is independently expanded
+- **Aliases are shell-local** — they live in the shell instance, not the kernel (just like real Unix)
+- **No recursive expansion** — if `ll` expands to `ls /`, and `ls` is also aliased, only the first level expands. This prevents infinite loops.
