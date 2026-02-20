@@ -44,10 +44,10 @@ PyOS follows real OS architecture: a **kernel** coordinates subsystems, a **sysc
 │  │ Signals  │ │   Env    │ │   IPC    │    │
 │  │(TERM,KILL│ │(KEY=VAL) │ │(pipe,mq) │    │
 │  └──────────┘ └──────────┘ └──────────┘    │
-│  ┌──────────┐ ┌──────────┐                 │
-│  │ Deadlock │ │   Disk   │                 │
-│  │(Banker's)│ │(SCAN,SSTF│                 │
-│  └──────────┘ └──────────┘                 │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐    │
+│  │ Deadlock │ │   Disk   │ │ Network  │    │
+│  │(Banker's)│ │(SCAN,SSTF│ │(sockets) │    │
+│  └──────────┘ └──────────┘ └──────────┘    │
 └─────────────────────────────────────────────┘
 ```
 
@@ -78,6 +78,7 @@ See [docs/architecture.md](docs/architecture.md) for detailed module description
 | Deadlock | `deadlock.py` | Deadlock detection, Banker's algorithm, safe sequences, resource allocation matrices |
 | Disk Scheduling | `disk.py` | FCFS, SSTF, SCAN, C-SCAN disk I/O scheduling, seek time minimisation |
 | Shell Scripting | `shell.py` | Scripts, comments, $VAR substitution, if/then/else/fi, source |
+| Networking | `networking.py` | Sockets, bind/listen/connect/accept, send/recv, client-server model |
 | REPL | `repl.py` | Interactive terminal, boot banner |
 
 ## Shell Commands
