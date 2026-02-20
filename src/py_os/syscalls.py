@@ -69,6 +69,9 @@ class SyscallNumber(IntEnum):
     SYS_DEVICE_WRITE = 41
     SYS_LIST_DEVICES = 42
 
+    # Logging operations
+    SYS_READ_LOG = 50
+
 
 class SyscallError(Exception):
     """Raised when a system call fails.
@@ -119,6 +122,7 @@ def dispatch_syscall(
         SyscallNumber.SYS_DEVICE_READ: _sys_device_read,
         SyscallNumber.SYS_DEVICE_WRITE: _sys_device_write,
         SyscallNumber.SYS_LIST_DEVICES: _sys_list_devices,
+        SyscallNumber.SYS_READ_LOG: _sys_read_log,
     }
 
     handler = handlers.get(number)
@@ -314,3 +318,12 @@ def _sys_list_devices(kernel: Any, **_kwargs: Any) -> list[str]:
     """List all registered device names."""
     assert kernel.device_manager is not None  # noqa: S101
     return kernel.device_manager.list_devices()
+
+
+# -- Logging syscall handlers --------------------------------------------------
+
+
+def _sys_read_log(kernel: Any, **_kwargs: Any) -> list[str]:
+    """Return recent log entries as formatted strings."""
+    assert kernel.logger is not None  # noqa: S101
+    return [str(entry) for entry in kernel.logger.entries]
