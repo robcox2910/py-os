@@ -114,6 +114,7 @@ class Shell:
             "scheduler": self._cmd_scheduler,
             "mutex": self._cmd_mutex,
             "semaphore": self._cmd_semaphore,
+            "handle": self._cmd_handle,
         }
 
     def execute(self, command: str) -> str:
@@ -876,3 +877,55 @@ class Shell:
             sem = sm.get_semaphore(name)
             lines.append(f"{name:<10} {sem.count}")
         return "\n".join(lines)
+
+    def _cmd_handle(self, args: list[str]) -> str:
+        """Register a signal handler for a process.
+
+        Built-in actions:
+            - ``log`` — store the signal name in env var
+              ``_LAST_SIGNAL_{pid}``.
+            - ``ignore`` — suppress the signal's default action.
+        """
+        min_args = 3
+        if len(args) < min_args:
+            return "Usage: handle <pid> <SIGNAL> <log|ignore>"
+        try:
+            pid = int(args[0])
+        except ValueError:
+            return f"Error: invalid PID '{args[0]}'"
+        try:
+            sig = Signal[args[1]]
+        except KeyError:
+            return f"Error: unknown signal '{args[1]}'"
+
+        action_name = args[2]
+        match action_name:
+            case "log":
+
+                def _log_handler(_pid: int = pid, _sig: Signal = sig) -> None:
+                    self._kernel.syscall(
+                        SyscallNumber.SYS_SET_ENV,
+                        key=f"_LAST_SIGNAL_{_pid}",
+                        value=_sig.name,
+                    )
+
+                handler: Callable[[], None] = _log_handler
+            case "ignore":
+
+                def _ignore_handler() -> None:
+                    pass
+
+                handler = _ignore_handler
+            case _:
+                return f"Error: unknown action '{action_name}'. Use log or ignore."
+
+        try:
+            result: str = self._kernel.syscall(
+                SyscallNumber.SYS_REGISTER_HANDLER,
+                pid=pid,
+                signal=sig,
+                handler=handler,
+            )
+        except SyscallError as e:
+            return f"Error: {e}"
+        return result

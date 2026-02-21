@@ -86,6 +86,7 @@ class SyscallNumber(IntEnum):
 
     # Signal operations
     SYS_SEND_SIGNAL = 60
+    SYS_REGISTER_HANDLER = 61
 
     # System info
     SYS_SYSINFO = 80
@@ -173,6 +174,7 @@ def dispatch_syscall(
         SyscallNumber.SYS_LIST_DEVICES: _sys_list_devices,
         SyscallNumber.SYS_READ_LOG: _sys_read_log,
         SyscallNumber.SYS_SEND_SIGNAL: _sys_send_signal,
+        SyscallNumber.SYS_REGISTER_HANDLER: _sys_register_handler,
         SyscallNumber.SYS_GET_ENV: _sys_get_env,
         SyscallNumber.SYS_SET_ENV: _sys_set_env,
         SyscallNumber.SYS_LIST_ENV: _sys_list_env,
@@ -457,6 +459,15 @@ def _sys_send_signal(kernel: Any, **kwargs: Any) -> None:
         kernel.send_signal(kwargs["pid"], kwargs["signal"])
     except SignalError as e:
         raise SyscallError(str(e)) from e
+
+
+def _sys_register_handler(kernel: Any, **kwargs: Any) -> str:
+    """Register a signal handler for a process."""
+    try:
+        kernel.register_signal_handler(kwargs["pid"], kwargs["signal"], kwargs["handler"])
+    except SignalError as e:
+        raise SyscallError(str(e)) from e
+    return f"Handler registered for {kwargs['signal'].name} on pid {kwargs['pid']}"
 
 
 # -- Environment syscall handlers ----------------------------------------------
