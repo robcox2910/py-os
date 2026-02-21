@@ -56,7 +56,7 @@ For a technical overview of every module, see [docs/architecture.md](docs/archit
 | Users | `users.py` | Identity, file permissions |
 | Devices | `devices.py` | Null, console, and random devices |
 | IPC | `ipc.py` | Pipes and message queues |
-| Signals | `signals.py` | SIGTERM, SIGKILL, SIGSTOP, SIGCONT |
+| Signals | `signals.py` | SIGTERM, SIGKILL, SIGSTOP, SIGCONT, SIGUSR1, SIGUSR2, custom handlers |
 | Logging | `logging.py` | Kernel log buffer, audit trail |
 | Environment | `env.py` | KEY=VALUE config |
 | Jobs | `jobs.py` | Background/foreground job control |
@@ -87,7 +87,8 @@ kill pid    Terminate a process by PID
 whoami      Show the current user
 adduser     Create a new user
 su uid      Switch to another user
-signal pid  Send a signal (SIGTERM, SIGKILL, etc.)
+signal pid  Send a signal (SIGTERM, SIGKILL, SIGUSR1, etc.)
+handle pid  Register a signal handler (log, ignore)
 env         List environment variables
 export K=V  Set an environment variable
 unset key   Remove an environment variable

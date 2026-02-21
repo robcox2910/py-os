@@ -35,7 +35,7 @@ Every source file and what it implements.
 | `kernel.py` | `Kernel` | Central coordinator, boot/shutdown lifecycle, subsystem ownership |
 | `kernel.py` | `KernelState` | SHUTDOWN / BOOTING / RUNNING / SHUTTING_DOWN state machine |
 | `syscalls.py` | `dispatch_syscall()` | Trap handler -- routes syscall numbers to kernel subsystem handlers |
-| `syscalls.py` | `SyscallNumber` | IntEnum of all syscall numbers (1-121) |
+| `syscalls.py` | `SyscallNumber` | IntEnum of all syscall numbers (1-121, plus 61) |
 | `syscalls.py` | `SyscallError` | User-facing exception wrapping internal errors |
 
 ### Process Management
@@ -52,7 +52,10 @@ Every source file and what it implements.
 | `scheduler.py` | `MLFQPolicy` | Multilevel Feedback Queue with demotion and boost |
 | `scheduler.py` | `CFSPolicy` | Completely Fair Scheduler with weighted virtual runtime |
 | `threads.py` | `Thread` | Lightweight execution unit within a process |
-| `signals.py` | `Signal` | SIGTERM / SIGKILL / SIGSTOP / SIGCONT |
+| `signals.py` | `Signal` | SIGKILL / SIGUSR1 / SIGUSR2 / SIGTERM / SIGCONT / SIGSTOP |
+| `signals.py` | `SignalAction` | TERMINATE / STOP / CONTINUE / IGNORE default actions |
+| `signals.py` | `DEFAULT_ACTIONS` | Maps every signal to its default action |
+| `signals.py` | `UNCATCHABLE` | frozenset of signals that cannot have handlers (SIGKILL, SIGSTOP) |
 
 ### Memory Management
 
@@ -124,7 +127,7 @@ Every source file and what it implements.
 | 30-33 | User operations (whoami, create, list, switch) |
 | 40-42 | Device operations (read, write, list) |
 | 50 | Logging |
-| 60 | Signals |
+| 60-61 | Signal operations (send, register handler) |
 | 70-73 | Environment variables |
 | 80 | System info |
 | 90 | Deadlock detection |

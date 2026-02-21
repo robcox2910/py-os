@@ -39,7 +39,7 @@ from py_os.logging import Logger, LogLevel
 from py_os.memory import MemoryManager
 from py_os.process import Process, ProcessState
 from py_os.scheduler import FCFSPolicy, Scheduler, SchedulingPolicy
-from py_os.signals import Signal, SignalError
+from py_os.signals import DEFAULT_ACTIONS, UNCATCHABLE, Signal, SignalAction, SignalError
 from py_os.sync import Condition, Mutex, Semaphore, SyncManager
 from py_os.syscalls import SyscallNumber, dispatch_syscall
 from py_os.threads import Thread
@@ -523,29 +523,39 @@ class Kernel:
     ) -> None:
         """Register a handler to be called when a signal is delivered.
 
+        For catchable signals the handler *replaces* the default action
+        (except SIGCONT, where the handler is additive).  Uncatchable
+        signals (SIGKILL, SIGSTOP) reject handler registration outright.
+
         Args:
             pid: The target process.
             signal: The signal to handle.
-            handler: A callable invoked before the signal's default action.
+            handler: A callable invoked instead of the default action.
 
         Raises:
-            SignalError: If the process does not exist.
+            SignalError: If the process does not exist or the signal is
+                uncatchable.
 
         """
         self._require_running()
         if pid not in self._processes:
             msg = f"Process {pid} not found"
             raise SignalError(msg)
+        if signal in UNCATCHABLE:
+            msg = f"{signal.name} is uncatchable"
+            raise SignalError(msg)
         self._signal_handlers[(pid, signal)] = handler
 
     def send_signal(self, pid: int, signal: Signal) -> None:
         """Deliver a signal to a process.
 
-        Signal behaviour:
-            - SIGKILL: force-terminate (uncatchable, no handler).
-            - SIGTERM: invoke handler if registered, then terminate.
-            - SIGSTOP: pause (RUNNING → WAITING).
-            - SIGCONT: resume (WAITING → READY), no-op otherwise.
+        Delivery logic:
+            1. **SIGCONT special case** — handler fires (if any), then
+               the process always resumes if WAITING.
+            2. **Catchable with handler** — handler fires, default
+               action is *replaced* (skipped).
+            3. **Uncatchable / no handler** — default action from
+               ``DEFAULT_ACTIONS`` table.
 
         Args:
             pid: The target process.
@@ -572,17 +582,30 @@ class Kernel:
                 uid=self._current_uid,
             )
 
-        if signal is Signal.SIGKILL:
-            process.force_terminate()
-        elif signal is Signal.SIGTERM:
-            handler = self._signal_handlers.get((pid, signal))
+        handler = self._signal_handlers.get((pid, signal))
+
+        # SIGCONT special case: handler is additive (fires AND resumes)
+        if signal is Signal.SIGCONT:
             if handler is not None:
                 handler()
-            process.force_terminate()
-        elif signal is Signal.SIGSTOP:
-            process.wait()
-        elif signal is Signal.SIGCONT and process.state is ProcessState.WAITING:
-            process.wake()
+            if process.state is ProcessState.WAITING:
+                process.wake()
+            return
+
+        # Catchable signal with a handler: handler replaces default action
+        if signal not in UNCATCHABLE and handler is not None:
+            handler()
+            return
+
+        # Uncatchable or no handler: perform the default action
+        action = DEFAULT_ACTIONS[signal]
+        match action:
+            case SignalAction.TERMINATE:
+                process.force_terminate()
+            case SignalAction.STOP:
+                process.wait()
+            case SignalAction.CONTINUE | SignalAction.IGNORE:
+                pass
 
     def syscall(self, number: SyscallNumber, **kwargs: Any) -> Any:
         """Execute a system call — the user-space → kernel-space gateway.

@@ -72,20 +72,30 @@ Imagine you are sitting in class, focused on your work. Someone taps you on the 
 
 Different taps mean different things.
 
-### The Four Main Signals
+### The Six Signals
 
-| Signal | What it means | Real-life version | Can you ignore it? |
-|--------|--------------|-------------------|-------------------|
-| **SIGTERM** | "Please stop what you're doing." | A polite tap on the shoulder | Yes -- you can finish up first |
-| **SIGKILL** | "STOP RIGHT NOW." | Being physically picked up and removed from the room | No -- this always works |
-| **SIGSTOP** | "Freeze! Don't move." | A game of freeze tag -- you are frozen in place | N/A -- pauses the process |
-| **SIGCONT** | "Ok, you can move again." | Someone unfreezes you in freeze tag | N/A -- unpauses it |
+| Signal | What it means | Real-life version | Can you catch it? | Default action |
+|--------|--------------|-------------------|-------------------|----------------|
+| **SIGKILL** (9) | "STOP RIGHT NOW." | Being physically picked up and removed from the room | No | Terminate |
+| **SIGUSR1** (10) | "Custom tap #1" | A secret handshake only your friend understands | Yes | Ignore |
+| **SIGUSR2** (12) | "Custom tap #2" | A different secret handshake | Yes | Ignore |
+| **SIGTERM** (15) | "Please stop what you're doing." | A polite tap on the shoulder | Yes | Terminate |
+| **SIGCONT** (18) | "Ok, you can move again." | Someone unfreezes you in freeze tag | Yes | Continue |
+| **SIGSTOP** (19) | "Freeze! Don't move." | A game of freeze tag -- you are frozen in place | No | Stop |
 
 SIGTERM is the polite way to ask a process to stop. The process receives the signal and gets a chance to wrap up what it is doing -- save files, close connections, say goodbye. Most of the time, this is what you want.
 
 SIGKILL is the emergency stop. It can *never* be caught, blocked, or ignored. The operating system itself handles SIGKILL by immediately yanking the process off the CPU and marking it as [TERMINATED](processes.md). The process does not get a chance to clean up. This sounds harsh, but it is necessary. If a program goes haywire and stops responding to polite requests, you need a guaranteed way to shut it down. That is why `kill -9` (SIGKILL's number is 9) always works on a real Unix system.
 
-SIGSTOP and SIGCONT work together like a pause and play button. SIGSTOP freezes a process in place -- it is still alive, but it is not doing anything. SIGCONT unfreezes it and lets it pick up where it left off. These are useful for debugging or for temporarily suspending a process that is using too many resources.
+SIGSTOP and SIGCONT work together like a pause and play button. SIGSTOP freezes a process in place -- it is still alive, but it is not doing anything. SIGCONT unfreezes it and lets it pick up where it left off. These are useful for debugging or for temporarily suspending a process that is using too many resources. Like SIGKILL, SIGSTOP is **uncatchable** -- you cannot register a handler for it. This guarantees that you can always pause a process, no matter what.
+
+### User-Defined Signals: SIGUSR1 and SIGUSR2
+
+SIGUSR1 and SIGUSR2 are like **custom shoulder taps**. They have no built-in meaning -- the operating system does not do anything special when they arrive. By default, they are simply ignored.
+
+But a process can register a handler for them, and then they become a private communication channel. Imagine you and your friend agree: "If I tap you twice on the left shoulder, it means 'check your phone.'" That tap only means something because you both agreed on it.
+
+In real Unix, programs use SIGUSR1 and SIGUSR2 for things like telling a server to reload its configuration file or triggering a status dump. They are completely up to the programmer.
 
 ### Signal Handlers
 
@@ -93,12 +103,16 @@ Here is where it gets interesting. A process can set up a **signal handler** -- 
 
 ```python
 # "When I receive SIGTERM, run my cleanup function first"
-process.set_signal_handler(SIGTERM, my_cleanup_function)
+kernel.register_signal_handler(pid, SIGTERM, my_cleanup_function)
 ```
 
-When SIGTERM arrives, instead of stopping immediately, the process runs `my_cleanup_function` first. Maybe it saves a file. Maybe it sends a goodbye message. Then it exits gracefully.
+When SIGTERM arrives, instead of the default action (terminating the process), the handler runs *instead*. The process stays alive. Maybe the handler saves a file. Maybe it sends a goodbye message. Maybe it decides to keep running. The handler **replaces** the default action -- this is exactly how real Unix works.
 
-But here is the critical part: you cannot set a handler for SIGKILL. There is no negotiating with SIGKILL. It does not knock -- it kicks the door down. That is by design. If programs could ignore SIGKILL, a broken program could become truly unstoppable, and you would have to restart your entire computer to get rid of it.
+This is *why* SIGKILL exists. If a process could catch SIGTERM and just... not stop, you would need an uncatchable signal as a last resort. SIGKILL is that last resort.
+
+SIGCONT is special: even if you register a handler for it, the process always resumes. The handler fires *in addition to* the default resume, not instead of it. This prevents a bug where registering a SIGCONT handler accidentally makes a frozen process unresumable.
+
+But here is the critical part: you cannot set a handler for SIGKILL or SIGSTOP. There is no negotiating with them. They do not knock -- they kick the door down. That is by design. If programs could ignore SIGKILL, a broken program could become truly unstoppable, and you would have to restart your entire computer to get rid of it.
 
 ---
 
@@ -232,7 +246,11 @@ Together with [processes](processes.md), [memory management](memory.md), the [fi
 | **Signal** | A small message sent to a process to notify it of an event |
 | **SIGTERM** | A polite request for a process to stop (can be caught and handled) |
 | **SIGKILL** | A forced termination that cannot be caught or ignored |
-| **Signal handler** | A function that runs automatically when a specific signal is received |
+| **SIGSTOP** | A forced pause that cannot be caught or ignored |
+| **SIGUSR1 / SIGUSR2** | User-defined signals with no built-in meaning (ignored by default) |
+| **Uncatchable** | A signal (SIGKILL, SIGSTOP) for which no handler can be registered |
+| **Signal handler** | A function that runs automatically when a specific signal is received, replacing the default action |
+| **Default action** | What the kernel does when a signal arrives and no handler is registered (terminate, stop, continue, or ignore) |
 | **Logger** | The kernel subsystem that records events as they happen |
 | **Log level** | A label (DEBUG, INFO, WARNING, ERROR) indicating how serious a log entry is |
 | **Deadlock** | A situation where two or more processes are stuck waiting for each other forever |

@@ -170,7 +170,7 @@ Here is every syscall number in PyOS, grouped by what they do:
 | 30-33   | Users (who am I, create user, list users, switch user) |
 | 40-42   | Devices (read, write, list) |
 | 50      | View logs |
-| 60      | Send signals |
+| 60-61   | Signal operations (send signal, register handler) |
 | 70-73   | Environment variables (get, set, list, delete) |
 | 80      | System info (like the `top` command) |
 | 90      | Deadlock detection |
