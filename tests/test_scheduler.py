@@ -1,7 +1,7 @@
 """Tests for the scheduler module.
 
 The scheduler decides which READY process gets the CPU next. We test
-five algorithms:
+six algorithms:
 
 - FCFS (First Come, First Served): processes run in arrival order.
 - Round Robin: each process gets a fixed time quantum, then yields.
@@ -9,6 +9,7 @@ five algorithms:
 - Aging Priority: like Priority, but waiting processes earn bonus priority
   over time to prevent starvation.
 - MLFQ (Multilevel Feedback Queue): adaptive demotion with boost.
+- CFS (Completely Fair Scheduler): weighted virtual runtime fairness.
 
 All implementations share the same interface (SchedulingPolicy protocol)
 so they can be swapped without changing the scheduler.
@@ -19,6 +20,7 @@ import pytest
 from py_os.process import Process, ProcessState
 from py_os.scheduler import (
     AgingPriorityPolicy,
+    CFSPolicy,
     FCFSPolicy,
     MLFQPolicy,
     PriorityPolicy,
@@ -578,3 +580,205 @@ class TestMLFQPolicy:
         # Now p1 and p2 are both at level 1, p3 at level 1 too
         # FIFO within level 1: p1 was added first after demotion
         assert scheduler.dispatch() is p1
+
+
+# Named constant for CFS tests.
+DEFAULT_CFS_BASE_SLICE = 1
+CFS_ROUNDS = 20
+
+
+class TestCFSPolicy:
+    """Verify Completely Fair Scheduler — weighted virtual runtime fairness."""
+
+    def test_empty_queue_returns_none(self) -> None:
+        """An empty queue should produce None."""
+        policy = CFSPolicy()
+        scheduler = Scheduler(policy=policy)
+        assert scheduler.dispatch() is None
+
+    def test_single_process_selected(self) -> None:
+        """A lone process should be selected."""
+        policy = CFSPolicy()
+        scheduler = Scheduler(policy=policy)
+        p = _ready("only")
+        scheduler.add(p)
+        assert scheduler.dispatch() is p
+
+    def test_equal_priority_round_robins(self) -> None:
+        """Two equal-priority processes should alternate fairly."""
+        policy = CFSPolicy()
+        scheduler = Scheduler(policy=policy)
+        p1 = _ready("a")
+        p2 = _ready("b")
+        for p in (p1, p2):
+            scheduler.add(p)
+
+        names: list[str] = []
+        for _ in range(CFS_ROUNDS):
+            result = scheduler.dispatch()
+            assert result is not None
+            names.append(result.name)
+            scheduler.preempt()
+
+        # Both should appear roughly equally
+        assert names.count("a") == names.count("b")
+
+    def test_lowest_vruntime_wins(self) -> None:
+        """After vruntime accumulation, the lower-vruntime process wins."""
+        policy = CFSPolicy()
+        scheduler = Scheduler(policy=policy)
+        p1 = _ready("a")
+        p2 = _ready("b")
+        for p in (p1, p2):
+            scheduler.add(p)
+
+        # Dispatch and preempt p1 — its vruntime increases
+        scheduler.dispatch()  # picks p1 (FIFO tiebreak, both at 0)
+        scheduler.preempt()  # p1's vruntime goes up
+
+        # Now p2 has lower vruntime, should be picked
+        assert scheduler.dispatch() is p2
+
+    def test_higher_priority_gets_more_cpu(self) -> None:
+        """A high-priority process should be selected more often over 20 rounds."""
+        policy = CFSPolicy()
+        scheduler = Scheduler(policy=policy)
+        p_high = _ready("high", MEDIUM_PRIORITY)
+        p_low = _ready("low", 0)
+        for p in (p_high, p_low):
+            scheduler.add(p)
+
+        counts: dict[str, int] = {"high": 0, "low": 0}
+        for _ in range(CFS_ROUNDS):
+            result = scheduler.dispatch()
+            assert result is not None
+            counts[result.name] += 1
+            scheduler.preempt()
+
+        assert counts["high"] > counts["low"]
+
+    def test_vruntime_increases_on_preempt(self) -> None:
+        """After preempt, the process's vruntime should have increased."""
+        policy = CFSPolicy()
+        scheduler = Scheduler(policy=policy)
+        p = _ready("worker")
+        scheduler.add(p)
+        scheduler.dispatch()
+
+        vruntime_before = policy.vruntime(pid=p.pid)
+        scheduler.preempt()
+        vruntime_after = policy.vruntime(pid=p.pid)
+
+        assert vruntime_after > vruntime_before
+
+    def test_weight_from_priority(self) -> None:
+        """Weight should equal max(1, priority + 1)."""
+        p_zero = _ready("zero", 0)
+        p_five = _ready("five", MEDIUM_PRIORITY)
+
+        expected_weight_zero = 1
+        expected_weight_five = MEDIUM_PRIORITY + 1
+        assert CFSPolicy.weight(p_zero) == expected_weight_zero
+        assert CFSPolicy.weight(p_five) == expected_weight_five
+
+    def test_new_process_starts_at_min_vruntime(self) -> None:
+        """A newly added process should get min_vruntime, not 0.
+
+        Vruntime is assigned when select() first encounters an untracked
+        PID, so we verify after dispatch.
+        """
+        policy = CFSPolicy()
+        scheduler = Scheduler(policy=policy)
+        p1 = _ready("first")
+        scheduler.add(p1)
+
+        # Run p1 a few times to build up vruntime
+        advance_rounds = 5
+        for _ in range(advance_rounds):
+            scheduler.dispatch()
+            scheduler.preempt()
+
+        # p1's vruntime should be > 0 now
+        min_vr = policy.min_vruntime
+        assert min_vr > 0.0
+
+        # Add a new process — it should get min_vruntime on first select()
+        p2 = _ready("second")
+        scheduler.add(p2)
+
+        # Trigger select() to assign vruntime, then preempt both back
+        dispatched = scheduler.dispatch()
+        assert dispatched is not None
+        scheduler.preempt()
+
+        # p2's base vruntime (before any preempt increment) should be min_vr
+        # If p2 was dispatched, it now has min_vr; if p1 was dispatched,
+        # p2 still got assigned min_vr during select's scan.
+        # Either way, p2's pre-increment vruntime was min_vr.
+        # After one preempt of the winner, check p2 is close to min_vr.
+        assert policy.vruntime(pid=p2.pid) == pytest.approx(min_vr, abs=1.0)  # pyright: ignore[reportUnknownMemberType]
+
+    def test_equal_vruntime_uses_fifo(self) -> None:
+        """Tied vruntime should use FIFO order (left-to-right scan)."""
+        policy = CFSPolicy()
+        scheduler = Scheduler(policy=policy)
+        p1 = _ready("first")
+        p2 = _ready("second")
+        p3 = _ready("third")
+        for p in (p1, p2, p3):
+            scheduler.add(p)
+
+        # All start at vruntime=0, so FIFO picks p1
+        assert scheduler.dispatch() is p1
+
+    def test_base_slice_property(self) -> None:
+        """The base_slice property should return the configured value."""
+        policy = CFSPolicy()
+        assert policy.base_slice == DEFAULT_CFS_BASE_SLICE
+
+    def test_min_vruntime_empty(self) -> None:
+        """min_vruntime should be 0.0 when nothing is tracked."""
+        policy = CFSPolicy()
+        assert policy.min_vruntime == 0.0
+
+    def test_custom_base_slice(self) -> None:
+        """A non-default base_slice should change the accumulation rate."""
+        custom_slice = 3
+        policy = CFSPolicy(base_slice=custom_slice)
+        scheduler = Scheduler(policy=policy)
+        p = _ready("worker")
+        scheduler.add(p)
+        scheduler.dispatch()
+        scheduler.preempt()
+
+        # weight(priority=0) = 1, so vruntime += custom_slice / 1 = 3.0
+        assert policy.vruntime(pid=p.pid) == pytest.approx(float(custom_slice))  # pyright: ignore[reportUnknownMemberType]
+
+    def test_vruntime_query(self) -> None:
+        """policy.vruntime(pid=X) should return the tracked value."""
+        policy = CFSPolicy()
+        scheduler = Scheduler(policy=policy)
+        p = _ready("worker")
+        scheduler.add(p)
+        scheduler.dispatch()
+        scheduler.preempt()
+
+        # weight(priority=0) = 1, vruntime += 1/1 = 1.0
+        assert policy.vruntime(pid=p.pid) == pytest.approx(1.0)  # pyright: ignore[reportUnknownMemberType]
+
+    def test_fairness_over_many_rounds(self) -> None:
+        """Over 20 cycles, equal-priority processes should have similar vruntime."""
+        policy = CFSPolicy()
+        scheduler = Scheduler(policy=policy)
+        p1 = _ready("a")
+        p2 = _ready("b")
+        for p in (p1, p2):
+            scheduler.add(p)
+
+        for _ in range(CFS_ROUNDS):
+            scheduler.dispatch()
+            scheduler.preempt()
+
+        vr1 = policy.vruntime(pid=p1.pid)
+        vr2 = policy.vruntime(pid=p2.pid)
+        assert vr1 == pytest.approx(vr2, abs=1.0)  # pyright: ignore[reportUnknownMemberType]

@@ -28,6 +28,7 @@ from py_os.jobs import JobManager
 from py_os.kernel import Kernel, KernelState
 from py_os.scheduler import (
     AgingPriorityPolicy,
+    CFSPolicy,
     FCFSPolicy,
     MLFQPolicy,
     PriorityPolicy,
@@ -695,10 +696,15 @@ class Shell:
                 return self._cmd_scheduler_switch(args[0], args[1:])
             case "mlfq":
                 return self._cmd_scheduler_mlfq(args[1:])
+            case "cfs":
+                return self._cmd_scheduler_cfs(args[1:])
             case "boost":
                 return self._cmd_scheduler_boost()
             case _:
-                return f"Error: unknown policy '{args[0]}'. Use fcfs, rr, priority, aging, or mlfq."
+                return (
+                    f"Error: unknown policy '{args[0]}'."
+                    " Use fcfs, rr, priority, aging, mlfq, or cfs."
+                )
 
     def _cmd_scheduler_show(self) -> str:
         """Display the current scheduling policy name."""
@@ -717,6 +723,8 @@ class Shell:
                 label = f"Aging Priority (boost={policy.aging_boost}, max_age={policy.max_age})"
             case MLFQPolicy():
                 label = f"MLFQ ({policy.num_levels} levels, quanta={policy.quantums})"
+            case CFSPolicy():
+                label = f"CFS (base_slice={policy.base_slice})"
             case _:
                 label = type(policy).__name__
         return f"Current policy: {label}"
@@ -761,6 +769,23 @@ class Shell:
                 kwargs["base_quantum"] = int(args[1])
             except ValueError:
                 return f"Error: invalid base_quantum '{args[1]}'"
+        try:
+            result: str = self._kernel.syscall(
+                SyscallNumber.SYS_SET_SCHEDULER,
+                **kwargs,
+            )
+        except SyscallError as e:
+            return f"Error: {e}"
+        return result
+
+    def _cmd_scheduler_cfs(self, args: list[str]) -> str:
+        """Switch to CFS with optional base_slice."""
+        kwargs: dict[str, int | str] = {"policy": "cfs"}
+        if args:
+            try:
+                kwargs["base_slice"] = int(args[0])
+            except ValueError:
+                return f"Error: invalid base_slice '{args[0]}'"
         try:
             result: str = self._kernel.syscall(
                 SyscallNumber.SYS_SET_SCHEDULER,

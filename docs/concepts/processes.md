@@ -161,7 +161,35 @@ pyos> scheduler boost
 MLFQ boost: all processes reset to level 0
 ```
 
-### Comparing the Five Policies
+### Completely Fair Scheduler (CFS)
+
+Linux replaced its earlier O(1) scheduler with the **Completely Fair Scheduler** in 2007, and it has been the default ever since. The goal is simple: give every process exactly its fair share of CPU time.
+
+**Analogy**: Imagine a pizza party where everyone should get equal slices, but some kids ordered extra toppings (higher priority). The host keeps a notebook tracking how many slices each person has eaten. The person who has eaten the fewest slices goes next. Kids with extra toppings have their count go up more slowly, so they get to eat more total slices before their number catches up. Eventually, everyone's count is roughly equal -- that is fairness.
+
+The notebook number is called **virtual runtime** (vruntime). Every time a process runs for one scheduling round, its vruntime goes up by `base_slice / weight`. The **weight** comes from the process's priority: `weight = max(1, priority + 1)`. A process with priority 5 has weight 6, so its vruntime grows six times slower than a priority-0 process. That means it gets picked more often before its count catches up -- more CPU time, just like the "extra toppings" kids.
+
+New processes start with their vruntime set to the current minimum across all processes, so they do not jump ahead or fall behind unfairly.
+
+```python
+# CFS with default base_slice of 1
+policy = CFSPolicy(base_slice=1)
+scheduler = Scheduler(policy=policy)
+```
+
+You can switch to CFS from the shell:
+
+```
+pyos> scheduler cfs
+Scheduler set to CFS (base_slice=1)
+
+pyos> scheduler cfs 3
+Scheduler set to CFS (base_slice=3)
+```
+
+> **How would you make it faster?** Our simulator finds the lowest vruntime by scanning through all processes in the queue -- this takes O(n) time. Real Linux CFS uses a **red-black tree** (a self-balancing binary search tree) so that finding and removing the minimum takes only O(log n) time. For our small simulations this does not matter, but in a real kernel with thousands of processes, that speedup is essential.
+
+### Comparing the Six Policies
 
 | Policy | Ordering | Preemption | Starvation risk | Best for |
 |--------|---------|------------|----------------|----------|
@@ -170,6 +198,7 @@ MLFQ boost: all processes reset to level 0
 | Priority | Priority number | None | High | Mixed workloads |
 | Aging Priority | Priority + age bonus | None | None (aging fixes it) | Priority with fairness |
 | MLFQ | Adaptive levels | After level quantum | None (with boost) | Real-world general use |
+| CFS | Lowest vruntime | After base_slice | None (vruntime balances) | Modern Linux default |
 
 You can switch policies at runtime using the `scheduler` shell command:
 
@@ -308,7 +337,7 @@ The `run` command does the full lifecycle behind the scenes: it creates a proces
 
 ## Putting It All Together
 
-Here is the big picture. A process is a program in action, tracked by a PCB. The scheduler decides which process gets the CPU, using a pluggable policy (FCFS, Round Robin, Priority, Aging Priority, or MLFQ). Processes can create copies of themselves through forking, or run lightweight parallel work using threads. When a process runs a program, it goes through the full lifecycle -- create, load, execute, output, and exit.
+Here is the big picture. A process is a program in action, tracked by a PCB. The scheduler decides which process gets the CPU, using a pluggable policy (FCFS, Round Robin, Priority, Aging Priority, MLFQ, or CFS). Processes can create copies of themselves through forking, or run lightweight parallel work using threads. When a process runs a program, it goes through the full lifecycle -- create, load, execute, output, and exit.
 
 All of these pieces work together inside the [kernel](kernel-and-syscalls.md), which coordinates the scheduler, [memory](memory.md) manager, and process table to keep everything running smoothly.
 
@@ -328,6 +357,8 @@ All of these pieces work together inside the [kernel](kernel-and-syscalls.md), w
 | **Priority** | A number that tells the scheduler how important a process is (higher = more important) |
 | **Starvation** | When a low-priority process never gets to run because higher-priority work keeps arriving |
 | **Aging** | A technique that gives waiting processes a small priority boost each round, preventing starvation |
+| **vruntime** | Virtual runtime -- a weighted count of how much CPU time a process has consumed (used by CFS) |
+| **CFS** | Completely Fair Scheduler -- always picks the process with the lowest vruntime |
 | **Fork** | Creating a copy of a process -- new PID, copied memory, independent from the original |
 | **Thread** | A lightweight execution unit that shares memory with other threads in the same process |
 | **Race condition** | A bug caused by two threads accessing shared data at the same time |
