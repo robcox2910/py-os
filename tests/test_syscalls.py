@@ -159,6 +159,39 @@ class TestSyscallMemoryOps:
         assert result["free_frames"] == expected_free
 
 
+class TestSyscallScheduler:
+    """Verify scheduler-related system calls."""
+
+    def test_sys_set_scheduler_priority(self) -> None:
+        """SYS_SET_SCHEDULER should switch to priority policy."""
+        kernel = _booted_kernel()
+        result = kernel.syscall(
+            SyscallNumber.SYS_SET_SCHEDULER,
+            policy="priority",
+        )
+        assert "priority" in result.lower()
+
+    def test_sys_set_scheduler_rr_with_quantum(self) -> None:
+        """SYS_SET_SCHEDULER should switch to round robin with quantum."""
+        kernel = _booted_kernel()
+        rr_quantum = 4
+        result = kernel.syscall(
+            SyscallNumber.SYS_SET_SCHEDULER,
+            policy="rr",
+            quantum=rr_quantum,
+        )
+        assert "round robin" in result.lower()
+
+    def test_sys_set_scheduler_unknown(self) -> None:
+        """SYS_SET_SCHEDULER with unknown policy should raise SyscallError."""
+        kernel = _booted_kernel()
+        with pytest.raises(SyscallError, match="Unknown"):
+            kernel.syscall(
+                SyscallNumber.SYS_SET_SCHEDULER,
+                policy="bogus",
+            )
+
+
 class TestSyscallValidation:
     """Verify that syscalls validate inputs and kernel state."""
 

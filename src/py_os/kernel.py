@@ -38,7 +38,7 @@ from py_os.filesystem import FileSystem
 from py_os.logging import Logger, LogLevel
 from py_os.memory import MemoryManager
 from py_os.process import Process, ProcessState
-from py_os.scheduler import FCFSPolicy, Scheduler
+from py_os.scheduler import FCFSPolicy, Scheduler, SchedulingPolicy
 from py_os.signals import Signal, SignalError
 from py_os.sync import Condition, Mutex, Semaphore, SyncManager
 from py_os.syscalls import SyscallNumber, dispatch_syscall
@@ -168,6 +168,31 @@ class Kernel:
         """Return the sync manager, or None if not booted."""
         return self._sync_manager
 
+    def set_scheduler_policy(self, policy: SchedulingPolicy) -> None:
+        """Replace the scheduler's policy, preserving the ready queue.
+
+        Creates a new Scheduler with the given policy and re-adds every
+        process that was in the old ready queue.
+
+        Args:
+            policy: The new scheduling policy to use.
+
+        """
+        self._require_running()
+        assert self._scheduler is not None  # noqa: S101
+
+        old = self._scheduler
+        new = Scheduler(policy=policy)
+
+        # Drain the old ready queue into the new scheduler
+        while old.ready_count > 0:
+            process = old.dispatch()
+            if process is not None:
+                process.preempt()  # RUNNING → READY
+                new.add(process)
+
+        self._scheduler = new
+
     def _require_running(self) -> None:
         """Raise if the kernel is not in the RUNNING state."""
         if self._state is not KernelState.RUNNING:
@@ -264,7 +289,7 @@ class Kernel:
         self._boot_time = None
         self._state = KernelState.SHUTDOWN
 
-    def create_process(self, *, name: str, num_pages: int) -> Process:
+    def create_process(self, *, name: str, num_pages: int, priority: int = 0) -> Process:
         """Create a new process, allocate memory, and register with scheduler.
 
         This is the coordinated act of process creation — the kernel is
@@ -278,6 +303,7 @@ class Kernel:
         Args:
             name: Human-readable process name.
             num_pages: Number of memory frames to allocate.
+            priority: Scheduling priority (higher = more important, default 0).
 
         Returns:
             The newly created process.
@@ -291,7 +317,7 @@ class Kernel:
         assert self._memory is not None  # guaranteed by _require_running  # noqa: S101
         assert self._scheduler is not None  # noqa: S101
 
-        process = Process(name=name)
+        process = Process(name=name, priority=priority)
         frames = self._memory.allocate(process.pid, num_pages=num_pages)
 
         # Set up virtual memory: map virtual pages 0..N-1 to physical frames

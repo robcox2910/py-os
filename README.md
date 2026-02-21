@@ -46,7 +46,7 @@ For a technical overview of every module, see [docs/architecture.md](docs/archit
 | Module | File | What It Teaches |
 |--------|------|-----------------|
 | Process | `process.py` | Five-state lifecycle, PID assignment |
-| Scheduler | `scheduler.py` | CPU scheduling (FCFS, Round Robin) |
+| Scheduler | `scheduler.py` | CPU scheduling (FCFS, Round Robin, Priority) |
 | Memory | `memory.py` | Page-based allocation, frame management |
 | Virtual Memory | `virtual_memory.py` | Address translation, page tables, isolation |
 | Filesystem | `filesystem.py` | Inodes, path resolution, file CRUD |
@@ -107,11 +107,12 @@ deadlock    Run deadlock detection
 devices     List registered devices
 devread     Read from a device
 devwrite    Write to a device
+scheduler   Show or switch scheduling policy (fcfs, rr, priority)
 mutex       Manage mutexes (create, list)
 semaphore   Manage semaphores (create, list)
 echo args   Print arguments to output
 source path Run a script from a file
-run prog    Run a built-in program (hello, counter)
+run prog [p] Run a built-in program with optional priority
 grep pat    Filter piped input (used with |)
 wc          Count lines in piped input
 exit        Shut down the kernel

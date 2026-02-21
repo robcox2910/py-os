@@ -97,9 +97,30 @@ policy = RoundRobinPolicy(quantum=3)
 scheduler = Scheduler(policy=policy)
 ```
 
+### Priority Scheduling
+
+What if some tasks are more important than others? In a hospital emergency room, a patient with a broken arm is seen before someone with a splinter, even if the splinter patient arrived first. Priority scheduling works the same way: every process has a **priority number**, and the scheduler always picks the highest-priority process next.
+
+In PyOS, higher numbers mean higher priority. A process with `priority=10` runs before one with `priority=1`. When two processes have the same priority, the scheduler falls back to FIFO -- whoever arrived first goes first.
+
+```python
+# Priority scheduling -- highest priority runs first
+policy = PriorityPolicy()
+scheduler = Scheduler(policy=policy)
+```
+
+There is a catch: **starvation**. If high-priority processes keep arriving, the low-priority ones never get a turn -- like an emergency room where critical patients keep showing up and the person with a sprained ankle waits forever. Real operating systems solve this with a technique called **aging**, where a process's priority slowly increases the longer it waits. PyOS does not implement aging (yet), but it is good to know the problem exists.
+
+You can switch policies at runtime using the `scheduler` shell command:
+
+```
+pyos> scheduler priority
+Scheduler set to Priority
+```
+
 ### The Strategy Pattern
 
-Notice something neat about this design: the scheduler itself does not know *how* to pick the next process. It just asks the policy. You can swap `FCFSPolicy` for `RoundRobinPolicy` (or write your own!) without changing a single line in the `Scheduler` class. This is a design pattern called **Strategy** -- the "rules for taking turns" are a separate, swappable piece.
+Notice something neat about this design: the scheduler itself does not know *how* to pick the next process. It just asks the policy. You can swap `FCFSPolicy` for `RoundRobinPolicy` or `PriorityPolicy` (or write your own!) without changing a single line in the `Scheduler` class. This is a design pattern called **Strategy** -- the "rules for taking turns" are a separate, swappable piece.
 
 ---
 
@@ -244,6 +265,8 @@ All of these pieces work together inside the [kernel](kernel-and-syscalls.md), w
 | **Ready queue** | The line of processes waiting for the CPU |
 | **Quantum** | The amount of time a process gets before being preempted (Round Robin) |
 | **Preemption** | Pulling a running process off the CPU so someone else can have a turn |
+| **Priority** | A number that tells the scheduler how important a process is (higher = more important) |
+| **Starvation** | When a low-priority process never gets to run because higher-priority work keeps arriving |
 | **Fork** | Creating a copy of a process -- new PID, copied memory, independent from the original |
 | **Thread** | A lightweight execution unit that shares memory with other threads in the same process |
 | **Race condition** | A bug caused by two threads accessing shared data at the same time |

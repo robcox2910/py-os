@@ -1,19 +1,20 @@
 """Tests for the scheduler module.
 
 The scheduler decides which READY process gets the CPU next. We test
-two algorithms:
+three algorithms:
 
 - FCFS (First Come, First Served): processes run in arrival order.
 - Round Robin: each process gets a fixed time quantum, then yields.
+- Priority: highest priority process runs first, FIFO tiebreaker.
 
-Both implementations share the same interface (SchedulingPolicy protocol)
+All implementations share the same interface (SchedulingPolicy protocol)
 so they can be swapped without changing the scheduler.
 """
 
 import pytest
 
 from py_os.process import Process, ProcessState
-from py_os.scheduler import FCFSPolicy, RoundRobinPolicy, Scheduler
+from py_os.scheduler import FCFSPolicy, PriorityPolicy, RoundRobinPolicy, Scheduler
 
 DEFAULT_QUANTUM = 2
 
@@ -201,3 +202,106 @@ class TestRoundRobinPolicy:
         """The time quantum should be readable for tick-based simulation."""
         policy = RoundRobinPolicy(quantum=DEFAULT_QUANTUM)
         assert policy.quantum == DEFAULT_QUANTUM
+
+
+# Named constants for priority test values.
+HIGH_PRIORITY = 10
+MEDIUM_PRIORITY = 5
+LOW_PRIORITY = 1
+
+
+def _ready(name: str, priority: int = 0) -> Process:
+    """Create a READY process with the given name and priority."""
+    p = Process(name=name, priority=priority)
+    p.admit()
+    return p
+
+
+class TestPriorityPolicy:
+    """Verify priority-based scheduling — highest priority runs first."""
+
+    def test_selects_highest_priority(self) -> None:
+        """Dispatch should pick the highest-priority process."""
+        scheduler = Scheduler(policy=PriorityPolicy())
+        p_low = _ready("low", LOW_PRIORITY)
+        p_high = _ready("high", MEDIUM_PRIORITY)
+        p_mid = _ready("mid", 3)
+        for p in (p_low, p_high, p_mid):
+            scheduler.add(p)
+
+        assert scheduler.dispatch() is p_high
+
+    def test_equal_priority_uses_fifo(self) -> None:
+        """Equal-priority processes should dispatch in arrival order."""
+        scheduler = Scheduler(policy=PriorityPolicy())
+        p1 = _ready("first", MEDIUM_PRIORITY)
+        p2 = _ready("second", MEDIUM_PRIORITY)
+        p3 = _ready("third", MEDIUM_PRIORITY)
+        for p in (p1, p2, p3):
+            scheduler.add(p)
+
+        assert scheduler.dispatch() is p1
+
+    def test_across_multiple_dispatches(self) -> None:
+        """Successive dispatches should follow descending priority."""
+        scheduler = Scheduler(policy=PriorityPolicy())
+        p_low = _ready("low", LOW_PRIORITY)
+        p_mid = _ready("mid", 3)
+        p_high = _ready("high", MEDIUM_PRIORITY)
+        for p in (p_low, p_mid, p_high):
+            scheduler.add(p)
+
+        dispatched = scheduler.dispatch()
+        assert dispatched is p_high
+        scheduler.terminate_current()
+
+        dispatched = scheduler.dispatch()
+        assert dispatched is p_mid
+        scheduler.terminate_current()
+
+        dispatched = scheduler.dispatch()
+        assert dispatched is p_low
+
+    def test_preempted_process_competes_by_priority(self) -> None:
+        """A preempted process re-enters and competes by priority."""
+        scheduler = Scheduler(policy=PriorityPolicy())
+        p_med = _ready("med", MEDIUM_PRIORITY)
+        scheduler.add(p_med)
+        scheduler.dispatch()  # med is RUNNING
+
+        p_high = _ready("high", HIGH_PRIORITY)
+        scheduler.add(p_high)
+        scheduler.preempt()  # med back to queue
+
+        assert scheduler.dispatch() is p_high
+
+    def test_empty_queue_returns_none(self) -> None:
+        """Dispatching from an empty queue should return None."""
+        scheduler = Scheduler(policy=PriorityPolicy())
+        assert scheduler.dispatch() is None
+
+    def test_single_process(self) -> None:
+        """A lone process should be dispatched regardless of priority."""
+        scheduler = Scheduler(policy=PriorityPolicy())
+        p = _ready("only", LOW_PRIORITY)
+        scheduler.add(p)
+        assert scheduler.dispatch() is p
+
+    def test_integration_add_dispatch_preempt(self) -> None:
+        """Full lifecycle: add → dispatch → preempt → re-dispatch by priority."""
+        scheduler = Scheduler(policy=PriorityPolicy())
+        p1 = _ready("a", LOW_PRIORITY)
+        p2 = _ready("b", MEDIUM_PRIORITY)
+        scheduler.add(p1)
+        scheduler.add(p2)
+
+        # Dispatch highest priority first
+        assert scheduler.dispatch() is p2
+        scheduler.preempt()
+
+        # After preemption, p2 (prio 5) still beats p1 (prio 1)
+        assert scheduler.dispatch() is p2
+        scheduler.terminate_current()
+
+        # Now only p1 remains
+        assert scheduler.dispatch() is p1

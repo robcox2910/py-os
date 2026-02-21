@@ -35,7 +35,7 @@ Every source file and what it implements.
 | `kernel.py` | `Kernel` | Central coordinator, boot/shutdown lifecycle, subsystem ownership |
 | `kernel.py` | `KernelState` | SHUTDOWN / BOOTING / RUNNING / SHUTTING_DOWN state machine |
 | `syscalls.py` | `dispatch_syscall()` | Trap handler -- routes syscall numbers to kernel subsystem handlers |
-| `syscalls.py` | `SyscallNumber` | IntEnum of all syscall numbers (1-118) |
+| `syscalls.py` | `SyscallNumber` | IntEnum of all syscall numbers (1-120) |
 | `syscalls.py` | `SyscallError` | User-facing exception wrapping internal errors |
 
 ### Process Management
@@ -47,6 +47,7 @@ Every source file and what it implements.
 | `scheduler.py` | `Scheduler` | Ready queue management, dispatch using pluggable policy |
 | `scheduler.py` | `FCFSPolicy` | First Come, First Served scheduling |
 | `scheduler.py` | `RoundRobinPolicy` | Time-sliced scheduling with configurable quantum |
+| `scheduler.py` | `PriorityPolicy` | Highest-priority-first scheduling with FIFO tiebreaker |
 | `threads.py` | `Thread` | Lightweight execution unit within a process |
 | `signals.py` | `Signal` | SIGTERM / SIGKILL / SIGSTOP / SIGCONT |
 
@@ -126,6 +127,7 @@ Every source file and what it implements.
 | 90 | Deadlock detection |
 | 100-101 | Process execution (exec, run) |
 | 110-118 | Synchronization (mutex, semaphore, condition) |
+| 120 | Scheduler policy switching |
 
 ## Strategy Pattern Usage
 
@@ -133,6 +135,6 @@ The Strategy pattern appears in three subsystems, always with the same structure
 
 | Subsystem | Mechanism | Policies |
 |-----------|-----------|----------|
-| CPU Scheduling | `Scheduler` | `FCFSPolicy`, `RoundRobinPolicy` |
+| CPU Scheduling | `Scheduler` | `FCFSPolicy`, `RoundRobinPolicy`, `PriorityPolicy` |
 | Page Replacement | `Pager` | `FIFOPolicy`, `LRUPolicy`, `ClockPolicy` |
 | Disk Scheduling | `DiskScheduler` | `FCFSPolicy`, `SSTFPolicy`, `SCANPolicy`, `CSCANPolicy` |
