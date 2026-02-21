@@ -7,7 +7,7 @@ how /dev works on Unix.
 
 import pytest
 
-from py_os.devices import ConsoleDevice, DeviceManager, DeviceState, NullDevice, RandomDevice
+from py_os.io.devices import ConsoleDevice, DeviceManager, DeviceState, NullDevice, RandomDevice
 
 
 class TestNullDevice:

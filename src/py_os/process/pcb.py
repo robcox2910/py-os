@@ -20,12 +20,12 @@ from enum import StrEnum
 from itertools import count
 from typing import TYPE_CHECKING
 
-from py_os.threads import Thread
+from py_os.process.threads import Thread
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from py_os.virtual_memory import VirtualMemory
+    from py_os.memory.virtual import VirtualMemory
 
 
 class ProcessState(StrEnum):

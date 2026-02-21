@@ -8,7 +8,7 @@ other modules (scheduler, memory, file system).
 import pytest
 
 from py_os.kernel import Kernel, KernelState
-from py_os.process import ProcessState
+from py_os.process.pcb import ProcessState
 
 
 class TestKernelInitialisation:

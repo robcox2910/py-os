@@ -16,7 +16,7 @@ Components tested:
 
 import pytest
 
-from py_os.swap import (
+from py_os.memory.swap import (
     ClockPolicy,
     FIFOPolicy,
     LRUPolicy,

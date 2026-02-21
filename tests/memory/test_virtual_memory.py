@@ -9,7 +9,7 @@ process's view of memory from the physical layout.
 import pytest
 
 from py_os.kernel import Kernel
-from py_os.virtual_memory import PageFaultError, PageTable, VirtualMemory
+from py_os.memory.virtual import PageFaultError, PageTable, VirtualMemory
 
 PAGE_SIZE = 256
 

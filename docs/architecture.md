@@ -42,39 +42,39 @@ Every source file and what it implements.
 
 | File | Class/Function | Purpose |
 |------|---------------|---------|
-| `process.py` | `Process` | PCB with five-state model, program/output/exit_code, thread management |
-| `process.py` | `ProcessState` | NEW / READY / RUNNING / WAITING / TERMINATED |
-| `scheduler.py` | `Scheduler` | Ready queue management, dispatch using pluggable policy |
-| `scheduler.py` | `FCFSPolicy` | First Come, First Served scheduling |
-| `scheduler.py` | `RoundRobinPolicy` | Time-sliced scheduling with configurable quantum |
-| `scheduler.py` | `PriorityPolicy` | Highest-priority-first scheduling with FIFO tiebreaker |
-| `scheduler.py` | `AgingPriorityPolicy` | Priority scheduling with aging to prevent starvation |
-| `scheduler.py` | `MLFQPolicy` | Multilevel Feedback Queue with demotion and boost |
-| `scheduler.py` | `CFSPolicy` | Completely Fair Scheduler with weighted virtual runtime |
-| `threads.py` | `Thread` | Lightweight execution unit within a process |
-| `signals.py` | `Signal` | SIGKILL / SIGUSR1 / SIGUSR2 / SIGTERM / SIGCONT / SIGSTOP |
-| `signals.py` | `SignalAction` | TERMINATE / STOP / CONTINUE / IGNORE default actions |
-| `signals.py` | `DEFAULT_ACTIONS` | Maps every signal to its default action |
-| `signals.py` | `UNCATCHABLE` | frozenset of signals that cannot have handlers (SIGKILL, SIGSTOP) |
+| `process/pcb.py` | `Process` | PCB with five-state model, program/output/exit_code, thread management |
+| `process/pcb.py` | `ProcessState` | NEW / READY / RUNNING / WAITING / TERMINATED |
+| `process/scheduler.py` | `Scheduler` | Ready queue management, dispatch using pluggable policy |
+| `process/scheduler.py` | `FCFSPolicy` | First Come, First Served scheduling |
+| `process/scheduler.py` | `RoundRobinPolicy` | Time-sliced scheduling with configurable quantum |
+| `process/scheduler.py` | `PriorityPolicy` | Highest-priority-first scheduling with FIFO tiebreaker |
+| `process/scheduler.py` | `AgingPriorityPolicy` | Priority scheduling with aging to prevent starvation |
+| `process/scheduler.py` | `MLFQPolicy` | Multilevel Feedback Queue with demotion and boost |
+| `process/scheduler.py` | `CFSPolicy` | Completely Fair Scheduler with weighted virtual runtime |
+| `process/threads.py` | `Thread` | Lightweight execution unit within a process |
+| `process/signals.py` | `Signal` | SIGKILL / SIGUSR1 / SIGUSR2 / SIGTERM / SIGCONT / SIGSTOP |
+| `process/signals.py` | `SignalAction` | TERMINATE / STOP / CONTINUE / IGNORE default actions |
+| `process/signals.py` | `DEFAULT_ACTIONS` | Maps every signal to its default action |
+| `process/signals.py` | `UNCATCHABLE` | frozenset of signals that cannot have handlers (SIGKILL, SIGSTOP) |
 
 ### Memory Management
 
 | File | Class/Function | Purpose |
 |------|---------------|---------|
-| `memory.py` | `MemoryManager` | Frame-based allocation with free set and page tables |
-| `virtual_memory.py` | `VirtualMemory` | Per-process address space with page table translation |
-| `swap.py` | `SwapSpace` | Key-value backing store for evicted pages |
-| `swap.py` | `FIFOPolicy` / `LRUPolicy` / `ClockPolicy` | Page replacement strategies |
-| `swap.py` | `Pager` | Demand paging orchestrator (page faults, eviction, swap I/O) |
+| `memory/manager.py` | `MemoryManager` | Frame-based allocation with free set and page tables |
+| `memory/virtual.py` | `VirtualMemory` | Per-process address space with page table translation |
+| `memory/swap.py` | `SwapSpace` | Key-value backing store for evicted pages |
+| `memory/swap.py` | `FIFOPolicy` / `LRUPolicy` / `ClockPolicy` | Page replacement strategies |
+| `memory/swap.py` | `Pager` | Demand paging orchestrator (page faults, eviction, swap I/O) |
 
 ### Filesystem
 
 | File | Class/Function | Purpose |
 |------|---------------|---------|
-| `filesystem.py` | `FileSystem` | Inode-based filesystem with path resolution and CRUD |
-| `filesystem.py` | `_Inode` | Internal metadata record (type, size, data, children) |
-| `persistence.py` | `dump_filesystem()` | Serialize filesystem to JSON |
-| `persistence.py` | `load_filesystem()` | Deserialize filesystem from JSON |
+| `fs/filesystem.py` | `FileSystem` | Inode-based filesystem with path resolution and CRUD |
+| `fs/filesystem.py` | `_Inode` | Internal metadata record (type, size, data, children) |
+| `fs/persistence.py` | `dump_filesystem()` | Serialize filesystem to JSON |
+| `fs/persistence.py` | `load_filesystem()` | Deserialize filesystem from JSON |
 
 ### User Space
 
@@ -90,23 +90,23 @@ Every source file and what it implements.
 
 | File | Class/Function | Purpose |
 |------|---------------|---------|
-| `devices.py` | `DeviceManager` | Device registry with uniform read/write protocol |
-| `devices.py` | `NullDevice` / `ConsoleDevice` / `RandomDevice` | Built-in devices |
-| `ipc.py` | `Pipe` | Byte-stream channel (FIFO) |
-| `ipc.py` | `MessageQueue` | Typed generic message queue |
-| `disk.py` | `DiskScheduler` | Request queue with pluggable scheduling policy |
-| `disk.py` | `FCFSPolicy` / `SSTFPolicy` / `SCANPolicy` / `CSCANPolicy` | Disk I/O scheduling strategies |
-| `networking.py` | `SocketManager` | Socket lifecycle, connection routing, data buffers |
-| `networking.py` | `Socket` / `SocketState` | Endpoint with CREATED/BOUND/LISTENING/CONNECTED/CLOSED states |
+| `io/devices.py` | `DeviceManager` | Device registry with uniform read/write protocol |
+| `io/devices.py` | `NullDevice` / `ConsoleDevice` / `RandomDevice` | Built-in devices |
+| `io/ipc.py` | `Pipe` | Byte-stream channel (FIFO) |
+| `io/ipc.py` | `MessageQueue` | Typed generic message queue |
+| `io/disk.py` | `DiskScheduler` | Request queue with pluggable scheduling policy |
+| `io/disk.py` | `FCFSPolicy` / `SSTFPolicy` / `SCANPolicy` / `CSCANPolicy` | Disk I/O scheduling strategies |
+| `io/networking.py` | `SocketManager` | Socket lifecycle, connection routing, data buffers |
+| `io/networking.py` | `Socket` / `SocketState` | Endpoint with CREATED/BOUND/LISTENING/CONNECTED/CLOSED states |
 
 ### Synchronization
 
 | File | Class/Function | Purpose |
 |------|---------------|---------|
-| `sync.py` | `Mutex` | Mutual exclusion lock with owner tracking and FIFO wait queue |
-| `sync.py` | `Semaphore` | Counting semaphore with optional max bound |
-| `sync.py` | `Condition` | Condition variable (wait/notify) paired with a mutex |
-| `sync.py` | `SyncManager` | Registry for all sync primitives (mutexes, semaphores, conditions) |
+| `sync/primitives.py` | `Mutex` | Mutual exclusion lock with owner tracking and FIFO wait queue |
+| `sync/primitives.py` | `Semaphore` | Counting semaphore with optional max bound |
+| `sync/primitives.py` | `Condition` | Condition variable (wait/notify) paired with a mutex |
+| `sync/primitives.py` | `SyncManager` | Registry for all sync primitives (mutexes, semaphores, conditions) |
 
 ### Observability
 
@@ -114,7 +114,7 @@ Every source file and what it implements.
 |------|---------------|---------|
 | `logging.py` | `Logger` | Ring buffer of structured log entries |
 | `logging.py` | `LogLevel` | DEBUG / INFO / WARNING / ERROR (IntEnum) |
-| `deadlock.py` | `ResourceManager` | Banker's algorithm matrices, deadlock detection |
+| `sync/deadlock.py` | `ResourceManager` | Banker's algorithm matrices, deadlock detection |
 | `repl.py` | `main()` | Interactive terminal with boot banner |
 
 ## Syscall Number Ranges

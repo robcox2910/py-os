@@ -15,11 +15,11 @@ Key differences from processes:
 import pytest
 
 from py_os.kernel import Kernel
-from py_os.process import Process
+from py_os.memory.virtual import VirtualMemory
+from py_os.process.pcb import Process
+from py_os.process.threads import Thread, ThreadState
 from py_os.shell import Shell
 from py_os.syscalls import SyscallError, SyscallNumber
-from py_os.threads import Thread, ThreadState
-from py_os.virtual_memory import VirtualMemory
 
 
 def _booted_kernel() -> Kernel:

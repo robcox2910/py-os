@@ -26,7 +26,7 @@ from collections.abc import Callable
 
 from py_os.jobs import JobManager
 from py_os.kernel import Kernel, KernelState
-from py_os.scheduler import (
+from py_os.process.scheduler import (
     AgingPriorityPolicy,
     CFSPolicy,
     FCFSPolicy,
@@ -34,7 +34,7 @@ from py_os.scheduler import (
     PriorityPolicy,
     RoundRobinPolicy,
 )
-from py_os.signals import Signal
+from py_os.process.signals import Signal
 from py_os.syscalls import SyscallError, SyscallNumber
 
 # Type alias for a command handler: takes a list of args, returns output.

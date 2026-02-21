@@ -31,20 +31,20 @@ from enum import StrEnum
 from time import monotonic
 from typing import Any
 
-from py_os.deadlock import ResourceManager
-from py_os.devices import ConsoleDevice, DeviceManager, NullDevice, RandomDevice
 from py_os.env import Environment
-from py_os.filesystem import FileSystem
+from py_os.fs.filesystem import FileSystem
+from py_os.io.devices import ConsoleDevice, DeviceManager, NullDevice, RandomDevice
 from py_os.logging import Logger, LogLevel
-from py_os.memory import MemoryManager
-from py_os.process import Process, ProcessState
-from py_os.scheduler import FCFSPolicy, Scheduler, SchedulingPolicy
-from py_os.signals import DEFAULT_ACTIONS, UNCATCHABLE, Signal, SignalAction, SignalError
-from py_os.sync import Condition, Mutex, Semaphore, SyncManager
+from py_os.memory.manager import MemoryManager
+from py_os.memory.virtual import VirtualMemory
+from py_os.process.pcb import Process, ProcessState
+from py_os.process.scheduler import FCFSPolicy, Scheduler, SchedulingPolicy
+from py_os.process.signals import DEFAULT_ACTIONS, UNCATCHABLE, Signal, SignalAction, SignalError
+from py_os.process.threads import Thread
+from py_os.sync.deadlock import ResourceManager
+from py_os.sync.primitives import Condition, Mutex, Semaphore, SyncManager
 from py_os.syscalls import SyscallNumber, dispatch_syscall
-from py_os.threads import Thread
 from py_os.users import FilePermissions, UserManager
-from py_os.virtual_memory import VirtualMemory
 
 DEFAULT_TOTAL_FRAMES = 64
 

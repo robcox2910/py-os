@@ -45,31 +45,31 @@ For a technical overview of every module, see [docs/architecture.md](docs/archit
 
 | Module | File | What It Teaches |
 |--------|------|-----------------|
-| Process | `process.py` | Five-state lifecycle, PID assignment |
-| Scheduler | `scheduler.py` | CPU scheduling (FCFS, Round Robin, Priority, Aging Priority, MLFQ, CFS) |
-| Memory | `memory.py` | Page-based allocation, frame management |
-| Virtual Memory | `virtual_memory.py` | Address translation, page tables, isolation |
-| Filesystem | `filesystem.py` | Inodes, path resolution, file CRUD |
+| Process | `process/pcb.py` | Five-state lifecycle, PID assignment |
+| Scheduler | `process/scheduler.py` | CPU scheduling (FCFS, Round Robin, Priority, Aging Priority, MLFQ, CFS) |
+| Memory | `memory/manager.py` | Page-based allocation, frame management |
+| Virtual Memory | `memory/virtual.py` | Address translation, page tables, isolation |
+| Filesystem | `fs/filesystem.py` | Inodes, path resolution, file CRUD |
 | Kernel | `kernel.py` | Boot/shutdown lifecycle, subsystem coordination |
 | System Calls | `syscalls.py` | User/kernel boundary, dispatch table |
 | Shell | `shell.py` | Commands, pipes, scripting, job control |
 | Users | `users.py` | Identity, file permissions |
-| Devices | `devices.py` | Null, console, and random devices |
-| IPC | `ipc.py` | Pipes and message queues |
-| Signals | `signals.py` | SIGTERM, SIGKILL, SIGSTOP, SIGCONT, SIGUSR1, SIGUSR2, custom handlers |
+| Devices | `io/devices.py` | Null, console, and random devices |
+| IPC | `io/ipc.py` | Pipes and message queues |
+| Signals | `process/signals.py` | SIGTERM, SIGKILL, SIGSTOP, SIGCONT, SIGUSR1, SIGUSR2, custom handlers |
 | Logging | `logging.py` | Kernel log buffer, audit trail |
 | Environment | `env.py` | KEY=VALUE config |
 | Jobs | `jobs.py` | Background/foreground job control |
-| Swap | `swap.py` | Page replacement (FIFO, LRU, Clock) |
+| Swap | `memory/swap.py` | Page replacement (FIFO, LRU, Clock) |
 | Fork | `kernel.py` | Process forking, parent-child trees |
-| Threads | `threads.py` | Lightweight execution within a process |
-| Deadlock | `deadlock.py` | Detection and Banker's algorithm |
-| Disk Scheduling | `disk.py` | FCFS, SSTF, SCAN, C-SCAN |
+| Threads | `process/threads.py` | Lightweight execution within a process |
+| Deadlock | `sync/deadlock.py` | Detection and Banker's algorithm |
+| Disk Scheduling | `io/disk.py` | FCFS, SSTF, SCAN, C-SCAN |
 | Scripting | `shell.py` | Scripts, variables, conditionals |
-| Networking | `networking.py` | Sockets, client-server model |
-| Persistence | `persistence.py` | Save/load filesystem to JSON |
-| Execution | `process.py` | Running programs, exit codes |
-| Synchronization | `sync.py` | Mutex, semaphore, condition variable |
+| Networking | `io/networking.py` | Sockets, client-server model |
+| Persistence | `fs/persistence.py` | Save/load filesystem to JSON |
+| Execution | `process/pcb.py` | Running programs, exit codes |
+| Synchronization | `sync/primitives.py` | Mutex, semaphore, condition variable |
 | REPL | `repl.py` | Interactive terminal |
 
 ## Shell Commands

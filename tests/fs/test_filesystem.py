@@ -8,7 +8,7 @@ resolved by walking the tree from the root.
 
 import pytest
 
-from py_os.filesystem import FileSystem, FileType
+from py_os.fs.filesystem import FileSystem, FileType
 
 ROOT_PATH = "/"
 

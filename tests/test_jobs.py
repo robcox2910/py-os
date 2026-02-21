@@ -7,7 +7,7 @@ a job number and status tracking (running, stopped, done).
 
 from py_os.jobs import Job, JobManager, JobStatus
 from py_os.kernel import Kernel
-from py_os.process import Process
+from py_os.process.pcb import Process
 from py_os.shell import Shell
 
 
