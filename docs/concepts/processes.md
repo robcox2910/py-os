@@ -109,7 +109,47 @@ policy = PriorityPolicy()
 scheduler = Scheduler(policy=policy)
 ```
 
-There is a catch: **starvation**. If high-priority processes keep arriving, the low-priority ones never get a turn -- like an emergency room where critical patients keep showing up and the person with a sprained ankle waits forever. Real operating systems solve this with a technique called **aging**, where a process's priority slowly increases the longer it waits. PyOS does not implement aging (yet), but it is good to know the problem exists.
+There is a catch: **starvation**. If high-priority processes keep arriving, the low-priority ones never get a turn -- like an emergency room where critical patients keep showing up and the person with a sprained ankle waits forever. Real operating systems solve this with a technique called **aging**, where a process's priority slowly increases the longer it waits.
+
+### Multilevel Feedback Queue (MLFQ)
+
+What if the scheduler could *learn* whether a process is a quick task or a long-running one, and adjust accordingly? That is what the **Multilevel Feedback Queue** does. It is the most important adaptive scheduling algorithm in real operating systems -- used by Linux (the predecessor to CFS), Windows, and macOS.
+
+**Analogy**: Imagine a science fair with three judging stations. Station 1 (front row) gives each student 2 minutes to present. If you cannot finish in 2 minutes, you move to Station 2, where you get 4 minutes. Still not done? Station 3 gives you 8 minutes. Judges always check Station 1 first, so quick presenters get served fast. Periodically, the teacher calls "Everyone back to Station 1!" so that students stuck in the back are not ignored forever.
+
+Here is how it works:
+
+1. **New processes start at the top** (level 0, shortest quantum).
+2. **If preempted** (used all their time), they are **demoted** one level down (longer quantum).
+3. **Judges always serve the highest level first** (lowest number = highest priority).
+4. **Periodic boost** resets everyone to level 0 to prevent starvation.
+
+This means short I/O-bound processes (like typing in a text editor) stay at level 0 and get fast response times, while long CPU-bound processes (like video encoding) naturally sink to lower levels with longer quanta -- less context-switching overhead for them.
+
+```python
+# MLFQ with 3 levels, base quantum of 2
+policy = MLFQPolicy(num_levels=3, base_quantum=2)
+# Quanta: level 0 = 2, level 1 = 4, level 2 = 8
+```
+
+You can switch to MLFQ and trigger boosts from the shell:
+
+```
+pyos> scheduler mlfq
+Scheduler set to MLFQ (3 levels, base_quantum=2)
+
+pyos> scheduler boost
+MLFQ boost: all processes reset to level 0
+```
+
+### Comparing the Four Policies
+
+| Policy | Ordering | Preemption | Starvation risk | Best for |
+|--------|---------|------------|----------------|----------|
+| FCFS | Arrival order | None | Convoy effect | Batch jobs |
+| Round Robin | Arrival order | After quantum | None | Time-sharing |
+| Priority | Priority number | None | High | Mixed workloads |
+| MLFQ | Adaptive levels | After level quantum | None (with boost) | Real-world general use |
 
 You can switch policies at runtime using the `scheduler` shell command:
 

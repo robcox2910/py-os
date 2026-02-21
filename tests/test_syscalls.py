@@ -191,6 +191,28 @@ class TestSyscallScheduler:
                 policy="bogus",
             )
 
+    def test_sys_set_scheduler_mlfq(self) -> None:
+        """SYS_SET_SCHEDULER should switch to MLFQ policy."""
+        kernel = _booted_kernel()
+        result = kernel.syscall(
+            SyscallNumber.SYS_SET_SCHEDULER,
+            policy="mlfq",
+        )
+        assert "MLFQ" in result
+
+    def test_sys_scheduler_boost(self) -> None:
+        """SYS_SCHEDULER_BOOST should succeed with MLFQ active."""
+        kernel = _booted_kernel()
+        kernel.syscall(SyscallNumber.SYS_SET_SCHEDULER, policy="mlfq")
+        result = kernel.syscall(SyscallNumber.SYS_SCHEDULER_BOOST)
+        assert "boost" in result.lower()
+
+    def test_sys_scheduler_boost_non_mlfq_raises(self) -> None:
+        """SYS_SCHEDULER_BOOST without MLFQ should raise SyscallError."""
+        kernel = _booted_kernel()
+        with pytest.raises(SyscallError, match="MLFQ"):
+            kernel.syscall(SyscallNumber.SYS_SCHEDULER_BOOST)
+
 
 class TestSyscallValidation:
     """Verify that syscalls validate inputs and kernel state."""

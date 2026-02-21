@@ -1,11 +1,12 @@
 """Tests for the scheduler module.
 
 The scheduler decides which READY process gets the CPU next. We test
-three algorithms:
+four algorithms:
 
 - FCFS (First Come, First Served): processes run in arrival order.
 - Round Robin: each process gets a fixed time quantum, then yields.
 - Priority: highest priority process runs first, FIFO tiebreaker.
+- MLFQ (Multilevel Feedback Queue): adaptive demotion with boost.
 
 All implementations share the same interface (SchedulingPolicy protocol)
 so they can be swapped without changing the scheduler.
@@ -14,7 +15,13 @@ so they can be swapped without changing the scheduler.
 import pytest
 
 from py_os.process import Process, ProcessState
-from py_os.scheduler import FCFSPolicy, PriorityPolicy, RoundRobinPolicy, Scheduler
+from py_os.scheduler import (
+    FCFSPolicy,
+    MLFQPolicy,
+    PriorityPolicy,
+    RoundRobinPolicy,
+    Scheduler,
+)
 
 DEFAULT_QUANTUM = 2
 
@@ -304,4 +311,144 @@ class TestPriorityPolicy:
         scheduler.terminate_current()
 
         # Now only p1 remains
+        assert scheduler.dispatch() is p1
+
+
+# Named constants for MLFQ tests.
+DEFAULT_MLFQ_LEVELS = 3
+DEFAULT_MLFQ_BASE_QUANTUM = 2
+
+
+class TestMLFQPolicy:
+    """Verify Multilevel Feedback Queue scheduling with demotion and boost."""
+
+    def test_empty_queue_returns_none(self) -> None:
+        """An empty queue should produce None."""
+        policy = MLFQPolicy()
+        scheduler = Scheduler(policy=policy)
+        assert scheduler.dispatch() is None
+
+    def test_new_process_starts_at_top(self) -> None:
+        """Unknown PIDs should be at level 0 (highest priority queue)."""
+        policy = MLFQPolicy()
+        assert policy.level(pid=42) == 0
+
+    def test_quantum_doubles_per_level(self) -> None:
+        """Default quanta should double each level: (2, 4, 8)."""
+        policy = MLFQPolicy()
+        expected = (DEFAULT_MLFQ_BASE_QUANTUM, 4, 8)
+        assert policy.quantums == expected
+
+    def test_custom_levels_and_quantum(self) -> None:
+        """Custom levels and base quantum should produce correct quanta."""
+        custom_levels = 4
+        custom_base = 3
+        policy = MLFQPolicy(num_levels=custom_levels, base_quantum=custom_base)
+        expected = (3, 6, 12, 24)
+        assert policy.quantums == expected
+        assert policy.num_levels == custom_levels
+
+    def test_selects_from_highest_queue(self) -> None:
+        """A level-0 process should be selected before a level-2 process."""
+        policy = MLFQPolicy()
+        scheduler = Scheduler(policy=policy)
+
+        # p1 will be demoted twice (to level 2)
+        p1 = _ready("demoted")
+        scheduler.add(p1)
+        scheduler.dispatch()
+        scheduler.preempt()  # p1 → level 1
+        scheduler.dispatch()
+        scheduler.preempt()  # p1 → level 2
+
+        # p2 is new, so it starts at level 0
+        p2 = _ready("fresh")
+        scheduler.add(p2)
+
+        # p2 at level 0 should beat p1 at level 2
+        assert scheduler.dispatch() is p2
+
+    def test_same_level_uses_fifo(self) -> None:
+        """Processes at the same level should dispatch in arrival order."""
+        policy = MLFQPolicy()
+        scheduler = Scheduler(policy=policy)
+        p1 = _ready("first")
+        p2 = _ready("second")
+        p3 = _ready("third")
+        for p in (p1, p2, p3):
+            scheduler.add(p)
+
+        assert scheduler.dispatch() is p1
+
+    def test_preemption_demotes(self) -> None:
+        """After preemption, the process should move down one level."""
+        policy = MLFQPolicy()
+        scheduler = Scheduler(policy=policy)
+        p = _ready("worker")
+        scheduler.add(p)
+        scheduler.dispatch()
+        scheduler.preempt()
+
+        expected_level = 1
+        assert policy.level(pid=p.pid) == expected_level
+
+    def test_bottom_level_stays_at_bottom(self) -> None:
+        """Preemption at the bottom level should not go lower."""
+        policy = MLFQPolicy()
+        scheduler = Scheduler(policy=policy)
+        p = _ready("heavy")
+        scheduler.add(p)
+
+        # Demote through all levels
+        for _ in range(DEFAULT_MLFQ_LEVELS + 1):
+            scheduler.dispatch()
+            scheduler.preempt()
+
+        bottom = DEFAULT_MLFQ_LEVELS - 1
+        assert policy.level(pid=p.pid) == bottom
+
+    def test_boost_resets_all_levels(self) -> None:
+        """Boosting should reset all tracked processes to level 0."""
+        policy = MLFQPolicy()
+        scheduler = Scheduler(policy=policy)
+        p1 = _ready("a")
+        p2 = _ready("b")
+        scheduler.add(p1)
+        scheduler.add(p2)
+
+        # Demote both
+        scheduler.dispatch()
+        scheduler.preempt()
+        scheduler.dispatch()
+        scheduler.preempt()
+
+        policy.boost()
+        assert policy.level(pid=p1.pid) == 0
+        assert policy.level(pid=p2.pid) == 0
+
+    def test_multi_level_dispatch_order_after_demotions(self) -> None:
+        """Full scenario: add 3 procs, demote via preemption, verify order."""
+        policy = MLFQPolicy()
+        scheduler = Scheduler(policy=policy)
+
+        p1 = _ready("a")
+        p2 = _ready("b")
+        p3 = _ready("c")
+        for p in (p1, p2, p3):
+            scheduler.add(p)
+
+        # Dispatch p1 and demote it (level 0 → 1)
+        assert scheduler.dispatch() is p1
+        scheduler.preempt()
+
+        # Dispatch p2 and demote it (level 0 → 1)
+        assert scheduler.dispatch() is p2
+        scheduler.preempt()
+
+        # p3 still at level 0, should go next
+        assert scheduler.dispatch() is p3
+        scheduler.preempt()
+
+        # Now p1 and p2 are both at level 1, p3 at level 1 too
+        # FIFO within level 1: p1 was added first after demotion
         assert scheduler.dispatch() is p1
