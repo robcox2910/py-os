@@ -102,6 +102,7 @@ class Shell:
             "devwrite": self._cmd_devwrite,
             "echo": self._cmd_echo,
             "source": self._cmd_source,
+            "run": self._cmd_run,
         }
 
     def execute(self, command: str) -> str:
@@ -640,3 +641,28 @@ class Shell:
             return f"Error: {e}"
         results = self.run_script(script)
         return "\n".join(r for r in results if r)
+
+    def _cmd_run(self, args: list[str]) -> str:
+        """Create a process, load a built-in program, and run it."""
+        if not args:
+            return "Usage: run <program>"
+        program_name = args[0]
+        programs: dict[str, Callable[[], str]] = {
+            "hello": lambda: "Hello from PyOS!",
+            "counter": lambda: "\n".join(str(i) for i in range(1, 6)),
+        }
+        program = programs.get(program_name)
+        if program is None:
+            return f"Unknown program: {program_name}"
+        try:
+            result = self._kernel.syscall(
+                SyscallNumber.SYS_CREATE_PROCESS, name=program_name, num_pages=1
+            )
+            pid = result["pid"]
+            self._kernel.syscall(SyscallNumber.SYS_EXEC, pid=pid, program=program)
+            run_result = self._kernel.syscall(SyscallNumber.SYS_RUN, pid=pid)
+            output = run_result["output"]
+            exit_code = run_result["exit_code"]
+            return f"{output}\n[exit code: {exit_code}]"
+        except SyscallError as e:
+            return f"Error: {e}"

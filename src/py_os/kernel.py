@@ -389,6 +389,69 @@ class Kernel:
         thread.admit()
         return thread
 
+    def exec_process(self, *, pid: int, program: Callable[[], str]) -> None:
+        """Load a program into an existing process.
+
+        Analogous to Unix ``execve()`` — replace the process's code with
+        a new program.  In real Unix, exec replaces the entire address
+        space; here we just store the callable.
+
+        Args:
+            pid: PID of the process to load the program into.
+            program: A callable that returns a string (the program's output).
+
+        Raises:
+            ValueError: If the process does not exist.
+
+        """
+        self._require_running()
+        process = self._processes.get(pid)
+        if process is None:
+            msg = f"Process {pid} not found"
+            raise ValueError(msg)
+        process.program = program
+
+    def run_process(self, *, pid: int) -> dict[str, Any]:
+        """Dispatch, execute, and terminate a process.
+
+        This is the full lifecycle: READY → RUNNING → execute → TERMINATED.
+        The process's memory is freed and it is removed from the process
+        table after completion.
+
+        Args:
+            pid: PID of the process to run.
+
+        Returns:
+            A dict with 'output' and 'exit_code' from the program.
+
+        Raises:
+            ValueError: If the process does not exist or has no program.
+
+        """
+        self._require_running()
+        assert self._memory is not None  # noqa: S101
+
+        process = self._processes.get(pid)
+        if process is None:
+            msg = f"Process {pid} not found"
+            raise ValueError(msg)
+        if process.program is None:
+            msg = f"No program loaded in process {pid}"
+            raise ValueError(msg)
+
+        process.dispatch()
+        process.execute()
+        output = process.output
+        exit_code = process.exit_code
+
+        process.terminate()
+        self._memory.free(pid)
+        if self._resource_manager is not None:
+            self._resource_manager.remove_process(pid)
+        del self._processes[pid]
+
+        return {"output": output, "exit_code": exit_code}
+
     def terminate_process(self, *, pid: int) -> None:
         """Terminate a process and free its resources.
 
