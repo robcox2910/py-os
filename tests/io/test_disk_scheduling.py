@@ -13,7 +13,7 @@ Algorithms tested:
     - **C-SCAN** — Circular SCAN.  Sweep one direction, jump back to start.
 """
 
-from py_os.disk import (
+from py_os.io.disk import (
     CSCANPolicy,
     DiskScheduler,
     FCFSPolicy,

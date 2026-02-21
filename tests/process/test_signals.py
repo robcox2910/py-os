@@ -8,15 +8,15 @@ SIGSTOP (pause), SIGCONT (resume), and user-defined SIGUSR1/SIGUSR2.
 import pytest
 
 from py_os.kernel import Kernel
-from py_os.process import Process, ProcessState
-from py_os.shell import Shell
-from py_os.signals import (
+from py_os.process.pcb import Process, ProcessState
+from py_os.process.signals import (
     DEFAULT_ACTIONS,
     UNCATCHABLE,
     Signal,
     SignalAction,
     SignalError,
 )
+from py_os.shell import Shell
 from py_os.syscalls import SyscallError, SyscallNumber
 
 

@@ -11,7 +11,7 @@ Our simulation mirrors this lifecycle with in-memory message passing,
 teaching the socket abstraction without actual network I/O.
 """
 
-from py_os.networking import Socket, SocketManager, SocketState
+from py_os.io.networking import Socket, SocketManager, SocketState
 
 # -- Socket basics -------------------------------------------------------------
 

@@ -83,7 +83,7 @@ This is the standard **producer-consumer** pattern: the producer adds items and 
 
 ## How It Works in PyOS
 
-PyOS implements all three primitives in `sync.py`:
+PyOS implements all three primitives in `sync/primitives.py`:
 
 | Class | Purpose | Key Methods |
 |-------|---------|-------------|

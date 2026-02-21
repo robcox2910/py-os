@@ -31,7 +31,7 @@ Why bother with this layer?
 from enum import IntEnum
 from typing import Any
 
-from py_os.scheduler import (
+from py_os.process.scheduler import (
     AgingPriorityPolicy,
     CFSPolicy,
     FCFSPolicy,
@@ -39,7 +39,7 @@ from py_os.scheduler import (
     PriorityPolicy,
     RoundRobinPolicy,
 )
-from py_os.signals import SignalError
+from py_os.process.signals import SignalError
 from py_os.users import FilePermissions
 from py_os.users import PermissionError as OsPermissionError
 

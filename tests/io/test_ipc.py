@@ -7,7 +7,7 @@ IPC provides mechanisms for processes to exchange data:
 
 import pytest
 
-from py_os.ipc import MessageQueue, Pipe
+from py_os.io.ipc import MessageQueue, Pipe
 
 
 class TestPipeCreation:

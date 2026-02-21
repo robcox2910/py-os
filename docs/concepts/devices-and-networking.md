@@ -14,7 +14,7 @@ In PyOS, this area is split across four files. Let's walk through each one.
 
 ---
 
-## 1. Devices (`devices.py`)
+## 1. Devices (`io/devices.py`)
 
 ### The School Supplies Analogy
 
@@ -98,7 +98,7 @@ folder.
 
 ---
 
-## 2. IPC -- Inter-Process Communication (`ipc.py`)
+## 2. IPC -- Inter-Process Communication (`io/ipc.py`)
 
 [Processes](processes.md) are isolated by design -- each one lives in its own
 little world with its own [memory](memory.md), and it can't peek at what other
@@ -169,7 +169,7 @@ processes can all read from it.
 
 ---
 
-## 3. Disk Scheduling (`disk.py`)
+## 3. Disk Scheduling (`io/disk.py`)
 
 ### The Elevator Analogy
 
@@ -261,7 +261,7 @@ in a different strategy.
 
 ---
 
-## 4. Networking (`networking.py`)
+## 4. Networking (`io/networking.py`)
 
 ### The Phone Call Analogy
 

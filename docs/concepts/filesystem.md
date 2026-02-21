@@ -25,7 +25,7 @@ inside. It's like how a teacher's attendance sheet has your name on it, but the
 actual essay you turned in doesn't have your name written on the pages -- the
 folder it's in tells the teacher whose work it is.
 
-In our code (`filesystem.py`), the `FileSystem` class manages all of this. When
+In our code (`fs/filesystem.py`), the `FileSystem` class manages all of this. When
 you create a file or folder, the filesystem creates a new inode and then adds
 the name to the parent directory's list. The name and the data live in different
 places, connected by a number.
@@ -87,7 +87,7 @@ Each step is a lookup: "does this directory have something called X?" If the
 answer is yes, you follow the inode number and keep going. If the answer is no,
 you get a `FileNotFoundError` -- the path is broken somewhere along the way.
 
-In `filesystem.py`, the `_resolve` method does exactly this:
+In `fs/filesystem.py`, the `_resolve` method does exactly this:
 
 ```python
 def _resolve(self, path: str) -> _Inode | None:
@@ -118,7 +118,7 @@ It is like building a beautiful filing cabinet out of ice -- when the power goes
 out, the whole thing melts.
 
 To solve this, we need **persistence** -- a way to save the filing cabinet so we
-can rebuild it later. That's what `persistence.py` does.
+can rebuild it later. That's what `fs/persistence.py` does.
 
 ### The Photograph Analogy
 

@@ -21,7 +21,7 @@ Key concepts:
 import json
 from pathlib import Path
 
-from py_os.filesystem import FileSystem
+from py_os.fs.filesystem import FileSystem
 
 
 def dump_filesystem(fs: FileSystem, path: Path) -> None:

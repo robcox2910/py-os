@@ -8,7 +8,7 @@ contiguous private memory.
 
 import pytest
 
-from py_os.memory import MemoryManager, OutOfMemoryError
+from py_os.memory.manager import MemoryManager, OutOfMemoryError
 
 TOTAL_FRAMES = 8
 SMALL_ALLOCATION = 3

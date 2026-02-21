@@ -16,7 +16,7 @@ import pytest
 
 from py_os.kernel import Kernel
 from py_os.shell import Shell
-from py_os.sync import Condition, Mutex, Semaphore, SyncManager
+from py_os.sync.primitives import Condition, Mutex, Semaphore, SyncManager
 from py_os.syscalls import SyscallError, SyscallNumber
 
 # Named constants to satisfy PLR2004

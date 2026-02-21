@@ -11,7 +11,7 @@ and returns a result — just like a real OS trap handler.
 import pytest
 
 from py_os.kernel import Kernel
-from py_os.process import ProcessState
+from py_os.process.pcb import ProcessState
 from py_os.syscalls import SyscallError, SyscallNumber
 
 NUM_PAGES = 2

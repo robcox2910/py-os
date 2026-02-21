@@ -16,7 +16,7 @@ piece of the puzzle. Let's walk through them one at a time.
 
 ---
 
-## 1. Physical Memory (`memory.py`)
+## 1. Physical Memory (`memory/manager.py`)
 
 ### The Locker Analogy
 
@@ -59,7 +59,7 @@ in a moment.
 
 ---
 
-## 2. Virtual Memory (`virtual_memory.py`)
+## 2. Virtual Memory (`memory/virtual.py`)
 
 ### The Personal Map Analogy
 
@@ -119,7 +119,7 @@ because it tried to access memory it doesn't own.
 
 ---
 
-## 3. Page Replacement and Swap (`swap.py`)
+## 3. Page Replacement and Swap (`memory/swap.py`)
 
 ### The Basement Storage Room
 
@@ -216,15 +216,15 @@ occupy frames for the pages they're actually using right now.
 
 Here's how these three pieces work as a team:
 
-1. **Physical memory** (`memory.py`) manages the actual frames -- the real
+1. **Physical memory** (`memory/manager.py`) manages the actual frames -- the real
    lockers in the hallway. It tracks which ones are free and which ones are
    taken.
 
-2. **Virtual memory** (`virtual_memory.py`) gives each process its own private
+2. **Virtual memory** (`memory/virtual.py`) gives each process its own private
    map (page table) so that processes see clean, simple addresses and can't
    interfere with each other.
 
-3. **Swap** (`swap.py`) handles the overflow. When memory is full, it moves
+3. **Swap** (`memory/swap.py`) handles the overflow. When memory is full, it moves
    pages to disk and brings them back when needed, using a replacement strategy
    (FIFO, LRU, or Clock) to decide what to move.
 

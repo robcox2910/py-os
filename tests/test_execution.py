@@ -17,7 +17,7 @@ pipes between fork and exec.
 import pytest
 
 from py_os.kernel import Kernel
-from py_os.process import Process
+from py_os.process.pcb import Process
 from py_os.shell import Shell
 from py_os.syscalls import SyscallError, SyscallNumber
 

@@ -16,8 +16,8 @@ restores it on load.  This teaches:
 import json
 from pathlib import Path
 
-from py_os.filesystem import FileSystem
-from py_os.persistence import dump_filesystem, load_filesystem
+from py_os.fs.filesystem import FileSystem
+from py_os.fs.persistence import dump_filesystem, load_filesystem
 
 # -- Round-trip (save and reload) -----------------------------------------------
 

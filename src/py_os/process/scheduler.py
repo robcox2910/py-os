@@ -33,7 +33,7 @@ from __future__ import annotations
 from collections import deque
 from typing import Protocol
 
-from py_os.process import Process, ProcessState
+from py_os.process.pcb import Process, ProcessState
 
 
 class SchedulingPolicy(Protocol):

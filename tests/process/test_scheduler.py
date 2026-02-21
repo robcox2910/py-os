@@ -17,8 +17,8 @@ so they can be swapped without changing the scheduler.
 
 import pytest
 
-from py_os.process import Process, ProcessState
-from py_os.scheduler import (
+from py_os.process.pcb import Process, ProcessState
+from py_os.process.scheduler import (
     AgingPriorityPolicy,
     CFSPolicy,
     FCFSPolicy,

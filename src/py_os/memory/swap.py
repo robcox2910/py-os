@@ -35,7 +35,7 @@ Pager:
 from collections import OrderedDict
 from typing import Protocol
 
-from py_os.virtual_memory import VirtualMemory
+from py_os.memory.virtual import VirtualMemory
 
 # ---------------------------------------------------------------------------
 # Replacement Policy Protocol (Strategy pattern)

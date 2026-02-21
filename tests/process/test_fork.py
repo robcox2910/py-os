@@ -17,7 +17,7 @@ Key properties:
 import pytest
 
 from py_os.kernel import Kernel
-from py_os.process import ProcessState
+from py_os.process.pcb import ProcessState
 from py_os.shell import Shell
 from py_os.syscalls import SyscallError, SyscallNumber
 

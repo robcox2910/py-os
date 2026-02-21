@@ -15,9 +15,9 @@ Two strategies address deadlock:
       an unsafe state (no guaranteed completion sequence).
 """
 
-from py_os.deadlock import ResourceManager
 from py_os.kernel import Kernel
 from py_os.shell import Shell
+from py_os.sync.deadlock import ResourceManager
 from py_os.syscalls import SyscallNumber
 
 

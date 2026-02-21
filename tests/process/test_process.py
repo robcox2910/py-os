@@ -11,7 +11,7 @@ resource information. Processes follow a strict state machine:
 
 import pytest
 
-from py_os.process import Process, ProcessState
+from py_os.process.pcb import Process, ProcessState
 
 INITIAL_PRIORITY = 0
 CUSTOM_PRIORITY = 5
