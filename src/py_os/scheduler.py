@@ -1,7 +1,7 @@
 """CPU scheduler — decides which READY process gets the CPU next.
 
 The scheduler owns the ready queue and delegates the *ordering* decision
-to a pluggable SchedulingPolicy.  Four policies ship out of the box:
+to a pluggable SchedulingPolicy.  Five policies ship out of the box:
 
 - **FCFSPolicy** (First Come, First Served): pure FIFO — simple, but a
   long-running process starves everyone behind it (convoy effect).
@@ -11,6 +11,9 @@ to a pluggable SchedulingPolicy.  Four policies ship out of the box:
 - **PriorityPolicy**: highest-priority process runs first.  Ties are
   broken by arrival order (FIFO).  Simple but susceptible to starvation
   of low-priority processes.
+- **AgingPriorityPolicy**: like PriorityPolicy, but waiting processes
+  earn a small priority bonus each scheduling round.  This prevents
+  starvation — even a low-priority process eventually gets selected.
 - **MLFQPolicy** (Multilevel Feedback Queue): adaptive scheduling with
   demotion.  New processes start at the highest-priority queue (shortest
   quantum).  Preempted processes are demoted to a lower queue with a
@@ -128,6 +131,73 @@ class PriorityPolicy:
 
     def on_preempt(self, ready_queue: deque[Process], process: Process) -> None:
         """Append the preempted process to the back of the queue."""
+        ready_queue.append(process)
+
+
+class AgingPriorityPolicy:
+    """Priority scheduling with aging — prevent starvation.
+
+    Like PriorityPolicy, the highest effective priority wins.  But each
+    time the scheduler runs, every waiting process earns a small bonus.
+    This means even a low-priority process will eventually collect enough
+    bonus to be selected.  Once dispatched, the bonus resets to zero.
+    """
+
+    def __init__(self, *, aging_boost: int = 1, max_age: int = 10) -> None:
+        """Create an aging priority policy.
+
+        Args:
+            aging_boost: Priority bonus awarded each scheduling round.
+            max_age: Maximum accumulated age bonus.
+
+        """
+        self._aging_boost = aging_boost
+        self._max_age = max_age
+        self._ages: dict[int, int] = {}  # PID → accumulated age bonus
+
+    @property
+    def aging_boost(self) -> int:
+        """Return the per-round priority bonus."""
+        return self._aging_boost
+
+    @property
+    def max_age(self) -> int:
+        """Return the maximum age bonus."""
+        return self._max_age
+
+    def effective_priority(self, process: Process) -> int:
+        """Return base priority plus accumulated age bonus."""
+        return process.priority + self._ages.get(process.pid, 0)
+
+    def select(self, ready_queue: deque[Process]) -> Process | None:
+        """Age all waiting processes, then pick the highest effective priority."""
+        if not ready_queue:
+            return None
+
+        # Age every process in the queue
+        for proc in ready_queue:
+            current_age = self._ages.get(proc.pid, 0)
+            self._ages[proc.pid] = min(current_age + self._aging_boost, self._max_age)
+
+        # Find the highest effective priority (FIFO tiebreak via left-to-right scan)
+        best_idx = 0
+        best_eff = self.effective_priority(ready_queue[0])
+        for i in range(1, len(ready_queue)):
+            eff = self.effective_priority(ready_queue[i])
+            if eff > best_eff:
+                best_eff = eff
+                best_idx = i
+
+        process = ready_queue[best_idx]
+        del ready_queue[best_idx]
+
+        # Reset winner's age
+        self._ages[process.pid] = 0
+        return process
+
+    def on_preempt(self, ready_queue: deque[Process], process: Process) -> None:
+        """Reset the preempted process's age and re-insert at back."""
+        self._ages[process.pid] = 0
         ready_queue.append(process)
 
 

@@ -31,7 +31,13 @@ Why bother with this layer?
 from enum import IntEnum
 from typing import Any
 
-from py_os.scheduler import FCFSPolicy, MLFQPolicy, PriorityPolicy, RoundRobinPolicy
+from py_os.scheduler import (
+    AgingPriorityPolicy,
+    FCFSPolicy,
+    MLFQPolicy,
+    PriorityPolicy,
+    RoundRobinPolicy,
+)
 from py_os.signals import SignalError
 from py_os.users import FilePermissions
 from py_os.users import PermissionError as OsPermissionError
@@ -663,11 +669,17 @@ def _sys_set_scheduler(kernel: Any, **kwargs: Any) -> str:
         case "priority":
             kernel.set_scheduler_policy(PriorityPolicy())
             return "Scheduler set to Priority"
+        case "aging":
+            aging_boost: int = kwargs.get("aging_boost", 1)
+            max_age: int = kwargs.get("max_age", 10)
+            policy = AgingPriorityPolicy(aging_boost=aging_boost, max_age=max_age)
+            kernel.set_scheduler_policy(policy)
+            return f"Scheduler set to Aging Priority (boost={aging_boost}, max_age={max_age})"
         case "mlfq":
             num_levels: int = kwargs.get("num_levels", 3)
             base_quantum: int = kwargs.get("base_quantum", 2)
-            policy = MLFQPolicy(num_levels=num_levels, base_quantum=base_quantum)
-            kernel.set_scheduler_policy(policy)
+            mlfq_policy = MLFQPolicy(num_levels=num_levels, base_quantum=base_quantum)
+            kernel.set_scheduler_policy(mlfq_policy)
             return f"Scheduler set to MLFQ ({num_levels} levels, base_quantum={base_quantum})"
         case _:
             msg = f"Unknown scheduling policy: {policy_name}"
