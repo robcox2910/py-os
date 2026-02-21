@@ -109,7 +109,26 @@ policy = PriorityPolicy()
 scheduler = Scheduler(policy=policy)
 ```
 
-There is a catch: **starvation**. If high-priority processes keep arriving, the low-priority ones never get a turn -- like an emergency room where critical patients keep showing up and the person with a sprained ankle waits forever. Real operating systems solve this with a technique called **aging**, where a process's priority slowly increases the longer it waits.
+There is a catch: **starvation**. If high-priority processes keep arriving, the low-priority ones never get a turn -- like an emergency room where critical patients keep showing up and the person with a sprained ankle waits forever. The next policy solves exactly this problem.
+
+### Aging Priority
+
+Imagine a lunch queue where VIP students always cut in front. That is unfair -- regular students could wait all day. **Aging** is like giving every waiting student a "patience sticker" each time someone cuts ahead of them. Once you collect enough stickers, the lunch lady says "You've waited long enough -- you're next!" After you get served, your stickers are cleared and the counting starts over.
+
+In PyOS, every time the scheduler runs, each waiting process earns a small priority bonus (the `aging_boost`, default 1). The **effective priority** is the process's base priority plus its accumulated bonus. Eventually, even a low-priority process collects enough bonus to beat the high-priority newcomers. Once selected, the bonus resets to zero. A cap (`max_age`, default 10) prevents the bonus from growing without limit.
+
+```python
+# Aging Priority with default settings (boost=1, max_age=10)
+policy = AgingPriorityPolicy()
+scheduler = Scheduler(policy=policy)
+```
+
+You can switch to it from the shell:
+
+```
+pyos> scheduler aging
+Scheduler set to Aging Priority (boost=1, max_age=10)
+```
 
 ### Multilevel Feedback Queue (MLFQ)
 
@@ -142,13 +161,14 @@ pyos> scheduler boost
 MLFQ boost: all processes reset to level 0
 ```
 
-### Comparing the Four Policies
+### Comparing the Five Policies
 
 | Policy | Ordering | Preemption | Starvation risk | Best for |
 |--------|---------|------------|----------------|----------|
 | FCFS | Arrival order | None | Convoy effect | Batch jobs |
 | Round Robin | Arrival order | After quantum | None | Time-sharing |
 | Priority | Priority number | None | High | Mixed workloads |
+| Aging Priority | Priority + age bonus | None | None (aging fixes it) | Priority with fairness |
 | MLFQ | Adaptive levels | After level quantum | None (with boost) | Real-world general use |
 
 You can switch policies at runtime using the `scheduler` shell command:
@@ -288,7 +308,7 @@ The `run` command does the full lifecycle behind the scenes: it creates a proces
 
 ## Putting It All Together
 
-Here is the big picture. A process is a program in action, tracked by a PCB. The scheduler decides which process gets the CPU, using a pluggable policy (FCFS or Round Robin). Processes can create copies of themselves through forking, or run lightweight parallel work using threads. When a process runs a program, it goes through the full lifecycle -- create, load, execute, output, and exit.
+Here is the big picture. A process is a program in action, tracked by a PCB. The scheduler decides which process gets the CPU, using a pluggable policy (FCFS, Round Robin, Priority, Aging Priority, or MLFQ). Processes can create copies of themselves through forking, or run lightweight parallel work using threads. When a process runs a program, it goes through the full lifecycle -- create, load, execute, output, and exit.
 
 All of these pieces work together inside the [kernel](kernel-and-syscalls.md), which coordinates the scheduler, [memory](memory.md) manager, and process table to keep everything running smoothly.
 
@@ -307,6 +327,7 @@ All of these pieces work together inside the [kernel](kernel-and-syscalls.md), w
 | **Preemption** | Pulling a running process off the CPU so someone else can have a turn |
 | **Priority** | A number that tells the scheduler how important a process is (higher = more important) |
 | **Starvation** | When a low-priority process never gets to run because higher-priority work keeps arriving |
+| **Aging** | A technique that gives waiting processes a small priority boost each round, preventing starvation |
 | **Fork** | Creating a copy of a process -- new PID, copied memory, independent from the original |
 | **Thread** | A lightweight execution unit that shares memory with other threads in the same process |
 | **Race condition** | A bug caused by two threads accessing shared data at the same time |

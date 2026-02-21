@@ -206,6 +206,21 @@ class TestShellScheduler:
         assert "levels" in result.lower()
         assert "quanta" in result.lower()
 
+    def test_scheduler_switch_to_aging(self) -> None:
+        """Switching to aging priority policy should be confirmed."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("scheduler aging")
+        assert "Aging Priority" in result
+
+    def test_scheduler_show_aging(self) -> None:
+        """Showing scheduler info with aging active should display boost and max_age."""
+        _kernel, shell = _booted_shell()
+        shell.execute("scheduler aging")
+        result = shell.execute("scheduler")
+        assert "Aging Priority" in result
+        assert "boost" in result.lower()
+        assert "max_age" in result.lower()
+
 
 class TestShellRunWithPriority:
     """Verify the run command accepts an optional priority argument."""

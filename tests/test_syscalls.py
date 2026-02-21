@@ -213,6 +213,15 @@ class TestSyscallScheduler:
         with pytest.raises(SyscallError, match="MLFQ"):
             kernel.syscall(SyscallNumber.SYS_SCHEDULER_BOOST)
 
+    def test_sys_set_scheduler_aging(self) -> None:
+        """SYS_SET_SCHEDULER with policy='aging' should switch to Aging Priority."""
+        kernel = _booted_kernel()
+        result = kernel.syscall(
+            SyscallNumber.SYS_SET_SCHEDULER,
+            policy="aging",
+        )
+        assert "aging" in result.lower()
+
 
 class TestSyscallValidation:
     """Verify that syscalls validate inputs and kernel state."""

@@ -1,11 +1,13 @@
 """Tests for the scheduler module.
 
 The scheduler decides which READY process gets the CPU next. We test
-four algorithms:
+five algorithms:
 
 - FCFS (First Come, First Served): processes run in arrival order.
 - Round Robin: each process gets a fixed time quantum, then yields.
 - Priority: highest priority process runs first, FIFO tiebreaker.
+- Aging Priority: like Priority, but waiting processes earn bonus priority
+  over time to prevent starvation.
 - MLFQ (Multilevel Feedback Queue): adaptive demotion with boost.
 
 All implementations share the same interface (SchedulingPolicy protocol)
@@ -16,6 +18,7 @@ import pytest
 
 from py_os.process import Process, ProcessState
 from py_os.scheduler import (
+    AgingPriorityPolicy,
     FCFSPolicy,
     MLFQPolicy,
     PriorityPolicy,
@@ -311,6 +314,129 @@ class TestPriorityPolicy:
         scheduler.terminate_current()
 
         # Now only p1 remains
+        assert scheduler.dispatch() is p1
+
+
+# Named constants for aging priority tests.
+DEFAULT_AGING_BOOST = 1
+DEFAULT_MAX_AGE = 10
+
+
+class TestAgingPriorityPolicy:
+    """Verify priority scheduling with aging — prevents starvation."""
+
+    def test_empty_queue_returns_none(self) -> None:
+        """An empty queue should produce None."""
+        policy = AgingPriorityPolicy()
+        scheduler = Scheduler(policy=policy)
+        assert scheduler.dispatch() is None
+
+    def test_selects_highest_base_priority(self) -> None:
+        """Without aging, behave like PriorityPolicy — highest priority wins."""
+        scheduler = Scheduler(policy=AgingPriorityPolicy())
+        p_low = _ready("low", LOW_PRIORITY)
+        p_high = _ready("high", HIGH_PRIORITY)
+        for p in (p_low, p_high):
+            scheduler.add(p)
+
+        assert scheduler.dispatch() is p_high
+
+    def test_age_increments_on_each_dispatch(self) -> None:
+        """After dispatch, non-selected processes' age should increase."""
+        policy = AgingPriorityPolicy()
+        scheduler = Scheduler(policy=policy)
+        p_high = _ready("high", HIGH_PRIORITY)
+        p_low = _ready("low", LOW_PRIORITY)
+        for p in (p_high, p_low):
+            scheduler.add(p)
+
+        # Dispatch picks p_high; p_low should gain an age bonus
+        scheduler.dispatch()
+        assert policy.effective_priority(p_low) == LOW_PRIORITY + DEFAULT_AGING_BOOST
+
+    def test_aging_overcomes_priority_gap(self) -> None:
+        """A low-priority process eventually beats a high-priority one."""
+        policy = AgingPriorityPolicy()
+        scheduler = Scheduler(policy=policy)
+        # Priority gap of 5 — with boost=1, low needs 6 rounds to overtake
+        p_high = _ready("high", MEDIUM_PRIORITY)
+        p_low = _ready("low", 0)
+        for p in (p_high, p_low):
+            scheduler.add(p)
+
+        # Keep dispatching and preempting; p_high always wins at first
+        dispatched_names: list[str] = []
+        dispatch_limit = 20
+        for _ in range(dispatch_limit):
+            result = scheduler.dispatch()
+            assert result is not None
+            dispatched_names.append(result.name)
+            scheduler.preempt()
+
+        # p_low should eventually appear
+        assert "low" in dispatched_names
+
+    def test_age_resets_on_dispatch(self) -> None:
+        """The dispatched process's age bonus should reset to 0."""
+        policy = AgingPriorityPolicy()
+        scheduler = Scheduler(policy=policy)
+        p_high = _ready("high", HIGH_PRIORITY)
+        p_low = _ready("low", LOW_PRIORITY)
+        for p in (p_high, p_low):
+            scheduler.add(p)
+
+        scheduler.dispatch()  # p_high selected
+        # p_high was dispatched, its age resets
+        assert policy.effective_priority(p_high) == HIGH_PRIORITY
+
+    def test_age_resets_on_preempt(self) -> None:
+        """A preempted process's age should reset (it just ran)."""
+        policy = AgingPriorityPolicy()
+        scheduler = Scheduler(policy=policy)
+        p = _ready("worker", MEDIUM_PRIORITY)
+        scheduler.add(p)
+        scheduler.dispatch()
+
+        # Artificially check: after preempt, age resets
+        scheduler.preempt()
+        assert policy.effective_priority(p) == MEDIUM_PRIORITY
+
+    def test_age_capped_at_max(self) -> None:
+        """Age bonus should never exceed max_age."""
+        max_age = 3
+        policy = AgingPriorityPolicy(max_age=max_age)
+        scheduler = Scheduler(policy=policy)
+        p_high = _ready("high", HIGH_PRIORITY)
+        p_low = _ready("low", LOW_PRIORITY)
+        for p in (p_high, p_low):
+            scheduler.add(p)
+
+        # Dispatch many times — p_low ages but should be capped
+        cap_rounds = 10
+        for _ in range(cap_rounds):
+            scheduler.dispatch()
+            scheduler.preempt()
+
+        # p_low's effective priority should not exceed base + max_age
+        assert policy.effective_priority(p_low) <= LOW_PRIORITY + max_age
+
+    def test_custom_boost_and_max(self) -> None:
+        """Custom aging_boost and max_age should be stored correctly."""
+        custom_boost = 2
+        custom_max = 20
+        policy = AgingPriorityPolicy(aging_boost=custom_boost, max_age=custom_max)
+        assert policy.aging_boost == custom_boost
+        assert policy.max_age == custom_max
+
+    def test_equal_effective_priority_uses_fifo(self) -> None:
+        """Tied effective priority should use FIFO (arrival order)."""
+        scheduler = Scheduler(policy=AgingPriorityPolicy())
+        p1 = _ready("first", MEDIUM_PRIORITY)
+        p2 = _ready("second", MEDIUM_PRIORITY)
+        p3 = _ready("third", MEDIUM_PRIORITY)
+        for p in (p1, p2, p3):
+            scheduler.add(p)
+
         assert scheduler.dispatch() is p1
 
 

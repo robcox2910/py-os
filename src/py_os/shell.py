@@ -26,7 +26,13 @@ from collections.abc import Callable
 
 from py_os.jobs import JobManager
 from py_os.kernel import Kernel, KernelState
-from py_os.scheduler import FCFSPolicy, MLFQPolicy, PriorityPolicy, RoundRobinPolicy
+from py_os.scheduler import (
+    AgingPriorityPolicy,
+    FCFSPolicy,
+    MLFQPolicy,
+    PriorityPolicy,
+    RoundRobinPolicy,
+)
 from py_os.signals import Signal
 from py_os.syscalls import SyscallError, SyscallNumber
 
@@ -685,14 +691,14 @@ class Shell:
         if not args:
             return self._cmd_scheduler_show()
         match args[0]:
-            case "fcfs" | "rr" | "priority":
+            case "fcfs" | "rr" | "priority" | "aging":
                 return self._cmd_scheduler_switch(args[0], args[1:])
             case "mlfq":
                 return self._cmd_scheduler_mlfq(args[1:])
             case "boost":
                 return self._cmd_scheduler_boost()
             case _:
-                return f"Error: unknown policy '{args[0]}'. Use fcfs, rr, priority, or mlfq."
+                return f"Error: unknown policy '{args[0]}'. Use fcfs, rr, priority, aging, or mlfq."
 
     def _cmd_scheduler_show(self) -> str:
         """Display the current scheduling policy name."""
@@ -702,17 +708,18 @@ class Shell:
         policy = scheduler.policy
         match policy:
             case FCFSPolicy():
-                return "Current policy: FCFS"
+                label = "FCFS"
             case RoundRobinPolicy():
-                return f"Current policy: Round Robin (quantum={policy.quantum})"
+                label = f"Round Robin (quantum={policy.quantum})"
             case PriorityPolicy():
-                return "Current policy: Priority"
+                label = "Priority"
+            case AgingPriorityPolicy():
+                label = f"Aging Priority (boost={policy.aging_boost}, max_age={policy.max_age})"
             case MLFQPolicy():
-                return (
-                    f"Current policy: MLFQ ({policy.num_levels} levels, quanta={policy.quantums})"
-                )
+                label = f"MLFQ ({policy.num_levels} levels, quanta={policy.quantums})"
             case _:
-                return f"Current policy: {type(policy).__name__}"
+                label = type(policy).__name__
+        return f"Current policy: {label}"
 
     def _cmd_scheduler_switch(self, name: str, args: list[str]) -> str:
         """Switch the scheduling policy via syscall."""
