@@ -31,6 +31,7 @@ Why bother with this layer?
 from enum import IntEnum
 from typing import Any
 
+from py_os.scheduler import FCFSPolicy, PriorityPolicy, RoundRobinPolicy
 from py_os.signals import SignalError
 from py_os.users import FilePermissions
 from py_os.users import PermissionError as OsPermissionError
@@ -106,6 +107,9 @@ class SyscallNumber(IntEnum):
     SYS_CONDITION_WAIT = 117
     SYS_CONDITION_NOTIFY = 118
 
+    # Scheduler operations
+    SYS_SET_SCHEDULER = 120
+
 
 class SyscallError(Exception):
     """Raised when a system call fails.
@@ -178,6 +182,7 @@ def dispatch_syscall(
         SyscallNumber.SYS_CREATE_CONDITION: _sys_create_condition,
         SyscallNumber.SYS_CONDITION_WAIT: _sys_condition_wait,
         SyscallNumber.SYS_CONDITION_NOTIFY: _sys_condition_notify,
+        SyscallNumber.SYS_SET_SCHEDULER: _sys_set_scheduler,
     }
 
     handler = handlers.get(number)
@@ -195,7 +200,8 @@ def _sys_create_process(kernel: Any, **kwargs: Any) -> dict[str, Any]:
     """Create a new process."""
     name: str = kwargs["name"]
     num_pages: int = kwargs["num_pages"]
-    process = kernel.create_process(name=name, num_pages=num_pages)
+    priority: int = kwargs.get("priority", 0)
+    process = kernel.create_process(name=name, num_pages=num_pages, priority=priority)
     return {"pid": process.pid, "name": process.name, "state": process.state}
 
 
@@ -632,3 +638,29 @@ def _sys_condition_notify(kernel: Any, **kwargs: Any) -> str:
     except KeyError as e:
         raise SyscallError(str(e)) from e
     return f"condition '{name}' notified"
+
+
+# -- Scheduler syscall handlers ------------------------------------------------
+
+
+def _sys_set_scheduler(kernel: Any, **kwargs: Any) -> str:
+    """Switch the active scheduling policy."""
+    policy_name: str = kwargs["policy"]
+    quantum: int | None = kwargs.get("quantum")
+
+    match policy_name:
+        case "fcfs":
+            kernel.set_scheduler_policy(FCFSPolicy())
+            return "Scheduler set to FCFS"
+        case "rr":
+            if quantum is None:
+                msg = "Round Robin requires a quantum"
+                raise SyscallError(msg)
+            kernel.set_scheduler_policy(RoundRobinPolicy(quantum=quantum))
+            return f"Scheduler set to Round Robin (quantum={quantum})"
+        case "priority":
+            kernel.set_scheduler_policy(PriorityPolicy())
+            return "Scheduler set to Priority"
+        case _:
+            msg = f"Unknown scheduling policy: {policy_name}"
+            raise SyscallError(msg)

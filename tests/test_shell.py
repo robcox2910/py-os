@@ -138,6 +138,50 @@ class TestShellFilesystemCommands:
         assert "usage" in result.lower() or "error" in result.lower()
 
 
+class TestShellScheduler:
+    """Verify the scheduler command for viewing and switching policies."""
+
+    def test_scheduler_shows_current_policy(self) -> None:
+        """Default scheduler should report FCFS."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("scheduler")
+        assert "FCFS" in result
+
+    def test_scheduler_switch_to_priority(self) -> None:
+        """Switching to priority policy should be confirmed."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("scheduler priority")
+        assert "Priority" in result
+
+    def test_scheduler_switch_to_rr(self) -> None:
+        """Switching to round robin with a quantum should be confirmed."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("scheduler rr 3")
+        assert "Round Robin" in result
+
+    def test_scheduler_missing_rr_quantum(self) -> None:
+        """Round robin without a quantum should produce a usage error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("scheduler rr")
+        assert "usage" in result.lower() or "error" in result.lower()
+
+    def test_scheduler_unknown_policy(self) -> None:
+        """An unknown policy name should produce an error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("scheduler foo")
+        assert "error" in result.lower() or "unknown" in result.lower()
+
+
+class TestShellRunWithPriority:
+    """Verify the run command accepts an optional priority argument."""
+
+    def test_run_with_priority(self) -> None:
+        """Running a program with a priority should succeed."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("run hello 5")
+        assert "Hello from PyOS!" in result
+
+
 class TestShellKill:
     """Verify the kill command."""
 

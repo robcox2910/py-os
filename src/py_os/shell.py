@@ -26,6 +26,7 @@ from collections.abc import Callable
 
 from py_os.jobs import JobManager
 from py_os.kernel import Kernel, KernelState
+from py_os.scheduler import FCFSPolicy, PriorityPolicy, RoundRobinPolicy
 from py_os.signals import Signal
 from py_os.syscalls import SyscallError, SyscallNumber
 
@@ -103,6 +104,7 @@ class Shell:
             "echo": self._cmd_echo,
             "source": self._cmd_source,
             "run": self._cmd_run,
+            "scheduler": self._cmd_scheduler,
             "mutex": self._cmd_mutex,
             "semaphore": self._cmd_semaphore,
         }
@@ -647,8 +649,14 @@ class Shell:
     def _cmd_run(self, args: list[str]) -> str:
         """Create a process, load a built-in program, and run it."""
         if not args:
-            return "Usage: run <program>"
+            return "Usage: run <program> [priority]"
         program_name = args[0]
+        priority = 0
+        if len(args) >= 2:  # noqa: PLR2004
+            try:
+                priority = int(args[1])
+            except ValueError:
+                return f"Error: invalid priority '{args[1]}'"
         programs: dict[str, Callable[[], str]] = {
             "hello": lambda: "Hello from PyOS!",
             "counter": lambda: "\n".join(str(i) for i in range(1, 6)),
@@ -658,7 +666,10 @@ class Shell:
             return f"Unknown program: {program_name}"
         try:
             result = self._kernel.syscall(
-                SyscallNumber.SYS_CREATE_PROCESS, name=program_name, num_pages=1
+                SyscallNumber.SYS_CREATE_PROCESS,
+                name=program_name,
+                num_pages=1,
+                priority=priority,
             )
             pid = result["pid"]
             self._kernel.syscall(SyscallNumber.SYS_EXEC, pid=pid, program=program)
@@ -668,6 +679,63 @@ class Shell:
             return f"{output}\n[exit code: {exit_code}]"
         except SyscallError as e:
             return f"Error: {e}"
+
+    def _cmd_scheduler(self, args: list[str]) -> str:
+        """Show or switch the scheduling policy."""
+        if not args:
+            return self._cmd_scheduler_show()
+        match args[0]:
+            case "fcfs":
+                return self._cmd_scheduler_switch("fcfs", args[1:])
+            case "rr":
+                return self._cmd_scheduler_switch("rr", args[1:])
+            case "priority":
+                return self._cmd_scheduler_switch("priority", args[1:])
+            case _:
+                return f"Error: unknown policy '{args[0]}'. Use fcfs, rr, or priority."
+
+    def _cmd_scheduler_show(self) -> str:
+        """Display the current scheduling policy name."""
+        scheduler = self._kernel.scheduler
+        if scheduler is None:
+            return "Scheduler not available."
+        policy = scheduler.policy
+        match policy:
+            case FCFSPolicy():
+                return "Current policy: FCFS"
+            case RoundRobinPolicy():
+                return f"Current policy: Round Robin (quantum={policy.quantum})"
+            case PriorityPolicy():
+                return "Current policy: Priority"
+            case _:
+                return f"Current policy: {type(policy).__name__}"
+
+    def _cmd_scheduler_switch(self, name: str, args: list[str]) -> str:
+        """Switch the scheduling policy via syscall."""
+        if name == "rr":
+            if not args:
+                return "Usage: scheduler rr <quantum>"
+            try:
+                quantum = int(args[0])
+            except ValueError:
+                return f"Error: invalid quantum '{args[0]}'"
+            try:
+                result: str = self._kernel.syscall(
+                    SyscallNumber.SYS_SET_SCHEDULER,
+                    policy=name,
+                    quantum=quantum,
+                )
+            except SyscallError as e:
+                return f"Error: {e}"
+            return result
+        try:
+            result = self._kernel.syscall(
+                SyscallNumber.SYS_SET_SCHEDULER,
+                policy=name,
+            )
+        except SyscallError as e:
+            return f"Error: {e}"
+        return result
 
     def _cmd_mutex(self, args: list[str]) -> str:
         """Manage mutexes — create or list."""

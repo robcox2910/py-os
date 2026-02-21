@@ -1,18 +1,21 @@
 """CPU scheduler — decides which READY process gets the CPU next.
 
 The scheduler owns the ready queue and delegates the *ordering* decision
-to a pluggable SchedulingPolicy.  Two policies ship out of the box:
+to a pluggable SchedulingPolicy.  Three policies ship out of the box:
 
 - **FCFSPolicy** (First Come, First Served): pure FIFO — simple, but a
   long-running process starves everyone behind it (convoy effect).
 - **RoundRobinPolicy**: each process gets a fixed time quantum, then is
   preempted so the next process can run.  Fairer, but more context-switch
   overhead.
+- **PriorityPolicy**: highest-priority process runs first.  Ties are
+  broken by arrival order (FIFO).  Simple but susceptible to starvation
+  of low-priority processes.
 
 Design: Strategy pattern
     The Scheduler is the *context*; SchedulingPolicy is the *strategy*.
-    Adding a new algorithm (e.g. priority-based) means writing a new
-    policy class — existing code is never touched.
+    Adding a new algorithm means writing a new policy class — existing
+    code is never touched.
 """
 
 from __future__ import annotations
@@ -93,6 +96,37 @@ class RoundRobinPolicy:
         ready_queue.append(process)
 
 
+class PriorityPolicy:
+    """Priority scheduling — highest priority process runs first.
+
+    Non-preemptive: once dispatched, a process runs until termination or
+    explicit preemption.  Higher priority values = more important.
+
+    Starvation risk: low-priority processes can wait forever if high-
+    priority work keeps arriving.  Real systems use aging to solve this.
+
+    Tiebreaker: equal-priority processes use FIFO (first-added wins),
+    since we scan left-to-right and the deque preserves insertion order.
+    """
+
+    def select(self, ready_queue: deque[Process]) -> Process | None:
+        """Remove and return the highest-priority process, or None."""
+        if not ready_queue:
+            return None
+        best_idx = 0
+        for i in range(1, len(ready_queue)):
+            if ready_queue[i].priority > ready_queue[best_idx].priority:
+                best_idx = i
+        # Remove the winner from the deque (O(n), fine for a learning sim)
+        process = ready_queue[best_idx]
+        del ready_queue[best_idx]
+        return process
+
+    def on_preempt(self, ready_queue: deque[Process], process: Process) -> None:
+        """Append the preempted process to the back of the queue."""
+        ready_queue.append(process)
+
+
 class Scheduler:
     """The CPU scheduler — manages the ready queue and current process.
 
@@ -101,7 +135,7 @@ class Scheduler:
     policy, and tracks which process currently owns the CPU.
     """
 
-    def __init__(self, *, policy: FCFSPolicy | RoundRobinPolicy) -> None:
+    def __init__(self, *, policy: SchedulingPolicy) -> None:
         """Create a scheduler with the given scheduling policy.
 
         Args:
@@ -111,6 +145,11 @@ class Scheduler:
         self._policy = policy
         self._ready_queue: deque[Process] = deque()
         self._current: Process | None = None
+
+    @property
+    def policy(self) -> SchedulingPolicy:
+        """Return the current scheduling policy."""
+        return self._policy
 
     @property
     def ready_count(self) -> int:
