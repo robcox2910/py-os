@@ -95,6 +95,17 @@ class SyscallNumber(IntEnum):
     SYS_LIST_ENV = 72
     SYS_DELETE_ENV = 73
 
+    # Synchronization operations
+    SYS_CREATE_MUTEX = 110
+    SYS_ACQUIRE_MUTEX = 111
+    SYS_RELEASE_MUTEX = 112
+    SYS_CREATE_SEMAPHORE = 113
+    SYS_ACQUIRE_SEMAPHORE = 114
+    SYS_RELEASE_SEMAPHORE = 115
+    SYS_CREATE_CONDITION = 116
+    SYS_CONDITION_WAIT = 117
+    SYS_CONDITION_NOTIFY = 118
+
 
 class SyscallError(Exception):
     """Raised when a system call fails.
@@ -158,6 +169,15 @@ def dispatch_syscall(
         SyscallNumber.SYS_DETECT_DEADLOCK: _sys_detect_deadlock,
         SyscallNumber.SYS_EXEC: _sys_exec,
         SyscallNumber.SYS_RUN: _sys_run,
+        SyscallNumber.SYS_CREATE_MUTEX: _sys_create_mutex,
+        SyscallNumber.SYS_ACQUIRE_MUTEX: _sys_acquire_mutex,
+        SyscallNumber.SYS_RELEASE_MUTEX: _sys_release_mutex,
+        SyscallNumber.SYS_CREATE_SEMAPHORE: _sys_create_semaphore,
+        SyscallNumber.SYS_ACQUIRE_SEMAPHORE: _sys_acquire_semaphore,
+        SyscallNumber.SYS_RELEASE_SEMAPHORE: _sys_release_semaphore,
+        SyscallNumber.SYS_CREATE_CONDITION: _sys_create_condition,
+        SyscallNumber.SYS_CONDITION_WAIT: _sys_condition_wait,
+        SyscallNumber.SYS_CONDITION_NOTIFY: _sys_condition_notify,
     }
 
     handler = handlers.get(number)
@@ -505,3 +525,110 @@ def _sys_run(kernel: Any, **kwargs: Any) -> dict[str, Any]:
         return kernel.run_process(pid=kwargs["pid"])
     except ValueError as e:
         raise SyscallError(str(e)) from e
+
+
+# -- Synchronization syscall handlers -----------------------------------------
+
+
+def _sys_create_mutex(kernel: Any, **kwargs: Any) -> str:
+    """Create a named mutex."""
+    name: str = kwargs["name"]
+    try:
+        kernel.create_mutex(name)
+    except ValueError as e:
+        raise SyscallError(str(e)) from e
+    return f"mutex '{name}' created"
+
+
+def _sys_acquire_mutex(kernel: Any, **kwargs: Any) -> str:
+    """Acquire a named mutex."""
+    name: str = kwargs["name"]
+    tid: int = kwargs["tid"]
+    try:
+        acquired = kernel.acquire_mutex(name, tid=tid)
+    except KeyError as e:
+        raise SyscallError(str(e)) from e
+    if acquired:
+        return f"mutex '{name}' acquired by thread {tid}"
+    return f"thread {tid} queued for mutex '{name}'"
+
+
+def _sys_release_mutex(kernel: Any, **kwargs: Any) -> str:
+    """Release a named mutex."""
+    name: str = kwargs["name"]
+    tid: int = kwargs["tid"]
+    try:
+        kernel.release_mutex(name, tid=tid)
+    except (KeyError, ValueError) as e:
+        raise SyscallError(str(e)) from e
+    return f"mutex '{name}' released by thread {tid}"
+
+
+def _sys_create_semaphore(kernel: Any, **kwargs: Any) -> str:
+    """Create a named semaphore."""
+    name: str = kwargs["name"]
+    count: int = kwargs["count"]
+    try:
+        kernel.create_semaphore(name, count=count)
+    except ValueError as e:
+        raise SyscallError(str(e)) from e
+    return f"semaphore '{name}' created (count={count})"
+
+
+def _sys_acquire_semaphore(kernel: Any, **kwargs: Any) -> str:
+    """Acquire a named semaphore."""
+    name: str = kwargs["name"]
+    tid: int = kwargs["tid"]
+    try:
+        acquired = kernel.acquire_semaphore(name, tid=tid)
+    except KeyError as e:
+        raise SyscallError(str(e)) from e
+    if acquired:
+        return f"semaphore '{name}' acquired by thread {tid}"
+    return f"thread {tid} queued for semaphore '{name}'"
+
+
+def _sys_release_semaphore(kernel: Any, **kwargs: Any) -> str:
+    """Release a named semaphore."""
+    name: str = kwargs["name"]
+    try:
+        kernel.release_semaphore(name)
+    except (KeyError, ValueError) as e:
+        raise SyscallError(str(e)) from e
+    return f"semaphore '{name}' released"
+
+
+def _sys_create_condition(kernel: Any, **kwargs: Any) -> str:
+    """Create a named condition variable."""
+    name: str = kwargs["name"]
+    mutex_name: str = kwargs["mutex_name"]
+    try:
+        kernel.create_condition(name, mutex_name=mutex_name)
+    except (KeyError, ValueError) as e:
+        raise SyscallError(str(e)) from e
+    return f"condition '{name}' created"
+
+
+def _sys_condition_wait(kernel: Any, **kwargs: Any) -> str:
+    """Wait on a named condition variable."""
+    name: str = kwargs["name"]
+    tid: int = kwargs["tid"]
+    try:
+        kernel.condition_wait(name, tid=tid)
+    except (KeyError, ValueError) as e:
+        raise SyscallError(str(e)) from e
+    return f"thread {tid} waiting on '{name}'"
+
+
+def _sys_condition_notify(kernel: Any, **kwargs: Any) -> str:
+    """Notify waiters on a named condition variable."""
+    name: str = kwargs["name"]
+    notify_all: bool = kwargs.get("notify_all", False)
+    try:
+        if notify_all:
+            kernel.condition_notify_all(name)
+        else:
+            kernel.condition_notify(name)
+    except KeyError as e:
+        raise SyscallError(str(e)) from e
+    return f"condition '{name}' notified"

@@ -37,6 +37,7 @@ Each guide explains one part of the OS with real-world analogies and simple lang
 | [The Shell](docs/concepts/shell.md) | Typing commands, pipes, scripting, and environment variables |
 | [Devices and Networking](docs/concepts/devices-and-networking.md) | Hardware, inter-process communication, disk scheduling, and sockets |
 | [Users and Safety](docs/concepts/users-and-safety.md) | Permissions, signals, logging, and deadlocks |
+| [Synchronization](docs/concepts/synchronization.md) | Mutexes, semaphores, condition variables, and race conditions |
 
 For a technical overview of every module, see [docs/architecture.md](docs/architecture.md).
 
@@ -68,6 +69,7 @@ For a technical overview of every module, see [docs/architecture.md](docs/archit
 | Networking | `networking.py` | Sockets, client-server model |
 | Persistence | `persistence.py` | Save/load filesystem to JSON |
 | Execution | `process.py` | Running programs, exit codes |
+| Synchronization | `sync.py` | Mutex, semaphore, condition variable |
 | REPL | `repl.py` | Interactive terminal |
 
 ## Shell Commands
@@ -105,6 +107,8 @@ deadlock    Run deadlock detection
 devices     List registered devices
 devread     Read from a device
 devwrite    Write to a device
+mutex       Manage mutexes (create, list)
+semaphore   Manage semaphores (create, list)
 echo args   Print arguments to output
 source path Run a script from a file
 run prog    Run a built-in program (hello, counter)
