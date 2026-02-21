@@ -40,6 +40,7 @@ from py_os.memory import MemoryManager
 from py_os.process import Process, ProcessState
 from py_os.scheduler import FCFSPolicy, Scheduler
 from py_os.signals import Signal, SignalError
+from py_os.sync import Condition, Mutex, Semaphore, SyncManager
 from py_os.syscalls import SyscallNumber, dispatch_syscall
 from py_os.threads import Thread
 from py_os.users import FilePermissions, UserManager
@@ -88,6 +89,7 @@ class Kernel:
         self._processes: dict[int, Process] = {}
         self._signal_handlers: dict[tuple[int, Signal], Callable[[], None]] = {}
         self._resource_manager: ResourceManager | None = None
+        self._sync_manager: SyncManager | None = None
 
     @property
     def state(self) -> KernelState:
@@ -161,6 +163,11 @@ class Kernel:
         """Return the resource manager, or None if not booted."""
         return self._resource_manager
 
+    @property
+    def sync_manager(self) -> SyncManager | None:
+        """Return the sync manager, or None if not booted."""
+        return self._sync_manager
+
     def _require_running(self) -> None:
         """Raise if the kernel is not in the RUNNING state."""
         if self._state is not KernelState.RUNNING:
@@ -215,7 +222,10 @@ class Kernel:
         # 7. Resource manager — deadlock detection and avoidance
         self._resource_manager = ResourceManager()
 
-        # 8. Scheduler — ready to accept processes
+        # 8. Sync manager — mutexes, semaphores, condition variables
+        self._sync_manager = SyncManager()
+
+        # 9. Scheduler — ready to accept processes
         self._scheduler = Scheduler(policy=FCFSPolicy())
 
         self._state = KernelState.RUNNING
@@ -238,6 +248,7 @@ class Kernel:
 
         # Tear down in reverse order
         self._scheduler = None
+        self._sync_manager = None
         self._resource_manager = None
         self._device_manager = None
         self._env = None
@@ -576,3 +587,155 @@ class Kernel:
                 uid=self._current_uid,
             )
         return dispatch_syscall(self, number, **kwargs)
+
+    # -- Synchronization delegation ------------------------------------------
+
+    def create_mutex(self, name: str) -> Mutex:
+        """Create a named mutex via the sync manager.
+
+        Args:
+            name: Unique name for the mutex.
+
+        Returns:
+            The newly created Mutex.
+
+        """
+        self._require_running()
+        assert self._sync_manager is not None  # noqa: S101
+        return self._sync_manager.create_mutex(name)
+
+    def acquire_mutex(self, name: str, *, tid: int) -> bool:
+        """Acquire a named mutex on behalf of a thread.
+
+        Args:
+            name: Name of the mutex.
+            tid: Thread ID of the caller.
+
+        Returns:
+            True if acquired, False if queued.
+
+        """
+        self._require_running()
+        assert self._sync_manager is not None  # noqa: S101
+        mutex = self._sync_manager.get_mutex(name)
+        return mutex.acquire(tid)
+
+    def release_mutex(self, name: str, *, tid: int) -> int | None:
+        """Release a named mutex on behalf of a thread.
+
+        Args:
+            name: Name of the mutex.
+            tid: Thread ID of the caller.
+
+        Returns:
+            The TID of the next waiter, or None.
+
+        """
+        self._require_running()
+        assert self._sync_manager is not None  # noqa: S101
+        mutex = self._sync_manager.get_mutex(name)
+        return mutex.release(tid)
+
+    def create_semaphore(self, name: str, *, count: int) -> Semaphore:
+        """Create a named semaphore via the sync manager.
+
+        Args:
+            name: Unique name for the semaphore.
+            count: Initial available count.
+
+        Returns:
+            The newly created Semaphore.
+
+        """
+        self._require_running()
+        assert self._sync_manager is not None  # noqa: S101
+        return self._sync_manager.create_semaphore(name, count=count)
+
+    def acquire_semaphore(self, name: str, *, tid: int) -> bool:
+        """Acquire a named semaphore on behalf of a thread.
+
+        Args:
+            name: Name of the semaphore.
+            tid: Thread ID of the caller.
+
+        Returns:
+            True if acquired, False if queued.
+
+        """
+        self._require_running()
+        assert self._sync_manager is not None  # noqa: S101
+        sem = self._sync_manager.get_semaphore(name)
+        return sem.acquire(tid)
+
+    def release_semaphore(self, name: str) -> int | None:
+        """Release a named semaphore.
+
+        Args:
+            name: Name of the semaphore.
+
+        Returns:
+            The TID of the woken waiter, or None.
+
+        """
+        self._require_running()
+        assert self._sync_manager is not None  # noqa: S101
+        sem = self._sync_manager.get_semaphore(name)
+        return sem.release()
+
+    def create_condition(self, name: str, *, mutex_name: str) -> Condition:
+        """Create a named condition variable via the sync manager.
+
+        Args:
+            name: Unique name for the condition.
+            mutex_name: Name of the associated mutex.
+
+        Returns:
+            The newly created Condition.
+
+        """
+        self._require_running()
+        assert self._sync_manager is not None  # noqa: S101
+        return self._sync_manager.create_condition(name, mutex_name=mutex_name)
+
+    def condition_wait(self, name: str, *, tid: int) -> None:
+        """Wait on a named condition variable.
+
+        Args:
+            name: Name of the condition.
+            tid: Thread ID of the caller.
+
+        """
+        self._require_running()
+        assert self._sync_manager is not None  # noqa: S101
+        cond = self._sync_manager.get_condition(name)
+        cond.wait(tid)
+
+    def condition_notify(self, name: str) -> int | None:
+        """Notify one waiter on a named condition variable.
+
+        Args:
+            name: Name of the condition.
+
+        Returns:
+            The TID of the woken thread, or None.
+
+        """
+        self._require_running()
+        assert self._sync_manager is not None  # noqa: S101
+        cond = self._sync_manager.get_condition(name)
+        return cond.notify()
+
+    def condition_notify_all(self, name: str) -> list[int]:
+        """Notify all waiters on a named condition variable.
+
+        Args:
+            name: Name of the condition.
+
+        Returns:
+            List of woken TIDs.
+
+        """
+        self._require_running()
+        assert self._sync_manager is not None  # noqa: S101
+        cond = self._sync_manager.get_condition(name)
+        return cond.notify_all()

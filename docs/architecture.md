@@ -22,6 +22,7 @@ Technical reference for every module in the system. For beginner-friendly explan
 | [The Shell](concepts/shell.md) | Commands, pipes, scripting, jobs, history, aliases, env |
 | [Devices and Networking](concepts/devices-and-networking.md) | Device protocol, IPC, disk scheduling, sockets |
 | [Users and Safety](concepts/users-and-safety.md) | Permissions, signals, logging, deadlock |
+| [Synchronization](concepts/synchronization.md) | Mutex, semaphore, condition variable, race conditions |
 
 ## Module Map
 
@@ -34,7 +35,7 @@ Every source file and what it implements.
 | `kernel.py` | `Kernel` | Central coordinator, boot/shutdown lifecycle, subsystem ownership |
 | `kernel.py` | `KernelState` | SHUTDOWN / BOOTING / RUNNING / SHUTTING_DOWN state machine |
 | `syscalls.py` | `dispatch_syscall()` | Trap handler -- routes syscall numbers to kernel subsystem handlers |
-| `syscalls.py` | `SyscallNumber` | IntEnum of all syscall numbers (1-101) |
+| `syscalls.py` | `SyscallNumber` | IntEnum of all syscall numbers (1-118) |
 | `syscalls.py` | `SyscallError` | User-facing exception wrapping internal errors |
 
 ### Process Management
@@ -91,6 +92,15 @@ Every source file and what it implements.
 | `networking.py` | `SocketManager` | Socket lifecycle, connection routing, data buffers |
 | `networking.py` | `Socket` / `SocketState` | Endpoint with CREATED/BOUND/LISTENING/CONNECTED/CLOSED states |
 
+### Synchronization
+
+| File | Class/Function | Purpose |
+|------|---------------|---------|
+| `sync.py` | `Mutex` | Mutual exclusion lock with owner tracking and FIFO wait queue |
+| `sync.py` | `Semaphore` | Counting semaphore with optional max bound |
+| `sync.py` | `Condition` | Condition variable (wait/notify) paired with a mutex |
+| `sync.py` | `SyncManager` | Registry for all sync primitives (mutexes, semaphores, conditions) |
+
 ### Observability
 
 | File | Class/Function | Purpose |
@@ -115,6 +125,7 @@ Every source file and what it implements.
 | 80 | System info |
 | 90 | Deadlock detection |
 | 100-101 | Process execution (exec, run) |
+| 110-118 | Synchronization (mutex, semaphore, condition) |
 
 ## Strategy Pattern Usage
 

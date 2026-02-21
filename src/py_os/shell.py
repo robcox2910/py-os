@@ -103,6 +103,8 @@ class Shell:
             "echo": self._cmd_echo,
             "source": self._cmd_source,
             "run": self._cmd_run,
+            "mutex": self._cmd_mutex,
+            "semaphore": self._cmd_semaphore,
         }
 
     def execute(self, command: str) -> str:
@@ -666,3 +668,77 @@ class Shell:
             return f"{output}\n[exit code: {exit_code}]"
         except SyscallError as e:
             return f"Error: {e}"
+
+    def _cmd_mutex(self, args: list[str]) -> str:
+        """Manage mutexes — create or list."""
+        if not args or args[0] not in {"create", "list"}:
+            return "Usage: mutex <create|list> [args...]"
+        if args[0] == "create":
+            return self._cmd_mutex_create(args[1:])
+        return self._cmd_mutex_list()
+
+    def _cmd_mutex_create(self, args: list[str]) -> str:
+        """Create a named mutex."""
+        if not args:
+            return "Usage: mutex create <name>"
+        try:
+            result: str = self._kernel.syscall(SyscallNumber.SYS_CREATE_MUTEX, name=args[0])
+        except SyscallError as e:
+            return f"Error: {e}"
+        return result
+
+    def _cmd_mutex_list(self) -> str:
+        """List all mutexes and their state."""
+        sm = self._kernel.sync_manager
+        if sm is None:
+            return "Sync manager not available."
+        names = sm.list_mutexes()
+        if not names:
+            return "No mutexes."
+        lines: list[str] = ["NAME       STATE       OWNER"]
+        for name in sorted(names):
+            mutex = sm.get_mutex(name)
+            state = "locked" if mutex.is_locked else "unlocked"
+            owner = str(mutex.owner) if mutex.owner is not None else "-"
+            lines.append(f"{name:<10} {state:<11} {owner}")
+        return "\n".join(lines)
+
+    def _cmd_semaphore(self, args: list[str]) -> str:
+        """Manage semaphores — create or list."""
+        if not args or args[0] not in {"create", "list"}:
+            return "Usage: semaphore <create|list> [args...]"
+        if args[0] == "create":
+            return self._cmd_semaphore_create(args[1:])
+        return self._cmd_semaphore_list()
+
+    def _cmd_semaphore_create(self, args: list[str]) -> str:
+        """Create a named semaphore with a given count."""
+        if len(args) < 2:  # noqa: PLR2004
+            return "Usage: semaphore create <name> <count>"
+        try:
+            count = int(args[1])
+        except ValueError:
+            return f"Error: invalid count '{args[1]}'"
+        try:
+            result: str = self._kernel.syscall(
+                SyscallNumber.SYS_CREATE_SEMAPHORE,
+                name=args[0],
+                count=count,
+            )
+        except SyscallError as e:
+            return f"Error: {e}"
+        return result
+
+    def _cmd_semaphore_list(self) -> str:
+        """List all semaphores and their counts."""
+        sm = self._kernel.sync_manager
+        if sm is None:
+            return "Sync manager not available."
+        names = sm.list_semaphores()
+        if not names:
+            return "No semaphores."
+        lines: list[str] = ["NAME       COUNT"]
+        for name in sorted(names):
+            sem = sm.get_semaphore(name)
+            lines.append(f"{name:<10} {sem.count}")
+        return "\n".join(lines)
