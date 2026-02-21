@@ -33,6 +33,7 @@ from typing import Any
 
 from py_os.scheduler import (
     AgingPriorityPolicy,
+    CFSPolicy,
     FCFSPolicy,
     MLFQPolicy,
     PriorityPolicy,
@@ -681,6 +682,11 @@ def _sys_set_scheduler(kernel: Any, **kwargs: Any) -> str:
             mlfq_policy = MLFQPolicy(num_levels=num_levels, base_quantum=base_quantum)
             kernel.set_scheduler_policy(mlfq_policy)
             return f"Scheduler set to MLFQ ({num_levels} levels, base_quantum={base_quantum})"
+        case "cfs":
+            base_slice: int = kwargs.get("base_slice", 1)
+            cfs_policy = CFSPolicy(base_slice=base_slice)
+            kernel.set_scheduler_policy(cfs_policy)
+            return f"Scheduler set to CFS (base_slice={base_slice})"
         case _:
             msg = f"Unknown scheduling policy: {policy_name}"
             raise SyscallError(msg)

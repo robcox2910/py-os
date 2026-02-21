@@ -46,7 +46,7 @@ For a technical overview of every module, see [docs/architecture.md](docs/archit
 | Module | File | What It Teaches |
 |--------|------|-----------------|
 | Process | `process.py` | Five-state lifecycle, PID assignment |
-| Scheduler | `scheduler.py` | CPU scheduling (FCFS, Round Robin, Priority, Aging Priority, MLFQ) |
+| Scheduler | `scheduler.py` | CPU scheduling (FCFS, Round Robin, Priority, Aging Priority, MLFQ, CFS) |
 | Memory | `memory.py` | Page-based allocation, frame management |
 | Virtual Memory | `virtual_memory.py` | Address translation, page tables, isolation |
 | Filesystem | `filesystem.py` | Inodes, path resolution, file CRUD |
@@ -107,7 +107,7 @@ deadlock    Run deadlock detection
 devices     List registered devices
 devread     Read from a device
 devwrite    Write to a device
-scheduler   Show or switch scheduling policy (fcfs, rr, priority, aging, mlfq)
+scheduler   Show or switch scheduling policy (fcfs, rr, priority, aging, mlfq, cfs)
             scheduler boost — reset MLFQ levels (anti-starvation)
 mutex       Manage mutexes (create, list)
 semaphore   Manage semaphores (create, list)

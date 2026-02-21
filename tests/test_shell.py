@@ -221,6 +221,26 @@ class TestShellScheduler:
         assert "boost" in result.lower()
         assert "max_age" in result.lower()
 
+    def test_scheduler_switch_to_cfs(self) -> None:
+        """Switching to CFS policy should be confirmed."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("scheduler cfs")
+        assert "CFS" in result
+
+    def test_scheduler_cfs_with_base_slice(self) -> None:
+        """Switching to CFS with a custom base_slice should show it."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("scheduler cfs 3")
+        assert "base_slice=3" in result
+
+    def test_scheduler_show_cfs(self) -> None:
+        """Showing scheduler info with CFS active should display base_slice."""
+        _kernel, shell = _booted_shell()
+        shell.execute("scheduler cfs")
+        result = shell.execute("scheduler")
+        assert "CFS" in result
+        assert "base_slice" in result
+
 
 class TestShellRunWithPriority:
     """Verify the run command accepts an optional priority argument."""

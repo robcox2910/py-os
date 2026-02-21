@@ -50,6 +50,7 @@ Every source file and what it implements.
 | `scheduler.py` | `PriorityPolicy` | Highest-priority-first scheduling with FIFO tiebreaker |
 | `scheduler.py` | `AgingPriorityPolicy` | Priority scheduling with aging to prevent starvation |
 | `scheduler.py` | `MLFQPolicy` | Multilevel Feedback Queue with demotion and boost |
+| `scheduler.py` | `CFSPolicy` | Completely Fair Scheduler with weighted virtual runtime |
 | `threads.py` | `Thread` | Lightweight execution unit within a process |
 | `signals.py` | `Signal` | SIGTERM / SIGKILL / SIGSTOP / SIGCONT |
 
@@ -137,6 +138,6 @@ The Strategy pattern appears in three subsystems, always with the same structure
 
 | Subsystem | Mechanism | Policies |
 |-----------|-----------|----------|
-| CPU Scheduling | `Scheduler` | `FCFSPolicy`, `RoundRobinPolicy`, `PriorityPolicy`, `AgingPriorityPolicy`, `MLFQPolicy` |
+| CPU Scheduling | `Scheduler` | `FCFSPolicy`, `RoundRobinPolicy`, `PriorityPolicy`, `AgingPriorityPolicy`, `MLFQPolicy`, `CFSPolicy` |
 | Page Replacement | `Pager` | `FIFOPolicy`, `LRUPolicy`, `ClockPolicy` |
 | Disk Scheduling | `DiskScheduler` | `FCFSPolicy`, `SSTFPolicy`, `SCANPolicy`, `CSCANPolicy` |

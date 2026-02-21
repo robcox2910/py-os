@@ -222,6 +222,15 @@ class TestSyscallScheduler:
         )
         assert "aging" in result.lower()
 
+    def test_sys_set_scheduler_cfs(self) -> None:
+        """SYS_SET_SCHEDULER with policy='cfs' should switch to CFS."""
+        kernel = _booted_kernel()
+        result = kernel.syscall(
+            SyscallNumber.SYS_SET_SCHEDULER,
+            policy="cfs",
+        )
+        assert "CFS" in result
+
 
 class TestSyscallValidation:
     """Verify that syscalls validate inputs and kernel state."""
