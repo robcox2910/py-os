@@ -1,7 +1,7 @@
 """CPU scheduler — decides which READY process gets the CPU next.
 
 The scheduler owns the ready queue and delegates the *ordering* decision
-to a pluggable SchedulingPolicy.  Three policies ship out of the box:
+to a pluggable SchedulingPolicy.  Four policies ship out of the box:
 
 - **FCFSPolicy** (First Come, First Served): pure FIFO — simple, but a
   long-running process starves everyone behind it (convoy effect).
@@ -11,6 +11,10 @@ to a pluggable SchedulingPolicy.  Three policies ship out of the box:
 - **PriorityPolicy**: highest-priority process runs first.  Ties are
   broken by arrival order (FIFO).  Simple but susceptible to starvation
   of low-priority processes.
+- **MLFQPolicy** (Multilevel Feedback Queue): adaptive scheduling with
+  demotion.  New processes start at the highest-priority queue (shortest
+  quantum).  Preempted processes are demoted to a lower queue with a
+  longer quantum.  A periodic boost resets everyone to prevent starvation.
 
 Design: Strategy pattern
     The Scheduler is the *context*; SchedulingPolicy is the *strategy*.
@@ -124,6 +128,75 @@ class PriorityPolicy:
 
     def on_preempt(self, ready_queue: deque[Process], process: Process) -> None:
         """Append the preempted process to the back of the queue."""
+        ready_queue.append(process)
+
+
+class MLFQPolicy:
+    """Multilevel Feedback Queue — adaptive scheduling with demotion.
+
+    New processes start at level 0 (shortest quantum).  If preempted,
+    they are demoted to the next level (longer quantum).  A periodic
+    boost resets everyone to level 0 to prevent starvation.
+
+    Levels are tracked externally in a PID → level dict so the policy
+    works with the scheduler's single ``deque[Process]`` ready queue.
+    """
+
+    def __init__(self, *, num_levels: int = 3, base_quantum: int = 2) -> None:
+        """Create an MLFQ policy with the given number of levels.
+
+        Quanta double each level: ``[base, base*2, base*4, ...]``.
+
+        Args:
+            num_levels: Number of priority queues (default 3).
+            base_quantum: Time quantum for the top-level queue (default 2).
+
+        """
+        self._num_levels = num_levels
+        self._quantums = tuple(base_quantum * (2**i) for i in range(num_levels))
+        self._levels: dict[int, int] = {}
+
+    @property
+    def num_levels(self) -> int:
+        """Return the number of priority levels."""
+        return self._num_levels
+
+    @property
+    def quantums(self) -> tuple[int, ...]:
+        """Return the quanta for each level."""
+        return self._quantums
+
+    def level(self, *, pid: int) -> int:
+        """Return the current level for *pid* (0 if unknown)."""
+        return self._levels.get(pid, 0)
+
+    def quantum_for(self, *, pid: int) -> int:
+        """Return the time quantum for *pid*'s current level."""
+        return self._quantums[self.level(pid=pid)]
+
+    def boost(self) -> None:
+        """Reset all tracked processes to level 0 (anti-starvation)."""
+        self._levels.clear()
+
+    def select(self, ready_queue: deque[Process]) -> Process | None:
+        """Select the highest-level (lowest number) process, FIFO tiebreak."""
+        if not ready_queue:
+            return None
+        best_idx = 0
+        best_level = self.level(pid=ready_queue[0].pid)
+        for i in range(1, len(ready_queue)):
+            proc_level = self.level(pid=ready_queue[i].pid)
+            if proc_level < best_level:
+                best_level = proc_level
+                best_idx = i
+        process = ready_queue[best_idx]
+        del ready_queue[best_idx]
+        return process
+
+    def on_preempt(self, ready_queue: deque[Process], process: Process) -> None:
+        """Demote the preempted process one level and re-insert at back."""
+        current = self.level(pid=process.pid)
+        self._levels[process.pid] = min(current + 1, self._num_levels - 1)
         ready_queue.append(process)
 
 

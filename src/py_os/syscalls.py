@@ -31,7 +31,7 @@ Why bother with this layer?
 from enum import IntEnum
 from typing import Any
 
-from py_os.scheduler import FCFSPolicy, PriorityPolicy, RoundRobinPolicy
+from py_os.scheduler import FCFSPolicy, MLFQPolicy, PriorityPolicy, RoundRobinPolicy
 from py_os.signals import SignalError
 from py_os.users import FilePermissions
 from py_os.users import PermissionError as OsPermissionError
@@ -109,6 +109,7 @@ class SyscallNumber(IntEnum):
 
     # Scheduler operations
     SYS_SET_SCHEDULER = 120
+    SYS_SCHEDULER_BOOST = 121
 
 
 class SyscallError(Exception):
@@ -183,6 +184,7 @@ def dispatch_syscall(
         SyscallNumber.SYS_CONDITION_WAIT: _sys_condition_wait,
         SyscallNumber.SYS_CONDITION_NOTIFY: _sys_condition_notify,
         SyscallNumber.SYS_SET_SCHEDULER: _sys_set_scheduler,
+        SyscallNumber.SYS_SCHEDULER_BOOST: _sys_scheduler_boost,
     }
 
     handler = handlers.get(number)
@@ -661,6 +663,23 @@ def _sys_set_scheduler(kernel: Any, **kwargs: Any) -> str:
         case "priority":
             kernel.set_scheduler_policy(PriorityPolicy())
             return "Scheduler set to Priority"
+        case "mlfq":
+            num_levels: int = kwargs.get("num_levels", 3)
+            base_quantum: int = kwargs.get("base_quantum", 2)
+            policy = MLFQPolicy(num_levels=num_levels, base_quantum=base_quantum)
+            kernel.set_scheduler_policy(policy)
+            return f"Scheduler set to MLFQ ({num_levels} levels, base_quantum={base_quantum})"
         case _:
             msg = f"Unknown scheduling policy: {policy_name}"
             raise SyscallError(msg)
+
+
+def _sys_scheduler_boost(kernel: Any, **_kwargs: Any) -> str:
+    """Trigger an MLFQ priority boost — reset all processes to level 0."""
+    assert kernel.scheduler is not None  # noqa: S101
+    policy = kernel.scheduler.policy
+    if not isinstance(policy, MLFQPolicy):
+        msg = "Boost requires MLFQ policy"
+        raise SyscallError(msg)
+    policy.boost()
+    return "MLFQ boost: all processes reset to level 0"

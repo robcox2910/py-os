@@ -26,7 +26,7 @@ from collections.abc import Callable
 
 from py_os.jobs import JobManager
 from py_os.kernel import Kernel, KernelState
-from py_os.scheduler import FCFSPolicy, PriorityPolicy, RoundRobinPolicy
+from py_os.scheduler import FCFSPolicy, MLFQPolicy, PriorityPolicy, RoundRobinPolicy
 from py_os.signals import Signal
 from py_os.syscalls import SyscallError, SyscallNumber
 
@@ -685,14 +685,14 @@ class Shell:
         if not args:
             return self._cmd_scheduler_show()
         match args[0]:
-            case "fcfs":
-                return self._cmd_scheduler_switch("fcfs", args[1:])
-            case "rr":
-                return self._cmd_scheduler_switch("rr", args[1:])
-            case "priority":
-                return self._cmd_scheduler_switch("priority", args[1:])
+            case "fcfs" | "rr" | "priority":
+                return self._cmd_scheduler_switch(args[0], args[1:])
+            case "mlfq":
+                return self._cmd_scheduler_mlfq(args[1:])
+            case "boost":
+                return self._cmd_scheduler_boost()
             case _:
-                return f"Error: unknown policy '{args[0]}'. Use fcfs, rr, or priority."
+                return f"Error: unknown policy '{args[0]}'. Use fcfs, rr, priority, or mlfq."
 
     def _cmd_scheduler_show(self) -> str:
         """Display the current scheduling policy name."""
@@ -707,6 +707,10 @@ class Shell:
                 return f"Current policy: Round Robin (quantum={policy.quantum})"
             case PriorityPolicy():
                 return "Current policy: Priority"
+            case MLFQPolicy():
+                return (
+                    f"Current policy: MLFQ ({policy.num_levels} levels, quanta={policy.quantums})"
+                )
             case _:
                 return f"Current policy: {type(policy).__name__}"
 
@@ -733,6 +737,36 @@ class Shell:
                 SyscallNumber.SYS_SET_SCHEDULER,
                 policy=name,
             )
+        except SyscallError as e:
+            return f"Error: {e}"
+        return result
+
+    def _cmd_scheduler_mlfq(self, args: list[str]) -> str:
+        """Switch to MLFQ with optional num_levels and base_quantum."""
+        kwargs: dict[str, int | str] = {"policy": "mlfq"}
+        if args:
+            try:
+                kwargs["num_levels"] = int(args[0])
+            except ValueError:
+                return f"Error: invalid num_levels '{args[0]}'"
+        if len(args) >= 2:  # noqa: PLR2004
+            try:
+                kwargs["base_quantum"] = int(args[1])
+            except ValueError:
+                return f"Error: invalid base_quantum '{args[1]}'"
+        try:
+            result: str = self._kernel.syscall(
+                SyscallNumber.SYS_SET_SCHEDULER,
+                **kwargs,
+            )
+        except SyscallError as e:
+            return f"Error: {e}"
+        return result
+
+    def _cmd_scheduler_boost(self) -> str:
+        """Trigger an MLFQ priority boost via syscall."""
+        try:
+            result: str = self._kernel.syscall(SyscallNumber.SYS_SCHEDULER_BOOST)
         except SyscallError as e:
             return f"Error: {e}"
         return result

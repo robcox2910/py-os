@@ -171,6 +171,41 @@ class TestShellScheduler:
         result = shell.execute("scheduler foo")
         assert "error" in result.lower() or "unknown" in result.lower()
 
+    def test_scheduler_switch_to_mlfq(self) -> None:
+        """Switching to MLFQ policy should be confirmed."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("scheduler mlfq")
+        assert "MLFQ" in result
+
+    def test_scheduler_mlfq_with_params(self) -> None:
+        """Switching to MLFQ with custom levels and base quantum."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("scheduler mlfq 4 3")
+        assert "4 levels" in result
+        assert "base_quantum=3" in result
+
+    def test_scheduler_boost(self) -> None:
+        """Scheduler boost should succeed when MLFQ is active."""
+        _kernel, shell = _booted_shell()
+        shell.execute("scheduler mlfq")
+        result = shell.execute("scheduler boost")
+        assert "boost" in result.lower()
+
+    def test_scheduler_boost_without_mlfq(self) -> None:
+        """Scheduler boost with a non-MLFQ policy should error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("scheduler boost")
+        assert "error" in result.lower()
+
+    def test_scheduler_show_mlfq(self) -> None:
+        """Showing scheduler info with MLFQ should display levels and quanta."""
+        _kernel, shell = _booted_shell()
+        shell.execute("scheduler mlfq")
+        result = shell.execute("scheduler")
+        assert "MLFQ" in result
+        assert "levels" in result.lower()
+        assert "quanta" in result.lower()
+
 
 class TestShellRunWithPriority:
     """Verify the run command accepts an optional priority argument."""
