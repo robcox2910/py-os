@@ -32,6 +32,7 @@ from time import monotonic
 from typing import Any
 
 from py_os.env import Environment
+from py_os.fs.fd import FdError, FdTable, FileMode, OpenFileDescription, SeekWhence
 from py_os.fs.filesystem import FileSystem, FileType
 from py_os.io.devices import ConsoleDevice, DeviceManager, NullDevice, RandomDevice
 from py_os.logging import Logger, LogLevel
@@ -97,6 +98,8 @@ class Kernel:
         self._mmap_regions: dict[int, dict[int, MmapRegion]] = {}
         # Shared frame cache: (inode_number, page_index) → (frame, bytearray)
         self._shared_file_frames: dict[tuple[int, int], tuple[int, bytearray]] = {}
+        # Per-process file descriptor tables: pid → FdTable
+        self._fd_tables: dict[int, FdTable] = {}
 
     @property
     def state(self) -> KernelState:
@@ -306,6 +309,7 @@ class Kernel:
         self._memory = None
         self._processes.clear()
         self._signal_handlers.clear()
+        self._fd_tables.clear()
         self._mmap_regions.clear()
         self._shared_file_frames.clear()
 
@@ -434,6 +438,11 @@ class Kernel:
         if parent_regions:
             self._mmap_regions[child.pid] = dict(parent_regions)
 
+        # Copy fd table from parent to child (independent offsets)
+        parent_fd_table = self._fd_tables.get(parent_pid)
+        if parent_fd_table is not None:
+            self._fd_tables[child.pid] = parent_fd_table.duplicate()
+
         # Admit to scheduler and register in process table
         child.admit()
         self._scheduler.add(child)
@@ -464,6 +473,202 @@ class Kernel:
             return (new_frame, new_storage)
 
         vm.cow_fault_handler = cow_handler
+
+    # -- File descriptor operations --------------------------------------------
+
+    def open_file(self, pid: int, path: str, mode: FileMode) -> int:
+        """Open a file and return a file descriptor.
+
+        Validates that the process exists, the file exists, and the path
+        is not a directory.  Creates a per-process fd table on first use.
+
+        Args:
+            pid: The process opening the file.
+            path: Absolute path to the file.
+            mode: Access mode (read, write, or read-write).
+
+        Returns:
+            The newly allocated fd number (>= 3).
+
+        Raises:
+            FdError: If the process or file is not found, or path is a directory.
+
+        """
+        self._require_running()
+        assert self._filesystem is not None  # noqa: S101
+
+        if pid not in self._processes:
+            msg = f"Process {pid} not found"
+            raise FdError(msg)
+
+        if not self._filesystem.exists(path):
+            msg = f"File not found: {path}"
+            raise FdError(msg)
+
+        info = self._filesystem.stat(path)
+        if info.file_type is FileType.DIRECTORY:
+            msg = f"Is a directory: {path}"
+            raise FdError(msg)
+
+        ofd = OpenFileDescription(
+            path=path,
+            mode=mode,
+            inode_number=info.inode_number,
+        )
+        table = self._fd_tables.setdefault(pid, FdTable())
+        return table.allocate(ofd)
+
+    def close_file(self, pid: int, fd: int) -> None:
+        """Close a file descriptor for a process.
+
+        Args:
+            pid: The process that owns the fd.
+            fd: The file descriptor number.
+
+        Raises:
+            FdError: If the pid has no fd table or the fd is not open.
+
+        """
+        self._require_running()
+        table = self._fd_tables.get(pid)
+        if table is None:
+            msg = f"Bad file descriptor: {fd}"
+            raise FdError(msg)
+        table.close(fd)
+
+    def read_fd(self, pid: int, fd: int, *, count: int) -> bytes:
+        """Read bytes from a file through a file descriptor.
+
+        Enforces mode — the fd must be opened for reading.  Advances
+        the offset by the number of bytes actually read.
+
+        Args:
+            pid: The process that owns the fd.
+            fd: The file descriptor number.
+            count: Maximum number of bytes to read.
+
+        Returns:
+            The bytes read (may be fewer than *count* near EOF).
+
+        Raises:
+            FdError: If the fd is invalid or not readable.
+
+        """
+        self._require_running()
+        assert self._filesystem is not None  # noqa: S101
+
+        table = self._fd_tables.get(pid)
+        if table is None:
+            msg = f"Bad file descriptor: {fd}"
+            raise FdError(msg)
+        ofd = table.lookup(fd)
+
+        if ofd.mode is FileMode.WRITE:
+            msg = f"fd {fd} is not readable (opened write-only)"
+            raise FdError(msg)
+
+        data = self._filesystem.read_at(ofd.path, offset=ofd.offset, count=count)
+        ofd.offset += len(data)
+        return data
+
+    def write_fd(self, pid: int, fd: int, data: bytes) -> int:
+        """Write bytes to a file through a file descriptor.
+
+        Enforces mode — the fd must be opened for writing.  Advances
+        the offset by the number of bytes written.
+
+        Args:
+            pid: The process that owns the fd.
+            fd: The file descriptor number.
+            data: The bytes to write.
+
+        Returns:
+            The number of bytes written.
+
+        Raises:
+            FdError: If the fd is invalid or not writable.
+
+        """
+        self._require_running()
+        assert self._filesystem is not None  # noqa: S101
+
+        table = self._fd_tables.get(pid)
+        if table is None:
+            msg = f"Bad file descriptor: {fd}"
+            raise FdError(msg)
+        ofd = table.lookup(fd)
+
+        if ofd.mode is FileMode.READ:
+            msg = f"fd {fd} is not writable (opened read-only)"
+            raise FdError(msg)
+
+        self._filesystem.write_at(ofd.path, offset=ofd.offset, data=data)
+        ofd.offset += len(data)
+        return len(data)
+
+    def seek_fd(
+        self,
+        pid: int,
+        fd: int,
+        *,
+        offset: int,
+        whence: SeekWhence,
+    ) -> int:
+        """Reposition a file descriptor's offset.
+
+        Args:
+            pid: The process that owns the fd.
+            fd: The file descriptor number.
+            offset: The offset value (interpretation depends on *whence*).
+            whence: How to interpret *offset* (SET, CUR, or END).
+
+        Returns:
+            The new absolute offset.
+
+        Raises:
+            FdError: If the fd is invalid or the resulting offset is negative.
+
+        """
+        self._require_running()
+        assert self._filesystem is not None  # noqa: S101
+
+        table = self._fd_tables.get(pid)
+        if table is None:
+            msg = f"Bad file descriptor: {fd}"
+            raise FdError(msg)
+        ofd = table.lookup(fd)
+
+        file_size = self._filesystem.stat(ofd.path).size
+
+        match whence:
+            case SeekWhence.SET:
+                new_offset = offset
+            case SeekWhence.CUR:
+                new_offset = ofd.offset + offset
+            case SeekWhence.END:
+                new_offset = file_size + offset
+
+        if new_offset < 0:
+            msg = f"Negative seek offset: {new_offset}"
+            raise FdError(msg)
+
+        ofd.offset = new_offset
+        return new_offset
+
+    def list_fds(self, pid: int) -> dict[int, OpenFileDescription]:
+        """Return all open file descriptors for a process.
+
+        Args:
+            pid: The process to query.
+
+        Returns:
+            Dict mapping fd numbers to open file descriptions (empty if none).
+
+        """
+        table = self._fd_tables.get(pid)
+        if table is None:
+            return {}
+        return table.list_fds()
 
     # -- Slab allocator delegation ---------------------------------------------
 
@@ -889,6 +1094,7 @@ class Kernel:
         exit_code = process.exit_code
 
         process.terminate()
+        self._cleanup_fd_table(pid)
         self._cleanup_mmap_regions(pid)
         self._memory.free(pid)
         if self._resource_manager is not None:
@@ -919,6 +1125,7 @@ class Kernel:
         process = self._processes.get(pid)
         if process is not None:
             process.terminate()
+            self._cleanup_fd_table(pid)
             self._cleanup_mmap_regions(pid)
             self._memory.free(pid)
             if self._resource_manager is not None:
@@ -1013,6 +1220,7 @@ class Kernel:
             case SignalAction.TERMINATE:
                 process.force_terminate()
                 assert self._memory is not None  # noqa: S101
+                self._cleanup_fd_table(pid)
                 self._cleanup_mmap_regions(pid)
                 self._memory.free(pid)
                 if self._resource_manager is not None:
@@ -1087,6 +1295,13 @@ class Kernel:
         keys_to_remove = [key for key in self._signal_handlers if key[0] == pid]
         for key in keys_to_remove:
             del self._signal_handlers[key]
+
+    def _cleanup_fd_table(self, pid: int) -> None:
+        """Remove the fd table for a process (idempotent).
+
+        Called during process termination to release all open fds.
+        """
+        self._fd_tables.pop(pid, None)
 
     def _cleanup_mmap_regions(self, pid: int) -> None:
         """Unmap all mmap regions for a process (idempotent).

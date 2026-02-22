@@ -233,6 +233,104 @@ We skip journaling in PyOS because it adds a lot of complexity, and our simple
 real operating systems need it -- computers crash, and your files need to
 survive.
 
+## File Descriptors: Bookmarks in a Library Book
+
+So far, every time we wanted to read or write a file, we gave the full path and
+got back the *entire* contents. That works fine for small operations, but real
+programs need something more flexible. They need to:
+
+- Open a file once, then read a little bit at a time.
+- Write a few bytes here, a few bytes there, without replacing the whole file.
+- Jump to a specific position in the file (like flipping to page 50).
+- Close the file when they're done, so the OS can clean up.
+
+This is where **file descriptors** come in.
+
+### The Library Analogy
+
+Imagine you go to the library and want to read a book. You can't just grab the
+book off the shelf -- you have to check it out at the front desk. The librarian
+gives you a numbered ticket (your **file descriptor**). You put a **bookmark**
+in the book to remember where you stopped reading (the **offset**).
+
+- `open` = check out a book from the library, get your ticket number
+- `read` = read from where your bookmark is, then move it forward
+- `write` = scribble on the page at your bookmark, then move it forward
+- `seek` = move your bookmark to a different page
+- `close` = return the book to the library
+
+Why numbered tickets instead of holding the book directly? Because the librarian
+(the OS) needs to keep track of who has what checked out. If you leave the
+library without returning your books, the librarian can clean up automatically.
+
+### How It Works in PyOS
+
+When you call `open`, the kernel:
+
+1. Checks that the file exists and is not a directory.
+2. Creates an **open file description** -- a little record that tracks the file
+   path, access mode (read, write, or both), and the current **offset** (starts
+   at 0, meaning the beginning of the file).
+3. Assigns the lowest available **fd number** (starting at 3) and stores it in
+   the process's **fd table**.
+4. Returns the fd number to you.
+
+Why does numbering start at 3? In Unix, fds 0, 1, and 2 are reserved:
+
+| FD | Name   | Purpose                          |
+|----|--------|----------------------------------|
+| 0  | stdin  | Standard input (keyboard)        |
+| 1  | stdout | Standard output (screen)         |
+| 2  | stderr | Standard error (error messages)  |
+
+We reserve these slots even though PyOS doesn't implement them yet -- it teaches
+the convention that every Unix programmer needs to know.
+
+### Access Modes
+
+When you open a file, you choose what you're allowed to do with it:
+
+| Mode | Meaning    | Read? | Write? |
+|------|------------|-------|--------|
+| `r`  | Read-only  | Yes   | No     |
+| `w`  | Write-only | No    | Yes    |
+| `rw` | Read-write | Yes   | Yes    |
+
+If you try to read from a write-only fd, or write to a read-only fd, you get an
+error. This is **mode enforcement** -- the OS protects you from accidentally
+doing something you didn't intend.
+
+### Reading Past the End
+
+What happens if you try to read 100 bytes from a file that only has 10 bytes
+left? You just get the 10 bytes that exist. No error, no crash. And if you try
+to read when you're already at the very end of the file, you get zero bytes
+back (empty). This matches how real Unix works -- programs use "got zero bytes"
+as the signal that they've reached the end.
+
+### Writing Past the End
+
+What if you seek past the end of a file and then write? The gap gets filled with
+**null bytes** (`\x00`). It's like having a notebook where you skip ahead to
+page 50 and start writing -- pages 1 through 49 are just blank.
+
+### Fork and File Descriptors
+
+When a process forks (creates a child copy), the child gets a copy of the
+parent's fd table. Both parent and child have the same fd numbers pointing to
+the same files. But their offsets are **independent** -- reading in the parent
+doesn't move the child's bookmark.
+
+(In real Unix, parent and child actually *share* the same offset. PyOS
+simplifies this to independent copies, which is easier to understand.)
+
+### Cleanup
+
+When a process terminates (normally or by signal), the kernel automatically
+closes all its open fds. You don't have to worry about leaked file descriptors
+-- the OS cleans up after you, just like the librarian knows which books you
+checked out and can return them when you leave.
+
 ## Putting It All Together
 
 Let's trace what happens when you type `cat /home/rob/homework.txt` in the PyOS
@@ -265,6 +363,9 @@ across reboots.
 | **Inode**         | An index card with metadata about a file or directory           |
 | **Directory**     | A folder -- an inode whose "data" is a list of names and inode numbers |
 | **Path resolution** | Walking a path like `/a/b/c` step by step to find the target |
+| **File descriptor** | A small number (like a library ticket) that identifies an open file |
+| **Offset**        | Your current position in the file (like a bookmark)            |
+| **Fd table**      | Per-process table that maps fd numbers to open file descriptions |
 | **Serialization** | Converting live data into a storable format (like taking a photo) |
 | **Deserialization** | Rebuilding live data from a stored format (like rebuilding from a photo) |
 | **Base64**        | A way to encode binary data as safe text characters            |

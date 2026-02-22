@@ -77,8 +77,13 @@ Every source file and what it implements.
 
 | File | Class/Function | Purpose |
 |------|---------------|---------|
-| `fs/filesystem.py` | `FileSystem` | Inode-based filesystem with path resolution and CRUD |
+| `fs/filesystem.py` | `FileSystem` | Inode-based filesystem with path resolution, CRUD, and offset-based I/O |
 | `fs/filesystem.py` | `_Inode` | Internal metadata record (type, size, data, children) |
+| `fs/fd.py` | `FdTable` | Per-process table mapping fd numbers (>= 3) to open file descriptions |
+| `fs/fd.py` | `OpenFileDescription` | Track an open file's path, mode, and current byte offset |
+| `fs/fd.py` | `FileMode` | READ / WRITE / READ_WRITE access modes |
+| `fs/fd.py` | `SeekWhence` | SET / CUR / END seek directions |
+| `fs/fd.py` | `FdError` | Exception for file descriptor operation failures |
 | `fs/persistence.py` | `dump_filesystem()` | Serialize filesystem to JSON |
 | `fs/persistence.py` | `load_filesystem()` | Deserialize filesystem from JSON |
 
@@ -128,10 +133,11 @@ Every source file and what it implements.
 | Range | Category |
 |-------|----------|
 | 1-8 | Process operations (create, terminate, list, fork, threads, wait, waitpid) |
-| 10-15 | Filesystem operations (create, read, write, delete, list) |
+| 10-19 | Filesystem operations (create, read, write, delete, list, open, close, read_fd, write_fd) |
 | 20 | Memory info |
 | 21-23 | Memory-mapped files (mmap, munmap, msync) |
 | 24-27 | Slab allocator (create cache, alloc, free, info) |
+| 28 | File descriptor seek |
 | 30-33 | User operations (whoami, create, list, switch) |
 | 40-42 | Device operations (read, write, list) |
 | 50 | Logging |
