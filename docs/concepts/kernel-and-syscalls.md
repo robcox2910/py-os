@@ -164,7 +164,7 @@ Here is every syscall number in PyOS, grouped by what they do:
 
 | Numbers | What they're for |
 |---------|-----------------|
-| 1-6     | Processes (create, terminate, list, fork, threads) |
+| 1-8     | Processes (create, terminate, list, fork, threads, wait, waitpid) |
 | 10-15   | Files (create, create directory, read, write, delete, list) |
 | 20      | Memory info |
 | 30-33   | Users (who am I, create user, list users, switch user) |
@@ -175,6 +175,8 @@ Here is every syscall number in PyOS, grouped by what they do:
 | 80      | System info (like the `top` command) |
 | 90      | Deadlock detection |
 | 100-101 | Run programs (load and execute) |
+| 110-118 | Synchronization (mutexes, semaphores, conditions) |
+| 120-121 | Scheduler operations (switch policy, MLFQ boost) |
 
 You don't need to memorize these. The important thing is that every single
 operation a program can ask for has a number, and every single request goes

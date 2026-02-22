@@ -114,6 +114,11 @@ The kernel owns a `SyncManager` that is created during boot and torn down during
 - **Semaphore**: Limiting database connections to a pool of 10
 - **Condition**: A print queue where the printer waits for jobs to arrive
 
-## What's Next?
+## Where to Go Next
 
 With synchronization in place, you have the tools to build higher-level patterns like thread-safe queues, reader-writer locks, and barriers. These primitives are the building blocks of every concurrent system, from web servers to operating systems.
+
+- [Processes](processes.md) -- How threads live inside processes, plus fork, signals, and wait/waitpid
+- [Users and Safety](users-and-safety.md) -- Deadlock detection and how the OS keeps things safe
+- [Devices and Networking](devices-and-networking.md) -- IPC pipes and message queues that use these primitives under the hood
+- [The Shell](shell.md) -- The `mutex` and `semaphore` shell commands

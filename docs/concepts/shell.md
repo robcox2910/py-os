@@ -74,6 +74,10 @@ Here are the commands grouped by what they do. You don't need to memorize them
 | `pstree`  | Show the parent-child process tree |
 | `threads` | List the threads inside a process |
 | `run`     | Create a process and run a built-in program |
+| `wait`    | Wait for any child process to finish and collect its exit code |
+| `waitpid` | Wait for a specific child process to finish |
+| `signal`  | Send a signal (like SIGTERM or SIGKILL) to a process |
+| `handle`  | Register a custom signal handler for a process |
 
 **Users** -- who's using the system:
 
