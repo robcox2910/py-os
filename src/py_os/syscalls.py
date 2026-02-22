@@ -136,10 +136,17 @@ class SyscallNumber(IntEnum):
     SYS_CREATE_CONDITION = 116
     SYS_CONDITION_WAIT = 117
     SYS_CONDITION_NOTIFY = 118
+    SYS_CREATE_RWLOCK = 119
 
     # Scheduler operations
     SYS_SET_SCHEDULER = 120
     SYS_SCHEDULER_BOOST = 121
+
+    # Reader-writer lock operations (continues sync block after scheduler gap)
+    SYS_ACQUIRE_READ_LOCK = 122
+    SYS_ACQUIRE_WRITE_LOCK = 123
+    SYS_RELEASE_READ_LOCK = 124
+    SYS_RELEASE_WRITE_LOCK = 125
 
     # Journal operations
     SYS_JOURNAL_STATUS = 130
@@ -237,6 +244,11 @@ def dispatch_syscall(
         SyscallNumber.SYS_CREATE_CONDITION: _sys_create_condition,
         SyscallNumber.SYS_CONDITION_WAIT: _sys_condition_wait,
         SyscallNumber.SYS_CONDITION_NOTIFY: _sys_condition_notify,
+        SyscallNumber.SYS_CREATE_RWLOCK: _sys_create_rwlock,
+        SyscallNumber.SYS_ACQUIRE_READ_LOCK: _sys_acquire_read_lock,
+        SyscallNumber.SYS_ACQUIRE_WRITE_LOCK: _sys_acquire_write_lock,
+        SyscallNumber.SYS_RELEASE_READ_LOCK: _sys_release_read_lock,
+        SyscallNumber.SYS_RELEASE_WRITE_LOCK: _sys_release_write_lock,
         SyscallNumber.SYS_SET_SCHEDULER: _sys_set_scheduler,
         SyscallNumber.SYS_SCHEDULER_BOOST: _sys_scheduler_boost,
         SyscallNumber.SYS_JOURNAL_STATUS: _sys_journal_status,
@@ -900,6 +912,67 @@ def _sys_condition_notify(kernel: Any, **kwargs: Any) -> str:
     except KeyError as e:
         raise SyscallError(str(e)) from e
     return f"condition '{name}' notified"
+
+
+# -- Reader-writer lock syscall handlers ---------------------------------------
+
+
+def _sys_create_rwlock(kernel: Any, **kwargs: Any) -> str:
+    """Create a named reader-writer lock."""
+    name: str = kwargs["name"]
+    try:
+        kernel.create_rwlock(name)
+    except ValueError as e:
+        raise SyscallError(str(e)) from e
+    return f"rwlock '{name}' created"
+
+
+def _sys_acquire_read_lock(kernel: Any, **kwargs: Any) -> str:
+    """Acquire read access on a named reader-writer lock."""
+    name: str = kwargs["name"]
+    tid: int = kwargs["tid"]
+    try:
+        acquired = kernel.acquire_read_lock(name, tid=tid)
+    except KeyError as e:
+        raise SyscallError(str(e)) from e
+    if acquired:
+        return f"rwlock '{name}' read-acquired by thread {tid}"
+    return f"thread {tid} queued for rwlock '{name}' (read)"
+
+
+def _sys_acquire_write_lock(kernel: Any, **kwargs: Any) -> str:
+    """Acquire write access on a named reader-writer lock."""
+    name: str = kwargs["name"]
+    tid: int = kwargs["tid"]
+    try:
+        acquired = kernel.acquire_write_lock(name, tid=tid)
+    except KeyError as e:
+        raise SyscallError(str(e)) from e
+    if acquired:
+        return f"rwlock '{name}' write-acquired by thread {tid}"
+    return f"thread {tid} queued for rwlock '{name}' (write)"
+
+
+def _sys_release_read_lock(kernel: Any, **kwargs: Any) -> str:
+    """Release read access on a named reader-writer lock."""
+    name: str = kwargs["name"]
+    tid: int = kwargs["tid"]
+    try:
+        kernel.release_read_lock(name, tid=tid)
+    except (KeyError, ValueError) as e:
+        raise SyscallError(str(e)) from e
+    return f"rwlock '{name}' read-released by thread {tid}"
+
+
+def _sys_release_write_lock(kernel: Any, **kwargs: Any) -> str:
+    """Release write access on a named reader-writer lock."""
+    name: str = kwargs["name"]
+    tid: int = kwargs["tid"]
+    try:
+        kernel.release_write_lock(name, tid=tid)
+    except (KeyError, ValueError) as e:
+        raise SyscallError(str(e)) from e
+    return f"rwlock '{name}' write-released by thread {tid}"
 
 
 # -- Scheduler syscall handlers ------------------------------------------------

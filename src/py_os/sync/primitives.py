@@ -1,7 +1,7 @@
-"""Synchronization primitives — mutex, semaphore, and condition variable.
+"""Synchronization primitives — mutex, semaphore, condition variable, rwlock.
 
 In a real OS, multiple threads share memory and must coordinate access
-to prevent data races.  The three classical primitives are:
+to prevent data races.  The four classical primitives are:
 
     **Mutex** (mutual exclusion lock): Only one thread can hold it at
     a time.  Think of a bathroom lock — you lock the door, do your
@@ -19,7 +19,12 @@ to prevent data races.  The three classical primitives are:
     you sit down (wait) and the receptionist calls your name (notify)
     when the doctor is ready.
 
-All three use a FIFO wait queue so that blocked threads are woken in
+    **Reader-writer lock** (RWLock): Allows multiple concurrent readers
+    OR one exclusive writer.  Think of a museum exhibit — any number of
+    visitors can look at the painting, but when a restorer needs to work
+    on it, they close the room.
+
+All four use a FIFO wait queue so that blocked threads are woken in
 the order they arrived — preventing starvation.
 """
 
@@ -300,12 +305,177 @@ class Condition:
         return f"Condition('{self._name}', {n} {waiter_word})"
 
 
+class ReadWriteLock:
+    """Reader-writer lock — multiple readers OR one exclusive writer.
+
+    Writer-preference: when a writer is waiting, new readers queue
+    behind it rather than jumping ahead.
+
+    Analogy: a museum exhibit.  Any number of visitors (readers) can
+    look at the painting at once.  But when a restorer (writer) needs
+    to work on it, they close the room — visitors already inside can
+    finish, but no new visitors enter until the restorer is done.
+    """
+
+    def __init__(self, *, name: str) -> None:
+        """Create an unlocked reader-writer lock with the given name."""
+        self._name = name
+        self._readers: set[int] = set()
+        self._writer: int | None = None
+        self._wait_queue: deque[tuple[int, str]] = deque()
+
+    @property
+    def name(self) -> str:
+        """Return the lock name."""
+        return self._name
+
+    @property
+    def reader_count(self) -> int:
+        """Return the number of active readers."""
+        return len(self._readers)
+
+    @property
+    def is_writing(self) -> bool:
+        """Return whether a writer currently holds the lock."""
+        return self._writer is not None
+
+    @property
+    def writer_tid(self) -> int | None:
+        """Return the TID of the active writer, or None."""
+        return self._writer
+
+    @property
+    def wait_queue_size(self) -> int:
+        """Return the number of threads waiting to acquire."""
+        return len(self._wait_queue)
+
+    def _has_waiting_writer(self) -> bool:
+        """Return True if a writer is waiting in the queue."""
+        return any(mode == "write" for _, mode in self._wait_queue)
+
+    def acquire_read(self, tid: int) -> bool:
+        """Attempt to acquire read access.
+
+        Succeeds if there is no active writer AND no writer waiting
+        in the queue (writer-preference).  Otherwise the caller is
+        queued.
+
+        Args:
+            tid: Thread ID of the caller.
+
+        Returns:
+            True if acquired, False if queued.
+
+        """
+        if self._writer is None and not self._has_waiting_writer():
+            self._readers.add(tid)
+            return True
+        self._wait_queue.append((tid, "read"))
+        return False
+
+    def acquire_write(self, tid: int) -> bool:
+        """Attempt to acquire write access.
+
+        Succeeds only if there are no active readers AND no active
+        writer.  Otherwise the caller is queued.
+
+        Args:
+            tid: Thread ID of the caller.
+
+        Returns:
+            True if acquired, False if queued.
+
+        """
+        if self._writer is None and not self._readers:
+            self._writer = tid
+            return True
+        self._wait_queue.append((tid, "write"))
+        return False
+
+    def release_read(self, tid: int) -> list[int]:
+        """Release read access and potentially wake queued threads.
+
+        Args:
+            tid: Thread ID of the caller.
+
+        Returns:
+            List of TIDs that were promoted from the wait queue.
+
+        Raises:
+            ValueError: If the TID is not an active reader.
+
+        """
+        if tid not in self._readers:
+            msg = f"Thread {tid} is not a reader of '{self._name}'"
+            raise ValueError(msg)
+        self._readers.discard(tid)
+        if not self._readers:
+            return self._wake_next()
+        return []
+
+    def release_write(self, tid: int) -> list[int]:
+        """Release write access and promote queued threads.
+
+        Args:
+            tid: Thread ID of the caller.
+
+        Returns:
+            List of TIDs that were promoted from the wait queue.
+
+        Raises:
+            ValueError: If the TID is not the active writer.
+
+        """
+        if self._writer != tid:
+            msg = f"Thread {tid} is not the writer of '{self._name}'"
+            raise ValueError(msg)
+        self._writer = None
+        return self._wake_next()
+
+    def _wake_next(self) -> list[int]:
+        """Promote the next waiter(s) from the queue.
+
+        - If the front is a writer → promote it alone.
+        - If the front is a reader → promote it AND all consecutive
+          readers behind it (batch wake).
+        - If the queue is empty → return [].
+        """
+        if not self._wait_queue:
+            return []
+
+        tid, mode = self._wait_queue[0]
+        if mode == "write":
+            self._wait_queue.popleft()
+            self._writer = tid
+            return [tid]
+
+        # Batch-wake consecutive readers from the front
+        woken: list[int] = []
+        while self._wait_queue and self._wait_queue[0][1] == "read":
+            reader_tid, _ = self._wait_queue.popleft()
+            self._readers.add(reader_tid)
+            woken.append(reader_tid)
+        return woken
+
+    def __repr__(self) -> str:
+        """Return a developer-friendly representation."""
+        if self._writer is not None:
+            state = f"writing by {self._writer}"
+        elif self._readers:
+            n = len(self._readers)
+            word = "reader" if n == 1 else "readers"
+            state = f"{n} {word}"
+        else:
+            state = "idle"
+        return f"ReadWriteLock('{self._name}', {state})"
+
+
 class SyncManager:
     """Registry for all synchronization primitives.
 
-    The sync manager owns mutexes, semaphores, and condition variables
-    by name.  It enforces uniqueness — you cannot create two primitives
-    of the same type with the same name.
+    The sync manager owns mutexes, semaphores, condition variables, and
+    reader-writer locks by name.  It enforces uniqueness — you cannot
+    create two primitives of the same type with the same name.
 
     The kernel creates a SyncManager during boot and tears it down on
     shutdown, just like every other subsystem.
@@ -316,6 +486,7 @@ class SyncManager:
         self._mutexes: dict[str, Mutex] = {}
         self._semaphores: dict[str, Semaphore] = {}
         self._conditions: dict[str, Condition] = {}
+        self._rwlocks: dict[str, ReadWriteLock] = {}
 
     # -- Mutex operations ----------------------------------------------------
 
@@ -477,3 +648,53 @@ class SyncManager:
     def list_conditions(self) -> list[str]:
         """Return names of all registered condition variables."""
         return list(self._conditions)
+
+    # -- ReadWriteLock operations --------------------------------------------
+
+    def create_rwlock(self, name: str) -> ReadWriteLock:
+        """Create and register a new reader-writer lock.
+
+        Args:
+            name: Unique name for the lock.
+
+        Returns:
+            The newly created ReadWriteLock.
+
+        Raises:
+            ValueError: If an RWLock with the same name already exists.
+
+        """
+        if name in self._rwlocks:
+            msg = f"ReadWriteLock '{name}' already exists"
+            raise ValueError(msg)
+        rwl = ReadWriteLock(name=name)
+        self._rwlocks[name] = rwl
+        return rwl
+
+    def get_rwlock(self, name: str) -> ReadWriteLock:
+        """Return a reader-writer lock by name.
+
+        Raises:
+            KeyError: If no RWLock with the given name exists.
+
+        """
+        if name not in self._rwlocks:
+            msg = f"ReadWriteLock '{name}' not found"
+            raise KeyError(msg)
+        return self._rwlocks[name]
+
+    def destroy_rwlock(self, name: str) -> None:
+        """Remove a reader-writer lock from the registry.
+
+        Raises:
+            KeyError: If no RWLock with the given name exists.
+
+        """
+        if name not in self._rwlocks:
+            msg = f"ReadWriteLock '{name}' not found"
+            raise KeyError(msg)
+        del self._rwlocks[name]
+
+    def list_rwlocks(self) -> list[str]:
+        """Return names of all registered reader-writer locks."""
+        return list(self._rwlocks)

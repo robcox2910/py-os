@@ -22,7 +22,7 @@ Technical reference for every module in the system. For beginner-friendly explan
 | [The Shell](concepts/shell.md) | Commands, pipes, redirection, loops, scripting, jobs, history, aliases, tab completion, env |
 | [Devices and Networking](concepts/devices-and-networking.md) | Device protocol, IPC, disk scheduling, sockets |
 | [Users and Safety](concepts/users-and-safety.md) | Permissions, signals, logging, deadlock |
-| [Synchronization](concepts/synchronization.md) | Mutex, semaphore, condition variable, race conditions |
+| [Synchronization](concepts/synchronization.md) | Mutex, semaphore, condition variable, reader-writer lock, race conditions |
 
 ## Module Map
 
@@ -129,7 +129,8 @@ Every source file and what it implements.
 | `sync/primitives.py` | `Mutex` | Mutual exclusion lock with owner tracking and FIFO wait queue |
 | `sync/primitives.py` | `Semaphore` | Counting semaphore with optional max bound |
 | `sync/primitives.py` | `Condition` | Condition variable (wait/notify) paired with a mutex |
-| `sync/primitives.py` | `SyncManager` | Registry for all sync primitives (mutexes, semaphores, conditions) |
+| `sync/primitives.py` | `ReadWriteLock` | Reader-writer lock with writer-preference and batch reader wake |
+| `sync/primitives.py` | `SyncManager` | Registry for all sync primitives (mutexes, semaphores, conditions, rwlocks) |
 
 ### Observability
 
@@ -159,7 +160,7 @@ Every source file and what it implements.
 | 80 | System info |
 | 90 | Deadlock detection |
 | 100-101 | Process execution (exec, run) |
-| 110-118 | Synchronization (mutex, semaphore, condition) |
+| 110-125 | Synchronization (mutex, semaphore, condition, reader-writer lock) |
 | 120-121 | Scheduler operations (policy switching, MLFQ boost) |
 | 130-133 | Journal operations (status, checkpoint, recover, crash) |
 
