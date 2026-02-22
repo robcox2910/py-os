@@ -117,6 +117,9 @@ class Shell:
             "handle": self._cmd_handle,
             "wait": self._cmd_wait,
             "waitpid": self._cmd_waitpid,
+            "mmap": self._cmd_mmap,
+            "munmap": self._cmd_munmap,
+            "msync": self._cmd_msync,
         }
 
     def execute(self, command: str) -> str:
@@ -982,3 +985,79 @@ class Shell:
             f" (exit_code={result_waitpid['exit_code']}"
             f", output={result_waitpid['output']!r})"
         )
+
+    def _cmd_mmap(self, args: list[str]) -> str:
+        """Map a file into a process's virtual address space."""
+        min_args = 2
+        if len(args) < min_args:
+            return "Usage: mmap <pid> <path> [--shared]"
+        try:
+            pid = int(args[0])
+        except ValueError:
+            return f"Error: invalid PID '{args[0]}'"
+        path = args[1]
+        shared = "--shared" in args
+        try:
+            result: dict[str, object] = self._kernel.syscall(
+                SyscallNumber.SYS_MMAP,
+                pid=pid,
+                path=path,
+                shared=shared,
+            )
+            return (
+                f"Mapped {path} at address {result['virtual_address']}"
+                f" ({result['num_pages']} pages)"
+            )
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_munmap(self, args: list[str]) -> str:
+        """Unmap a memory-mapped region."""
+        min_args = 2
+        if len(args) < min_args:
+            return "Usage: munmap <pid> <address>"
+        try:
+            pid = int(args[0])
+        except ValueError:
+            return f"Error: invalid PID '{args[0]}'"
+        try:
+            address = int(args[1])
+        except ValueError:
+            return f"Error: invalid address '{args[1]}'"
+        try:
+            self._kernel.syscall(
+                SyscallNumber.SYS_MUNMAP,
+                pid=pid,
+                virtual_address=address,
+            )
+            return f"Unmapped address {address}"
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_msync(self, args: list[str]) -> str:
+        """Sync a shared mapping's data back to the file."""
+        min_args = 2
+        if len(args) < min_args:
+            return "Usage: msync <pid> <address>"
+        try:
+            pid = int(args[0])
+        except ValueError:
+            return f"Error: invalid PID '{args[0]}'"
+        try:
+            address = int(args[1])
+        except ValueError:
+            return f"Error: invalid address '{args[1]}'"
+        try:
+            self._kernel.syscall(
+                SyscallNumber.SYS_MSYNC,
+                pid=pid,
+                virtual_address=address,
+            )
+            # Look up region path for the output message
+            regions = self._kernel.mmap_regions(pid)
+            vpn = address // 256  # default page size
+            region = regions.get(vpn)
+            path_info = f" to {region.path}" if region else ""
+            return f"Synced address {address}{path_info}"
+        except SyscallError as e:
+            return f"Error: {e}"

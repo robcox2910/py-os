@@ -31,6 +31,7 @@ Why bother with this layer?
 from enum import IntEnum
 from typing import Any
 
+from py_os.memory.mmap import MmapError
 from py_os.process.scheduler import (
     AgingPriorityPolicy,
     CFSPolicy,
@@ -71,6 +72,9 @@ class SyscallNumber(IntEnum):
 
     # Memory operations
     SYS_MEMORY_INFO = 20
+    SYS_MMAP = 21
+    SYS_MUNMAP = 22
+    SYS_MSYNC = 23
 
     # User operations
     SYS_WHOAMI = 30
@@ -169,6 +173,9 @@ def dispatch_syscall(
         SyscallNumber.SYS_DELETE_FILE: _sys_delete_file,
         SyscallNumber.SYS_LIST_DIR: _sys_list_dir,
         SyscallNumber.SYS_MEMORY_INFO: _sys_memory_info,
+        SyscallNumber.SYS_MMAP: _sys_mmap,
+        SyscallNumber.SYS_MUNMAP: _sys_munmap,
+        SyscallNumber.SYS_MSYNC: _sys_msync,
         SyscallNumber.SYS_WHOAMI: _sys_whoami,
         SyscallNumber.SYS_CREATE_USER: _sys_create_user,
         SyscallNumber.SYS_LIST_USERS: _sys_list_users,
@@ -388,6 +395,47 @@ def _sys_memory_info(kernel: Any, **_kwargs: Any) -> dict[str, int]:
         "total_frames": kernel.memory.total_frames,
         "free_frames": kernel.memory.free_frames,
     }
+
+
+def _sys_mmap(kernel: Any, **kwargs: Any) -> dict[str, Any]:
+    """Map a file into a process's virtual address space."""
+    pid: int = kwargs["pid"]
+    path: str = kwargs["path"]
+    offset: int = kwargs.get("offset", 0)
+    length: int | None = kwargs.get("length")
+    shared: bool = kwargs.get("shared", False)
+    try:
+        virtual_address = kernel.mmap_file(
+            pid=pid,
+            path=path,
+            offset=offset,
+            length=length,
+            shared=shared,
+        )
+    except MmapError as e:
+        raise SyscallError(str(e)) from e
+    process = kernel.processes.get(pid)
+    assert process is not None  # noqa: S101
+    assert process.virtual_memory is not None  # noqa: S101
+    start_vpn = virtual_address // process.virtual_memory.page_size
+    region = kernel.mmap_regions(pid)[start_vpn]
+    return {"virtual_address": virtual_address, "num_pages": region.num_pages}
+
+
+def _sys_munmap(kernel: Any, **kwargs: Any) -> None:
+    """Unmap a memory-mapped region."""
+    try:
+        kernel.munmap_file(pid=kwargs["pid"], virtual_address=kwargs["virtual_address"])
+    except MmapError as e:
+        raise SyscallError(str(e)) from e
+
+
+def _sys_msync(kernel: Any, **kwargs: Any) -> None:
+    """Sync a shared mapping's data back to the file."""
+    try:
+        kernel.msync_file(pid=kwargs["pid"], virtual_address=kwargs["virtual_address"])
+    except MmapError as e:
+        raise SyscallError(str(e)) from e
 
 
 # -- User syscall handlers ---------------------------------------------------
