@@ -474,6 +474,46 @@ class Kernel:
 
         vm.cow_fault_handler = cow_handler
 
+    # -- Link operations --------------------------------------------------------
+
+    def link_file(self, target_path: str, link_path: str) -> None:
+        """Create a hard link via the filesystem.
+
+        Args:
+            target_path: The existing file to link to.
+            link_path: The new name for the file.
+
+        """
+        self._require_running()
+        assert self._filesystem is not None  # noqa: S101
+        self._filesystem.link(target_path, link_path)
+
+    def symlink_file(self, target_path: str, link_path: str) -> None:
+        """Create a symbolic link via the filesystem.
+
+        Args:
+            target_path: The path the symlink will point to.
+            link_path: The new symlink name.
+
+        """
+        self._require_running()
+        assert self._filesystem is not None  # noqa: S101
+        self._filesystem.symlink(target_path, link_path)
+
+    def readlink_file(self, path: str) -> str:
+        """Return the target of a symbolic link.
+
+        Args:
+            path: Absolute path to a symlink.
+
+        Returns:
+            The target path stored in the symlink.
+
+        """
+        self._require_running()
+        assert self._filesystem is not None  # noqa: S101
+        return self._filesystem.readlink(path)
+
     # -- File descriptor operations --------------------------------------------
 
     def open_file(self, pid: int, path: str, mode: FileMode) -> int:

@@ -17,7 +17,7 @@ Technical reference for every module in the system. For beginner-friendly explan
 | [What Is an OS?](concepts/what-is-an-os.md) | Big picture, layered architecture, how PyOS works |
 | [Processes](concepts/processes.md) | PCB, five-state model, scheduler, fork (COW), threads, execution, zombies, wait/waitpid |
 | [Memory](concepts/memory.md) | Frames/pages, virtual memory, page replacement, swap, copy-on-write, mmap, slab allocator |
-| [Filesystem](concepts/filesystem.md) | Inodes, path resolution, persistence, journaling |
+| [Filesystem](concepts/filesystem.md) | Inodes, path resolution, hard/symbolic links, persistence, journaling |
 | [Kernel and System Calls](concepts/kernel-and-syscalls.md) | Boot sequence, lifecycle, syscall dispatch, number ranges |
 | [The Shell](concepts/shell.md) | Commands, pipes, scripting, jobs, history, aliases, env |
 | [Devices and Networking](concepts/devices-and-networking.md) | Device protocol, IPC, disk scheduling, sockets |
@@ -77,8 +77,10 @@ Every source file and what it implements.
 
 | File | Class/Function | Purpose |
 |------|---------------|---------|
-| `fs/filesystem.py` | `FileSystem` | Inode-based filesystem with path resolution, CRUD, and offset-based I/O |
-| `fs/filesystem.py` | `_Inode` | Internal metadata record (type, size, data, children) |
+| `fs/filesystem.py` | `FileSystem` | Inode-based filesystem with path resolution, links, CRUD, and offset-based I/O |
+| `fs/filesystem.py` | `_Inode` | Internal metadata record (type, size, data, children, link_count) |
+| `fs/filesystem.py` | `FileType` | FILE / DIRECTORY / SYMLINK |
+| `fs/filesystem.py` | `MAX_SYMLINK_DEPTH` | Loop detection limit (40, matching Linux SYMLOOP_MAX) |
 | `fs/fd.py` | `FdTable` | Per-process table mapping fd numbers (>= 3) to open file descriptions |
 | `fs/fd.py` | `OpenFileDescription` | Track an open file's path, mode, and current byte offset |
 | `fs/fd.py` | `FileMode` | READ / WRITE / READ_WRITE access modes |
@@ -138,6 +140,7 @@ Every source file and what it implements.
 | 21-23 | Memory-mapped files (mmap, munmap, msync) |
 | 24-27 | Slab allocator (create cache, alloc, free, info) |
 | 28 | File descriptor seek |
+| 34-36 | Link operations (link, symlink, readlink) |
 | 30-33 | User operations (whoami, create, list, switch) |
 | 40-42 | Device operations (read, write, list) |
 | 50 | Logging |
