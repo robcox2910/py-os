@@ -101,11 +101,11 @@ Every source file and what it implements.
 
 | File | Class/Function | Purpose |
 |------|---------------|---------|
-| `shell.py` | `Shell` | Command interpreter with pipes, scripting, job control |
+| `shell.py` | `Shell` | Command interpreter with pipes, scripting, job control, background execution (`&`) |
 | `users.py` | `UserManager` | User registry with auto-incrementing UIDs |
 | `users.py` | `FilePermissions` | Per-file owner/other read/write permission bits |
 | `env.py` | `Environment` | KEY=VALUE store with copy semantics |
-| `jobs.py` | `JobManager` | Background/foreground job tracking |
+| `jobs.py` | `JobManager` | Background/foreground job tracking with output capture |
 
 ### I/O and Networking
 

@@ -25,7 +25,7 @@ import re
 from collections.abc import Callable
 
 from py_os.fs.filesystem import FileType
-from py_os.jobs import JobManager
+from py_os.jobs import JobManager, JobStatus
 from py_os.kernel import Kernel, KernelState
 from py_os.process.scheduler import (
     AgingPriorityPolicy,
@@ -135,15 +135,15 @@ class Shell:
             "readlink": self._cmd_readlink,
             "stat": self._cmd_stat,
             "journal": self._cmd_journal,
+            "waitjob": self._cmd_waitjob,
         }
 
     def execute(self, command: str) -> str:
-        """Parse and execute a shell command, with pipe support.
+        """Parse and execute a shell command, with pipe and ``&`` support.
 
         Commands can be chained with ``|``.  The output of each stage
-        becomes the piped input for the next.  For example::
-
-            ls / | grep txt | wc
+        becomes the piped input for the next.  A trailing ``&`` runs the
+        command in the background (only meaningful for ``run``).
 
         Args:
             command: The raw command string (e.g. "ls / | grep txt").
@@ -157,13 +157,22 @@ class Shell:
         if stripped:
             self._history.append(stripped)
 
+        # Detect trailing &
+        background = stripped.endswith("&")
+        if background:
+            stripped = stripped[:-1].rstrip()
+            if not stripped:
+                return ""
+            if "|" in stripped:
+                return "Error: background execution with pipes is not supported"
+
         # Expand aliases in each pipeline stage
-        stages = [s.strip() for s in command.split("|")]
+        stages = [s.strip() for s in stripped.split("|")]
         output = ""
         for i, stage in enumerate(stages):
             self._pipe_input = output if i > 0 else ""
             expanded = self._expand_alias(stage)
-            output = self._execute_single(expanded)
+            output = self._execute_single(expanded, background=background)
             # Stop the pipeline if a command produces an error
             if output.startswith(("Unknown command:", "Error:")):
                 break
@@ -258,7 +267,7 @@ class Shell:
             return self._aliases[parts[0]]
         return command
 
-    def _execute_single(self, command: str) -> str:
+    def _execute_single(self, command: str, *, background: bool = False) -> str:
         """Execute a single (non-piped) command."""
         parts = command.strip().split()
         if not parts:
@@ -266,6 +275,10 @@ class Shell:
 
         name = parts[0]
         args = parts[1:]
+
+        # Only `run` has meaningful background semantics
+        if background and name == "run":
+            return self._run_background(args)
 
         handler = self._commands.get(name)
         if handler is None:
@@ -497,7 +510,12 @@ class Shell:
         return str(job)
 
     def _cmd_fg(self, args: list[str]) -> str:
-        """Bring a background job to the foreground."""
+        """Bring a background job to the foreground.
+
+        If the job has captured output (from ``run ... &``), display it.
+        Otherwise fall back to the standard "moved to foreground" message
+        (for jobs created via ``bg``).
+        """
         if not args:
             return "Usage: fg <job_id>"
         try:
@@ -508,7 +526,41 @@ class Shell:
         if job is None:
             return f"Error: job {job_id} not found"
         self._jobs.remove(job_id)
+        if job.output is not None:
+            return job.output
         return f"{job.name} (pid={job.pid}) moved to foreground."
+
+    def _cmd_waitjob(self, args: list[str]) -> str:
+        """Collect output from background jobs.
+
+        ``waitjob``         — collect all jobs
+        ``waitjob <job_id>`` — collect a specific job
+
+        Unlike ``wait`` (kernel-level parent-child semantics), ``waitjob``
+        is a shell-level concept for retrieving background job output.
+        """
+        if not args:
+            jobs = self._jobs.list_jobs()
+            if not jobs:
+                return "No background jobs."
+            outputs: list[str] = []
+            for job in jobs:
+                header = f"[{job.job_id}] {job.name}:"
+                body = job.output if job.output is not None else "(no output)"
+                outputs.append(f"{header}\n{body}")
+                self._jobs.remove(job.job_id)
+            return "\n".join(outputs)
+        try:
+            job_id = int(args[0])
+        except ValueError:
+            return f"Error: invalid job id '{args[0]}'"
+        job = self._jobs.get(job_id)
+        if job is None:
+            return f"Error: job {job_id} not found"
+        self._jobs.remove(job_id)
+        if job.output is not None:
+            return job.output
+        return f"{job.name} (pid={job.pid}) — no captured output."
 
     def _cmd_log(self, _args: list[str]) -> str:
         """Show recent log entries."""
@@ -674,6 +726,18 @@ class Shell:
         results = self.run_script(script)
         return "\n".join(r for r in results if r)
 
+    @staticmethod
+    def _builtin_programs() -> dict[str, Callable[[], str]]:
+        """Return the registry of built-in programs.
+
+        Both ``_cmd_run`` and ``_run_background`` need the same set of
+        programs, so this single source of truth avoids duplication.
+        """
+        return {
+            "hello": lambda: "Hello from PyOS!",
+            "counter": lambda: "\n".join(str(i) for i in range(1, 6)),
+        }
+
     def _cmd_run(self, args: list[str]) -> str:
         """Create a process, load a built-in program, and run it."""
         if not args:
@@ -685,11 +749,7 @@ class Shell:
                 priority = int(args[1])
             except ValueError:
                 return f"Error: invalid priority '{args[1]}'"
-        programs: dict[str, Callable[[], str]] = {
-            "hello": lambda: "Hello from PyOS!",
-            "counter": lambda: "\n".join(str(i) for i in range(1, 6)),
-        }
-        program = programs.get(program_name)
+        program = self._builtin_programs().get(program_name)
         if program is None:
             return f"Unknown program: {program_name}"
         try:
@@ -707,6 +767,46 @@ class Shell:
             return f"{output}\n[exit code: {exit_code}]"
         except SyscallError as e:
             return f"Error: {e}"
+
+    def _run_background(self, args: list[str]) -> str:
+        """Run a program in the background, capturing output into a job.
+
+        Same create/exec/run flow as ``_cmd_run``, but output is stored
+        in a job instead of returned directly.  The user gets a
+        ``[job_id] pid`` notification and retrieves output via ``fg``
+        or ``waitjob``.
+        """
+        if not args:
+            return "Usage: run <program> [priority]"
+        program_name = args[0]
+        priority = 0
+        if len(args) >= 2:  # noqa: PLR2004
+            try:
+                priority = int(args[1])
+            except ValueError:
+                return f"Error: invalid priority '{args[1]}'"
+        program = self._builtin_programs().get(program_name)
+        if program is None:
+            return f"Unknown program: {program_name}"
+        try:
+            result = self._kernel.syscall(
+                SyscallNumber.SYS_CREATE_PROCESS,
+                name=program_name,
+                num_pages=1,
+                priority=priority,
+            )
+            pid = result["pid"]
+            self._kernel.syscall(SyscallNumber.SYS_EXEC, pid=pid, program=program)
+            run_result = self._kernel.syscall(SyscallNumber.SYS_RUN, pid=pid)
+            output = run_result["output"]
+            exit_code = run_result["exit_code"]
+        except SyscallError as e:
+            return f"Error: {e}"
+        job = self._jobs.add(pid=pid, name=program_name)
+        job.status = JobStatus.DONE
+        job.output = f"{output}\n[exit code: {exit_code}]"
+        job.exit_code = exit_code
+        return f"[{job.job_id}] {pid}"
 
     def _cmd_scheduler(self, args: list[str]) -> str:
         """Show or switch the scheduling policy."""

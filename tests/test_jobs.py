@@ -112,6 +112,32 @@ class TestJobManager:
         assert mgr.get_by_pid(999) is None
 
 
+class TestJobOutputFields:
+    """Verify the output and exit_code fields on Job."""
+
+    def test_output_defaults_to_none(self) -> None:
+        """A new job should have output=None by default."""
+        job = Job(job_id=1, pid=10, name="test")
+        assert job.output is None
+
+    def test_exit_code_defaults_to_none(self) -> None:
+        """A new job should have exit_code=None by default."""
+        job = Job(job_id=1, pid=10, name="test")
+        assert job.exit_code is None
+
+    def test_output_can_be_set(self) -> None:
+        """Output should be settable after creation."""
+        job = Job(job_id=1, pid=10, name="test")
+        job.output = "Hello from PyOS!\n[exit code: 0]"
+        assert job.output == "Hello from PyOS!\n[exit code: 0]"
+
+    def test_exit_code_can_be_set(self) -> None:
+        """Exit code should be settable after creation."""
+        job = Job(job_id=1, pid=10, name="test")
+        job.exit_code = 0
+        assert job.exit_code == 0
+
+
 class TestShellJobCommands:
     """Verify the shell's job control commands."""
 

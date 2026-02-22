@@ -208,13 +208,100 @@ The [kernel](kernel-and-syscalls.md) knows about processes, but it doesn't
 know or care which ones you consider "background jobs." The shell keeps its own
 list.
 
-The commands:
+### The `&` operator
 
-- `bg <pid>` -- send a process to the background (let it cook while you keep
-  working)
-- `fg <job_id>` -- bring a background job back to the foreground (go check on
-  your food)
-- `jobs` -- list all your background jobs (what's currently cooking?)
+Adding `&` to the end of a `run` command is like telling the kitchen "bring it
+when it's ready, I don't need to watch you cook." The program runs, but instead
+of showing its output right away, the shell captures it silently and gives you
+a job notification:
+
+```
+> run hello &
+[1] 42
+```
+
+That `[1]` is the **job number** and `42` is the process ID. The program has
+already finished -- its output is waiting for you whenever you're ready to look
+at it.
+
+**Important:** In a real operating system, `&` makes a process run *at the
+same time* as your other commands (true concurrency). PyOS is a simulator
+without threads, so the process actually runs to completion immediately -- the
+only difference is that the output gets stored in the job instead of being
+printed. Think of it like a restaurant that cooks your food instantly but keeps
+it warm on a shelf instead of bringing it to your table right away.
+
+The `&` operator is only meaningful for `run` commands (which create and
+execute processes). Other commands like `touch` or `ls` are so fast that
+backgrounding them doesn't make sense -- they just run normally.
+
+One limitation: you can't combine pipes with `&` (like `ls / | grep txt &`).
+Real shells can do this, but it adds complexity that we'll save for later.
+
+### Retrieving output
+
+Once a job is running in the background, you have two ways to get its output:
+
+**`fg <job_id>`** -- brings the job to the foreground and shows its captured
+output. This also removes the job from the list.
+
+```
+> run hello &
+[1] 42
+> fg 1
+Hello from PyOS!
+[exit code: 0]
+```
+
+**`waitjob`** -- collects output from background jobs without "bringing them
+forward." Use `waitjob` to see all jobs, or `waitjob <job_id>` for a specific
+one. Either way, the jobs are removed after you collect them.
+
+```
+> run hello &
+[1] 42
+> run counter &
+[2] 43
+> waitjob
+[1] hello:
+Hello from PyOS!
+[exit code: 0]
+[2] counter:
+1
+2
+3
+4
+5
+[exit code: 0]
+```
+
+Why is `waitjob` a separate command from `wait`? Because they're different
+concepts. `wait` is a **kernel-level** command -- it tells a parent process to
+wait for a child process to finish (like a parent waiting for their kid to come
+home). `waitjob` is a **shell-level** command -- it retrieves output from a
+background job you started with `&`. Keeping them separate helps reinforce
+where each concept lives in the OS layers.
+
+### All job commands
+
+| Command | What it does |
+|---------|-------------|
+| `run <program> &` | Run a program in the background |
+| `bg <pid>` | Add an existing process as a background job |
+| `fg <job_id>` | Bring a job to the foreground (shows output, removes job) |
+| `jobs` | List all background jobs |
+| `waitjob` | Collect output from all jobs and remove them |
+| `waitjob <job_id>` | Collect output from a specific job and remove it |
+
+### Vocabulary
+
+- **Background job** -- a process whose output is captured silently instead of
+  shown immediately
+- **Foreground** -- the normal mode where a command's output is shown right away
+- **`&` operator** -- the ampersand at the end of a command that triggers
+  background execution
+- **Job number** -- a small number like `[1]` or `[2]` that the shell assigns
+  for your convenience (much easier to remember than a PID)
 
 ## History and Aliases
 
