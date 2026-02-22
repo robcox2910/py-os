@@ -58,6 +58,8 @@ class SyscallNumber(IntEnum):
     SYS_FORK = 4
     SYS_CREATE_THREAD = 5
     SYS_LIST_THREADS = 6
+    SYS_WAIT = 7
+    SYS_WAITPID = 8
 
     # File-system operations
     SYS_CREATE_FILE = 10
@@ -158,6 +160,8 @@ def dispatch_syscall(
         SyscallNumber.SYS_FORK: _sys_fork,
         SyscallNumber.SYS_CREATE_THREAD: _sys_create_thread,
         SyscallNumber.SYS_LIST_THREADS: _sys_list_threads,
+        SyscallNumber.SYS_WAIT: _sys_wait,
+        SyscallNumber.SYS_WAITPID: _sys_waitpid,
         SyscallNumber.SYS_CREATE_FILE: _sys_create_file,
         SyscallNumber.SYS_CREATE_DIR: _sys_create_dir,
         SyscallNumber.SYS_READ_FILE: _sys_read_file,
@@ -277,6 +281,25 @@ def _sys_list_threads(kernel: Any, **kwargs: Any) -> list[dict[str, Any]]:
         raise SyscallError(msg)
     process = kernel.processes[pid]
     return [{"tid": t.tid, "name": t.name, "state": t.state} for t in process.threads.values()]
+
+
+def _sys_wait(kernel: Any, **kwargs: Any) -> dict[str, Any] | None:
+    """Wait for any child of the parent to terminate."""
+    parent_pid: int = kwargs["parent_pid"]
+    try:
+        return kernel.wait_process(parent_pid=parent_pid)
+    except ValueError as e:
+        raise SyscallError(str(e)) from e
+
+
+def _sys_waitpid(kernel: Any, **kwargs: Any) -> dict[str, Any] | None:
+    """Wait for a specific child to terminate."""
+    parent_pid: int = kwargs["parent_pid"]
+    child_pid: int = kwargs["child_pid"]
+    try:
+        return kernel.waitpid_process(parent_pid=parent_pid, child_pid=child_pid)
+    except ValueError as e:
+        raise SyscallError(str(e)) from e
 
 
 # -- File-system syscall handlers --------------------------------------------

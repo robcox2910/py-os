@@ -452,8 +452,9 @@ class Kernel:
         """Dispatch, execute, and terminate a process.
 
         This is the full lifecycle: READY → RUNNING → execute → TERMINATED.
-        The process's memory is freed and it is removed from the process
-        table after completion.
+        Memory is freed immediately, but the process stays in the table
+        as a zombie if it has a living parent (so the parent can collect
+        its exit code).  Orphans are deleted immediately.
 
         Args:
             pid: PID of the process to run.
@@ -485,7 +486,8 @@ class Kernel:
         self._memory.free(pid)
         if self._resource_manager is not None:
             self._resource_manager.remove_process(pid)
-        del self._processes[pid]
+
+        self._zombie_or_delete(process)
 
         return {"output": output, "exit_code": exit_code}
 
@@ -495,7 +497,7 @@ class Kernel:
         The kernel coordinates cleanup across subsystems:
         1. Terminate the process (RUNNING → TERMINATED).
         2. Free its memory frames.
-        3. Remove from the process table.
+        3. Keep as zombie if a living parent exists, else delete.
 
         Args:
             pid: The PID of the process to terminate.
@@ -513,7 +515,7 @@ class Kernel:
             self._memory.free(pid)
             if self._resource_manager is not None:
                 self._resource_manager.remove_process(pid)
-            del self._processes[pid]
+            self._zombie_or_delete(process)
 
     def register_signal_handler(
         self,
@@ -602,10 +604,162 @@ class Kernel:
         match action:
             case SignalAction.TERMINATE:
                 process.force_terminate()
+                assert self._memory is not None  # noqa: S101
+                self._memory.free(pid)
+                if self._resource_manager is not None:
+                    self._resource_manager.remove_process(pid)
+                self._zombie_or_delete(process)
             case SignalAction.STOP:
                 process.wait()
             case SignalAction.CONTINUE | SignalAction.IGNORE:
                 pass
+
+    # -- Wait / zombie helpers -------------------------------------------------
+
+    def _zombie_or_delete(self, process: Process) -> None:
+        """Keep a terminated process as a zombie or delete it.
+
+        If the process has a living parent in the process table, it
+        stays as a zombie so the parent can collect its exit code.
+        Otherwise it is deleted immediately.  In either case, if the
+        parent is waiting, it is woken.
+        """
+        parent_pid = process.parent_pid
+        if parent_pid is not None and parent_pid in self._processes:
+            # Stay as zombie — parent may want to collect
+            self._notify_waiting_parent(process)
+        else:
+            # Orphan — clean up immediately
+            self._cleanup_signal_handlers(process.pid)
+            del self._processes[process.pid]
+
+    def _notify_waiting_parent(self, child: Process) -> None:
+        """Wake the parent if it is waiting for this child.
+
+        The parent must be in WAITING state and its wait_target must
+        match: either -1 (any child) or the child's PID.
+        """
+        if child.parent_pid is None:
+            return
+        parent = self._processes.get(child.parent_pid)
+        if parent is None:
+            return
+        if parent.state is not ProcessState.WAITING:
+            return
+        target = parent.wait_target
+        if target in {-1, child.pid}:
+            parent.wake()
+            parent.wait_target = None
+
+    def _collect_child(self, child: Process) -> dict[str, Any]:
+        """Reap a zombie child and remove it from the process table.
+
+        Extract the child's exit info, clean up signal handlers, and
+        delete the process from the table.
+
+        Args:
+            child: A terminated child process to collect.
+
+        Returns:
+            Dict with child_pid, exit_code, and output.
+
+        """
+        result: dict[str, Any] = {
+            "child_pid": child.pid,
+            "exit_code": child.exit_code,
+            "output": child.output,
+        }
+        self._cleanup_signal_handlers(child.pid)
+        del self._processes[child.pid]
+        return result
+
+    def _cleanup_signal_handlers(self, pid: int) -> None:
+        """Remove all signal handlers registered for a process."""
+        keys_to_remove = [key for key in self._signal_handlers if key[0] == pid]
+        for key in keys_to_remove:
+            del self._signal_handlers[key]
+
+    def wait_process(self, *, parent_pid: int) -> dict[str, Any] | None:
+        """Wait for any child of the parent to terminate.
+
+        If a terminated child already exists, collect it immediately
+        and return the result.  Otherwise, block the parent (transition
+        to WAITING) and return None — the parent will be woken when a
+        child terminates later.
+
+        Args:
+            parent_pid: PID of the parent process.
+
+        Returns:
+            Dict with child info if a zombie was collected, or None if
+            the parent is now blocked waiting.
+
+        Raises:
+            ValueError: If the parent does not exist or has no children.
+
+        """
+        self._require_running()
+        parent = self._processes.get(parent_pid)
+        if parent is None:
+            msg = f"Process {parent_pid} not found"
+            raise ValueError(msg)
+
+        children = [p for p in self._processes.values() if p.parent_pid == parent_pid]
+        if not children:
+            msg = f"Process {parent_pid} has no children"
+            raise ValueError(msg)
+
+        # Check for an already-terminated child
+        for child in children:
+            if child.state is ProcessState.TERMINATED:
+                return self._collect_child(child)
+
+        # No terminated child yet — block the parent
+        parent.dispatch()
+        parent.wait()
+        parent.wait_target = -1
+        return None
+
+    def waitpid_process(self, *, parent_pid: int, child_pid: int) -> dict[str, Any] | None:
+        """Wait for a specific child to terminate.
+
+        If the child is already terminated, collect it immediately.
+        Otherwise, block the parent and return None.
+
+        Args:
+            parent_pid: PID of the parent process.
+            child_pid: PID of the specific child to wait for.
+
+        Returns:
+            Dict with child info if collected, or None if blocked.
+
+        Raises:
+            ValueError: If parent or child not found, or child is not
+                a child of the parent.
+
+        """
+        self._require_running()
+        parent = self._processes.get(parent_pid)
+        if parent is None:
+            msg = f"Process {parent_pid} not found"
+            raise ValueError(msg)
+
+        child = self._processes.get(child_pid)
+        if child is None:
+            msg = f"Process {child_pid} not found"
+            raise ValueError(msg)
+        if child.parent_pid != parent_pid:
+            msg = f"Process {child_pid} is not a child of {parent_pid}"
+            raise ValueError(msg)
+
+        if child.state is ProcessState.TERMINATED:
+            return self._collect_child(child)
+
+        # Block the parent until this specific child terminates
+        parent.dispatch()
+        parent.wait()
+        parent.wait_target = child_pid
+        return None
 
     def syscall(self, number: SyscallNumber, **kwargs: Any) -> Any:
         """Execute a system call — the user-space → kernel-space gateway.

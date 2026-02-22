@@ -89,6 +89,7 @@ class Process:
         self._program: Callable[[], str] | None = None
         self._output: str | None = None
         self._exit_code: int | None = None
+        self._wait_target: int | None = None
 
         # Thread management — every process has at least one thread
         self._next_tid = count(start=1)
@@ -150,6 +151,20 @@ class Process:
     def exit_code(self) -> int | None:
         """Return the exit code, or None if not yet executed."""
         return self._exit_code
+
+    @property
+    def wait_target(self) -> int | None:
+        """Return the PID this process is waiting to collect.
+
+        None means not waiting, -1 means any child, positive int means
+        a specific child PID.
+        """
+        return self._wait_target
+
+    @wait_target.setter
+    def wait_target(self, target: int | None) -> None:
+        """Set the child PID this process is waiting for."""
+        self._wait_target = target
 
     def execute(self) -> None:
         """Run the loaded program and capture its output and exit code.

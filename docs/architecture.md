@@ -35,7 +35,7 @@ Every source file and what it implements.
 | `kernel.py` | `Kernel` | Central coordinator, boot/shutdown lifecycle, subsystem ownership |
 | `kernel.py` | `KernelState` | SHUTDOWN / BOOTING / RUNNING / SHUTTING_DOWN state machine |
 | `syscalls.py` | `dispatch_syscall()` | Trap handler -- routes syscall numbers to kernel subsystem handlers |
-| `syscalls.py` | `SyscallNumber` | IntEnum of all syscall numbers (1-121, plus 61) |
+| `syscalls.py` | `SyscallNumber` | IntEnum of all syscall numbers (1-121, plus 61 and 7-8) |
 | `syscalls.py` | `SyscallError` | User-facing exception wrapping internal errors |
 
 ### Process Management
@@ -121,7 +121,7 @@ Every source file and what it implements.
 
 | Range | Category |
 |-------|----------|
-| 1-6 | Process operations (create, terminate, list, fork, threads) |
+| 1-8 | Process operations (create, terminate, list, fork, threads, wait, waitpid) |
 | 10-15 | Filesystem operations (create, read, write, delete, list) |
 | 20 | Memory info |
 | 30-33 | User operations (whoami, create, list, switch) |
