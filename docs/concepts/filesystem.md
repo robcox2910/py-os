@@ -327,42 +327,140 @@ Here is a quick comparison:
 | Saves everything    | Only saves what changed   |
 | No crash recovery   | Journaling (see below)    |
 
-## Journaling: The Sticky-Note Safety Net
+## Journaling: The Undo-History Safety Net
 
-This is a concept we don't implement in PyOS, but it's important enough to talk
-about because every modern filesystem uses it.
+Imagine you're writing an essay in a text editor. Your editor saves a backup
+every 10 minutes (that's a **checkpoint**). Every keystroke you type is recorded
+in the undo history (that's the **journal**).
 
-Imagine you're rearranging your filing cabinet. You're moving papers from one
-drawer to another, renaming things, deleting old files. Halfway through, the
-power goes out. When it comes back on, your cabinet is a mess: some papers are
-in the old spot, some are in the new spot, and some might be lost entirely.
+If your computer suddenly loses power, you'd lose everything since the last
+save, right? But with a journal, you can do better:
 
-**Journaling** solves this problem. Before you start rearranging anything, you
-write your plan on a sticky note:
+1. Open the last saved backup (restore from checkpoint).
+2. Look at the undo history and replay every keystroke that was "finished"
+   (committed transactions).
+3. Throw away any half-typed words that weren't finished (active/aborted
+   transactions).
 
-- Step 1: Move paper A from drawer X to drawer Y
-- Step 2: Delete paper B from drawer Z
-- Step 3: Rename paper C to "new_name"
+That's exactly how filesystem journaling works! The journal is a safety net
+that lets us recover from crashes without losing completed work.
 
-You stick the note on the front of the cabinet. Then you start doing the work.
-If the power goes out in the middle of step 2, you can look at the sticky note
-when the power comes back and figure out exactly where you left off. You either
-finish the plan or undo it cleanly. Either way, you don't end up with a
-corrupted mess.
+### What Is a Crash?
 
-In OS terms, that sticky note is called a **journal** (or **write-ahead log**).
-The filesystem writes what it *plans* to do before it actually does it. If the
-system crashes, it replays the journal on the next boot to get back to a
-consistent state.
+A "crash" is anything that stops the computer without warning -- a power
+outage, a frozen program, or pulling the plug. The danger is that you might be
+in the middle of changing a file. If the power dies after writing half the data,
+the file is *corrupted* -- not the old version, not the new version, but a
+broken mix of both.
+
+### Write-Ahead Logging: Log Before You Do
+
+The key idea is simple: **write down what you're about to do before you
+actually do it**. This is called **write-ahead logging** (WAL). Here's the
+pattern every journaled operation follows:
+
+```python
+# 1. Begin a transaction
+txn = journal.begin()
+
+# 2. Log what we're about to do
+journal.append(txn, entry)
+
+# 3. Actually do it
+filesystem.create_file(path)
+
+# 4. Mark the transaction as done
+journal.commit(txn)
+```
+
+If a crash happens between steps 2 and 4, the transaction stays "active"
+(uncommitted). On recovery, we know it didn't finish, so we can safely ignore
+it.
+
+### Transactions: Begin, Commit, Abort
+
+A **transaction** is a bundle of work that either *fully succeeds* or *fully
+fails* -- there's no in-between. Each transaction goes through these states:
+
+| State | Meaning |
+|-------|---------|
+| **active** | Work is in progress |
+| **committed** | All done -- this work should be kept |
+| **aborted** | Something went wrong -- throw this away |
+
+In our PyOS code, every filesystem mutation (create, write, delete, link) is
+wrapped in its own transaction. This keeps things simple: one operation = one
+transaction.
+
+### Checkpoints: The Known-Good Snapshot
+
+A **checkpoint** is like hitting "Save" in your text editor. It takes a
+photograph of the entire filesystem at that moment. We call this the
+"known-good state" because we know it's consistent and correct.
+
+After a checkpoint, we can also clean up the journal -- we don't need to keep
+records of work that's already been safely saved.
+
+```
+journal checkpoint    →  "Checkpoint created"
+```
+
+### Recovery: Restore + Replay
+
+When you recover from a crash, three things happen:
+
+1. **Restore** the filesystem to the last checkpoint (the last known-good
+   state).
+2. **Replay** all committed transactions that happened after the checkpoint.
+   These were finished work, so we redo them.
+3. **Discard** any active or aborted transactions. These were unfinished, so
+   we throw them away.
+
+```
+journal recover    →  "Recovery complete: replayed 3 transactions"
+```
+
+The result? Your filesystem is back to a consistent state, with all completed
+work preserved. Only truly unfinished operations are lost.
+
+### Why "Redo" Logging (Not Undo)?
+
+There are two approaches to crash recovery:
+
+- **Redo logging** (what we use): Save the checkpoint, then replay committed
+  work forward. Simple and clean.
+- **Undo logging**: Record how to reverse each operation. Much more complex
+  because you need to figure out the "opposite" of every action.
+
+Real filesystems like ext3 and ext4 use redo logging in "ordered" mode. It's
+the simpler approach, and it works great.
+
+### Trying It in PyOS
+
+You can experiment with crash recovery in the PyOS shell:
+
+```
+touch /important.txt              # create a file
+write /important.txt secret data  # write to it
+journal checkpoint                # save a known-good state
+touch /experiment.txt             # create another file
+write /experiment.txt testing     # write some data
+journal crash                     # simulate a power failure!
+cat /important.txt                # still here (was checkpointed)
+cat /experiment.txt               # Error! (but was committed...)
+journal recover                   # replay committed transactions
+cat /experiment.txt               # back! recovered from the journal
+```
+
+### How Real Filesystems Do It
 
 Real filesystems like ext4 journal their metadata by default. More advanced
 systems like ZFS and Btrfs use a technique called **copy-on-write** with
 checksums, which gives even stronger protection against corruption.
 
-We skip journaling in PyOS because it adds a lot of complexity, and our simple
-"dump everything to JSON" approach works fine for learning. But now you know why
-real operating systems need it -- computers crash, and your files need to
-survive.
+Our PyOS journal keeps things simple for learning, but the core ideas --
+write-ahead logging, transactions, checkpoints, and recovery -- are exactly
+what real operating systems use every day to keep your files safe.
 
 ## File Descriptors: Bookmarks in a Library Book
 
@@ -507,6 +605,13 @@ across reboots.
 | **Base64**        | A way to encode binary data as safe text characters            |
 | **JSON**          | A human-readable text format for structured data               |
 | **Journaling**    | Writing a plan before doing work, so crashes don't cause corruption |
+| **Write-ahead log** | The journal itself -- a record of planned operations         |
+| **Transaction**   | A unit of work that fully succeeds or fully fails              |
+| **Commit**        | Mark a transaction as successfully completed                   |
+| **Abort**         | Mark a transaction as failed or incomplete                     |
+| **Checkpoint**    | A snapshot of the filesystem at a known-good point             |
+| **Recovery**      | Restoring from checkpoint and replaying committed transactions |
+| **Crash consistency** | The guarantee that the filesystem is valid after a crash   |
 
 ## Where to Go Next
 

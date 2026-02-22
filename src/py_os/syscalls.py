@@ -141,6 +141,12 @@ class SyscallNumber(IntEnum):
     SYS_SET_SCHEDULER = 120
     SYS_SCHEDULER_BOOST = 121
 
+    # Journal operations
+    SYS_JOURNAL_STATUS = 130
+    SYS_JOURNAL_CHECKPOINT = 131
+    SYS_JOURNAL_RECOVER = 132
+    SYS_JOURNAL_CRASH = 133
+
 
 class SyscallError(Exception):
     """Raised when a system call fails.
@@ -233,6 +239,10 @@ def dispatch_syscall(
         SyscallNumber.SYS_CONDITION_NOTIFY: _sys_condition_notify,
         SyscallNumber.SYS_SET_SCHEDULER: _sys_set_scheduler,
         SyscallNumber.SYS_SCHEDULER_BOOST: _sys_scheduler_boost,
+        SyscallNumber.SYS_JOURNAL_STATUS: _sys_journal_status,
+        SyscallNumber.SYS_JOURNAL_CHECKPOINT: _sys_journal_checkpoint,
+        SyscallNumber.SYS_JOURNAL_RECOVER: _sys_journal_recover,
+        SyscallNumber.SYS_JOURNAL_CRASH: _sys_journal_crash,
     }
 
     handler = handlers.get(number)
@@ -944,3 +954,27 @@ def _sys_scheduler_boost(kernel: Any, **_kwargs: Any) -> str:
         raise SyscallError(msg)
     policy.boost()
     return "MLFQ boost: all processes reset to level 0"
+
+
+# -- Journal syscall handlers ------------------------------------------------
+
+
+def _sys_journal_status(kernel: Any, **_kwargs: Any) -> dict[str, int]:
+    """Return journal transaction status counts."""
+    return kernel.journal_status()
+
+
+def _sys_journal_checkpoint(kernel: Any, **_kwargs: Any) -> None:
+    """Take a journal checkpoint."""
+    kernel.journal_checkpoint()
+
+
+def _sys_journal_recover(kernel: Any, **_kwargs: Any) -> dict[str, int]:
+    """Recover from a crash by replaying committed transactions."""
+    count = kernel.journal_recover()
+    return {"replayed": count}
+
+
+def _sys_journal_crash(kernel: Any, **_kwargs: Any) -> None:
+    """Simulate a crash for educational purposes."""
+    kernel.journal_crash()

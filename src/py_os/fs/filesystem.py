@@ -572,7 +572,7 @@ class FileSystem:
                 "inode_number": inode.inode_number,
                 "file_type": inode.file_type.value,
                 "data": base64.b64encode(inode.data).decode("ascii"),
-                "children": inode.children,
+                "children": dict(inode.children),
                 "link_count": inode.link_count,
             }
         return {"root_ino": self._root_ino, "inodes": inodes}

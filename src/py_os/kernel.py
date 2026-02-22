@@ -33,7 +33,8 @@ from typing import Any
 
 from py_os.env import Environment
 from py_os.fs.fd import FdError, FdTable, FileMode, OpenFileDescription, SeekWhence
-from py_os.fs.filesystem import FileSystem, FileType
+from py_os.fs.filesystem import FileType
+from py_os.fs.journal import JournaledFileSystem
 from py_os.io.devices import ConsoleDevice, DeviceManager, NullDevice, RandomDevice
 from py_os.logging import Logger, LogLevel
 from py_os.memory.manager import MemoryManager
@@ -82,7 +83,7 @@ class Kernel:
         self._boot_time: float | None = None
         self._scheduler: Scheduler | None = None
         self._memory: MemoryManager | None = None
-        self._filesystem: FileSystem | None = None
+        self._filesystem: JournaledFileSystem | None = None
         self._user_manager: UserManager | None = None
         self._device_manager: DeviceManager | None = None
         self._env: Environment | None = None
@@ -124,7 +125,7 @@ class Kernel:
         return self._memory
 
     @property
-    def filesystem(self) -> FileSystem | None:
+    def filesystem(self) -> JournaledFileSystem | None:
         """Return the file system, or None if not booted."""
         return self._filesystem
 
@@ -246,8 +247,8 @@ class Kernel:
         self._slab_allocator.create_cache("pcb", obj_size=64)
         self._slab_allocator.create_cache("inode", obj_size=48)
 
-        # 2. File system — processes may need files
-        self._filesystem = FileSystem()
+        # 2. File system — processes may need files (with journaling for crash recovery)
+        self._filesystem = JournaledFileSystem()
 
         # 3. User manager — identity before scheduling
         self._user_manager = UserManager()
@@ -1649,3 +1650,39 @@ class Kernel:
         assert self._sync_manager is not None  # noqa: S101
         cond = self._sync_manager.get_condition(name)
         return cond.notify_all()
+
+    # -- Journal operations --------------------------------------------------
+
+    def journal_status(self) -> dict[str, Any]:
+        """Return a summary of journal transaction counts.
+
+        Returns:
+            Dict with total, active, committed, and aborted counts.
+
+        """
+        self._require_running()
+        assert self._filesystem is not None  # noqa: S101
+        return self._filesystem.journal_status()
+
+    def journal_checkpoint(self) -> None:
+        """Take a journal checkpoint — snapshot the current filesystem state."""
+        self._require_running()
+        assert self._filesystem is not None  # noqa: S101
+        self._filesystem.checkpoint()
+
+    def journal_crash(self) -> None:
+        """Simulate a crash — abort active transactions, restore from checkpoint."""
+        self._require_running()
+        assert self._filesystem is not None  # noqa: S101
+        self._filesystem.simulate_crash()
+
+    def journal_recover(self) -> int:
+        """Recover from a crash — replay committed transactions.
+
+        Returns:
+            The number of transactions replayed.
+
+        """
+        self._require_running()
+        assert self._filesystem is not None  # noqa: S101
+        return self._filesystem.recover()

@@ -7,7 +7,13 @@ Re-exports public symbols so callers can write::
 
 from py_os.fs.fd import FdError, FdTable, FileMode, OpenFileDescription, SeekWhence
 from py_os.fs.filesystem import MAX_SYMLINK_DEPTH, FileSystem, FileType, InodeInfo
-from py_os.fs.persistence import dump_filesystem, load_filesystem
+from py_os.fs.journal import Journal, JournaledFileSystem, JournalOp, TransactionState
+from py_os.fs.persistence import (
+    dump_filesystem,
+    dump_journaled_filesystem,
+    load_filesystem,
+    load_journaled_filesystem,
+)
 
 __all__ = [
     "MAX_SYMLINK_DEPTH",
@@ -17,8 +23,14 @@ __all__ = [
     "FileSystem",
     "FileType",
     "InodeInfo",
+    "Journal",
+    "JournalOp",
+    "JournaledFileSystem",
     "OpenFileDescription",
     "SeekWhence",
+    "TransactionState",
     "dump_filesystem",
+    "dump_journaled_filesystem",
     "load_filesystem",
+    "load_journaled_filesystem",
 ]

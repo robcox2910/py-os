@@ -14,14 +14,15 @@ Key concepts:
     - **Serialization** — converting in-memory structures to a storable format.
     - **Deserialization** — reconstructing structures from stored data.
     - **Base64 encoding** — binary file data is encoded as ASCII text for JSON.
-    - **Journaling** (not implemented) — real filesystems log operations
-      before applying them, so a crash mid-write doesn't corrupt data.
+    - **Journaling** — log operations before applying them, so a crash
+      mid-write doesn't corrupt data.  See ``fs/journal.py``.
 """
 
 import json
 from pathlib import Path
 
 from py_os.fs.filesystem import FileSystem
+from py_os.fs.journal import JournaledFileSystem
 
 
 def dump_filesystem(fs: FileSystem, path: Path) -> None:
@@ -58,3 +59,33 @@ def load_filesystem(path: Path) -> FileSystem:
     text = path.read_text()
     data = json.loads(text)
     return FileSystem.from_dict(data)
+
+
+def dump_journaled_filesystem(jfs: JournaledFileSystem, path: Path) -> None:
+    """Save a journaled filesystem (fs + journal + checkpoint) to JSON.
+
+    Args:
+        jfs: The journaled filesystem to save.
+        path: The file path to write to.
+
+    """
+    data = jfs.to_dict()
+    path.write_text(json.dumps(data, indent=2))
+
+
+def load_journaled_filesystem(path: Path) -> JournaledFileSystem:
+    """Load a journaled filesystem from JSON.
+
+    Args:
+        path: The file path to read from.
+
+    Returns:
+        A reconstructed JournaledFileSystem instance.
+
+    Raises:
+        FileNotFoundError: If the path does not exist.
+
+    """
+    text = path.read_text()
+    data = json.loads(text)
+    return JournaledFileSystem.from_dict(data)

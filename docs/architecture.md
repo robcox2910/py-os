@@ -35,7 +35,7 @@ Every source file and what it implements.
 | `kernel.py` | `Kernel` | Central coordinator, boot/shutdown lifecycle, subsystem ownership |
 | `kernel.py` | `KernelState` | SHUTDOWN / BOOTING / RUNNING / SHUTTING_DOWN state machine |
 | `syscalls.py` | `dispatch_syscall()` | Trap handler -- routes syscall numbers to kernel subsystem handlers |
-| `syscalls.py` | `SyscallNumber` | IntEnum of all syscall numbers (1-121+) |
+| `syscalls.py` | `SyscallNumber` | IntEnum of all syscall numbers (1-133+) |
 | `syscalls.py` | `SyscallError` | User-facing exception wrapping internal errors |
 
 ### Process Management
@@ -86,8 +86,16 @@ Every source file and what it implements.
 | `fs/fd.py` | `FileMode` | READ / WRITE / READ_WRITE access modes |
 | `fs/fd.py` | `SeekWhence` | SET / CUR / END seek directions |
 | `fs/fd.py` | `FdError` | Exception for file descriptor operation failures |
+| `fs/journal.py` | `JournaledFileSystem` | Composition wrapper adding WAL logging to every filesystem mutation |
+| `fs/journal.py` | `Journal` | Write-ahead log managing transactions (begin/append/commit/abort) |
+| `fs/journal.py` | `JournalOp` | CREATE_FILE / CREATE_DIR / WRITE / WRITE_AT / DELETE / LINK / SYMLINK |
+| `fs/journal.py` | `TransactionState` | ACTIVE / COMMITTED / ABORTED |
+| `fs/journal.py` | `JournalEntry` | Single logged operation within a transaction |
+| `fs/journal.py` | `Transaction` | Atomic unit grouping journal entries |
 | `fs/persistence.py` | `dump_filesystem()` | Serialize filesystem to JSON |
 | `fs/persistence.py` | `load_filesystem()` | Deserialize filesystem from JSON |
+| `fs/persistence.py` | `dump_journaled_filesystem()` | Serialize journaled filesystem (fs + journal + checkpoint) to JSON |
+| `fs/persistence.py` | `load_journaled_filesystem()` | Deserialize journaled filesystem from JSON |
 
 ### User Space
 
@@ -151,6 +159,7 @@ Every source file and what it implements.
 | 100-101 | Process execution (exec, run) |
 | 110-118 | Synchronization (mutex, semaphore, condition) |
 | 120-121 | Scheduler operations (policy switching, MLFQ boost) |
+| 130-133 | Journal operations (status, checkpoint, recover, crash) |
 
 ## Strategy Pattern Usage
 
