@@ -19,7 +19,7 @@ Technical reference for every module in the system. For beginner-friendly explan
 | [Memory](concepts/memory.md) | Frames/pages, virtual memory, page replacement, swap, copy-on-write, mmap, slab allocator |
 | [Filesystem](concepts/filesystem.md) | Inodes, path resolution, hard/symbolic links, persistence, journaling |
 | [Kernel and System Calls](concepts/kernel-and-syscalls.md) | Boot sequence, lifecycle, syscall dispatch, number ranges |
-| [The Shell](concepts/shell.md) | Commands, pipes, redirection, loops, scripting, jobs, history, aliases, env |
+| [The Shell](concepts/shell.md) | Commands, pipes, redirection, loops, scripting, jobs, history, aliases, tab completion, env |
 | [Devices and Networking](concepts/devices-and-networking.md) | Device protocol, IPC, disk scheduling, sockets |
 | [Users and Safety](concepts/users-and-safety.md) | Permissions, signals, logging, deadlock |
 | [Synchronization](concepts/synchronization.md) | Mutex, semaphore, condition variable, race conditions |

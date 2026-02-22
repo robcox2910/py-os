@@ -192,7 +192,7 @@ The other approach is the opposite philosophy: let processes grab whatever resou
 
 Detection works by looking for circular waits in the system. If Process A is waiting for Process B, and Process B is waiting for Process A, the detector spots that circle and reports it.
 
-This approach is more permissive -- processes are never told "no" just in case. But you need a plan for what to do when a deadlock is found. Usually, the OS picks one of the stuck processes and terminates it (using [SIGKILL](#the-four-main-signals)) to break the circle. Tough luck for that process, but it frees everyone else.
+This approach is more permissive -- processes are never told "no" just in case. But you need a plan for what to do when a deadlock is found. Usually, the OS picks one of the stuck processes and terminates it (using [SIGKILL](#the-six-signals)) to break the circle. Tough luck for that process, but it frees everyone else.
 
 ### Two Philosophies
 

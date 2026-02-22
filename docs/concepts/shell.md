@@ -689,8 +689,8 @@ the children messing up the parent's settings. The
 The shell is your window into the operating system. It takes your plain-English
 (well, plain-command) requests, translates them into system calls, and gives
 you back the results. It adds convenience features on top -- pipes, scripts,
-job control, history, aliases, variables -- that make the raw power of the
-kernel accessible and pleasant to use.
+job control, history, aliases, tab completion, variables -- that make the raw
+power of the kernel accessible and pleasant to use.
 
 If the kernel is the engine of a car, the shell is the steering wheel, the
 pedals, and the dashboard. You don't need to understand every piston and valve

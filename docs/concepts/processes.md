@@ -275,7 +275,7 @@ Sharing sounds great, but it comes with a catch. If both pairs of hands try to e
 
 In programming, this is called a **race condition** -- the result depends on which thread happened to go first, and that can change every time you run the program. Race conditions are some of the hardest bugs to find because they do not happen consistently.
 
-The solution involves tools like **mutexes** (locks that only let one thread in at a time) and **semaphores** (counters that control access). Those are topics for a future module.
+The solution involves tools like **mutexes** (locks that only let one thread in at a time) and **semaphores** (counters that control access). Those are covered in [Synchronization](synchronization.md).
 
 ### Threads vs Fork -- When to use which
 
