@@ -93,6 +93,11 @@ class SyscallNumber(IntEnum):
     SYS_LIST_USERS = 32
     SYS_SWITCH_USER = 33
 
+    # Link operations
+    SYS_LINK = 34
+    SYS_SYMLINK = 35
+    SYS_READLINK = 36
+
     # Device operations
     SYS_DEVICE_READ = 40
     SYS_DEVICE_WRITE = 41
@@ -200,6 +205,9 @@ def dispatch_syscall(
         SyscallNumber.SYS_CREATE_USER: _sys_create_user,
         SyscallNumber.SYS_LIST_USERS: _sys_list_users,
         SyscallNumber.SYS_SWITCH_USER: _sys_switch_user,
+        SyscallNumber.SYS_LINK: _sys_link,
+        SyscallNumber.SYS_SYMLINK: _sys_symlink,
+        SyscallNumber.SYS_READLINK: _sys_readlink,
         SyscallNumber.SYS_DEVICE_READ: _sys_device_read,
         SyscallNumber.SYS_DEVICE_WRITE: _sys_device_write,
         SyscallNumber.SYS_LIST_DEVICES: _sys_list_devices,
@@ -402,6 +410,38 @@ def _sys_list_dir(kernel: Any, **kwargs: Any) -> list[str]:
     try:
         return kernel.filesystem.list_dir(kwargs["path"])
     except FileNotFoundError as e:
+        raise SyscallError(str(e)) from e
+
+
+# -- Link syscall handlers ---------------------------------------------------
+
+
+def _sys_link(kernel: Any, **kwargs: Any) -> None:
+    """Create a hard link."""
+    target: str = kwargs["target"]
+    link_path: str = kwargs["link_path"]
+    try:
+        kernel.link_file(target, link_path)
+    except (FileNotFoundError, FileExistsError, OSError) as e:
+        raise SyscallError(str(e)) from e
+
+
+def _sys_symlink(kernel: Any, **kwargs: Any) -> None:
+    """Create a symbolic link."""
+    target: str = kwargs["target"]
+    link_path: str = kwargs["link_path"]
+    try:
+        kernel.symlink_file(target, link_path)
+    except (FileNotFoundError, FileExistsError) as e:
+        raise SyscallError(str(e)) from e
+
+
+def _sys_readlink(kernel: Any, **kwargs: Any) -> str:
+    """Read the target of a symbolic link."""
+    path: str = kwargs["path"]
+    try:
+        return kernel.readlink_file(path)
+    except (FileNotFoundError, OSError) as e:
         raise SyscallError(str(e)) from e
 
 

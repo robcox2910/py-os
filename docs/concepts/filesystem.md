@@ -51,9 +51,10 @@ In our Python code, the `_Inode` class looks like this (simplified):
 @dataclass
 class _Inode:
     inode_number: int
-    file_type: FileType      # FILE or DIRECTORY
-    data: bytes = b""        # the file's contents
+    file_type: FileType      # FILE, DIRECTORY, or SYMLINK
+    data: bytes = b""        # file contents (or symlink target path)
     children: dict[str, int] # name -> inode number (for directories)
+    link_count: int = 1      # how many names point to this inode
 ```
 
 Notice the `children` dictionary. If this inode is a directory, `children` maps
@@ -109,6 +110,136 @@ through them one by one, hopping from directory to directory. Simple and clean.
 When [The Kernel](kernel-and-syscalls.md) receives a filesystem syscall (like
 "read this file" or "list this directory"), the kernel hands the path to the
 filesystem, and this resolution process kicks in before anything else happens.
+
+## Links: Multiple Names for One File
+
+Remember how names live in the parent directory, not on the file itself? That
+separation makes something really cool possible: one file can have **more than
+one name**. There are two kinds of links in Unix, and they work very
+differently.
+
+### The Phone Contacts Analogy
+
+**Hard link** = Two entries in your phone's contacts that both reach the same
+person. "Mom" and "Emergency Contact" both dial the same number. If you delete
+"Mom", the person is still reachable through "Emergency Contact". The person
+only truly disappears from your phone when you delete *every* contact entry for
+that number.
+
+**Symbolic link** = A sticky note on your desk that says "Call Mom's number". It
+doesn't store the number itself -- it points to the contact entry. If someone
+deletes "Mom" from your contacts, the sticky note is useless (a *dangling*
+link). But if someone later adds "Mom" back, the sticky note works again.
+
+### Hard Links
+
+A hard link is a second name that points to the **same inode**. Since both
+names point to the same inode number, they share everything: the same data, the
+same size, the same type. Writing through one name changes the data for the
+other name too, because there is only one copy of the data.
+
+```
+Directory /         Directory /docs
+name → inode        name → inode
+─────────────       ─────────────
+hello.txt → 5      ref.txt → 5      ← same inode!
+```
+
+In PyOS:
+
+```python
+fs.create_file("/hello.txt")
+fs.write("/hello.txt", b"Hi!")
+fs.link("/hello.txt", "/docs/ref.txt")
+
+# Both names read the same data:
+fs.read("/docs/ref.txt")   # b"Hi!"
+```
+
+**Rules for hard links:**
+
+- You cannot hard-link directories. If you could, the directory tree would have
+  loops, and path resolution would never finish.
+- The target file must already exist.
+- The new name must not already exist.
+
+### Link Count
+
+How does the OS know when to actually delete a file's data? It uses a **link
+count** -- a counter on the inode that tracks how many names point to it. Every
+time you create a hard link, the count goes up. Every time you delete a name,
+the count goes down. The inode (and its data) is only freed when the count hits
+zero.
+
+```
+fs.stat("/hello.txt").link_count   # 1  (just created)
+fs.link("/hello.txt", "/alias.txt")
+fs.stat("/hello.txt").link_count   # 2  (two names now)
+fs.delete("/hello.txt")
+fs.stat("/alias.txt").link_count   # 1  (one name left, data still alive)
+fs.delete("/alias.txt")            # link_count → 0, inode freed
+```
+
+### Symbolic Links (Symlinks)
+
+A symbolic link is a completely different kind of inode. Instead of pointing to
+the same inode number, it creates a **new inode** whose data is the *path* to
+the target. It is like a shortcut file that says "go look over there".
+
+```python
+fs.create_file("/target.txt")
+fs.symlink("/target.txt", "/shortcut.txt")
+
+fs.readlink("/shortcut.txt")   # "/target.txt"
+fs.read("/shortcut.txt")       # reads /target.txt's data (followed the link)
+```
+
+The filesystem follows symlinks **automatically** during path resolution. When
+`_resolve()` encounters a symlink, it reads the stored target path and
+continues resolving from there.
+
+**What makes symlinks special:**
+
+- The target **doesn't have to exist**. You can create a symlink pointing to
+  `/nonexistent`, and the symlink itself is valid. It just can't be followed
+  until the target exists. This is called a **dangling symlink**.
+- You **can** symlink directories. This is safe because symlinks have depth
+  protection (see below).
+- Symlinks can be **relative** (`real.txt`) or **absolute** (`/data/real.txt`).
+  Relative targets resolve from the symlink's parent directory.
+
+### Loop Detection
+
+What if symlink A points to B, and B points back to A? The filesystem would
+follow links forever. To prevent this, `_resolve()` counts how many symlinks
+it has followed. If the count exceeds `MAX_SYMLINK_DEPTH` (40, matching Linux),
+it raises an error: "Too many levels of symbolic links".
+
+```python
+fs.symlink("/b", "/a")   # /a → /b
+fs.symlink("/a", "/b")   # /b → /a (circular!)
+fs.stat("/a")             # OSError: Too many levels of symbolic links
+```
+
+### stat vs. lstat
+
+The `stat()` function follows symlinks -- if you stat a symlink, you get the
+target's metadata. But sometimes you want to see the symlink itself. That is
+what `lstat()` does: it returns the symlink's own inode info (type=SYMLINK,
+size=length of the target path) without following it.
+
+```python
+fs.stat("/shortcut.txt").file_type    # FileType.FILE (the target)
+fs.lstat("/shortcut.txt").file_type   # FileType.SYMLINK (the link itself)
+```
+
+### Deleting Links
+
+- **Deleting a hard link** removes one name and decrements the link count. The
+  data survives as long as at least one name remains.
+- **Deleting a symlink** removes the symlink inode. The target is untouched.
+- **Deleting the target of a symlink** leaves the symlink dangling -- the
+  symlink still exists, but following it produces a "not found" error.
 
 ## Saving to Disk: Persistence
 
@@ -366,6 +497,11 @@ across reboots.
 | **File descriptor** | A small number (like a library ticket) that identifies an open file |
 | **Offset**        | Your current position in the file (like a bookmark)            |
 | **Fd table**      | Per-process table that maps fd numbers to open file descriptions |
+| **Hard link**     | A second name pointing to the same inode (same data, same file) |
+| **Symbolic link** | A special inode that stores a path to another file (a shortcut) |
+| **Link count**    | How many names point to an inode; file is freed when it hits zero |
+| **Dangling symlink** | A symlink whose target doesn't exist (yet)                  |
+| **Symlink loop**  | Circular symlinks (A→B→A); caught by MAX_SYMLINK_DEPTH        |
 | **Serialization** | Converting live data into a storable format (like taking a photo) |
 | **Deserialization** | Rebuilding live data from a stored format (like rebuilding from a photo) |
 | **Base64**        | A way to encode binary data as safe text characters            |

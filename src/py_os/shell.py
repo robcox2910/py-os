@@ -24,6 +24,7 @@ Design choices:
 import re
 from collections.abc import Callable
 
+from py_os.fs.filesystem import FileType
 from py_os.jobs import JobManager
 from py_os.kernel import Kernel, KernelState
 from py_os.process.scheduler import (
@@ -130,6 +131,9 @@ class Shell:
             "writefd": self._cmd_writefd,
             "seek": self._cmd_seek,
             "lsfd": self._cmd_lsfd,
+            "ln": self._cmd_ln,
+            "readlink": self._cmd_readlink,
+            "stat": self._cmd_stat,
         }
 
     def execute(self, command: str) -> str:
@@ -1286,4 +1290,67 @@ class Shell:
         for fd_num in sorted(fds):
             ofd = fds[fd_num]
             lines.append(f"{fd_num:<3} {ofd.mode!s:<5} {ofd.offset:<7} {ofd.path}")
+        return "\n".join(lines)
+
+    # -- Link commands -------------------------------------------------------
+
+    def _cmd_ln(self, args: list[str]) -> str:
+        """Create a hard or symbolic link.
+
+        ``ln <target> <link>``     → hard link
+        ``ln -s <target> <link>``  → symbolic link
+        """
+        symbolic = args[0] == "-s" if args else False
+        actual_args = args[1:] if symbolic else args
+
+        min_args = 2
+        if len(actual_args) < min_args:
+            return "Usage: ln [-s] <target> <link_name>"
+
+        target = actual_args[0]
+        link_path = actual_args[1]
+        syscall = SyscallNumber.SYS_SYMLINK if symbolic else SyscallNumber.SYS_LINK
+        try:
+            self._kernel.syscall(syscall, target=target, link_path=link_path)
+        except SyscallError as e:
+            return f"Error: {e}"
+        return ""
+
+    def _cmd_readlink(self, args: list[str]) -> str:
+        """Print the target of a symbolic link."""
+        if not args:
+            return "Usage: readlink <path>"
+        try:
+            result: str = self._kernel.syscall(SyscallNumber.SYS_READLINK, path=args[0])
+        except SyscallError as e:
+            return f"Error: {e}"
+        return result
+
+    def _cmd_stat(self, args: list[str]) -> str:
+        """Display file metadata (inode, type, size, links).
+
+        Uses lstat internally so symlinks show their own metadata.
+        """
+        if not args:
+            return "Usage: stat <path>"
+        path = args[0]
+        assert self._kernel.filesystem is not None  # noqa: S101
+        try:
+            info = self._kernel.filesystem.lstat(path)
+        except FileNotFoundError as e:
+            return f"Error: {e}"
+
+        if info.file_type is FileType.SYMLINK:
+            target = self._kernel.filesystem.readlink(path)
+            file_line = f"  File: {path} -> {target}"
+        else:
+            file_line = f"  File: {path}"
+
+        lines = [
+            file_line,
+            f"  Inode: {info.inode_number}",
+            f"  Type: {info.file_type}",
+            f"  Size: {info.size}",
+            f"  Links: {info.link_count}",
+        ]
         return "\n".join(lines)
