@@ -41,6 +41,8 @@ class Job:
         pid: The underlying kernel process PID.
         name: The command or process name.
         status: Current job status.
+        output: Captured output from a background run (None for ``bg`` jobs).
+        exit_code: Exit code from a background run (None for ``bg`` jobs).
 
     """
 
@@ -48,6 +50,8 @@ class Job:
     pid: int
     name: str
     status: JobStatus = JobStatus.RUNNING
+    output: str | None = None
+    exit_code: int | None = None
 
     def __str__(self) -> str:
         """Format as ``[id] status name (pid=N)``."""
