@@ -602,6 +602,46 @@ every time, you press one button and the phone fills in the rest.
 Use `alias` with no arguments to see all your current aliases, and
 `unalias <name>` to remove one.
 
+## Tab Completion
+
+You know how your phone suggests the rest of a word while you're typing? Tab
+completion works the same way. Start typing a command, press the **Tab** key,
+and the shell fills in the rest for you. If there's more than one possibility,
+press Tab twice to see all the options.
+
+For example, type `he` and press Tab -- the shell completes it to `help`
+because that's the only command starting with "he". Type `ls /` and press Tab
+-- you'll see every file and directory in the root folder.
+
+Tab completion isn't just for commands. It works in several contexts depending
+on what you're typing:
+
+| Where you are | What completes |
+|---------------|----------------|
+| First word on the line | Command names (`ls`, `cat`, `mkdir`, ...) |
+| After `scheduler`, `mutex`, `semaphore`, `journal` | Subcommands (`fcfs`, `create`, `status`, ...) |
+| After a file command (`ls`, `cat`, `rm`, ...) | Filesystem paths |
+| After `run` | Built-in program names |
+| After `unset` | Environment variable names |
+| After `signal <pid>` or `handle <pid>` | Signal names (`SIGTERM`, `SIGKILL`, ...) |
+| `$` prefix anywhere | Environment variable names with `$` prefix |
+
+Under the hood, this works by importing Python's `readline` module and giving
+it a **completer function**. Every time you press Tab, readline calls that
+function with whatever partial text you've typed so far. The completer looks at
+the context -- which command you're typing, where in the line you are -- and
+returns a list of suggestions. All the logic lives in a separate `Completer`
+class so it can be tested without any I/O.
+
+### Vocabulary
+
+- **Tab completion** -- pressing Tab to auto-fill a partial command, path, or
+  name
+- **Completer** -- the code that decides what suggestions to offer based on
+  context
+- **readline** -- a library that adds line-editing features (Tab completion,
+  arrow keys, history) to terminal input
+
 ## Environment Variables
 
 Environment variables are like sticky notes on your desk. Each one has a name

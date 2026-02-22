@@ -16,6 +16,9 @@ The helper functions (``build_prompt``, ``boot_banner``) are pure and
 testable.  The ``run()`` function is the I/O entrypoint.
 """
 
+import readline
+
+from py_os.completer import Completer
 from py_os.kernel import Kernel, KernelState
 from py_os.shell import Shell
 from py_os.syscalls import SyscallNumber
@@ -68,6 +71,12 @@ def run() -> None:
     kernel = Kernel()
     kernel.boot()
     shell = Shell(kernel=kernel)
+
+    # Wire up tab completion via readline.
+    completer = Completer(shell)
+    readline.set_completer(completer.complete)
+    readline.set_completer_delims(" \t")
+    readline.parse_and_bind("tab: complete")
 
     print(boot_banner())  # noqa: T201
 

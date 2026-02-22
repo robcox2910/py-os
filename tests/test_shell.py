@@ -270,3 +270,21 @@ class TestShellKill:
         _kernel, shell = _booted_shell()
         result = shell.execute("kill")
         assert "usage" in result.lower() or "error" in result.lower()
+
+
+class TestCommandNamesProperty:
+    """Verify the command_names property on Shell."""
+
+    def test_command_names_returns_sorted_list(self) -> None:
+        """command_names should return a sorted list of strings."""
+        _kernel, shell = _booted_shell()
+        names = shell.command_names
+        assert names == sorted(names)
+        assert isinstance(names, list)
+
+    def test_command_names_includes_known_commands(self) -> None:
+        """command_names should include well-known commands."""
+        _kernel, shell = _booted_shell()
+        names = shell.command_names
+        for cmd in ("ls", "cat", "mkdir", "ps", "help", "exit", "run"):
+            assert cmd in names
