@@ -27,6 +27,12 @@ Design choices:
       physical frame number, simulating physical RAM.
 """
 
+from collections.abc import Callable
+
+# Type alias for the COW fault handler callback.
+# Given a virtual page number, return (new_frame, new_storage).
+CowFaultHandler = Callable[[int], tuple[int, bytearray]]
+
 
 class PageFaultError(Exception):
     """Raised when a virtual address has no physical mapping."""
@@ -91,6 +97,9 @@ class VirtualMemory:
         self._page_table = PageTable()
         # Simulated physical RAM: frame_number → bytearray
         self._physical: dict[int, bytearray] = {}
+        # COW tracking
+        self._cow_pages: set[int] = set()
+        self._cow_fault_handler: CowFaultHandler | None = None
 
     @property
     def page_size(self) -> int:
@@ -101,6 +110,58 @@ class VirtualMemory:
     def page_table(self) -> PageTable:
         """Return the page table for this address space."""
         return self._page_table
+
+    def mark_cow(self, *, virtual_page: int) -> None:
+        """Mark a virtual page as copy-on-write protected."""
+        self._cow_pages.add(virtual_page)
+
+    def clear_cow(self, *, virtual_page: int) -> None:
+        """Remove copy-on-write protection from a virtual page."""
+        self._cow_pages.discard(virtual_page)
+
+    def is_cow(self, *, virtual_page: int) -> bool:
+        """Return True if the virtual page is copy-on-write protected."""
+        return virtual_page in self._cow_pages
+
+    @property
+    def cow_pages(self) -> frozenset[int]:
+        """Return the set of virtual page numbers that are COW-protected."""
+        return frozenset(self._cow_pages)
+
+    @property
+    def cow_fault_handler(self) -> CowFaultHandler | None:
+        """Return the currently installed COW fault handler."""
+        return self._cow_fault_handler
+
+    @cow_fault_handler.setter
+    def cow_fault_handler(self, handler: CowFaultHandler | None) -> None:
+        """Install a COW fault handler callback."""
+        self._cow_fault_handler = handler
+
+    def share_physical(self, *, frame: int, storage: bytearray) -> None:
+        """Install a shared bytearray as the storage for a physical frame.
+
+        Used by the kernel at fork time to make parent and child point
+        to the same underlying buffer until a COW fault separates them.
+
+        Args:
+            frame: The physical frame number.
+            storage: The bytearray to use as backing storage.
+
+        """
+        self._physical[frame] = storage
+
+    def physical_storage(self, frame: int) -> bytearray:
+        """Return the underlying bytearray for a physical frame.
+
+        Args:
+            frame: The physical frame number.
+
+        Returns:
+            The frame's storage buffer.
+
+        """
+        return self._ensure_frame(frame)
 
     def _resolve(self, virtual_address: int) -> tuple[int, int]:
         """Translate a virtual address to (physical_frame, offset).
@@ -141,14 +202,42 @@ class VirtualMemory:
     def write(self, *, virtual_address: int, data: bytes) -> None:
         """Write bytes to a virtual address.
 
+        If the target page is COW-protected, a fault handler is invoked
+        to allocate a private copy before the write proceeds.
+
         Args:
             virtual_address: The starting virtual address.
             data: The bytes to write.
 
         Raises:
             PageFaultError: If the address is not mapped.
+            RuntimeError: If a COW page has no fault handler installed.
 
         """
+        vpn = virtual_address // self._page_size
+        if vpn in self._cow_pages:
+            self._handle_cow_fault(vpn)
         frame, offset = self._resolve(virtual_address)
         storage = self._ensure_frame(frame)
         storage[offset : offset + len(data)] = data
+
+    def _handle_cow_fault(self, vpn: int) -> None:
+        """Handle a copy-on-write fault for a virtual page.
+
+        Calls the installed fault handler to get a new private frame
+        and storage, remaps the page table, and clears the COW flag.
+
+        Args:
+            vpn: The virtual page number that was written to.
+
+        Raises:
+            RuntimeError: If no fault handler is installed.
+
+        """
+        if self._cow_fault_handler is None:
+            msg = f"No COW fault handler for virtual page {vpn}"
+            raise RuntimeError(msg)
+        new_frame, new_storage = self._cow_fault_handler(vpn)
+        self._page_table.map(virtual_page=vpn, physical_frame=new_frame)
+        self._physical[new_frame] = new_storage
+        self._cow_pages.discard(vpn)
