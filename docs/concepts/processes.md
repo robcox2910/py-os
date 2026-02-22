@@ -335,9 +335,51 @@ The `run` command does the full lifecycle behind the scenes: it creates a proces
 
 ---
 
+## Zombies and Waiting
+
+When a child process finishes, it does not just vanish. It still has information the parent might need -- like an exit code that says whether things went well. So the child becomes a **zombie**: it is dead (TERMINATED), its memory is freed, but its entry stays in the process table, holding its exit code like a receipt.
+
+### The milk analogy
+
+Imagine you send your sibling to the corner shop to buy milk. They go, they buy it, they come back. But instead of putting the milk in the fridge themselves, they stand in the doorway holding the carton, waiting for you to take it from them. Until you take the milk, they are stuck in the doorway -- that is a zombie. Once you take the milk (collect the exit code), they can finally go sit down and the doorway is clear.
+
+### `wait()` and `waitpid()`
+
+The parent collects a zombie using `wait()` or `waitpid()`:
+
+- **`wait()`** -- "I don't care which sibling comes back first -- just give me whoever finishes first."
+- **`waitpid(pid)`** -- "I'm specifically waiting for sibling number 5."
+
+If a child has already finished (there is already a zombie), the collection happens instantly. If no child has finished yet, the parent **blocks** -- it moves to the WAITING state and stops doing anything until a child terminates.
+
+In PyOS, because everything is single-threaded, "blocking" means the parent transitions to WAITING and records what it is waiting for. When the child later terminates, the kernel checks if the parent is waiting and wakes it up.
+
+### What happens to orphans?
+
+If a process has no parent (or the parent has already been removed), it is an **orphan**. Orphans are cleaned up immediately when they terminate -- no zombie stage needed, because nobody is going to collect them.
+
+### Try it in the PyOS shell
+
+```
+pyos> fork 1
+Forked pid 1 → child pid 2 (parent (fork))
+
+pyos> wait 1
+Collected child pid 2 (exit_code=0, output='hello')
+```
+
+If the child has not finished yet, you will see:
+
+```
+pyos> wait 1
+Process 1 is now waiting for a child.
+```
+
+---
+
 ## Putting It All Together
 
-Here is the big picture. A process is a program in action, tracked by a PCB. The scheduler decides which process gets the CPU, using a pluggable policy (FCFS, Round Robin, Priority, Aging Priority, MLFQ, or CFS). Processes can create copies of themselves through forking, or run lightweight parallel work using threads. When a process runs a program, it goes through the full lifecycle -- create, load, execute, output, and exit.
+Here is the big picture. A process is a program in action, tracked by a PCB. The scheduler decides which process gets the CPU, using a pluggable policy (FCFS, Round Robin, Priority, Aging Priority, MLFQ, or CFS). Processes can create copies of themselves through forking, or run lightweight parallel work using threads. When a process runs a program, it goes through the full lifecycle -- create, load, execute, output, and exit. When a child terminates, it becomes a zombie until its parent collects the exit code with `wait()` or `waitpid()`.
 
 All of these pieces work together inside the [kernel](kernel-and-syscalls.md), which coordinates the scheduler, [memory](memory.md) manager, and process table to keep everything running smoothly.
 
@@ -363,3 +405,7 @@ All of these pieces work together inside the [kernel](kernel-and-syscalls.md), w
 | **Thread** | A lightweight execution unit that shares memory with other threads in the same process |
 | **Race condition** | A bug caused by two threads accessing shared data at the same time |
 | **Exit code** | A number (0 = success, non-zero = failure) that a process returns when it finishes |
+| **Zombie** | A terminated process that stays in the process table until its parent collects the exit code |
+| **wait()** | Block until any child terminates, then collect its exit code |
+| **waitpid()** | Block until a specific child terminates, then collect its exit code |
+| **Orphan** | A process whose parent no longer exists -- cleaned up immediately on termination |

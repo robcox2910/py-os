@@ -101,6 +101,8 @@ jobs        List background jobs
 bg pid      Move a process to background
 fg job_id   Bring a job to foreground
 fork pid    Fork a process (create a child copy)
+wait pid    Wait for any child to terminate and collect its exit code
+waitpid p c Wait for a specific child (c) of parent (p) to terminate
 pstree      Show the process tree hierarchy
 threads pid List threads of a process
 resources   Show resource allocation status

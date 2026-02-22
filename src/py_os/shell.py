@@ -115,6 +115,8 @@ class Shell:
             "mutex": self._cmd_mutex,
             "semaphore": self._cmd_semaphore,
             "handle": self._cmd_handle,
+            "wait": self._cmd_wait,
+            "waitpid": self._cmd_waitpid,
         }
 
     def execute(self, command: str) -> str:
@@ -929,3 +931,54 @@ class Shell:
         except SyscallError as e:
             return f"Error: {e}"
         return result
+
+    def _cmd_wait(self, args: list[str]) -> str:
+        """Wait for any child of a parent process to terminate."""
+        if not args:
+            return "Usage: wait <parent_pid>"
+        try:
+            parent_pid = int(args[0])
+        except ValueError:
+            return f"Error: invalid PID '{args[0]}'"
+        try:
+            result_wait: dict[str, object] | None = self._kernel.syscall(
+                SyscallNumber.SYS_WAIT, parent_pid=parent_pid
+            )
+        except SyscallError as e:
+            return f"Error: {e}"
+        if result_wait is None:
+            return f"Process {parent_pid} is now waiting for a child."
+        return (
+            f"Collected child pid {result_wait['child_pid']}"
+            f" (exit_code={result_wait['exit_code']}"
+            f", output={result_wait['output']!r})"
+        )
+
+    def _cmd_waitpid(self, args: list[str]) -> str:
+        """Wait for a specific child process to terminate."""
+        min_args = 2
+        if len(args) < min_args:
+            return "Usage: waitpid <parent_pid> <child_pid>"
+        try:
+            parent_pid = int(args[0])
+        except ValueError:
+            return f"Error: invalid PID '{args[0]}'"
+        try:
+            child_pid = int(args[1])
+        except ValueError:
+            return f"Error: invalid PID '{args[1]}'"
+        try:
+            result_waitpid: dict[str, object] | None = self._kernel.syscall(
+                SyscallNumber.SYS_WAITPID,
+                parent_pid=parent_pid,
+                child_pid=child_pid,
+            )
+        except SyscallError as e:
+            return f"Error: {e}"
+        if result_waitpid is None:
+            return f"Process {parent_pid} is now waiting for child {child_pid}."
+        return (
+            f"Collected child pid {result_waitpid['child_pid']}"
+            f" (exit_code={result_waitpid['exit_code']}"
+            f", output={result_waitpid['output']!r})"
+        )
