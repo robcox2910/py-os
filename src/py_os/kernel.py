@@ -32,10 +32,11 @@ from time import monotonic
 from typing import Any
 
 from py_os.env import Environment
-from py_os.fs.filesystem import FileSystem
+from py_os.fs.filesystem import FileSystem, FileType
 from py_os.io.devices import ConsoleDevice, DeviceManager, NullDevice, RandomDevice
 from py_os.logging import Logger, LogLevel
 from py_os.memory.manager import MemoryManager
+from py_os.memory.mmap import MmapError, MmapRegion
 from py_os.memory.virtual import VirtualMemory
 from py_os.process.pcb import Process, ProcessState
 from py_os.process.scheduler import FCFSPolicy, Scheduler, SchedulingPolicy
@@ -90,6 +91,10 @@ class Kernel:
         self._signal_handlers: dict[tuple[int, Signal], Callable[[], None]] = {}
         self._resource_manager: ResourceManager | None = None
         self._sync_manager: SyncManager | None = None
+        # Per-process mmap regions: pid → {start_vpn → MmapRegion}
+        self._mmap_regions: dict[int, dict[int, MmapRegion]] = {}
+        # Shared frame cache: (inode_number, page_index) → (frame, bytearray)
+        self._shared_file_frames: dict[tuple[int, int], tuple[int, bytearray]] = {}
 
     @property
     def state(self) -> KernelState:
@@ -284,6 +289,8 @@ class Kernel:
         self._memory = None
         self._processes.clear()
         self._signal_handlers.clear()
+        self._mmap_regions.clear()
+        self._shared_file_frames.clear()
 
         self._logger = None
         self._boot_time = None
@@ -375,6 +382,13 @@ class Kernel:
         # COW fork: share physical frames instead of copying
         child_vm = VirtualMemory()
         parent_vm = parent.virtual_memory
+
+        # Build set of vpns in MAP_SHARED mmap regions (skip COW for these)
+        shared_vpns: set[int] = set()
+        for region in self._mmap_regions.get(parent_pid, {}).values():
+            if region.shared:
+                shared_vpns.update(range(region.start_vpn, region.start_vpn + region.num_pages))
+
         if parent_vm is not None:
             parent_mappings = parent_vm.page_table.mappings()
             for vpn, frame in sorted(parent_mappings.items()):
@@ -387,15 +401,21 @@ class Kernel:
                 self._memory.increment_refcount(frame)
                 self._memory.share_frame(pid=child.pid, frame=frame)
 
-                # Mark COW on both sides
-                parent_vm.mark_cow(virtual_page=vpn)
-                child_vm.mark_cow(virtual_page=vpn)
+                if vpn not in shared_vpns:
+                    # Mark COW on both sides (private pages)
+                    parent_vm.mark_cow(virtual_page=vpn)
+                    child_vm.mark_cow(virtual_page=vpn)
 
             # Install COW fault handlers
             self._install_cow_handler(child.pid, child_vm)
             self._install_cow_handler(parent_pid, parent_vm)
 
         child.virtual_memory = child_vm
+
+        # Copy mmap regions from parent to child
+        parent_regions = self._mmap_regions.get(parent_pid, {})
+        if parent_regions:
+            self._mmap_regions[child.pid] = dict(parent_regions)
 
         # Admit to scheduler and register in process table
         child.admit()
@@ -427,6 +447,292 @@ class Kernel:
             return (new_frame, new_storage)
 
         vm.cow_fault_handler = cow_handler
+
+    # -- Memory-mapped files (mmap) -------------------------------------------
+
+    def mmap_regions(self, pid: int) -> dict[int, MmapRegion]:
+        """Return the mmap regions for a process (start_vpn → region).
+
+        Args:
+            pid: The process ID to look up.
+
+        Returns:
+            A dict mapping start_vpn to MmapRegion (empty if none).
+
+        """
+        return dict(self._mmap_regions.get(pid, {}))
+
+    def mmap_file(
+        self,
+        *,
+        pid: int,
+        path: str,
+        offset: int = 0,
+        length: int | None = None,
+        shared: bool = False,
+    ) -> int:
+        """Map a file's contents into a process's virtual address space.
+
+        Args:
+            pid: The process to map into.
+            path: Filesystem path of the file.
+            offset: Byte offset into the file.
+            length: Bytes to map (defaults to file size minus offset).
+            shared: True for MAP_SHARED, False for MAP_PRIVATE.
+
+        Returns:
+            The virtual address where the mapping starts.
+
+        Raises:
+            MmapError: If the file doesn't exist, is a directory, or
+                the PID is invalid.
+
+        """
+        self._require_running()
+        assert self._memory is not None  # noqa: S101
+        assert self._filesystem is not None  # noqa: S101
+
+        process = self._processes.get(pid)
+        if process is None:
+            msg = f"Process {pid} not found"
+            raise MmapError(msg)
+
+        # Validate the file exists and is not a directory
+        try:
+            info = self._filesystem.stat(path)
+        except FileNotFoundError:
+            msg = f"File not found: {path}"
+            raise MmapError(msg) from None
+        if info.file_type is FileType.DIRECTORY:
+            msg = f"Cannot mmap a directory: {path}"
+            raise MmapError(msg)
+
+        # Read file data
+        data = self._filesystem.read(path)
+        if length is None:
+            length = len(data) - offset
+        mapped_data = data[offset : offset + length]
+
+        vm = process.virtual_memory
+        if vm is None:
+            msg = f"Process {pid} has no virtual memory"
+            raise MmapError(msg)
+
+        page_size = vm.page_size
+        num_pages = (length + page_size - 1) // page_size
+
+        # Find the next available vpn (after all existing mappings)
+        existing = vm.page_table.mappings()
+        next_vpn = max(existing.keys(), default=-1) + 1
+
+        if shared:
+            self._mmap_shared(
+                pid=pid,
+                vm=vm,
+                inode_number=info.inode_number,
+                next_vpn=next_vpn,
+                num_pages=num_pages,
+                mapped_data=mapped_data,
+                page_size=page_size,
+            )
+        else:
+            # MAP_PRIVATE: allocate fresh frames and copy data in
+            frames = self._memory.allocate(pid, num_pages=num_pages)
+            for i, frame in enumerate(frames):
+                vm.page_table.map(virtual_page=next_vpn + i, physical_frame=frame)
+                chunk_start = i * page_size
+                chunk_end = min(chunk_start + page_size, len(mapped_data))
+                if chunk_start < len(mapped_data):
+                    storage = vm.physical_storage(frame)
+                    storage[: chunk_end - chunk_start] = mapped_data[chunk_start:chunk_end]
+
+        # Record the region
+        region = MmapRegion(
+            path=path,
+            inode_number=info.inode_number,
+            start_vpn=next_vpn,
+            num_pages=num_pages,
+            offset=offset,
+            length=length,
+            shared=shared,
+        )
+        self._mmap_regions.setdefault(pid, {})[next_vpn] = region
+
+        return next_vpn * page_size
+
+    def _mmap_shared(
+        self,
+        *,
+        pid: int,
+        vm: VirtualMemory,
+        inode_number: int,
+        next_vpn: int,
+        num_pages: int,
+        mapped_data: bytes,
+        page_size: int,
+    ) -> None:
+        """Set up MAP_SHARED pages — reuse cached frames or allocate new ones.
+
+        Args:
+            pid: The process ID.
+            vm: The process's virtual memory.
+            inode_number: Inode for the shared-frame cache key.
+            next_vpn: First virtual page number for the mapping.
+            num_pages: Number of pages to map.
+            mapped_data: The file data to load.
+            page_size: Size of each page in bytes.
+
+        """
+        assert self._memory is not None  # noqa: S101
+
+        for i in range(num_pages):
+            cache_key = (inode_number, i)
+            if cache_key in self._shared_file_frames:
+                # Reuse existing shared frame
+                frame, storage = self._shared_file_frames[cache_key]
+                vm.page_table.map(virtual_page=next_vpn + i, physical_frame=frame)
+                vm.share_physical(frame=frame, storage=storage)
+                self._memory.increment_refcount(frame)
+                self._memory.share_frame(pid=pid, frame=frame)
+            else:
+                # First mapper: allocate a new frame
+                frame = self._memory.allocate_one(pid)
+                vm.page_table.map(virtual_page=next_vpn + i, physical_frame=frame)
+                storage = vm.physical_storage(frame)
+                chunk_start = i * page_size
+                chunk_end = min(chunk_start + page_size, len(mapped_data))
+                if chunk_start < len(mapped_data):
+                    storage[: chunk_end - chunk_start] = mapped_data[chunk_start:chunk_end]
+                self._shared_file_frames[cache_key] = (frame, storage)
+
+    def munmap_file(self, *, pid: int, virtual_address: int) -> None:
+        """Unmap a memory-mapped region from a process's address space.
+
+        For shared regions, data is written back to the file (implicit
+        msync).  Page table entries are removed and frames are released.
+
+        Args:
+            pid: The process that owns the mapping.
+            virtual_address: The starting virtual address of the mapping.
+
+        Raises:
+            MmapError: If the PID or address is invalid.
+
+        """
+        self._require_running()
+        assert self._memory is not None  # noqa: S101
+        assert self._filesystem is not None  # noqa: S101
+
+        if pid not in self._processes:
+            msg = f"Process {pid} not found"
+            raise MmapError(msg)
+
+        process = self._processes[pid]
+        vm = process.virtual_memory
+        if vm is None:
+            msg = f"Process {pid} has no virtual memory"
+            raise MmapError(msg)
+
+        page_size = vm.page_size
+        start_vpn = virtual_address // page_size
+        pid_regions = self._mmap_regions.get(pid, {})
+        region = pid_regions.get(start_vpn)
+        if region is None:
+            msg = f"No mmap region at address {virtual_address} for pid {pid}"
+            raise MmapError(msg)
+
+        # For shared mappings, write back to the file before unmapping
+        if region.shared:
+            self._writeback_shared(region, vm)
+
+        # Unmap pages and release frames
+        for i in range(region.num_pages):
+            vpn = region.start_vpn + i
+            frame = vm.page_table.translate(vpn)
+            vm.page_table.unmap(virtual_page=vpn)
+            self._memory.decrement_refcount(frame)
+
+            # Clean up shared frame cache if no one else references it
+            if region.shared:
+                cache_key = (region.inode_number, i)
+                if cache_key in self._shared_file_frames and self._memory.refcount(frame) == 0:
+                    del self._shared_file_frames[cache_key]
+
+        # Remove the region from tracking
+        del pid_regions[start_vpn]
+        if not pid_regions:
+            self._mmap_regions.pop(pid, None)
+
+    def _writeback_shared(
+        self,
+        region: MmapRegion,
+        vm: VirtualMemory,
+    ) -> None:
+        """Write shared mapping data back to the filesystem.
+
+        Args:
+            region: The mmap region to write back.
+            vm: The process's virtual memory.
+
+        """
+        assert self._filesystem is not None  # noqa: S101
+
+        # Assemble the mapped bytes from physical storage
+        chunks: list[bytes] = []
+        for i in range(region.num_pages):
+            vpn = region.start_vpn + i
+            frame = vm.page_table.translate(vpn)
+            storage = vm.physical_storage(frame)
+            chunks.append(bytes(storage))
+        mapped_bytes = b"".join(chunks)[: region.length]
+
+        # Splice into original file at the region's offset
+        original = self._filesystem.read(region.path)
+        updated = (
+            original[: region.offset] + mapped_bytes + original[region.offset + region.length :]
+        )
+        self._filesystem.write(region.path, updated)
+
+    def msync_file(self, *, pid: int, virtual_address: int) -> None:
+        """Sync a shared mapping's data back to the underlying file.
+
+        Only valid for MAP_SHARED regions.  The mapping remains active
+        after syncing — this is a "save" operation, not an unmap.
+
+        Args:
+            pid: The process that owns the mapping.
+            virtual_address: The starting virtual address of the mapping.
+
+        Raises:
+            MmapError: If the region is private, not found, or PID invalid.
+
+        """
+        self._require_running()
+        assert self._filesystem is not None  # noqa: S101
+
+        if pid not in self._processes:
+            msg = f"Process {pid} not found"
+            raise MmapError(msg)
+
+        process = self._processes[pid]
+        vm = process.virtual_memory
+        if vm is None:
+            msg = f"Process {pid} has no virtual memory"
+            raise MmapError(msg)
+
+        page_size = vm.page_size
+        start_vpn = virtual_address // page_size
+        pid_regions = self._mmap_regions.get(pid, {})
+        region = pid_regions.get(start_vpn)
+        if region is None:
+            msg = f"No mmap region at address {virtual_address} for pid {pid}"
+            raise MmapError(msg)
+
+        if not region.shared:
+            msg = "Cannot msync a private mapping"
+            raise MmapError(msg)
+
+        self._writeback_shared(region, vm)
 
     def create_thread(self, *, pid: int, name: str) -> Thread:
         """Create a new thread within a process.
@@ -511,6 +817,7 @@ class Kernel:
         exit_code = process.exit_code
 
         process.terminate()
+        self._cleanup_mmap_regions(pid)
         self._memory.free(pid)
         if self._resource_manager is not None:
             self._resource_manager.remove_process(pid)
@@ -540,6 +847,7 @@ class Kernel:
         process = self._processes.get(pid)
         if process is not None:
             process.terminate()
+            self._cleanup_mmap_regions(pid)
             self._memory.free(pid)
             if self._resource_manager is not None:
                 self._resource_manager.remove_process(pid)
@@ -633,6 +941,7 @@ class Kernel:
             case SignalAction.TERMINATE:
                 process.force_terminate()
                 assert self._memory is not None  # noqa: S101
+                self._cleanup_mmap_regions(pid)
                 self._memory.free(pid)
                 if self._resource_manager is not None:
                     self._resource_manager.remove_process(pid)
@@ -706,6 +1015,49 @@ class Kernel:
         keys_to_remove = [key for key in self._signal_handlers if key[0] == pid]
         for key in keys_to_remove:
             del self._signal_handlers[key]
+
+    def _cleanup_mmap_regions(self, pid: int) -> None:
+        """Unmap all mmap regions for a process (idempotent).
+
+        For shared regions, data is written back to the file.
+        Called before freeing process memory during termination.
+        """
+        pid_regions = self._mmap_regions.get(pid)
+        if not pid_regions:
+            return
+
+        process = self._processes.get(pid)
+        if process is None:
+            self._mmap_regions.pop(pid, None)
+            return
+
+        vm = process.virtual_memory
+        if vm is None:
+            self._mmap_regions.pop(pid, None)
+            return
+
+        # Iterate over a copy since munmap modifies the dict
+        for _start_vpn, region in list(pid_regions.items()):
+            if region.shared:
+                self._writeback_shared(region, vm)
+
+            for i in range(region.num_pages):
+                vpn = region.start_vpn + i
+                mappings = vm.page_table.mappings()
+                if vpn in mappings:
+                    frame = mappings[vpn]
+                    vm.page_table.unmap(virtual_page=vpn)
+                    self._memory.decrement_refcount(frame)  # type: ignore[union-attr]
+
+                    if region.shared:
+                        cache_key = (region.inode_number, i)
+                        if (
+                            cache_key in self._shared_file_frames
+                            and self._memory.refcount(frame) == 0  # type: ignore[union-attr]
+                        ):
+                            del self._shared_file_frames[cache_key]
+
+        self._mmap_regions.pop(pid, None)
 
     def wait_process(self, *, parent_pid: int) -> dict[str, Any] | None:
         """Wait for any child of the parent to terminate.

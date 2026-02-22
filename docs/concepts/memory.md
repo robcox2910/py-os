@@ -270,6 +270,79 @@ the count. The frame is only truly freed when the count reaches 0.
 
 ---
 
+## 5. Memory-Mapped Files (mmap)
+
+### The Open Textbook Analogy
+
+Imagine you're doing homework and need to look something up in a textbook. The
+normal way is to grab the book, photocopy the pages you need, put the copies on
+your desk, read and scribble on them, and later copy your changes back into the
+book. That's a lot of steps!
+
+**Memory-mapped files** are like opening the textbook and laying it flat on your
+desk. Instead of photocopying pages, you read and write *directly on the open
+book*. No copying back and forth -- the book is right there.
+
+In OS terms, `mmap` takes a file and makes it appear as if it's part of a
+process's memory. The process can read and write those memory addresses, and the
+OS handles moving data between the file and RAM automatically.
+
+### Two Modes: Private vs Shared
+
+#### MAP_PRIVATE -- Your own photocopy
+
+With MAP_PRIVATE, the OS hands you **your own copy** of the pages. You can
+scribble all over them, but your changes stay with you -- the original book is
+untouched. This is useful when a process needs to read file data into memory but
+doesn't want to modify the actual file.
+
+When a process [forks](processes.md), private mmap pages get the same
+copy-on-write treatment as regular memory pages -- parent and child share until
+one of them writes.
+
+#### MAP_SHARED -- Everyone reads the same book
+
+With MAP_SHARED, multiple processes all look at the **same physical pages**.
+If one process writes "HELLO" at the top of page 3, every other process mapping
+that same file immediately sees "HELLO" there too -- because they're all looking
+at the same underlying memory.
+
+This is powerful for communication between processes. Instead of sending messages
+back and forth, they can just read and write the same shared memory.
+
+When a process forks, shared mmap pages are **not** marked copy-on-write.
+Writes by the parent or child should be visible to the other -- that's the
+whole point of "shared."
+
+### msync -- Saving Your Work
+
+Shared mappings live in memory, but the actual file on disk doesn't update
+automatically. When you want to make sure your changes are saved to the file,
+you call `msync` -- think of it as pressing "Save." The OS takes whatever is in
+the shared memory pages and writes it back to the file.
+
+When a process unmaps a shared region (or terminates), the OS does an automatic
+msync to make sure nothing is lost.
+
+### How It Works Under the Hood
+
+1. **mmap** -- The kernel reads the file data, allocates physical frames, copies
+   the data into those frames, and maps them into the process's virtual address
+   space. For shared mappings, a second process mapping the same file reuses the
+   same frames (zero extra allocation).
+
+2. **Read/write** -- The process just reads and writes memory addresses like
+   normal. For private mappings, changes stay local. For shared mappings,
+   changes are visible to all sharers.
+
+3. **munmap** -- Removes the mapping. For shared regions, data is written back
+   to the file first. Frames are released and reference counts updated.
+
+4. **msync** -- Writes shared data back to the file without removing the
+   mapping. Like saving a document without closing it.
+
+---
+
 ## Putting It All Together
 
 Here's how these three pieces work as a team:

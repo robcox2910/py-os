@@ -6,6 +6,7 @@ Re-exports public symbols so callers can write::
 """
 
 from py_os.memory.manager import MemoryManager, OutOfMemoryError
+from py_os.memory.mmap import MmapError, MmapRegion
 from py_os.memory.swap import (
     ClockPolicy,
     FIFOPolicy,
@@ -21,6 +22,8 @@ __all__ = [
     "FIFOPolicy",
     "LRUPolicy",
     "MemoryManager",
+    "MmapError",
+    "MmapRegion",
     "OutOfMemoryError",
     "PageFaultError",
     "PageTable",
