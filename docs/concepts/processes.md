@@ -53,7 +53,7 @@ Think of a classroom where only **one student can use the whiteboard** at a time
 
 **WAITING** -- The student stepped out of the classroom to grab a book from the library. They cannot continue until they get the book back. In OS terms, the process is blocked on something -- maybe waiting for a file to be read from disk, or waiting for a network response. When the thing it is waiting for happens, the process moves back to READY and rejoins the line.
 
-**TERMINATED** -- The student finished their work and left the classroom. The process is done. The [kernel](kernel-and-syscalls.md) cleans up its memory and removes it from the process table.
+**TERMINATED** -- The student finished their work and left the classroom. The process is done. The [kernel](kernel-and-syscalls.md) cleans up its memory. If the process has a living parent, it stays in the process table as a [zombie](#zombies-and-waiting) until the parent collects its exit code. Otherwise it is removed immediately.
 
 ### Transitions
 

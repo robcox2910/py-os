@@ -15,7 +15,7 @@ Technical reference for every module in the system. For beginner-friendly explan
 | Guide | Topics |
 |-------|--------|
 | [What Is an OS?](concepts/what-is-an-os.md) | Big picture, layered architecture, how PyOS works |
-| [Processes](concepts/processes.md) | PCB, five-state model, scheduler, fork, threads, execution |
+| [Processes](concepts/processes.md) | PCB, five-state model, scheduler, fork, threads, execution, zombies, wait/waitpid |
 | [Memory](concepts/memory.md) | Frames/pages, virtual memory, page replacement, swap |
 | [Filesystem](concepts/filesystem.md) | Inodes, path resolution, persistence, journaling |
 | [Kernel and System Calls](concepts/kernel-and-syscalls.md) | Boot sequence, lifecycle, syscall dispatch, number ranges |
@@ -35,7 +35,7 @@ Every source file and what it implements.
 | `kernel.py` | `Kernel` | Central coordinator, boot/shutdown lifecycle, subsystem ownership |
 | `kernel.py` | `KernelState` | SHUTDOWN / BOOTING / RUNNING / SHUTTING_DOWN state machine |
 | `syscalls.py` | `dispatch_syscall()` | Trap handler -- routes syscall numbers to kernel subsystem handlers |
-| `syscalls.py` | `SyscallNumber` | IntEnum of all syscall numbers (1-121, plus 61 and 7-8) |
+| `syscalls.py` | `SyscallNumber` | IntEnum of all syscall numbers (1-121) |
 | `syscalls.py` | `SyscallError` | User-facing exception wrapping internal errors |
 
 ### Process Management
