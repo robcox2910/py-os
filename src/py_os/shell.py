@@ -23,6 +23,7 @@ Design choices:
 
 import re
 from collections.abc import Callable
+from dataclasses import dataclass
 
 from py_os.fs.filesystem import FileType
 from py_os.jobs import JobManager, JobStatus
@@ -40,6 +41,16 @@ from py_os.syscalls import SyscallError, SyscallNumber
 
 # Type alias for a command handler: takes a list of args, returns output.
 type _Handler = Callable[[list[str]], str]
+
+
+@dataclass
+class _Redirections:
+    """Parsed I/O redirection operators from a command string."""
+
+    stdin: str | None = None  # < file
+    stdout: str | None = None  # > file or >> file
+    stderr: str | None = None  # 2> file
+    append: bool = False  # >> vs >
 
 
 class Shell:
@@ -165,6 +176,8 @@ class Shell:
                 return ""
             if "|" in stripped:
                 return "Error: background execution with pipes is not supported"
+            if re.search(r"2?>|>>|<", stripped):
+                return "Error: background execution with redirection is not supported"
 
         # Expand aliases in each pipeline stage
         stages = [s.strip() for s in stripped.split("|")]
@@ -172,7 +185,21 @@ class Shell:
         for i, stage in enumerate(stages):
             self._pipe_input = output if i > 0 else ""
             expanded = self._expand_alias(stage)
-            output = self._execute_single(expanded, background=background)
+            cmd, redirects = self._parse_redirections(expanded)
+
+            # Input redirection: load file into _pipe_input
+            if redirects.stdin is not None:
+                input_result = self._apply_input_redirect(redirects.stdin)
+                if input_result.startswith("Error:"):
+                    output = input_result
+                    break
+                self._pipe_input = input_result
+
+            output = self._execute_single(cmd, background=background)
+
+            # Output/error redirection
+            output = self._apply_output_redirect(output, redirects)
+
             # Stop the pipeline if a command produces an error
             if output.startswith(("Unknown command:", "Error:")):
                 break
@@ -266,6 +293,89 @@ class Shell:
         if parts and parts[0] in self._aliases:
             return self._aliases[parts[0]]
         return command
+
+    def _parse_redirections(self, command: str) -> tuple[str, _Redirections]:
+        """Extract redirection operators from a command string.
+
+        Processing order: ``2>`` before ``>>`` before ``>`` before ``<``
+        to avoid ambiguity (e.g. ``2>`` must not leave a stray ``2``).
+        """
+        redirects = _Redirections()
+        remaining = command
+
+        # 2> (must check before > to avoid 2 being left as an arg)
+        if match := re.search(r"2>\s*(\S+)", remaining):
+            redirects.stderr = match.group(1)
+            remaining = remaining[: match.start()] + remaining[match.end() :]
+
+        # >> (must check before >)
+        if match := re.search(r">>\s*(\S+)", remaining):
+            redirects.stdout = match.group(1)
+            redirects.append = True
+            remaining = remaining[: match.start()] + remaining[match.end() :]
+
+        # >
+        elif match := re.search(r">\s*(\S+)", remaining):
+            redirects.stdout = match.group(1)
+            remaining = remaining[: match.start()] + remaining[match.end() :]
+
+        # <
+        if match := re.search(r"<\s*(\S+)", remaining):
+            redirects.stdin = match.group(1)
+            remaining = remaining[: match.start()] + remaining[match.end() :]
+
+        return remaining.strip(), redirects
+
+    def _apply_input_redirect(self, path: str) -> str:
+        """Read a file for input redirection (``<``)."""
+        try:
+            data: bytes = self._kernel.syscall(SyscallNumber.SYS_READ_FILE, path=path)
+            return data.decode()
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _apply_output_redirect(self, output: str, redirects: _Redirections) -> str:
+        """Apply output and error redirection after command execution."""
+        is_error = output.startswith(("Error:", "Unknown command:"))
+
+        # Error redirection (2>)
+        if is_error and redirects.stderr is not None:
+            return self._write_redirect(redirects.stderr, output, append=False)
+
+        # Stdout redirection (> or >>)
+        if not is_error and redirects.stdout is not None:
+            return self._write_redirect(redirects.stdout, output, append=redirects.append)
+
+        return output
+
+    def _write_redirect(self, path: str, content: str, *, append: bool) -> str:
+        """Write content to a file for redirection. Create file if needed."""
+        try:
+            if append:
+                try:
+                    existing: bytes = self._kernel.syscall(SyscallNumber.SYS_READ_FILE, path=path)
+                    combined = existing.decode() + content
+                except SyscallError:
+                    # File doesn't exist — create it, start fresh
+                    self._kernel.syscall(SyscallNumber.SYS_CREATE_FILE, path=path)
+                    combined = content
+                self._kernel.syscall(
+                    SyscallNumber.SYS_WRITE_FILE, path=path, data=combined.encode()
+                )
+            else:
+                try:
+                    self._kernel.syscall(
+                        SyscallNumber.SYS_WRITE_FILE, path=path, data=content.encode()
+                    )
+                except SyscallError:
+                    # File doesn't exist — create then write
+                    self._kernel.syscall(SyscallNumber.SYS_CREATE_FILE, path=path)
+                    self._kernel.syscall(
+                        SyscallNumber.SYS_WRITE_FILE, path=path, data=content.encode()
+                    )
+            return ""  # Output was redirected; return empty
+        except SyscallError as e:
+            return f"Error: {e}"
 
     def _execute_single(self, command: str, *, background: bool = False) -> str:
         """Execute a single (non-piped) command."""
