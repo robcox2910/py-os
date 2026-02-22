@@ -619,7 +619,7 @@ on what you're typing:
 | Where you are | What completes |
 |---------------|----------------|
 | First word on the line | Command names (`ls`, `cat`, `mkdir`, ...) |
-| After `scheduler`, `mutex`, `semaphore`, `journal` | Subcommands (`fcfs`, `create`, `status`, ...) |
+| After `scheduler`, `mutex`, `semaphore`, `rwlock`, `journal` | Subcommands (`fcfs`, `create`, `list`, `status`, ...) |
 | After a file command (`ls`, `cat`, `rm`, ...) | Filesystem paths |
 | After `run` | Built-in program names |
 | After `unset` | Environment variable names |

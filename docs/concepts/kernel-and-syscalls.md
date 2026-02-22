@@ -175,7 +175,7 @@ Here is every syscall number in PyOS, grouped by what they do:
 | 80      | System info (like the `top` command) |
 | 90      | Deadlock detection |
 | 100-101 | Run programs (load and execute) |
-| 110-118 | Synchronization (mutexes, semaphores, conditions) |
+| 110-119, 122-125 | Synchronization (mutexes, semaphores, conditions, reader-writer locks) |
 | 120-121 | Scheduler operations (switch policy, MLFQ boost) |
 
 You don't need to memorize these. The important thing is that every single

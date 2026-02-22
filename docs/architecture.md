@@ -160,7 +160,7 @@ Every source file and what it implements.
 | 80 | System info |
 | 90 | Deadlock detection |
 | 100-101 | Process execution (exec, run) |
-| 110-125 | Synchronization (mutex, semaphore, condition, reader-writer lock) |
+| 110-119, 122-125 | Synchronization (mutex, semaphore, condition, reader-writer lock) |
 | 120-121 | Scheduler operations (policy switching, MLFQ boost) |
 | 130-133 | Journal operations (status, checkpoint, recover, crash) |
 
