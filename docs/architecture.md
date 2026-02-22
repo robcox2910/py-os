@@ -103,6 +103,7 @@ Every source file and what it implements.
 |------|---------------|---------|
 | `shell.py` | `Shell` | Command interpreter with pipes, redirection (`>`, `>>`, `<`, `2>`), scripting (if/else, while/for loops), job control, background execution (`&`) |
 | `shell.py` | `_Redirections` | Parsed I/O redirection operators from a command string |
+| `completer.py` | `Completer` | Context-aware tab completion for commands, subcommands, paths, programs, env vars, signals |
 | `users.py` | `UserManager` | User registry with auto-incrementing UIDs |
 | `users.py` | `FilePermissions` | Per-file owner/other read/write permission bits |
 | `env.py` | `Environment` | KEY=VALUE store with copy semantics |

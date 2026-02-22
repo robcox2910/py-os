@@ -153,6 +153,21 @@ class Shell:
             "waitjob": self._cmd_waitjob,
         }
 
+    @property
+    def kernel(self) -> Kernel:
+        """Return the kernel this shell is attached to."""
+        return self._kernel
+
+    @property
+    def command_names(self) -> list[str]:
+        """Return sorted list of available command names."""
+        return sorted(self._commands)
+
+    @property
+    def builtin_program_names(self) -> list[str]:
+        """Return sorted list of built-in program names."""
+        return sorted(self._builtin_programs())
+
     def execute(self, command: str) -> str:
         """Parse and execute a shell command, with pipe and ``&`` support.
 
