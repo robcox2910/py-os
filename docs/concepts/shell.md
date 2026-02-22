@@ -263,6 +263,138 @@ that belongs in a later feature.
 - **Overwrite** -- `>` replaces the file's contents completely
 - **Append** -- `>>` adds to the end of the file without erasing
 
+## Loops
+
+Imagine you have a big stack of trading cards and you need to sort them. You
+wouldn't write a separate instruction for each card -- you'd say "keep doing
+this until the stack is empty" or "do this for every card in the pile." That's
+what loops do in a script: they repeat a block of commands automatically.
+
+### While loops
+
+A while loop is like a traffic light. Keep going as long as the light is green.
+The moment it turns red, stop.
+
+```bash
+while cat /flag
+do
+  echo "still going"
+  rm /flag
+done
+```
+
+Here's what happens:
+
+1. The shell runs `cat /flag`. If it succeeds (the file exists), the light is
+   "green" -- enter the loop body.
+2. Inside the body, we echo a message and delete the flag file.
+3. Back to the top: try `cat /flag` again. This time it fails (file is gone),
+   so the light turns "red" and the loop stops.
+
+The condition is checked **every time** before entering the body. If the
+condition fails on the very first check, the body never runs at all -- just like
+a red light stopping you before you even start.
+
+**Important:** The condition is re-expanded each iteration. If you use `$VAR`
+in the condition, it picks up the latest value of that variable every time
+around the loop. This is how you can change a variable inside the body and have
+the condition notice.
+
+### For loops
+
+A for loop is like taking attendance at school. The teacher has a list of names,
+and for each name on the list, they call it out and mark it down.
+
+```bash
+for FRUIT in apple banana cherry
+do
+  echo $FRUIT
+done
+```
+
+This outputs:
+
+```
+apple
+banana
+cherry
+```
+
+The shell takes each item after `in`, assigns it to the variable `FRUIT`, and
+runs the body once. Then it assigns the next item and runs the body again, until
+the list is exhausted.
+
+You can use a variable for the list, too:
+
+```bash
+export COLORS="red green blue"
+for C in $COLORS
+do
+  echo $C
+done
+```
+
+The `$COLORS` variable gets expanded to `red green blue`, and the loop iterates
+over those three words.
+
+### Nesting
+
+Loops can go inside other loops, and loops can go inside `if` blocks (and vice
+versa). Think of Russian nesting dolls -- each doll can contain another doll
+inside.
+
+```bash
+for DIR in /data /logs
+do
+  mkdir $DIR
+  for FILE in a.txt b.txt
+  do
+    touch $DIR/$FILE
+  done
+done
+```
+
+This creates two directories and puts two files in each one. The outer loop runs
+twice (once for `/data`, once for `/logs`), and for each outer iteration, the
+inner loop runs twice (once for `a.txt`, once for `b.txt`). Total: four files
+created.
+
+You can also put a while loop inside a for loop, an if inside a while, or any
+combination. The shell handles nesting by running each inner block as its own
+mini-script -- the same technique that makes the whole scripting engine work.
+
+### Safety net
+
+What if you accidentally write a while loop whose condition never fails?
+
+```bash
+while cat /always-exists
+do
+  echo "forever!"
+done
+```
+
+In a real OS, this would run until you kill the process (Ctrl+C). In PyOS, we
+have a built-in safety limit: **1,000 iterations**. If a loop hits this limit,
+it stops and reports an error. This prevents your scripts from running away and
+freezing the system.
+
+### All loop commands
+
+| Syntax | What it does |
+|--------|-------------|
+| `while <cmd>` / `do` / `done` | Repeat while `<cmd>` succeeds |
+| `for VAR in items...` / `do` / `done` | Iterate over a list of items |
+
+### Vocabulary
+
+- **While loop** -- repeat a block as long as a condition is true
+- **For loop** -- repeat a block once for each item in a list
+- **Iteration** -- one pass through the loop body
+- **Nesting** -- putting one loop (or conditional) inside another
+- **Infinite loop** -- a loop that never stops (PyOS limits these to 1,000
+  iterations)
+
 ## Scripting
 
 So far you've been giving the receptionist one request at a time. But what if
