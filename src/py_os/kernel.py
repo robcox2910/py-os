@@ -336,8 +336,10 @@ class Kernel:
 
         In Unix, fork() is how every new process is born.  The child gets:
         - A new unique PID with parent_pid set to the parent's PID.
-        - A copy of the parent's virtual memory (new physical frames,
-          same data — eager copy, not copy-on-write).
+        - **Copy-on-write** virtual memory: parent and child share the
+          same physical frames, marked read-only.  The first write by
+          either side triggers a fault that copies the page, giving the
+          writer a private frame while the other keeps the original.
         - The same name (suffixed with " (fork)") and priority.
         - READY state — admitted to the scheduler immediately.
 
@@ -349,7 +351,6 @@ class Kernel:
 
         Raises:
             ValueError: If the parent doesn't exist or is terminated.
-            OutOfMemoryError: If insufficient memory for the copy.
 
         """
         self._require_running()
@@ -364,10 +365,6 @@ class Kernel:
             msg = f"Cannot fork: process {parent_pid} is terminated"
             raise ValueError(msg)
 
-        # Determine how many pages the parent has
-        parent_frames = self._memory.pages_for(parent_pid)
-        num_pages = len(parent_frames)
-
         # Create the child process
         child = Process(
             name=f"{parent.name} (fork)",
@@ -375,22 +372,28 @@ class Kernel:
             parent_pid=parent_pid,
         )
 
-        # Allocate new physical frames for the child
-        child_frames = self._memory.allocate(child.pid, num_pages=num_pages)
-
-        # Set up virtual memory: copy page table structure and data
+        # COW fork: share physical frames instead of copying
         child_vm = VirtualMemory()
         parent_vm = parent.virtual_memory
         if parent_vm is not None:
             parent_mappings = parent_vm.page_table.mappings()
-            for vpn, _parent_frame in sorted(parent_mappings.items()):
-                child_frame = child_frames[vpn] if vpn < len(child_frames) else child_frames[0]
-                child_vm.page_table.map(virtual_page=vpn, physical_frame=child_frame)
+            for vpn, frame in sorted(parent_mappings.items()):
+                # Point child to the same physical frame
+                child_vm.page_table.map(virtual_page=vpn, physical_frame=frame)
+                child_vm.share_physical(
+                    frame=frame,
+                    storage=parent_vm.physical_storage(frame),
+                )
+                self._memory.increment_refcount(frame)
+                self._memory.share_frame(pid=child.pid, frame=frame)
 
-                # Copy the page data from parent to child
-                addr = vpn * parent_vm.page_size
-                data = parent_vm.read(virtual_address=addr, size=parent_vm.page_size)
-                child_vm.write(virtual_address=addr, data=data)
+                # Mark COW on both sides
+                parent_vm.mark_cow(virtual_page=vpn)
+                child_vm.mark_cow(virtual_page=vpn)
+
+            # Install COW fault handlers
+            self._install_cow_handler(child.pid, child_vm)
+            self._install_cow_handler(parent_pid, parent_vm)
 
         child.virtual_memory = child_vm
 
@@ -399,6 +402,31 @@ class Kernel:
         self._scheduler.add(child)
         self._processes[child.pid] = child
         return child
+
+    def _install_cow_handler(self, pid: int, vm: VirtualMemory) -> None:
+        """Install a copy-on-write fault handler on a virtual memory space.
+
+        The handler is a closure that captures the PID and memory manager.
+        When a COW page is written, it allocates a fresh frame, copies
+        the data, and decrements the old frame's refcount.
+
+        Args:
+            pid: The process ID that owns this address space.
+            vm: The virtual memory to install the handler on.
+
+        """
+        memory = self._memory
+        assert memory is not None  # noqa: S101
+
+        def cow_handler(vpn: int) -> tuple[int, bytearray]:
+            old_frame = vm.page_table.translate(vpn)
+            new_frame = memory.allocate_one(pid)
+            old_storage = vm.physical_storage(old_frame)
+            new_storage = bytearray(old_storage)
+            memory.decrement_refcount(old_frame)
+            return (new_frame, new_storage)
+
+        vm.cow_fault_handler = cow_handler
 
     def create_thread(self, *, pid: int, name: str) -> Thread:
         """Create a new thread within a process.

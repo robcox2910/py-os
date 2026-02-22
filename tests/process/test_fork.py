@@ -7,9 +7,8 @@ new process in Unix is born — even ``exec()`` starts with a fork.
 
 Key properties:
     - The child gets a **new PID** but records the parent's PID.
-    - Memory is **copied** (not shared) — writes in the child don't
-      affect the parent.  Real OSes use copy-on-write for efficiency;
-      we do an eager copy for clarity.
+    - Memory uses **copy-on-write** — parent and child share physical
+      frames until one writes, triggering a private copy.
     - The child is admitted to the scheduler and is immediately eligible
       to run.
 """
@@ -18,6 +17,7 @@ import pytest
 
 from py_os.kernel import Kernel
 from py_os.process.pcb import ProcessState
+from py_os.process.signals import Signal
 from py_os.shell import Shell
 from py_os.syscalls import SyscallError, SyscallNumber
 
@@ -91,18 +91,18 @@ class TestForkProcess:
         parent_data = parent.virtual_memory.read(virtual_address=0, size=6)
         assert parent_data == b"parent"
 
-    def test_fork_allocates_new_frames(self) -> None:
-        """Child should get different physical frames than the parent."""
+    def test_fork_shares_physical_frames(self) -> None:
+        """After COW fork, parent and child share the same physical frames."""
         kernel = _booted_kernel()
         parent = kernel.create_process(name="parent", num_pages=2)
         child = kernel.fork_process(parent_pid=parent.pid)
         assert kernel.memory is not None
         parent_frames = set(kernel.memory.pages_for(parent.pid))
         child_frames = set(kernel.memory.pages_for(child.pid))
-        assert parent_frames.isdisjoint(child_frames)
+        assert parent_frames == child_frames
 
-    def test_fork_reduces_free_memory(self) -> None:
-        """Fork should allocate memory, reducing free frames."""
+    def test_fork_uses_zero_new_frames(self) -> None:
+        """COW fork should not consume any new physical frames."""
         kernel = _booted_kernel()
         assert kernel.memory is not None
         num_pages = 4
@@ -110,7 +110,7 @@ class TestForkProcess:
         after_parent = kernel.memory.free_frames
         kernel.fork_process(parent_pid=parent.pid)
         after_fork = kernel.memory.free_frames
-        assert after_fork == after_parent - num_pages
+        assert after_fork == after_parent
 
     def test_fork_inherits_priority(self) -> None:
         """Child should inherit the parent's scheduling priority."""
@@ -144,6 +144,175 @@ class TestForkProcess:
         grandchild = kernel.fork_process(parent_pid=child.pid)
         assert grandchild.parent_pid == child.pid
         assert child.parent_pid == parent.pid
+
+
+class TestCopyOnWriteFork:
+    """Verify copy-on-write semantics in forked processes.
+
+    After fork, parent and child share physical frames marked COW.
+    A write by either side triggers a fault that copies the page,
+    giving the writer its own private frame while the other side
+    keeps the original.
+    """
+
+    def test_child_write_triggers_cow(self) -> None:
+        """Writing in the child should give it a private frame."""
+        kernel = _booted_kernel()
+        parent = kernel.create_process(name="parent", num_pages=2)
+        assert parent.virtual_memory is not None
+        parent.virtual_memory.write(virtual_address=0, data=b"shared")
+
+        child = kernel.fork_process(parent_pid=parent.pid)
+        assert child.virtual_memory is not None
+        child.virtual_memory.write(virtual_address=0, data=b"child!")
+
+        # Parent still sees original data
+        assert parent.virtual_memory.read(virtual_address=0, size=6) == b"shared"
+        # Child sees its own data
+        assert child.virtual_memory.read(virtual_address=0, size=6) == b"child!"
+
+    def test_parent_write_triggers_cow(self) -> None:
+        """Writing in the parent should give it a private frame."""
+        kernel = _booted_kernel()
+        parent = kernel.create_process(name="parent", num_pages=2)
+        assert parent.virtual_memory is not None
+        parent.virtual_memory.write(virtual_address=0, data=b"before")
+
+        child = kernel.fork_process(parent_pid=parent.pid)
+        assert child.virtual_memory is not None
+
+        # Parent writes first
+        parent.virtual_memory.write(virtual_address=0, data=b"parent")
+
+        # Child still sees the original data
+        assert child.virtual_memory.read(virtual_address=0, size=6) == b"before"
+        assert parent.virtual_memory.read(virtual_address=0, size=6) == b"parent"
+
+    def test_both_sides_write_both_get_private_copies(self) -> None:
+        """Both parent and child writing should produce independent copies."""
+        kernel = _booted_kernel()
+        parent = kernel.create_process(name="parent", num_pages=2)
+        assert parent.virtual_memory is not None
+        parent.virtual_memory.write(virtual_address=0, data=b"orig")
+
+        child = kernel.fork_process(parent_pid=parent.pid)
+        assert child.virtual_memory is not None
+
+        child.virtual_memory.write(virtual_address=0, data=b"ccc!")
+        parent.virtual_memory.write(virtual_address=0, data=b"ppp!")
+
+        assert parent.virtual_memory.read(virtual_address=0, size=4) == b"ppp!"
+        assert child.virtual_memory.read(virtual_address=0, size=4) == b"ccc!"
+
+    def test_cow_write_allocates_one_frame(self) -> None:
+        """A COW fault should consume exactly one frame from the free pool."""
+        kernel = _booted_kernel()
+        assert kernel.memory is not None
+        parent = kernel.create_process(name="parent", num_pages=2)
+        kernel.fork_process(parent_pid=parent.pid)
+        free_before = kernel.memory.free_frames
+
+        child = kernel.processes[max(kernel.processes)]
+        assert child.virtual_memory is not None
+        child.virtual_memory.write(virtual_address=0, data=b"x")
+
+        expected_free = free_before - 1
+        assert kernel.memory.free_frames == expected_free
+
+    def test_cow_refcount_lifecycle(self) -> None:
+        """Refcounts should track sharing correctly through fork and write."""
+        kernel = _booted_kernel()
+        assert kernel.memory is not None
+        parent = kernel.create_process(name="parent", num_pages=1)
+        parent_frame = kernel.memory.pages_for(parent.pid)[0]
+
+        # Before fork: refcount = 1
+        assert kernel.memory.refcount(parent_frame) == 1
+
+        child = kernel.fork_process(parent_pid=parent.pid)
+        # After fork: refcount = 2 (shared)
+        expected_shared = 2
+        assert kernel.memory.refcount(parent_frame) == expected_shared
+
+        # Child writes: gets private frame, old frame drops to 1
+        assert child.virtual_memory is not None
+        child.virtual_memory.write(virtual_address=0, data=b"x")
+        assert kernel.memory.refcount(parent_frame) == 1
+
+    def test_cow_pages_marked_on_both_sides(self) -> None:
+        """After fork, COW flags should be set on both parent and child VMs."""
+        kernel = _booted_kernel()
+        parent = kernel.create_process(name="parent", num_pages=2)
+        child = kernel.fork_process(parent_pid=parent.pid)
+        assert parent.virtual_memory is not None
+        assert child.virtual_memory is not None
+
+        # Both should have all pages marked COW
+        expected_cow = frozenset({0, 1})
+        assert parent.virtual_memory.cow_pages == expected_cow
+        assert child.virtual_memory.cow_pages == expected_cow
+
+    def test_terminate_shared_frame_process(self) -> None:
+        """Terminating a process with shared frames should not corrupt the other."""
+        kernel = _booted_kernel()
+        parent = kernel.create_process(name="parent", num_pages=2)
+        assert parent.virtual_memory is not None
+        parent.virtual_memory.write(virtual_address=0, data=b"safe")
+
+        child = kernel.fork_process(parent_pid=parent.pid)
+        assert child.virtual_memory is not None
+
+        # Kill child via SIGKILL (works from any state)
+        kernel.send_signal(child.pid, Signal.SIGKILL)
+
+        # Parent data intact
+        assert parent.virtual_memory.read(virtual_address=0, size=4) == b"safe"
+
+    def test_read_shared_page_no_fault(self) -> None:
+        """Reading a shared COW page should work without triggering a copy."""
+        kernel = _booted_kernel()
+        assert kernel.memory is not None
+        parent = kernel.create_process(name="parent", num_pages=2)
+        assert parent.virtual_memory is not None
+        parent.virtual_memory.write(virtual_address=0, data=b"read-me")
+
+        child = kernel.fork_process(parent_pid=parent.pid)
+        assert child.virtual_memory is not None
+        free_before = kernel.memory.free_frames
+
+        # Read from child — should NOT allocate a new frame
+        result = child.virtual_memory.read(virtual_address=0, size=7)
+        assert result == b"read-me"
+        assert kernel.memory.free_frames == free_before
+
+    def test_chain_fork_refcounts(self) -> None:
+        """Forking a fork should bump refcounts to 3."""
+        kernel = _booted_kernel()
+        assert kernel.memory is not None
+        parent = kernel.create_process(name="A", num_pages=1)
+        frame = kernel.memory.pages_for(parent.pid)[0]
+
+        child = kernel.fork_process(parent_pid=parent.pid)
+        grandchild = kernel.fork_process(parent_pid=child.pid)
+        expected_triple = 3
+        assert kernel.memory.refcount(frame) == expected_triple
+
+        # Grandchild writes — gets private copy, frame drops to 2
+        assert grandchild.virtual_memory is not None
+        grandchild.virtual_memory.write(virtual_address=0, data=b"gc")
+        expected_double = 2
+        assert kernel.memory.refcount(frame) == expected_double
+
+    def test_shared_frame_count_after_fork(self) -> None:
+        """shared_frame_count should reflect number of shared frames."""
+        kernel = _booted_kernel()
+        assert kernel.memory is not None
+        num_pages = 3
+        parent = kernel.create_process(name="parent", num_pages=num_pages)
+        assert kernel.memory.shared_frame_count == 0
+
+        kernel.fork_process(parent_pid=parent.pid)
+        assert kernel.memory.shared_frame_count == num_pages
 
 
 # -- Fork syscall --------------------------------------------------------------

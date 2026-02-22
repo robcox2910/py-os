@@ -15,8 +15,8 @@ Technical reference for every module in the system. For beginner-friendly explan
 | Guide | Topics |
 |-------|--------|
 | [What Is an OS?](concepts/what-is-an-os.md) | Big picture, layered architecture, how PyOS works |
-| [Processes](concepts/processes.md) | PCB, five-state model, scheduler, fork, threads, execution, zombies, wait/waitpid |
-| [Memory](concepts/memory.md) | Frames/pages, virtual memory, page replacement, swap |
+| [Processes](concepts/processes.md) | PCB, five-state model, scheduler, fork (COW), threads, execution, zombies, wait/waitpid |
+| [Memory](concepts/memory.md) | Frames/pages, virtual memory, page replacement, swap, copy-on-write |
 | [Filesystem](concepts/filesystem.md) | Inodes, path resolution, persistence, journaling |
 | [Kernel and System Calls](concepts/kernel-and-syscalls.md) | Boot sequence, lifecycle, syscall dispatch, number ranges |
 | [The Shell](concepts/shell.md) | Commands, pipes, scripting, jobs, history, aliases, env |
@@ -61,8 +61,8 @@ Every source file and what it implements.
 
 | File | Class/Function | Purpose |
 |------|---------------|---------|
-| `memory/manager.py` | `MemoryManager` | Frame-based allocation with free set and page tables |
-| `memory/virtual.py` | `VirtualMemory` | Per-process address space with page table translation |
+| `memory/manager.py` | `MemoryManager` | Frame-based allocation with free set, page tables, and refcounting for COW |
+| `memory/virtual.py` | `VirtualMemory` | Per-process address space with page table translation and COW fault handling |
 | `memory/swap.py` | `SwapSpace` | Key-value backing store for evicted pages |
 | `memory/swap.py` | `FIFOPolicy` / `LRUPolicy` / `ClockPolicy` | Page replacement strategies |
 | `memory/swap.py` | `Pager` | Demand paging orchestrator (page faults, eviction, swap I/O) |

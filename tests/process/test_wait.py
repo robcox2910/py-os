@@ -284,19 +284,23 @@ class TestZombieBehavior:
         assert process.pid not in kernel.processes
 
     def test_zombie_memory_is_freed(self) -> None:
-        """A zombie's memory frames should be freed even though it stays in the table."""
+        """A zombie's page table should be cleared even though it stays in the table.
+
+        With COW, parent and child share frames. The child's frames are
+        released (refcounts decremented) but physical frames only return
+        to the free pool when no process references them.
+        """
         kernel = _booted_kernel()
         assert kernel.memory is not None
         parent = kernel.create_process(name="parent", num_pages=1)
         child = kernel.fork_process(parent_pid=parent.pid)
         kernel.exec_process(pid=child.pid, program=lambda: "x")
 
-        free_before = kernel.memory.free_frames
         kernel.run_process(pid=child.pid)
-        free_after = kernel.memory.free_frames
 
-        # Memory should be freed even though child is a zombie
-        assert free_after > free_before
+        # Child's page table should be empty (memory released)
+        assert kernel.memory.pages_for(child.pid) == []
+        # But child stays in the process table as a zombie
         assert child.pid in kernel.processes
 
     def test_sigkill_creates_zombie(self) -> None:

@@ -115,6 +115,110 @@ class TestVirtualMemory:
         assert vm.page_size == PAGE_SIZE
 
 
+class TestCopyOnWrite:
+    """Verify copy-on-write page tracking and fault handling.
+
+    COW pages are shared between parent and child after fork.  Reads
+    go through unchanged (both see the same data).  Writes trigger a
+    fault handler that copies the page, giving the writer its own
+    private copy so the other process is unaffected.
+    """
+
+    def test_mark_cow_and_is_cow(self) -> None:
+        """Marking a page as COW should make is_cow return True."""
+        vm = VirtualMemory(page_size=PAGE_SIZE)
+        vm.page_table.map(virtual_page=0, physical_frame=0)
+        vm.mark_cow(virtual_page=0)
+        assert vm.is_cow(virtual_page=0) is True
+
+    def test_unmarked_page_is_not_cow(self) -> None:
+        """A page that was never marked should not be COW."""
+        vm = VirtualMemory(page_size=PAGE_SIZE)
+        assert vm.is_cow(virtual_page=0) is False
+
+    def test_clear_cow(self) -> None:
+        """Clearing COW on a page should make is_cow return False."""
+        vm = VirtualMemory(page_size=PAGE_SIZE)
+        vm.mark_cow(virtual_page=0)
+        vm.clear_cow(virtual_page=0)
+        assert vm.is_cow(virtual_page=0) is False
+
+    def test_cow_pages_property(self) -> None:
+        """cow_pages should return a frozenset of all COW page numbers."""
+        vm = VirtualMemory(page_size=PAGE_SIZE)
+        vm.mark_cow(virtual_page=0)
+        vm.mark_cow(virtual_page=2)
+        expected = frozenset({0, 2})
+        assert vm.cow_pages == expected
+
+    def test_read_does_not_trigger_cow(self) -> None:
+        """Reading a COW page should not call the fault handler."""
+        vm = VirtualMemory(page_size=PAGE_SIZE)
+        vm.page_table.map(virtual_page=0, physical_frame=0)
+        vm.write(virtual_address=0, data=b"hello")
+        handler_called = False
+
+        def handler(vpn: int) -> tuple[int, bytearray]:  # noqa: ARG001
+            nonlocal handler_called
+            handler_called = True
+            return (99, bytearray(PAGE_SIZE))
+
+        vm.mark_cow(virtual_page=0)
+        vm.cow_fault_handler = handler
+        result = vm.read(virtual_address=0, size=5)
+        assert result == b"hello"
+        assert handler_called is False
+
+    def test_write_to_cow_page_triggers_handler(self) -> None:
+        """Writing to a COW page should invoke the fault handler."""
+        vm = VirtualMemory(page_size=PAGE_SIZE)
+        vm.page_table.map(virtual_page=0, physical_frame=0)
+        vm.write(virtual_address=0, data=b"old")
+
+        new_frame = 42
+        new_storage = bytearray(PAGE_SIZE)
+        new_storage[:3] = b"old"
+
+        def handler(vpn: int) -> tuple[int, bytearray]:  # noqa: ARG001
+            return (new_frame, new_storage)
+
+        vm.mark_cow(virtual_page=0)
+        vm.cow_fault_handler = handler
+        vm.write(virtual_address=0, data=b"new")
+
+        # Page table should now point to the new frame
+        assert vm.page_table.translate(0) == new_frame
+        # COW flag should be cleared
+        assert vm.is_cow(virtual_page=0) is False
+        # Data should be written to the new storage
+        assert vm.read(virtual_address=0, size=3) == b"new"
+
+    def test_write_to_cow_page_without_handler_raises(self) -> None:
+        """Writing to a COW page with no handler should raise RuntimeError."""
+        vm = VirtualMemory(page_size=PAGE_SIZE)
+        vm.page_table.map(virtual_page=0, physical_frame=0)
+        vm.mark_cow(virtual_page=0)
+        with pytest.raises(RuntimeError, match="No COW fault handler"):
+            vm.write(virtual_address=0, data=b"boom")
+
+    def test_share_physical(self) -> None:
+        """share_physical should install a bytearray at a frame slot."""
+        vm = VirtualMemory(page_size=PAGE_SIZE)
+        vm.page_table.map(virtual_page=0, physical_frame=5)
+        shared_buf = bytearray(PAGE_SIZE)
+        shared_buf[:4] = b"data"
+        vm.share_physical(frame=5, storage=shared_buf)
+        assert vm.read(virtual_address=0, size=4) == b"data"
+
+    def test_physical_storage_returns_frame_buffer(self) -> None:
+        """physical_storage should return the underlying bytearray."""
+        vm = VirtualMemory(page_size=PAGE_SIZE)
+        vm.page_table.map(virtual_page=0, physical_frame=3)
+        vm.write(virtual_address=0, data=b"test")
+        buf = vm.physical_storage(3)
+        assert buf[:4] == b"test"
+
+
 class TestKernelVirtualMemory:
     """Verify kernel integration with virtual memory."""
 

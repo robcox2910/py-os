@@ -212,6 +212,64 @@ occupy frames for the pages they're actually using right now.
 
 ---
 
+## 4. Copy-on-Write (COW)
+
+### The Shared Notebook Analogy
+
+Imagine two students, Alice and Bob, are both studying from the same textbook.
+Instead of photocopying the whole book for Bob (slow and wasteful), the teacher
+says: "Just share. You're both reading the same pages anyway."
+
+But there's a catch -- if Bob wants to scribble notes in the margin, he can't
+do it on the shared copy or he'd mess up Alice's book too. So the rule is:
+**the first person to write on a page gets a photocopy of just that one page**.
+Now Bob has his own copy to scribble on, and Alice's page is untouched. If
+neither of them ever writes, no copies are ever needed. Free sharing!
+
+This is **copy-on-write** (COW), and it's one of the cleverest tricks in
+operating systems.
+
+### Why Does This Matter?
+
+When a [process](processes.md) forks (creates a child), the child needs its own
+copy of the parent's memory. The naive approach is to copy every single page
+immediately -- but that's wasteful. Many forked processes immediately call
+`exec()` to load a completely different program, throwing away all those copies
+before they're even read.
+
+With COW:
+1. **Fork is nearly free** -- parent and child point to the same physical
+   frames. No copying happens.
+2. **Reads are shared** -- both processes read from the same frames. No extra
+   memory used.
+3. **Writes trigger a copy** -- only the page being written gets duplicated.
+   The writer gets a private copy; the other process keeps the original.
+
+### How It Works Under the Hood
+
+1. **At fork time**, the kernel marks all shared pages as COW-protected and
+   bumps a **reference count** on each physical frame (from 1 to 2).
+2. **On read**, nothing special happens. Both processes read the same data from
+   the same frame.
+3. **On write**, the virtual memory system detects the COW flag and triggers a
+   **fault handler**. The handler:
+   - Allocates a brand-new frame.
+   - Copies the data from the shared frame to the new one.
+   - Updates the writer's page table to point to the new frame.
+   - Decrements the old frame's reference count.
+   - Clears the COW flag on that page (it's now private).
+4. **When refcount hits 0**, the frame goes back to the free pool.
+
+### Reference Counting
+
+The memory manager keeps a counter for each frame: "how many processes are
+using this frame right now?" When a frame is first allocated, the count is 1.
+When fork shares it, the count goes to 2. If three processes share it (A forks
+B, then B forks C), the count is 3. Each termination or COW copy decrements
+the count. The frame is only truly freed when the count reaches 0.
+
+---
+
 ## Putting It All Together
 
 Here's how these three pieces work as a team:
