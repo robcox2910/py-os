@@ -69,6 +69,11 @@ class Mutex:
         """Return the number of threads waiting to acquire."""
         return len(self._wait_queue)
 
+    @property
+    def waiters(self) -> list[int]:
+        """Return TIDs currently waiting to acquire (in FIFO order)."""
+        return list(self._wait_queue)
+
     def acquire(self, tid: int) -> bool:
         """Attempt to acquire the mutex.
 

@@ -112,27 +112,107 @@ rwlock create db_lock
 rwlock list
 ```
 
+## Priority Inversion
+
+**Analogy: Three students and one textbook.**
+
+Imagine a classroom with three students who all need the same textbook:
+
+- **Slow Student** (low priority) -- currently has the textbook and is reading
+- **Fast Student** (high priority) -- needs the textbook urgently
+- **Normal Student** (medium priority) -- doesn't need the textbook at all
+
+The teacher (scheduler) always calls on the highest-priority student who is ready to work. Here's the problem:
+
+1. Slow Student has the textbook and is reading chapter 3
+2. Fast Student raises their hand -- "I need that textbook!" But Slow Student still has it
+3. Normal Student doesn't need the textbook, so they're ready to work
+4. The teacher keeps calling on Normal Student (priority 5) instead of Slow Student (priority 1)
+5. Slow Student never gets a turn, so they can never finish and return the textbook
+6. Fast Student is stuck forever!
+
+This is **priority inversion**: the high-priority task is effectively running at the *lowest* priority because it's blocked behind the low-priority holder, and medium-priority tasks keep jumping ahead.
+
+### The Mars Pathfinder Bug
+
+This exact problem happened on Mars in 1997. NASA's Pathfinder rover had three tasks:
+
+- A **low-priority** task that collected weather data (and held a shared mutex)
+- A **high-priority** task that managed the communication bus
+- **Medium-priority** tasks that ran science experiments
+
+The high-priority bus manager kept getting starved. A watchdog timer detected the failure and rebooted the rover -- over and over. Engineers on Earth diagnosed the problem and uploaded a fix: **priority inheritance**.
+
+**Shell usage:**
+```
+pi demo     # Walk through the Mars Pathfinder scenario step by step
+pi status   # See which processes are currently boosted
+```
+
+## Priority Inheritance
+
+**The fix: temporarily boost the slow student.**
+
+Priority inheritance is the kernel's solution to priority inversion. When a high-priority thread blocks on a mutex held by a lower-priority thread, the kernel temporarily **boosts** the holder's priority to match the waiter's.
+
+Back to our classroom:
+
+1. Fast Student says "I need the textbook"
+2. The teacher sees Fast Student is blocked waiting for Slow Student
+3. The teacher says "Slow Student, you're temporarily promoted to priority 10!"
+4. Now the teacher calls on Slow Student (priority 10) instead of Normal Student (priority 5)
+5. Slow Student finishes quickly, returns the textbook
+6. Slow Student drops back to priority 1
+7. Fast Student gets the textbook and proceeds
+
+### Transitive Inheritance
+
+What if Slow Student is *also* waiting for something? The boost propagates through the chain:
+
+```
+Fast Student (priority=10) blocked on Textbook, held by Normal Student (priority=5)
+Normal Student also blocked on Calculator, held by Slow Student (priority=1)
+
+Result: Slow Student boosted to 10, Normal Student boosted to 10
+When Slow Student returns Calculator -> Normal Student gets it, Slow Student drops to 1
+When Normal Student returns Textbook -> Fast Student gets it, Normal Student drops to 5
+```
+
+The kernel walks the chain of "who is blocked on what" and boosts everyone in the path. Loop detection (via a visited set) prevents infinite chains.
+
+### How It Works
+
+Each process has two priority values:
+
+- **Base priority** -- the original, immutable priority set at creation
+- **Effective priority** -- what the scheduler actually uses (may be boosted)
+
+When no inheritance is active, `effective_priority == base_priority`. When a boost happens, only the effective priority changes. When the mutex is released, the kernel recalculates: it looks at all mutexes the process still holds, finds the highest-priority waiter across all of them, and sets `effective_priority = max(base_priority, max_waiter_priority)`.
+
 ## How It Works in PyOS
 
-PyOS implements all four primitives in `sync/primitives.py`:
+PyOS implements all four primitives in `sync/primitives.py`, plus priority inheritance in `sync/inheritance.py`:
 
 | Class | Purpose | Key Methods |
 |-------|---------|-------------|
-| `Mutex` | Mutual exclusion | `acquire(tid)`, `release(tid)` |
+| `Mutex` | Mutual exclusion | `acquire(tid)`, `release(tid)`, `waiters` |
 | `Semaphore` | Counting lock | `acquire(tid)`, `release()` |
 | `Condition` | Wait/notify | `wait(tid)`, `notify()`, `notify_all()` |
 | `ReadWriteLock` | Multiple readers / one writer | `acquire_read(tid)`, `acquire_write(tid)`, `release_read(tid)`, `release_write(tid)` |
 | `SyncManager` | Registry | `create_mutex()`, `create_semaphore()`, `create_condition()`, `create_rwlock()` |
+| `PriorityInheritanceManager` | Prevent priority inversion | `on_acquire()`, `on_block()`, `on_release()` |
 
-The kernel owns a `SyncManager` that is created during boot and torn down during shutdown. All user-space access goes through system calls (110-125), and the shell provides `mutex`, `semaphore`, and `rwlock` commands.
+The kernel owns a `SyncManager` and a `PriorityInheritanceManager`, both created during boot and torn down during shutdown. All user-space access goes through system calls (110-125), and the shell provides `mutex`, `semaphore`, `rwlock`, and `pi` commands.
+
+The `PriorityInheritanceManager` tracks which process holds each mutex, which processes are blocked waiting, and coordinates priority boosts. The Mutex itself stays simple -- all coordination logic lives in the PI manager.
 
 ## Syscall Interface
 
 | Number | Name | What It Does |
 |--------|------|--------------|
 | 110 | SYS_CREATE_MUTEX | Create a named mutex |
-| 111 | SYS_ACQUIRE_MUTEX | Lock a mutex (or queue if held) |
-| 112 | SYS_RELEASE_MUTEX | Unlock a mutex |
+| 111 | SYS_ACQUIRE_MUTEX | Lock a mutex (or queue if held); optional `pid` enables PI tracking |
+| 112 | SYS_RELEASE_MUTEX | Unlock a mutex; optional `pid` triggers priority recalculation |
 | 113 | SYS_CREATE_SEMAPHORE | Create a counting semaphore |
 | 114 | SYS_ACQUIRE_SEMAPHORE | Decrement semaphore (or queue if zero) |
 | 115 | SYS_RELEASE_SEMAPHORE | Increment semaphore |
@@ -145,12 +225,15 @@ The kernel owns a `SyncManager` that is created during boot and torn down during
 | 124 | SYS_RELEASE_READ_LOCK | Release read access |
 | 125 | SYS_RELEASE_WRITE_LOCK | Release write access |
 
+No new syscall numbers were added for priority inheritance -- the existing `SYS_ACQUIRE_MUTEX` (111) and `SYS_RELEASE_MUTEX` (112) accept an optional `pid` parameter that activates PI tracking.
+
 ## Real-World Examples
 
 - **Mutex**: Protecting a shared log file so lines don't interleave
 - **Semaphore**: Limiting database connections to a pool of 10
 - **Condition**: A print queue where the printer waits for jobs to arrive
 - **Reader-writer lock**: A configuration file that many threads read but only one thread updates
+- **Priority inheritance**: The Mars Pathfinder rover fix -- preventing high-priority tasks from starving when they need a mutex held by a low-priority task
 
 ## Where to Go Next
 

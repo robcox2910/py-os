@@ -824,8 +824,9 @@ def _sys_acquire_mutex(kernel: Any, **kwargs: Any) -> str:
     """Acquire a named mutex."""
     name: str = kwargs["name"]
     tid: int = kwargs["tid"]
+    pid: int | None = kwargs.get("pid")
     try:
-        acquired = kernel.acquire_mutex(name, tid=tid)
+        acquired = kernel.acquire_mutex(name, tid=tid, pid=pid)
     except KeyError as e:
         raise SyscallError(str(e)) from e
     if acquired:
@@ -837,8 +838,9 @@ def _sys_release_mutex(kernel: Any, **kwargs: Any) -> str:
     """Release a named mutex."""
     name: str = kwargs["name"]
     tid: int = kwargs["tid"]
+    pid: int | None = kwargs.get("pid")
     try:
-        kernel.release_mutex(name, tid=tid)
+        kernel.release_mutex(name, tid=tid, pid=pid)
     except (KeyError, ValueError) as e:
         raise SyscallError(str(e)) from e
     return f"mutex '{name}' released by thread {tid}"

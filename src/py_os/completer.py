@@ -32,6 +32,7 @@ _SUBCOMMANDS: dict[str, list[str]] = {
     "semaphore": ["create", "list"],
     "journal": ["status", "checkpoint", "recover", "crash"],
     "rwlock": ["create", "list"],
+    "pi": ["demo", "status"],
 }
 
 # Minimum number of words needed before signal name completion kicks in.
