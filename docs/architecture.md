@@ -16,7 +16,7 @@ Technical reference for every module in the system. For beginner-friendly explan
 |-------|--------|
 | [What Is an OS?](concepts/what-is-an-os.md) | Big picture, layered architecture, how PyOS works |
 | [Processes](concepts/processes.md) | PCB, five-state model, scheduler, fork (COW), threads, execution, zombies, wait/waitpid |
-| [Memory](concepts/memory.md) | Frames/pages, virtual memory, page replacement, swap, copy-on-write, mmap |
+| [Memory](concepts/memory.md) | Frames/pages, virtual memory, page replacement, swap, copy-on-write, mmap, slab allocator |
 | [Filesystem](concepts/filesystem.md) | Inodes, path resolution, persistence, journaling |
 | [Kernel and System Calls](concepts/kernel-and-syscalls.md) | Boot sequence, lifecycle, syscall dispatch, number ranges |
 | [The Shell](concepts/shell.md) | Commands, pipes, scripting, jobs, history, aliases, env |
@@ -65,6 +65,10 @@ Every source file and what it implements.
 | `memory/virtual.py` | `VirtualMemory` | Per-process address space with page table translation and COW fault handling |
 | `memory/mmap.py` | `MmapRegion` | Frozen dataclass describing a memory-mapped file region |
 | `memory/mmap.py` | `MmapError` | Exception for mmap operation failures |
+| `memory/slab.py` | `SlabAllocator` | Registry of named slab caches backed by physical frames |
+| `memory/slab.py` | `SlabCache` | Pool of slabs for one fixed object size, auto-grows |
+| `memory/slab.py` | `Slab` | One physical frame divided into equal-sized object slots |
+| `memory/slab.py` | `SlabError` | Exception for slab operation failures |
 | `memory/swap.py` | `SwapSpace` | Key-value backing store for evicted pages |
 | `memory/swap.py` | `FIFOPolicy` / `LRUPolicy` / `ClockPolicy` | Page replacement strategies |
 | `memory/swap.py` | `Pager` | Demand paging orchestrator (page faults, eviction, swap I/O) |
@@ -127,6 +131,7 @@ Every source file and what it implements.
 | 10-15 | Filesystem operations (create, read, write, delete, list) |
 | 20 | Memory info |
 | 21-23 | Memory-mapped files (mmap, munmap, msync) |
+| 24-27 | Slab allocator (create cache, alloc, free, info) |
 | 30-33 | User operations (whoami, create, list, switch) |
 | 40-42 | Device operations (read, write, list) |
 | 50 | Logging |

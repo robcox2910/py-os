@@ -32,6 +32,7 @@ from enum import IntEnum
 from typing import Any
 
 from py_os.memory.mmap import MmapError
+from py_os.memory.slab import SlabError
 from py_os.process.scheduler import (
     AgingPriorityPolicy,
     CFSPolicy,
@@ -75,6 +76,10 @@ class SyscallNumber(IntEnum):
     SYS_MMAP = 21
     SYS_MUNMAP = 22
     SYS_MSYNC = 23
+    SYS_SLAB_CREATE = 24
+    SYS_SLAB_ALLOC = 25
+    SYS_SLAB_FREE = 26
+    SYS_SLAB_INFO = 27
 
     # User operations
     SYS_WHOAMI = 30
@@ -176,6 +181,10 @@ def dispatch_syscall(
         SyscallNumber.SYS_MMAP: _sys_mmap,
         SyscallNumber.SYS_MUNMAP: _sys_munmap,
         SyscallNumber.SYS_MSYNC: _sys_msync,
+        SyscallNumber.SYS_SLAB_CREATE: _sys_slab_create,
+        SyscallNumber.SYS_SLAB_ALLOC: _sys_slab_alloc,
+        SyscallNumber.SYS_SLAB_FREE: _sys_slab_free,
+        SyscallNumber.SYS_SLAB_INFO: _sys_slab_info,
         SyscallNumber.SYS_WHOAMI: _sys_whoami,
         SyscallNumber.SYS_CREATE_USER: _sys_create_user,
         SyscallNumber.SYS_LIST_USERS: _sys_list_users,
@@ -436,6 +445,47 @@ def _sys_msync(kernel: Any, **kwargs: Any) -> None:
         kernel.msync_file(pid=kwargs["pid"], virtual_address=kwargs["virtual_address"])
     except MmapError as e:
         raise SyscallError(str(e)) from e
+
+
+# -- Slab allocator syscall handlers -----------------------------------------
+
+
+def _sys_slab_create(kernel: Any, **kwargs: Any) -> dict[str, Any]:
+    """Create a named slab cache."""
+    name: str = kwargs["name"]
+    obj_size: int = kwargs["obj_size"]
+    try:
+        cache = kernel.slab_create_cache(name, obj_size=obj_size)
+    except SlabError as e:
+        raise SyscallError(str(e)) from e
+    return {
+        "name": cache.name,
+        "obj_size": cache.obj_size,
+        "capacity_per_slab": cache.stats()["total_slots"] if cache.slab_count > 0 else 0,
+    }
+
+
+def _sys_slab_alloc(kernel: Any, **kwargs: Any) -> dict[str, int | str]:
+    """Allocate an object from a slab cache."""
+    cache_name: str = kwargs["cache"]
+    try:
+        name, slab_index, slot_index = kernel.slab_alloc(cache_name)
+    except SlabError as e:
+        raise SyscallError(str(e)) from e
+    return {"cache": name, "slab_index": slab_index, "slot_index": slot_index}
+
+
+def _sys_slab_free(kernel: Any, **kwargs: Any) -> None:
+    """Free an object back to a slab cache."""
+    try:
+        kernel.slab_free(kwargs["cache"], kwargs["slab_index"], kwargs["slot_index"])
+    except SlabError as e:
+        raise SyscallError(str(e)) from e
+
+
+def _sys_slab_info(kernel: Any, **_kwargs: Any) -> dict[str, dict[str, Any]]:
+    """Return stats for all slab caches."""
+    return kernel.slab_info()
 
 
 # -- User syscall handlers ---------------------------------------------------

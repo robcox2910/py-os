@@ -120,6 +120,10 @@ class Shell:
             "mmap": self._cmd_mmap,
             "munmap": self._cmd_munmap,
             "msync": self._cmd_msync,
+            "slabcreate": self._cmd_slabcreate,
+            "slaballoc": self._cmd_slaballoc,
+            "slabfree": self._cmd_slabfree,
+            "slabinfo": self._cmd_slabinfo,
         }
 
     def execute(self, command: str) -> str:
@@ -1061,3 +1065,88 @@ class Shell:
             return f"Synced address {address}{path_info}"
         except SyscallError as e:
             return f"Error: {e}"
+
+    # -- Slab allocator commands ---------------------------------------------
+
+    def _cmd_slabcreate(self, args: list[str]) -> str:
+        """Create a named slab cache with a given object size."""
+        min_args = 2
+        if len(args) < min_args:
+            return "Usage: slabcreate <name> <obj_size>"
+        name = args[0]
+        try:
+            obj_size = int(args[1])
+        except ValueError:
+            return f"Error: invalid obj_size '{args[1]}'"
+        try:
+            result: dict[str, object] = self._kernel.syscall(
+                SyscallNumber.SYS_SLAB_CREATE,
+                name=name,
+                obj_size=obj_size,
+            )
+            return (
+                f"Created cache '{result['name']}'"
+                f" ({result['obj_size']} bytes,"
+                f" {result['capacity_per_slab']} per slab)"
+            )
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_slaballoc(self, args: list[str]) -> str:
+        """Allocate an object from a slab cache."""
+        if not args:
+            return "Usage: slaballoc <cache>"
+        try:
+            result: dict[str, object] = self._kernel.syscall(
+                SyscallNumber.SYS_SLAB_ALLOC,
+                cache=args[0],
+            )
+            return (
+                f"Allocated from '{result['cache']}':"
+                f" slab {result['slab_index']}, slot {result['slot_index']}"
+            )
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_slabfree(self, args: list[str]) -> str:
+        """Free an object back to a slab cache."""
+        min_args = 3
+        if len(args) < min_args:
+            return "Usage: slabfree <cache> <slab_index> <slot_index>"
+        name = args[0]
+        try:
+            slab_index = int(args[1])
+        except ValueError:
+            return f"Error: invalid slab_index '{args[1]}'"
+        try:
+            slot_index = int(args[2])
+        except ValueError:
+            return f"Error: invalid slot_index '{args[2]}'"
+        try:
+            self._kernel.syscall(
+                SyscallNumber.SYS_SLAB_FREE,
+                cache=name,
+                slab_index=slab_index,
+                slot_index=slot_index,
+            )
+            return f"Freed '{name}' slab {slab_index}, slot {slot_index}"
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_slabinfo(self, _args: list[str]) -> str:
+        """Show slab cache statistics."""
+        info: dict[str, dict[str, object]] = self._kernel.syscall(
+            SyscallNumber.SYS_SLAB_INFO,
+        )
+        if not info:
+            return "No slab caches."
+        lines = ["CACHE      OBJ_SIZE  SLABS  USED  FREE"]
+        for name in sorted(info):
+            stats = info[name]
+            lines.append(
+                f"{name:<10} {stats['obj_size']!s:>8}"
+                f"  {stats['total_slabs']!s:>5}"
+                f"  {stats['used_slots']!s:>4}"
+                f"  {stats['free_slots']!s:>4}"
+            )
+        return "\n".join(lines)
