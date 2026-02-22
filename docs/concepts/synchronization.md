@@ -81,18 +81,50 @@ A condition variable lets threads wait for some condition to become true. It is 
 
 This is the standard **producer-consumer** pattern: the producer adds items and notifies; the consumer waits until items are available.
 
+## Reader-Writer Lock (RWLock)
+
+**Analogy: A museum exhibit.**
+
+Imagine a famous painting in a museum. Any number of visitors (readers) can look at the painting at the same time -- they don't interfere with each other. But when a restorer (writer) needs to work on the painting, they close the room. Visitors already inside can finish looking, but no new visitors are let in until the restorer is done.
+
+A reader-writer lock works the same way:
+- **Multiple readers** can hold the lock at the same time
+- **Only one writer** can hold the lock, and nobody else (no readers, no other writers)
+- This is perfect for data that gets read much more often than it gets written (config files, caches, lookup tables)
+
+```
+Thread A: acquire_read   -> success (1 reader)
+Thread B: acquire_read   -> success (2 readers)
+Thread C: acquire_write  -> blocked, added to wait queue
+Thread D: acquire_read   -> blocked behind writer (writer-preference!)
+Thread A: release_read   -> nothing happens (B still reading)
+Thread B: release_read   -> 0 readers, C wakes up (writer goes next)
+Thread C: release_write  -> D wakes up (reader gets in)
+```
+
+### Writer-Preference
+
+Notice that Thread D was blocked even though it was a reader. This is **writer-preference**: when a writer is waiting in line, new readers queue behind it rather than jumping ahead. Without this rule, a steady stream of readers could starve the writer forever -- the writer would never get a turn.
+
+**Shell usage:**
+```
+rwlock create db_lock
+rwlock list
+```
+
 ## How It Works in PyOS
 
-PyOS implements all three primitives in `sync/primitives.py`:
+PyOS implements all four primitives in `sync/primitives.py`:
 
 | Class | Purpose | Key Methods |
 |-------|---------|-------------|
 | `Mutex` | Mutual exclusion | `acquire(tid)`, `release(tid)` |
 | `Semaphore` | Counting lock | `acquire(tid)`, `release()` |
 | `Condition` | Wait/notify | `wait(tid)`, `notify()`, `notify_all()` |
-| `SyncManager` | Registry | `create_mutex()`, `create_semaphore()`, `create_condition()` |
+| `ReadWriteLock` | Multiple readers / one writer | `acquire_read(tid)`, `acquire_write(tid)`, `release_read(tid)`, `release_write(tid)` |
+| `SyncManager` | Registry | `create_mutex()`, `create_semaphore()`, `create_condition()`, `create_rwlock()` |
 
-The kernel owns a `SyncManager` that is created during boot and torn down during shutdown. All user-space access goes through system calls (110-118), and the shell provides `mutex` and `semaphore` commands.
+The kernel owns a `SyncManager` that is created during boot and torn down during shutdown. All user-space access goes through system calls (110-125), and the shell provides `mutex`, `semaphore`, and `rwlock` commands.
 
 ## Syscall Interface
 
@@ -107,18 +139,24 @@ The kernel owns a `SyncManager` that is created during boot and torn down during
 | 116 | SYS_CREATE_CONDITION | Create a condition variable |
 | 117 | SYS_CONDITION_WAIT | Wait on a condition |
 | 118 | SYS_CONDITION_NOTIFY | Wake waiters on a condition |
+| 119 | SYS_CREATE_RWLOCK | Create a reader-writer lock |
+| 122 | SYS_ACQUIRE_READ_LOCK | Acquire read access (or queue) |
+| 123 | SYS_ACQUIRE_WRITE_LOCK | Acquire write access (or queue) |
+| 124 | SYS_RELEASE_READ_LOCK | Release read access |
+| 125 | SYS_RELEASE_WRITE_LOCK | Release write access |
 
 ## Real-World Examples
 
 - **Mutex**: Protecting a shared log file so lines don't interleave
 - **Semaphore**: Limiting database connections to a pool of 10
 - **Condition**: A print queue where the printer waits for jobs to arrive
+- **Reader-writer lock**: A configuration file that many threads read but only one thread updates
 
 ## Where to Go Next
 
-With synchronization in place, you have the tools to build higher-level patterns like thread-safe queues, reader-writer locks, and barriers. These primitives are the building blocks of every concurrent system, from web servers to operating systems.
+With synchronization in place, you have the tools to build higher-level patterns like thread-safe queues and barriers. These primitives are the building blocks of every concurrent system, from web servers to operating systems.
 
 - [Processes](processes.md) -- How threads live inside processes, plus fork, signals, and wait/waitpid
 - [Users and Safety](users-and-safety.md) -- Deadlock detection and how the OS keeps things safe
 - [Devices and Networking](devices-and-networking.md) -- IPC pipes and message queues that use these primitives under the hood
-- [The Shell](shell.md) -- The `mutex` and `semaphore` shell commands
+- [The Shell](shell.md) -- The `mutex`, `semaphore`, and `rwlock` shell commands

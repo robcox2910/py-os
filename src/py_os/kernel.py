@@ -46,7 +46,7 @@ from py_os.process.scheduler import FCFSPolicy, Scheduler, SchedulingPolicy
 from py_os.process.signals import DEFAULT_ACTIONS, UNCATCHABLE, Signal, SignalAction, SignalError
 from py_os.process.threads import Thread
 from py_os.sync.deadlock import ResourceManager
-from py_os.sync.primitives import Condition, Mutex, Semaphore, SyncManager
+from py_os.sync.primitives import Condition, Mutex, ReadWriteLock, Semaphore, SyncManager
 from py_os.syscalls import SyscallNumber, dispatch_syscall
 from py_os.users import FilePermissions, UserManager
 
@@ -1650,6 +1650,86 @@ class Kernel:
         assert self._sync_manager is not None  # noqa: S101
         cond = self._sync_manager.get_condition(name)
         return cond.notify_all()
+
+    # -- Reader-writer lock delegation ---------------------------------------
+
+    def create_rwlock(self, name: str) -> ReadWriteLock:
+        """Create a named reader-writer lock via the sync manager.
+
+        Args:
+            name: Unique name for the lock.
+
+        Returns:
+            The newly created ReadWriteLock.
+
+        """
+        self._require_running()
+        assert self._sync_manager is not None  # noqa: S101
+        return self._sync_manager.create_rwlock(name)
+
+    def acquire_read_lock(self, name: str, *, tid: int) -> bool:
+        """Acquire read access on a named reader-writer lock.
+
+        Args:
+            name: Name of the lock.
+            tid: Thread ID of the caller.
+
+        Returns:
+            True if acquired, False if queued.
+
+        """
+        self._require_running()
+        assert self._sync_manager is not None  # noqa: S101
+        rwl = self._sync_manager.get_rwlock(name)
+        return rwl.acquire_read(tid)
+
+    def acquire_write_lock(self, name: str, *, tid: int) -> bool:
+        """Acquire write access on a named reader-writer lock.
+
+        Args:
+            name: Name of the lock.
+            tid: Thread ID of the caller.
+
+        Returns:
+            True if acquired, False if queued.
+
+        """
+        self._require_running()
+        assert self._sync_manager is not None  # noqa: S101
+        rwl = self._sync_manager.get_rwlock(name)
+        return rwl.acquire_write(tid)
+
+    def release_read_lock(self, name: str, *, tid: int) -> list[int]:
+        """Release read access on a named reader-writer lock.
+
+        Args:
+            name: Name of the lock.
+            tid: Thread ID of the caller.
+
+        Returns:
+            List of TIDs promoted from the wait queue.
+
+        """
+        self._require_running()
+        assert self._sync_manager is not None  # noqa: S101
+        rwl = self._sync_manager.get_rwlock(name)
+        return rwl.release_read(tid)
+
+    def release_write_lock(self, name: str, *, tid: int) -> list[int]:
+        """Release write access on a named reader-writer lock.
+
+        Args:
+            name: Name of the lock.
+            tid: Thread ID of the caller.
+
+        Returns:
+            List of TIDs promoted from the wait queue.
+
+        """
+        self._require_running()
+        assert self._sync_manager is not None  # noqa: S101
+        rwl = self._sync_manager.get_rwlock(name)
+        return rwl.release_write(tid)
 
     # -- Journal operations --------------------------------------------------
 

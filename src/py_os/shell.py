@@ -150,6 +150,7 @@ class Shell:
             "readlink": self._cmd_readlink,
             "stat": self._cmd_stat,
             "journal": self._cmd_journal,
+            "rwlock": self._cmd_rwlock,
             "waitjob": self._cmd_waitjob,
         }
 
@@ -1241,6 +1242,41 @@ class Shell:
         for name in sorted(names):
             sem = sm.get_semaphore(name)
             lines.append(f"{name:<10} {sem.count}")
+        return "\n".join(lines)
+
+    def _cmd_rwlock(self, args: list[str]) -> str:
+        """Manage reader-writer locks — create or list."""
+        if not args or args[0] not in {"create", "list"}:
+            return "Usage: rwlock <create|list> [args...]"
+        if args[0] == "create":
+            return self._cmd_rwlock_create(args[1:])
+        return self._cmd_rwlock_list()
+
+    def _cmd_rwlock_create(self, args: list[str]) -> str:
+        """Create a named reader-writer lock."""
+        if not args:
+            return "Usage: rwlock create <name>"
+        try:
+            result: str = self._kernel.syscall(SyscallNumber.SYS_CREATE_RWLOCK, name=args[0])
+        except SyscallError as e:
+            return f"Error: {e}"
+        return result
+
+    def _cmd_rwlock_list(self) -> str:
+        """List all reader-writer locks and their state."""
+        sm = self._kernel.sync_manager
+        if sm is None:
+            return "Sync manager not available."
+        names = sm.list_rwlocks()
+        if not names:
+            return "No reader-writer locks."
+        lines: list[str] = ["NAME       READERS  WRITER  WAITING"]
+        for name in sorted(names):
+            rwl = sm.get_rwlock(name)
+            readers = str(rwl.reader_count)
+            writer = str(rwl.writer_tid) if rwl.writer_tid is not None else "-"
+            waiting = str(rwl.wait_queue_size)
+            lines.append(f"{name:<10} {readers:<8} {writer:<7} {waiting}")
         return "\n".join(lines)
 
     def _cmd_handle(self, args: list[str]) -> str:

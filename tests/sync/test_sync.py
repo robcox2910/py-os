@@ -3,20 +3,23 @@
 Synchronization primitives coordinate access to shared resources among
 concurrent threads and processes.  A Mutex provides mutual exclusion
 (one holder at a time), a Semaphore limits concurrent access to N,
-and a Condition Variable lets threads wait until notified.
+a Condition Variable lets threads wait until notified, and a
+ReadWriteLock allows multiple readers OR one exclusive writer.
 
 Real-world analogies:
     - **Mutex**: A bathroom lock — only one person at a time.
     - **Semaphore**: A parking lot with limited spaces.
     - **Condition Variable**: A waiting room where you sit until your
       name is called.
+    - **ReadWriteLock**: A museum exhibit — visitors (readers) can
+      look together, but a restorer (writer) needs the room cleared.
 """
 
 import pytest
 
 from py_os.kernel import Kernel
 from py_os.shell import Shell
-from py_os.sync.primitives import Condition, Mutex, Semaphore, SyncManager
+from py_os.sync.primitives import Condition, Mutex, ReadWriteLock, Semaphore, SyncManager
 from py_os.syscalls import SyscallError, SyscallNumber
 
 # Named constants to satisfy PLR2004
@@ -654,4 +657,282 @@ class TestShellSync:
         """'semaphore' without a subcommand should show usage."""
         _kernel, shell = _booted_shell()
         result = shell.execute("semaphore")
+        assert "usage" in result.lower()
+
+
+# -- ReadWriteLock Tests (Cycle 1) -------------------------------------------
+
+
+class TestReadWriteLock:
+    """Verify basic RWLock creation, acquire, release, and properties."""
+
+    def test_create_rwlock(self) -> None:
+        """Create a reader-writer lock with a name."""
+        rwl = ReadWriteLock(name="db_lock")
+        assert rwl.name == "db_lock"
+
+    def test_new_rwlock_has_no_readers(self) -> None:
+        """A freshly created lock should have zero readers."""
+        rwl = ReadWriteLock(name="db_lock")
+        assert rwl.reader_count == 0
+
+    def test_new_rwlock_is_not_writing(self) -> None:
+        """A freshly created lock should not be in write mode."""
+        rwl = ReadWriteLock(name="db_lock")
+        assert not rwl.is_writing
+        assert rwl.writer_tid is None
+
+    def test_acquire_and_release_read(self) -> None:
+        """Acquire read, verify reader count, release back to zero."""
+        rwl = ReadWriteLock(name="db_lock")
+        acquired = rwl.acquire_read(TID_1)
+        assert acquired is True
+        assert rwl.reader_count == 1
+        woken = rwl.release_read(TID_1)
+        assert woken == []
+        assert rwl.reader_count == 0
+
+    def test_acquire_and_release_write(self) -> None:
+        """Acquire write, verify writer state, release."""
+        rwl = ReadWriteLock(name="db_lock")
+        acquired = rwl.acquire_write(TID_1)
+        assert acquired is True
+        assert rwl.is_writing
+        assert rwl.writer_tid == TID_1
+        woken = rwl.release_write(TID_1)
+        assert woken == []
+        assert not rwl.is_writing
+
+    def test_release_read_not_held_raises(self) -> None:
+        """Releasing a read lock not held should raise ValueError."""
+        rwl = ReadWriteLock(name="db_lock")
+        with pytest.raises(ValueError, match="not a reader"):
+            rwl.release_read(TID_1)
+
+    def test_release_write_not_held_raises(self) -> None:
+        """Releasing write when not the writer should raise ValueError."""
+        rwl = ReadWriteLock(name="db_lock")
+        with pytest.raises(ValueError, match="not the writer"):
+            rwl.release_write(TID_1)
+
+    def test_release_write_wrong_tid_raises(self) -> None:
+        """Releasing write with the wrong TID should raise ValueError."""
+        rwl = ReadWriteLock(name="db_lock")
+        rwl.acquire_write(TID_1)
+        with pytest.raises(ValueError, match="not the writer"):
+            rwl.release_write(TID_2)
+
+    def test_repr_idle(self) -> None:
+        """Repr of an idle lock should show name and 'idle'."""
+        rwl = ReadWriteLock(name="db_lock")
+        assert "db_lock" in repr(rwl)
+        assert "idle" in repr(rwl)
+
+    def test_repr_readers(self) -> None:
+        """Repr with active readers should show the count."""
+        rwl = ReadWriteLock(name="db_lock")
+        rwl.acquire_read(TID_1)
+        assert "1 reader" in repr(rwl)
+
+    def test_repr_writing(self) -> None:
+        """Repr with an active writer should show 'writing'."""
+        rwl = ReadWriteLock(name="db_lock")
+        rwl.acquire_write(TID_1)
+        assert "writing" in repr(rwl)
+
+
+# -- ReadWriteLock Contention Tests (Cycle 2) --------------------------------
+
+
+class TestReadWriteLockContention:
+    """Verify contention: blocking, queueing, writer-preference, batch wake."""
+
+    def test_multiple_concurrent_readers(self) -> None:
+        """Multiple readers can hold the lock simultaneously."""
+        rwl = ReadWriteLock(name="db_lock")
+        assert rwl.acquire_read(TID_1) is True
+        assert rwl.acquire_read(TID_2) is True
+        assert rwl.acquire_read(TID_3) is True
+        expected_readers = 3
+        assert rwl.reader_count == expected_readers
+
+    def test_writer_blocks_new_readers(self) -> None:
+        """When a writer holds the lock, new readers must queue."""
+        rwl = ReadWriteLock(name="db_lock")
+        rwl.acquire_write(TID_1)
+        assert rwl.acquire_read(TID_2) is False
+        assert rwl.wait_queue_size == 1
+
+    def test_reader_blocks_writer(self) -> None:
+        """When readers hold the lock, a writer must queue."""
+        rwl = ReadWriteLock(name="db_lock")
+        rwl.acquire_read(TID_1)
+        assert rwl.acquire_write(TID_2) is False
+        assert rwl.wait_queue_size == 1
+
+    def test_writer_blocks_writer(self) -> None:
+        """When a writer holds the lock, another writer must queue."""
+        rwl = ReadWriteLock(name="db_lock")
+        rwl.acquire_write(TID_1)
+        assert rwl.acquire_write(TID_2) is False
+        assert rwl.wait_queue_size == 1
+
+    def test_writer_preference(self) -> None:
+        """New readers queue behind a waiting writer (writer-preference).
+
+        Scenario:
+        1. TID_1 holds read
+        2. TID_2 requests write → queued
+        3. TID_3 requests read → queued behind TID_2 (NOT granted)
+        """
+        rwl = ReadWriteLock(name="db_lock")
+        rwl.acquire_read(TID_1)
+        rwl.acquire_write(TID_2)  # queued
+        result = rwl.acquire_read(TID_3)
+        assert result is False
+        expected_queue_size = 2
+        assert rwl.wait_queue_size == expected_queue_size
+
+    def test_batch_reader_wake_after_writer(self) -> None:
+        """When a writer releases, consecutive queued readers all wake.
+
+        Scenario:
+        1. TID_1 holds write
+        2. TID_2 queues read
+        3. TID_3 queues read
+        4. TID_4 queues write
+        5. TID_1 releases → TID_2 and TID_3 both wake (batch),
+           TID_4 stays queued.
+        """
+        rwl = ReadWriteLock(name="db_lock")
+        rwl.acquire_write(TID_1)
+        rwl.acquire_read(TID_2)
+        rwl.acquire_read(TID_3)
+        rwl.acquire_write(TID_4)
+
+        woken = rwl.release_write(TID_1)
+        assert woken == [TID_2, TID_3]
+        expected_readers = 2
+        assert rwl.reader_count == expected_readers
+        assert rwl.wait_queue_size == 1  # TID_4 still waiting
+
+    def test_writer_wakes_after_all_readers_release(self) -> None:
+        """A queued writer wakes only after ALL readers release."""
+        rwl = ReadWriteLock(name="db_lock")
+        rwl.acquire_read(TID_1)
+        rwl.acquire_read(TID_2)
+        rwl.acquire_write(TID_3)  # queued
+
+        woken1 = rwl.release_read(TID_1)
+        assert woken1 == []  # TID_2 still reading
+
+        woken2 = rwl.release_read(TID_2)
+        assert woken2 == [TID_3]  # now writer can go
+        assert rwl.is_writing
+        assert rwl.writer_tid == TID_3
+
+
+# -- SyncManager RWLock Tests (Cycle 3) -------------------------------------
+
+
+class TestSyncManagerRWLock:
+    """Verify SyncManager registry for reader-writer locks."""
+
+    def test_create_rwlock(self) -> None:
+        """Create an RWLock via the manager."""
+        mgr = SyncManager()
+        rwl = mgr.create_rwlock("db_lock")
+        assert rwl.name == "db_lock"
+
+    def test_get_rwlock(self) -> None:
+        """Retrieve an RWLock by name."""
+        mgr = SyncManager()
+        mgr.create_rwlock("db_lock")
+        rwl = mgr.get_rwlock("db_lock")
+        assert rwl.name == "db_lock"
+
+    def test_destroy_rwlock(self) -> None:
+        """Destroy an RWLock and verify it is removed."""
+        mgr = SyncManager()
+        mgr.create_rwlock("db_lock")
+        mgr.destroy_rwlock("db_lock")
+        with pytest.raises(KeyError, match="db_lock"):
+            mgr.get_rwlock("db_lock")
+
+    def test_duplicate_rwlock_rejected(self) -> None:
+        """Creating an RWLock with a duplicate name should raise ValueError."""
+        mgr = SyncManager()
+        mgr.create_rwlock("db_lock")
+        with pytest.raises(ValueError, match="already exists"):
+            mgr.create_rwlock("db_lock")
+
+    def test_list_rwlocks(self) -> None:
+        """List all RWLock names."""
+        mgr = SyncManager()
+        mgr.create_rwlock("a")
+        mgr.create_rwlock("b")
+        names = mgr.list_rwlocks()
+        assert sorted(names) == ["a", "b"]
+
+
+# -- RWLock Integration Tests (Cycle 4) -------------------------------------
+
+
+class TestRWLockIntegration:
+    """Verify kernel delegation, syscalls, and shell commands for RWLock."""
+
+    def test_create_rwlock_via_kernel(self) -> None:
+        """Create an RWLock through the kernel's delegation method."""
+        kernel = _booted_kernel()
+        rwl = kernel.create_rwlock("test_rw")
+        assert rwl.name == "test_rw"
+
+    def test_acquire_and_release_via_kernel(self) -> None:
+        """Acquire and release read/write locks through the kernel."""
+        kernel = _booted_kernel()
+        kernel.create_rwlock("test_rw")
+        assert kernel.acquire_read_lock("test_rw", tid=TID_1) is True
+        kernel.release_read_lock("test_rw", tid=TID_1)
+        assert kernel.acquire_write_lock("test_rw", tid=TID_2) is True
+        kernel.release_write_lock("test_rw", tid=TID_2)
+
+    def test_sys_create_rwlock(self) -> None:
+        """SYS_CREATE_RWLOCK should create an RWLock."""
+        kernel = _booted_kernel()
+        result = kernel.syscall(SyscallNumber.SYS_CREATE_RWLOCK, name="myrw")
+        assert "myrw" in result
+        assert "created" in result
+
+    def test_sys_acquire_read_lock(self) -> None:
+        """SYS_ACQUIRE_READ_LOCK should acquire read access."""
+        kernel = _booted_kernel()
+        kernel.syscall(SyscallNumber.SYS_CREATE_RWLOCK, name="myrw")
+        result = kernel.syscall(SyscallNumber.SYS_ACQUIRE_READ_LOCK, name="myrw", tid=TID_1)
+        assert "acquired" in result
+
+    def test_sys_release_read_lock(self) -> None:
+        """SYS_RELEASE_READ_LOCK should release read access."""
+        kernel = _booted_kernel()
+        kernel.syscall(SyscallNumber.SYS_CREATE_RWLOCK, name="myrw")
+        kernel.syscall(SyscallNumber.SYS_ACQUIRE_READ_LOCK, name="myrw", tid=TID_1)
+        result = kernel.syscall(SyscallNumber.SYS_RELEASE_READ_LOCK, name="myrw", tid=TID_1)
+        assert "released" in result
+
+    def test_shell_rwlock_create(self) -> None:
+        """'rwlock create <name>' should create an RWLock."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("rwlock create myrw")
+        assert "created" in result.lower()
+
+    def test_shell_rwlock_list(self) -> None:
+        """'rwlock list' should show created RWLocks."""
+        _kernel, shell = _booted_shell()
+        shell.execute("rwlock create myrw")
+        result = shell.execute("rwlock list")
+        assert "myrw" in result
+
+    def test_shell_rwlock_missing_subcommand(self) -> None:
+        """'rwlock' without a subcommand should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("rwlock")
         assert "usage" in result.lower()
