@@ -343,9 +343,101 @@ msync to make sure nothing is lost.
 
 ---
 
+## 6. Slab Allocator (`memory/slab.py`)
+
+### The Supply Closet Analogy
+
+Imagine the school warehouse full of big storage crates (frames). Every time a
+teacher needs a single pencil, they get an entire crate. That's a huge waste of
+space!
+
+A **slab allocator** is like setting up a supply closet. You take one crate from
+the warehouse and divide it into little compartments -- one pencil per
+compartment. Now when a teacher needs a pencil, they grab one from the supply
+closet in a split second. When they're done, they put it back. No waste, no
+waiting.
+
+Each supply closet handles one type of item. The "pencil closet" has
+pencil-sized compartments, the "eraser closet" has eraser-sized ones. In OS
+terms, each closet is a **slab cache**, each compartment is a **slot**, and
+the crate backing it is a **slab** (one physical frame).
+
+### Why Not Just Use Frames?
+
+The memory manager allocates in whole frames (256 bytes each). But kernel
+objects like process control blocks (PCBs, ~64 bytes) and inodes (~48 bytes)
+are *much* smaller. If you use a whole frame for each one, you waste 75-80%
+of the space. Multiply that by hundreds of objects and the waste adds up fast.
+
+A slab allocator solves this by packing many small objects into a single frame.
+A 256-byte frame with 64-byte slots holds 4 PCBs. Same space, four times the
+capacity.
+
+### The Three-Level Hierarchy
+
+The slab allocator has three levels, from bottom to top:
+
+1. **Slab** -- one physical frame divided into equal-sized slots. A slab for
+   64-byte objects has 4 slots (256 / 64). It tracks which slots are free using
+   a simple stack: pop to allocate, push to free. Both operations are O(1) --
+   constant time, no matter how many slots there are.
+
+2. **Slab Cache** -- a pool of slabs, all for the same object size. The "pcb"
+   cache might have three slabs (three frames), giving 12 total slots for PCBs.
+   When all slabs are full, the cache auto-grows by requesting another frame
+   from the memory manager.
+
+3. **Slab Allocator** -- a registry of named caches. The kernel creates caches
+   for each type of object it needs: "pcb" for process control blocks, "inode"
+   for filesystem metadata, and so on. User code talks to the allocator by
+   cache name.
+
+### How Allocation Works
+
+When the kernel needs a new PCB:
+
+1. It asks the **slab allocator** for an object from the "pcb" cache.
+2. The allocator finds the "pcb" **slab cache**.
+3. The cache scans its slabs for one with free space.
+4. If a **slab** has a free slot, it pops the slot index from its free stack.
+   Done!
+5. If all slabs are full, the cache asks the memory manager for a new frame,
+   creates a new slab, and allocates from that.
+
+The result is a handle: `(slab_index, slot_index)` -- exactly which frame and
+which slot your object lives in. It's transparent and inspectable, which makes
+it great for learning.
+
+### Auto-Growing
+
+When all slabs in a cache are full and a new allocation comes in, the cache
+automatically requests another frame from the memory manager. This is like the
+supply closet running out of pencils -- you grab another crate from the
+warehouse and add more compartments.
+
+In real operating systems, slab allocators can also *shrink* by returning empty
+slabs back to the page allocator. Our simulator keeps things simple and doesn't
+reclaim empty slabs.
+
+### How It Works Under the Hood
+
+1. **At boot**, the kernel creates a `SlabAllocator` backed by the memory
+   manager. It pre-registers caches for common objects ("pcb" at 64 bytes,
+   "inode" at 48 bytes).
+
+2. **On allocate**, the cache pops a free slot index from one of its slabs.
+   If no slab has space, it requests a new frame and creates a new slab.
+
+3. **On free**, the slot index is pushed back onto the slab's free stack.
+   The slot is immediately available for the next allocation.
+
+4. **On destroy**, all backing frames are returned to the memory manager.
+
+---
+
 ## Putting It All Together
 
-Here's how these three pieces work as a team:
+Here's how these pieces work as a team:
 
 1. **Physical memory** (`memory/manager.py`) manages the actual frames -- the real
    lockers in the hallway. It tracks which ones are free and which ones are
@@ -358,6 +450,10 @@ Here's how these three pieces work as a team:
 3. **Swap** (`memory/swap.py`) handles the overflow. When memory is full, it moves
    pages to disk and brings them back when needed, using a replacement strategy
    (FIFO, LRU, or Clock) to decide what to move.
+
+4. **Slab allocator** (`memory/slab.py`) sits on top of the frame allocator and
+   subdivides frames into small, fixed-size slots for kernel objects. It
+   eliminates waste when many tiny objects need their own space.
 
 Together, they create the illusion that every [process](processes.md) has its own
 big, private chunk of memory -- even if the physical RAM is small and shared

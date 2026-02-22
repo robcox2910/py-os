@@ -37,6 +37,7 @@ from py_os.io.devices import ConsoleDevice, DeviceManager, NullDevice, RandomDev
 from py_os.logging import Logger, LogLevel
 from py_os.memory.manager import MemoryManager
 from py_os.memory.mmap import MmapError, MmapRegion
+from py_os.memory.slab import SlabAllocator, SlabCache
 from py_os.memory.virtual import VirtualMemory
 from py_os.process.pcb import Process, ProcessState
 from py_os.process.scheduler import FCFSPolicy, Scheduler, SchedulingPolicy
@@ -91,6 +92,7 @@ class Kernel:
         self._signal_handlers: dict[tuple[int, Signal], Callable[[], None]] = {}
         self._resource_manager: ResourceManager | None = None
         self._sync_manager: SyncManager | None = None
+        self._slab_allocator: SlabAllocator | None = None
         # Per-process mmap regions: pid → {start_vpn → MmapRegion}
         self._mmap_regions: dict[int, dict[int, MmapRegion]] = {}
         # Shared frame cache: (inode_number, page_index) → (frame, bytearray)
@@ -173,6 +175,11 @@ class Kernel:
         """Return the sync manager, or None if not booted."""
         return self._sync_manager
 
+    @property
+    def slab_allocator(self) -> SlabAllocator | None:
+        """Return the slab allocator, or None if not booted."""
+        return self._slab_allocator
+
     def set_scheduler_policy(self, policy: SchedulingPolicy) -> None:
         """Replace the scheduler's policy, preserving the ready queue.
 
@@ -226,6 +233,15 @@ class Kernel:
 
         # 1. Memory — everything else needs it
         self._memory = MemoryManager(total_frames=DEFAULT_TOTAL_FRAMES)
+
+        # 1b. Slab allocator — kernel-level fixed-size object pools
+        self._slab_allocator = SlabAllocator(
+            memory=self._memory,
+            page_size=VirtualMemory().page_size,
+            kernel_pid=0,
+        )
+        self._slab_allocator.create_cache("pcb", obj_size=64)
+        self._slab_allocator.create_cache("inode", obj_size=48)
 
         # 2. File system — processes may need files
         self._filesystem = FileSystem()
@@ -286,6 +302,7 @@ class Kernel:
         self._current_uid = 0
         self._file_permissions.clear()
         self._filesystem = None
+        self._slab_allocator = None
         self._memory = None
         self._processes.clear()
         self._signal_handlers.clear()
@@ -447,6 +464,61 @@ class Kernel:
             return (new_frame, new_storage)
 
         vm.cow_fault_handler = cow_handler
+
+    # -- Slab allocator delegation ---------------------------------------------
+
+    def slab_create_cache(self, name: str, *, obj_size: int) -> SlabCache:
+        """Create a named slab cache via the slab allocator.
+
+        Args:
+            name: Unique cache name.
+            obj_size: Bytes per object slot.
+
+        Returns:
+            The newly created SlabCache.
+
+        """
+        self._require_running()
+        assert self._slab_allocator is not None  # noqa: S101
+        return self._slab_allocator.create_cache(name, obj_size=obj_size)
+
+    def slab_alloc(self, cache_name: str) -> tuple[str, int, int]:
+        """Allocate an object slot from a named slab cache.
+
+        Args:
+            cache_name: The cache to allocate from.
+
+        Returns:
+            ``(cache_name, slab_index, slot_index)``.
+
+        """
+        self._require_running()
+        assert self._slab_allocator is not None  # noqa: S101
+        return self._slab_allocator.allocate(cache_name)
+
+    def slab_free(self, cache_name: str, slab_index: int, slot_index: int) -> None:
+        """Free an object slot back to a named slab cache.
+
+        Args:
+            cache_name: The cache name.
+            slab_index: The slab index.
+            slot_index: The slot index.
+
+        """
+        self._require_running()
+        assert self._slab_allocator is not None  # noqa: S101
+        self._slab_allocator.free(cache_name, slab_index, slot_index)
+
+    def slab_info(self) -> dict[str, dict[str, object]]:
+        """Return stats for all slab caches.
+
+        Returns:
+            Dict mapping cache name to its stats dict.
+
+        """
+        self._require_running()
+        assert self._slab_allocator is not None  # noqa: S101
+        return self._slab_allocator.info()
 
     # -- Memory-mapped files (mmap) -------------------------------------------
 
