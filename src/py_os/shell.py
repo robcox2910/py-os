@@ -124,6 +124,12 @@ class Shell:
             "slaballoc": self._cmd_slaballoc,
             "slabfree": self._cmd_slabfree,
             "slabinfo": self._cmd_slabinfo,
+            "open": self._cmd_open,
+            "close": self._cmd_close,
+            "readfd": self._cmd_readfd,
+            "writefd": self._cmd_writefd,
+            "seek": self._cmd_seek,
+            "lsfd": self._cmd_lsfd,
         }
 
     def execute(self, command: str) -> str:
@@ -1149,4 +1155,135 @@ class Shell:
                 f"  {stats['used_slots']!s:>4}"
                 f"  {stats['free_slots']!s:>4}"
             )
+        return "\n".join(lines)
+
+    # -- File descriptor commands --------------------------------------------
+
+    def _cmd_open(self, args: list[str]) -> str:
+        """Open a file and get a file descriptor."""
+        min_args = 2
+        if len(args) < min_args:
+            return "Usage: open <pid> <path> [r|w|rw]"
+        try:
+            pid = int(args[0])
+        except ValueError:
+            return f"Error: invalid PID '{args[0]}'"
+        path = args[1]
+        mode = args[2] if len(args) > 2 else "r"  # noqa: PLR2004
+        try:
+            result: dict[str, object] = self._kernel.syscall(
+                SyscallNumber.SYS_OPEN, pid=pid, path=path, mode=mode
+            )
+            return f"Opened '{path}' as fd {result['fd']} for pid {pid}"
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_close(self, args: list[str]) -> str:
+        """Close a file descriptor."""
+        min_args = 2
+        if len(args) < min_args:
+            return "Usage: close <pid> <fd>"
+        try:
+            pid = int(args[0])
+        except ValueError:
+            return f"Error: invalid PID '{args[0]}'"
+        try:
+            fd = int(args[1])
+        except ValueError:
+            return f"Error: invalid fd '{args[1]}'"
+        try:
+            self._kernel.syscall(SyscallNumber.SYS_CLOSE, pid=pid, fd=fd)
+            return f"Closed fd {fd} for pid {pid}"
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_readfd(self, args: list[str]) -> str:
+        """Read bytes from a file descriptor."""
+        min_args = 3
+        if len(args) < min_args:
+            return "Usage: readfd <pid> <fd> <count>"
+        try:
+            pid = int(args[0])
+        except ValueError:
+            return f"Error: invalid PID '{args[0]}'"
+        try:
+            fd = int(args[1])
+        except ValueError:
+            return f"Error: invalid fd '{args[1]}'"
+        try:
+            count = int(args[2])
+        except ValueError:
+            return f"Error: invalid count '{args[2]}'"
+        try:
+            result_read: dict[str, object] = self._kernel.syscall(
+                SyscallNumber.SYS_READ_FD, pid=pid, fd=fd, count=count
+            )
+            data: bytes = result_read["data"]  # type: ignore[assignment]
+            return data.decode(errors="replace")
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_writefd(self, args: list[str]) -> str:
+        """Write data to a file descriptor."""
+        min_args = 3
+        if len(args) < min_args:
+            return "Usage: writefd <pid> <fd> <data...>"
+        try:
+            pid = int(args[0])
+        except ValueError:
+            return f"Error: invalid PID '{args[0]}'"
+        try:
+            fd = int(args[1])
+        except ValueError:
+            return f"Error: invalid fd '{args[1]}'"
+        content = " ".join(args[2:])
+        try:
+            result_write: dict[str, object] = self._kernel.syscall(
+                SyscallNumber.SYS_WRITE_FD, pid=pid, fd=fd, data=content.encode()
+            )
+            return f"Wrote {result_write['bytes_written']} bytes to fd {fd}"
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_seek(self, args: list[str]) -> str:
+        """Reposition a file descriptor's offset."""
+        min_args = 3
+        if len(args) < min_args:
+            return "Usage: seek <pid> <fd> <offset> [set|cur|end]"
+        try:
+            pid = int(args[0])
+        except ValueError:
+            return f"Error: invalid PID '{args[0]}'"
+        try:
+            fd = int(args[1])
+        except ValueError:
+            return f"Error: invalid fd '{args[1]}'"
+        try:
+            offset = int(args[2])
+        except ValueError:
+            return f"Error: invalid offset '{args[2]}'"
+        whence = args[3] if len(args) > 3 else "set"  # noqa: PLR2004
+        try:
+            result_seek: dict[str, object] = self._kernel.syscall(
+                SyscallNumber.SYS_SEEK, pid=pid, fd=fd, offset=offset, whence=whence
+            )
+            return f"Seeked fd {fd} to offset {result_seek['offset']}"
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_lsfd(self, args: list[str]) -> str:
+        """List open file descriptors for a process."""
+        if not args:
+            return "Usage: lsfd <pid>"
+        try:
+            pid = int(args[0])
+        except ValueError:
+            return f"Error: invalid PID '{args[0]}'"
+        fds = self._kernel.list_fds(pid)
+        if not fds:
+            return f"No open file descriptors for pid {pid}."
+        lines = ["FD  MODE  OFFSET  PATH"]
+        for fd_num in sorted(fds):
+            ofd = fds[fd_num]
+            lines.append(f"{fd_num:<3} {ofd.mode!s:<5} {ofd.offset:<7} {ofd.path}")
         return "\n".join(lines)

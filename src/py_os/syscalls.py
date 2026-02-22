@@ -31,6 +31,7 @@ Why bother with this layer?
 from enum import IntEnum
 from typing import Any
 
+from py_os.fs.fd import FdError, FileMode, SeekWhence
 from py_os.memory.mmap import MmapError
 from py_os.memory.slab import SlabError
 from py_os.process.scheduler import (
@@ -70,6 +71,10 @@ class SyscallNumber(IntEnum):
     SYS_WRITE_FILE = 13
     SYS_DELETE_FILE = 14
     SYS_LIST_DIR = 15
+    SYS_OPEN = 16
+    SYS_CLOSE = 17
+    SYS_READ_FD = 18
+    SYS_WRITE_FD = 19
 
     # Memory operations
     SYS_MEMORY_INFO = 20
@@ -80,6 +85,7 @@ class SyscallNumber(IntEnum):
     SYS_SLAB_ALLOC = 25
     SYS_SLAB_FREE = 26
     SYS_SLAB_INFO = 27
+    SYS_SEEK = 28
 
     # User operations
     SYS_WHOAMI = 30
@@ -177,6 +183,11 @@ def dispatch_syscall(
         SyscallNumber.SYS_WRITE_FILE: _sys_write_file,
         SyscallNumber.SYS_DELETE_FILE: _sys_delete_file,
         SyscallNumber.SYS_LIST_DIR: _sys_list_dir,
+        SyscallNumber.SYS_OPEN: _sys_open,
+        SyscallNumber.SYS_CLOSE: _sys_close,
+        SyscallNumber.SYS_READ_FD: _sys_read_fd,
+        SyscallNumber.SYS_WRITE_FD: _sys_write_fd,
+        SyscallNumber.SYS_SEEK: _sys_seek,
         SyscallNumber.SYS_MEMORY_INFO: _sys_memory_info,
         SyscallNumber.SYS_MMAP: _sys_mmap,
         SyscallNumber.SYS_MUNMAP: _sys_munmap,
@@ -392,6 +403,66 @@ def _sys_list_dir(kernel: Any, **kwargs: Any) -> list[str]:
         return kernel.filesystem.list_dir(kwargs["path"])
     except FileNotFoundError as e:
         raise SyscallError(str(e)) from e
+
+
+# -- File descriptor syscall handlers ----------------------------------------
+
+
+def _sys_open(kernel: Any, **kwargs: Any) -> dict[str, int]:
+    """Open a file and return a file descriptor."""
+    pid: int = kwargs["pid"]
+    path: str = kwargs["path"]
+    mode = FileMode(kwargs["mode"])
+    try:
+        fd = kernel.open_file(pid, path, mode)
+    except FdError as e:
+        raise SyscallError(str(e)) from e
+    return {"fd": fd}
+
+
+def _sys_close(kernel: Any, **kwargs: Any) -> None:
+    """Close a file descriptor."""
+    try:
+        kernel.close_file(kwargs["pid"], kwargs["fd"])
+    except FdError as e:
+        raise SyscallError(str(e)) from e
+
+
+def _sys_read_fd(kernel: Any, **kwargs: Any) -> dict[str, Any]:
+    """Read bytes from a file descriptor."""
+    pid: int = kwargs["pid"]
+    fd: int = kwargs["fd"]
+    count: int = kwargs["count"]
+    try:
+        data = kernel.read_fd(pid, fd, count=count)
+    except FdError as e:
+        raise SyscallError(str(e)) from e
+    return {"data": data, "count": len(data)}
+
+
+def _sys_write_fd(kernel: Any, **kwargs: Any) -> dict[str, int]:
+    """Write bytes to a file descriptor."""
+    pid: int = kwargs["pid"]
+    fd: int = kwargs["fd"]
+    data: bytes = kwargs["data"]
+    try:
+        bytes_written = kernel.write_fd(pid, fd, data)
+    except FdError as e:
+        raise SyscallError(str(e)) from e
+    return {"bytes_written": bytes_written}
+
+
+def _sys_seek(kernel: Any, **kwargs: Any) -> dict[str, int]:
+    """Reposition a file descriptor's offset."""
+    pid: int = kwargs["pid"]
+    fd: int = kwargs["fd"]
+    offset: int = kwargs["offset"]
+    whence = SeekWhence(kwargs["whence"])
+    try:
+        new_offset = kernel.seek_fd(pid, fd, offset=offset, whence=whence)
+    except FdError as e:
+        raise SyscallError(str(e)) from e
+    return {"offset": new_offset}
 
 
 # -- Memory syscall handlers -------------------------------------------------

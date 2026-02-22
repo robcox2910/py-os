@@ -252,6 +252,62 @@ class FileSystem:
             raise IsADirectoryError(msg)
         inode.data = data
 
+    def read_at(self, path: str, *, offset: int, count: int) -> bytes:
+        """Read *count* bytes from a file starting at *offset*.
+
+        Matches Unix ``read(2)`` semantics:
+        - Reading past EOF returns fewer bytes than requested.
+        - Reading at or beyond EOF returns ``b""``.
+
+        Args:
+            path: Absolute path to a file.
+            offset: Byte offset to start reading from.
+            count: Maximum number of bytes to read.
+
+        Raises:
+            FileNotFoundError: If the path does not exist.
+            IsADirectoryError: If the path is a directory.
+
+        """
+        inode = self._resolve(path)
+        if inode is None:
+            msg = f"Path not found: {path}"
+            raise FileNotFoundError(msg)
+        if inode.file_type is FileType.DIRECTORY:
+            msg = f"Is a directory: {path}"
+            raise IsADirectoryError(msg)
+        return inode.data[offset : offset + count]
+
+    def write_at(self, path: str, *, offset: int, data: bytes) -> None:
+        r"""Write *data* into a file at *offset*, splicing into existing content.
+
+        Matches Unix ``lseek`` + ``write`` behaviour:
+        - Writing within the file overwrites bytes in place.
+        - Writing beyond EOF pads the gap with ``\x00`` bytes.
+
+        Args:
+            path: Absolute path to a file.
+            offset: Byte offset to start writing at.
+            data: The bytes to write.
+
+        Raises:
+            FileNotFoundError: If the path does not exist.
+            IsADirectoryError: If the path is a directory.
+
+        """
+        inode = self._resolve(path)
+        if inode is None:
+            msg = f"Path not found: {path}"
+            raise FileNotFoundError(msg)
+        if inode.file_type is FileType.DIRECTORY:
+            msg = f"Is a directory: {path}"
+            raise IsADirectoryError(msg)
+        existing = inode.data
+        # Pad with nulls if offset is past current EOF
+        if offset > len(existing):
+            existing = existing + b"\x00" * (offset - len(existing))
+        inode.data = existing[:offset] + data + existing[offset + len(data) :]
+
     def delete(self, path: str) -> None:
         """Delete a file or empty directory.
 
