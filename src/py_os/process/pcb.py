@@ -84,6 +84,7 @@ class Process:
         self._name: str = name
         self._state: ProcessState = ProcessState.NEW
         self._priority: int = priority
+        self._effective_priority: int = priority
         self._parent_pid: int | None = parent_pid
         self._virtual_memory: VirtualMemory | None = None
         self._program: Callable[[], str] | None = None
@@ -114,8 +115,18 @@ class Process:
 
     @property
     def priority(self) -> int:
-        """Return the scheduling priority."""
+        """Return the base scheduling priority (immutable)."""
         return self._priority
+
+    @property
+    def effective_priority(self) -> int:
+        """Return the effective scheduling priority (may be boosted by inheritance)."""
+        return self._effective_priority
+
+    @effective_priority.setter
+    def effective_priority(self, value: int) -> None:
+        """Set the effective priority (used by priority inheritance)."""
+        self._effective_priority = value
 
     @property
     def virtual_memory(self) -> VirtualMemory | None:

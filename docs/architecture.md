@@ -42,7 +42,7 @@ Every source file and what it implements.
 
 | File | Class/Function | Purpose |
 |------|---------------|---------|
-| `process/pcb.py` | `Process` | PCB with five-state model, program/output/exit_code, thread management |
+| `process/pcb.py` | `Process` | PCB with five-state model, program/output/exit_code, thread management, effective_priority for PI |
 | `process/pcb.py` | `ProcessState` | NEW / READY / RUNNING / WAITING / TERMINATED |
 | `process/scheduler.py` | `Scheduler` | Ready queue management, dispatch using pluggable policy |
 | `process/scheduler.py` | `FCFSPolicy` | First Come, First Served scheduling |
@@ -126,7 +126,8 @@ Every source file and what it implements.
 
 | File | Class/Function | Purpose |
 |------|---------------|---------|
-| `sync/primitives.py` | `Mutex` | Mutual exclusion lock with owner tracking and FIFO wait queue |
+| `sync/inheritance.py` | `PriorityInheritanceManager` | Coordinate priority inheritance across mutexes, prevent priority inversion |
+| `sync/primitives.py` | `Mutex` | Mutual exclusion lock with owner tracking, FIFO wait queue, and `waiters` property |
 | `sync/primitives.py` | `Semaphore` | Counting semaphore with optional max bound |
 | `sync/primitives.py` | `Condition` | Condition variable (wait/notify) paired with a mutex |
 | `sync/primitives.py` | `ReadWriteLock` | Reader-writer lock with writer-preference and batch reader wake |

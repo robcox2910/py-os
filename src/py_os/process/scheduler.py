@@ -125,7 +125,7 @@ class PriorityPolicy:
             return None
         best_idx = 0
         for i in range(1, len(ready_queue)):
-            if ready_queue[i].priority > ready_queue[best_idx].priority:
+            if ready_queue[i].effective_priority > ready_queue[best_idx].effective_priority:
                 best_idx = i
         # Remove the winner from the deque (O(n), fine for a learning sim)
         process = ready_queue[best_idx]
@@ -169,8 +169,8 @@ class AgingPriorityPolicy:
         return self._max_age
 
     def effective_priority(self, process: Process) -> int:
-        """Return base priority plus accumulated age bonus."""
-        return process.priority + self._ages.get(process.pid, 0)
+        """Return effective priority plus accumulated age bonus."""
+        return process.effective_priority + self._ages.get(process.pid, 0)
 
     def select(self, ready_queue: deque[Process]) -> Process | None:
         """Age all waiting processes, then pick the highest effective priority."""
@@ -321,7 +321,7 @@ class CFSPolicy:
 
         Higher priority → higher weight → slower vruntime growth → more CPU.
         """
-        return max(1, process.priority + 1)
+        return max(1, process.effective_priority + 1)
 
     def select(self, ready_queue: deque[Process]) -> Process | None:
         """Pick the process with the lowest vruntime (FIFO tiebreak).

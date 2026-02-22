@@ -151,6 +151,7 @@ class Shell:
             "stat": self._cmd_stat,
             "journal": self._cmd_journal,
             "rwlock": self._cmd_rwlock,
+            "pi": self._cmd_pi,
             "waitjob": self._cmd_waitjob,
         }
 
@@ -1735,6 +1736,148 @@ class Shell:
             f"  Size: {info.size}",
             f"  Links: {info.link_count}",
         ]
+        return "\n".join(lines)
+
+    # -- Priority inheritance commands --------------------------------------
+
+    def _cmd_pi(self, args: list[str]) -> str:
+        """Priority inheritance demo and status.
+
+        Subcommands:
+            demo   — walk through the Mars Pathfinder scenario
+            status — show which processes are currently boosted
+        """
+        if not args or args[0] not in {"demo", "status"}:
+            return "Usage: pi <demo|status>"
+        if args[0] == "demo":
+            return self._cmd_pi_demo()
+        return self._cmd_pi_status()
+
+    def _cmd_pi_demo(self) -> str:
+        """Walk through the Mars Pathfinder priority inversion scenario."""
+        pi_mgr = self._kernel.pi_manager
+        if pi_mgr is None:
+            return "Error: Priority inheritance manager not available."
+
+        lines: list[str] = [
+            "=== Mars Pathfinder Priority Inversion Demo ===",
+            "",
+            "In 1997, NASA's Mars Pathfinder rover kept rebooting on Mars.",
+            "A low-priority task held a shared mutex, a high-priority task",
+            "blocked waiting for it, and a medium-priority task kept running.",
+            "",
+            "Let's recreate this with three processes and a mutex:",
+        ]
+
+        try:
+            # Create demo processes
+            low_r = self._kernel.syscall(
+                SyscallNumber.SYS_CREATE_PROCESS, name="low_task", num_pages=1, priority=1
+            )
+            med_r = self._kernel.syscall(
+                SyscallNumber.SYS_CREATE_PROCESS, name="med_task", num_pages=1, priority=5
+            )
+            high_r = self._kernel.syscall(
+                SyscallNumber.SYS_CREATE_PROCESS, name="high_task", num_pages=1, priority=10
+            )
+            low_pid: int = low_r["pid"]
+            med_pid: int = med_r["pid"]
+            high_pid: int = high_r["pid"]
+
+            low_proc = self._kernel.processes[low_pid]
+            med_proc = self._kernel.processes[med_pid]
+            high_proc = self._kernel.processes[high_pid]
+
+            lines.append(f"  low_task  (pid={low_pid}, priority=1)")
+            lines.append(f"  med_task  (pid={med_pid}, priority=5)")
+            lines.append(f"  high_task (pid={high_pid}, priority=10)")
+
+            # Create a mutex
+            self._kernel.syscall(SyscallNumber.SYS_CREATE_MUTEX, name="_pi_demo_lock")
+
+            # Low acquires the mutex
+            self._kernel.syscall(
+                SyscallNumber.SYS_ACQUIRE_MUTEX,
+                name="_pi_demo_lock",
+                tid=low_proc.main_thread.tid,
+                pid=low_pid,
+            )
+            lines.append("")
+            lines.append("Step 1: low_task acquires the mutex.")
+            lines.append(f"  low_task effective_priority = {low_proc.effective_priority}")
+
+            # High tries to acquire — blocked, triggers PI
+            self._kernel.syscall(
+                SyscallNumber.SYS_ACQUIRE_MUTEX,
+                name="_pi_demo_lock",
+                tid=high_proc.main_thread.tid,
+                pid=high_pid,
+            )
+            lines.append("")
+            lines.append("Step 2: high_task tries to acquire — blocked!")
+            lines.append("  Priority inheritance kicks in:")
+            lines.append(
+                f"  low_task effective_priority = {low_proc.effective_priority} (boosted!)"
+            )
+            lines.append(f"  med_task effective_priority = {med_proc.effective_priority}")
+            lines.append("")
+            lines.append("  Now low_task runs at priority 10, so the scheduler picks it")
+            lines.append("  over med_task (priority 5). low_task finishes and releases.")
+
+            # Low releases
+            self._kernel.syscall(
+                SyscallNumber.SYS_RELEASE_MUTEX,
+                name="_pi_demo_lock",
+                tid=low_proc.main_thread.tid,
+                pid=low_pid,
+            )
+            lines.append("")
+            lines.append("Step 3: low_task releases the mutex.")
+            lines.append(
+                f"  low_task effective_priority = {low_proc.effective_priority} (restored)"
+            )
+            lines.append("  high_task can now acquire and proceed.")
+
+            lines.append("")
+            lines.append("Without priority inheritance, med_task would have starved high_task.")
+            lines.append("This is exactly what happened on Mars until engineers uploaded a fix!")
+
+        except SyscallError as e:
+            lines.append(f"\nError during demo: {e}")
+        finally:
+            # Clean up demo resources
+            with contextlib.suppress(SyscallError, KeyError):
+                sm = self._kernel.sync_manager
+                if sm is not None:
+                    with contextlib.suppress(KeyError):
+                        sm.destroy_mutex("_pi_demo_lock")
+            pi_mgr.clear()
+
+        return "\n".join(lines)
+
+    def _cmd_pi_status(self) -> str:
+        """Show priority inheritance status."""
+        pi_mgr = self._kernel.pi_manager
+        if pi_mgr is None:
+            return "Priority inheritance manager not available."
+
+        lines = ["=== Priority Inheritance Status ==="]
+        lines.append(f"Enabled: {pi_mgr.enabled}")
+
+        # Show boosted processes
+        boosted: list[str] = []
+        for pid, proc in self._kernel.processes.items():
+            if proc.effective_priority != proc.priority:
+                boosted.append(
+                    f"  pid {pid} ({proc.name}):"
+                    f" base={proc.priority}, effective={proc.effective_priority}"
+                )
+        if boosted:
+            lines.append("Boosted processes:")
+            lines.extend(boosted)
+        else:
+            lines.append("No processes currently boosted.")
+
         return "\n".join(lines)
 
     # -- Journal commands ---------------------------------------------------

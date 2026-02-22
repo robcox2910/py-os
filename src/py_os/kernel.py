@@ -46,6 +46,7 @@ from py_os.process.scheduler import FCFSPolicy, Scheduler, SchedulingPolicy
 from py_os.process.signals import DEFAULT_ACTIONS, UNCATCHABLE, Signal, SignalAction, SignalError
 from py_os.process.threads import Thread
 from py_os.sync.deadlock import ResourceManager
+from py_os.sync.inheritance import PriorityInheritanceManager
 from py_os.sync.primitives import Condition, Mutex, ReadWriteLock, Semaphore, SyncManager
 from py_os.syscalls import SyscallNumber, dispatch_syscall
 from py_os.users import FilePermissions, UserManager
@@ -94,6 +95,7 @@ class Kernel:
         self._signal_handlers: dict[tuple[int, Signal], Callable[[], None]] = {}
         self._resource_manager: ResourceManager | None = None
         self._sync_manager: SyncManager | None = None
+        self._pi_manager: PriorityInheritanceManager | None = None
         self._slab_allocator: SlabAllocator | None = None
         # Per-process mmap regions: pid → {start_vpn → MmapRegion}
         self._mmap_regions: dict[int, dict[int, MmapRegion]] = {}
@@ -178,6 +180,11 @@ class Kernel:
     def sync_manager(self) -> SyncManager | None:
         """Return the sync manager, or None if not booted."""
         return self._sync_manager
+
+    @property
+    def pi_manager(self) -> PriorityInheritanceManager | None:
+        """Return the priority inheritance manager, or None if not booted."""
+        return self._pi_manager
 
     @property
     def slab_allocator(self) -> SlabAllocator | None:
@@ -275,6 +282,9 @@ class Kernel:
         # 8. Sync manager — mutexes, semaphores, condition variables
         self._sync_manager = SyncManager()
 
+        # 8b. Priority inheritance manager — prevent priority inversion
+        self._pi_manager = PriorityInheritanceManager()
+
         # 9. Scheduler — ready to accept processes
         self._scheduler = Scheduler(policy=FCFSPolicy())
 
@@ -298,6 +308,9 @@ class Kernel:
 
         # Tear down in reverse order
         self._scheduler = None
+        if self._pi_manager is not None:
+            self._pi_manager.clear()
+        self._pi_manager = None
         self._sync_manager = None
         self._resource_manager = None
         self._device_manager = None
@@ -1515,12 +1528,13 @@ class Kernel:
         assert self._sync_manager is not None  # noqa: S101
         return self._sync_manager.create_mutex(name)
 
-    def acquire_mutex(self, name: str, *, tid: int) -> bool:
+    def acquire_mutex(self, name: str, *, tid: int, pid: int | None = None) -> bool:
         """Acquire a named mutex on behalf of a thread.
 
         Args:
             name: Name of the mutex.
             tid: Thread ID of the caller.
+            pid: Optional process ID for priority inheritance tracking.
 
         Returns:
             True if acquired, False if queued.
@@ -1529,14 +1543,21 @@ class Kernel:
         self._require_running()
         assert self._sync_manager is not None  # noqa: S101
         mutex = self._sync_manager.get_mutex(name)
-        return mutex.acquire(tid)
+        acquired = mutex.acquire(tid)
+        if pid is not None and self._pi_manager is not None:
+            if acquired:
+                self._pi_manager.on_acquire(name, pid)
+            else:
+                self._pi_manager.on_block(name, pid, self._processes)
+        return acquired
 
-    def release_mutex(self, name: str, *, tid: int) -> int | None:
+    def release_mutex(self, name: str, *, tid: int, pid: int | None = None) -> int | None:
         """Release a named mutex on behalf of a thread.
 
         Args:
             name: Name of the mutex.
             tid: Thread ID of the caller.
+            pid: Optional process ID for priority inheritance tracking.
 
         Returns:
             The TID of the next waiter, or None.
@@ -1545,7 +1566,10 @@ class Kernel:
         self._require_running()
         assert self._sync_manager is not None  # noqa: S101
         mutex = self._sync_manager.get_mutex(name)
-        return mutex.release(tid)
+        next_tid = mutex.release(tid)
+        if pid is not None and self._pi_manager is not None:
+            self._pi_manager.on_release(name, pid, new_holder_pid=None, processes=self._processes)
+        return next_tid
 
     def create_semaphore(self, name: str, *, count: int) -> Semaphore:
         """Create a named semaphore via the sync manager.

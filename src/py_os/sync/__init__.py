@@ -1,4 +1,4 @@
-"""Synchronization subsystem — mutexes, semaphores, conditions, rwlocks, deadlock.
+"""Synchronization subsystem — mutexes, semaphores, conditions, rwlocks, deadlock, PI.
 
 Re-exports public symbols so callers can write::
 
@@ -6,6 +6,7 @@ Re-exports public symbols so callers can write::
 """
 
 from py_os.sync.deadlock import ResourceManager
+from py_os.sync.inheritance import PriorityInheritanceManager
 from py_os.sync.primitives import (
     Condition,
     Mutex,
@@ -17,6 +18,7 @@ from py_os.sync.primitives import (
 __all__ = [
     "Condition",
     "Mutex",
+    "PriorityInheritanceManager",
     "ReadWriteLock",
     "ResourceManager",
     "Semaphore",
