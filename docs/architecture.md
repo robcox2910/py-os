@@ -19,7 +19,7 @@ Technical reference for every module in the system. For beginner-friendly explan
 | [Memory](concepts/memory.md) | Frames/pages, virtual memory, page replacement, swap, copy-on-write, mmap, slab allocator |
 | [Filesystem](concepts/filesystem.md) | Inodes, path resolution, hard/symbolic links, persistence, journaling |
 | [Kernel and System Calls](concepts/kernel-and-syscalls.md) | Boot sequence, lifecycle, syscall dispatch, number ranges |
-| [The Shell](concepts/shell.md) | Commands, pipes, scripting, jobs, history, aliases, env |
+| [The Shell](concepts/shell.md) | Commands, pipes, redirection, scripting, jobs, history, aliases, env |
 | [Devices and Networking](concepts/devices-and-networking.md) | Device protocol, IPC, disk scheduling, sockets |
 | [Users and Safety](concepts/users-and-safety.md) | Permissions, signals, logging, deadlock |
 | [Synchronization](concepts/synchronization.md) | Mutex, semaphore, condition variable, race conditions |
@@ -101,7 +101,8 @@ Every source file and what it implements.
 
 | File | Class/Function | Purpose |
 |------|---------------|---------|
-| `shell.py` | `Shell` | Command interpreter with pipes, scripting, job control, background execution (`&`) |
+| `shell.py` | `Shell` | Command interpreter with pipes, redirection (`>`, `>>`, `<`, `2>`), scripting, job control, background execution (`&`) |
+| `shell.py` | `_Redirections` | Parsed I/O redirection operators from a command string |
 | `users.py` | `UserManager` | User registry with auto-incrementing UIDs |
 | `users.py` | `FilePermissions` | Per-file owner/other read/write permission bits |
 | `env.py` | `Environment` | KEY=VALUE store with copy semantics |

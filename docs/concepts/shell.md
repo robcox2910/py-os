@@ -133,6 +133,136 @@ Remember how the shell returns everything as strings? That's why pipes work so
 smoothly. Since every command produces text, any command's output can become
 any other command's input.
 
+## Redirection
+
+Pipes connect commands to each other. But what if you want to send a command's
+output to a **file** instead? Or read a command's input from a file instead of
+typing it? That's what **redirection** does.
+
+Think of it like mail. Normally, when a command finishes, it hands you the
+result directly -- like someone handing you a letter. Redirection says "don't
+hand it to me, put it in that mailbox over there instead."
+
+### Output redirection (`>`)
+
+The `>` operator takes a command's output and writes it into a file:
+
+```
+echo hello > /greeting.txt
+cat /greeting.txt
+```
+
+The first command writes "hello" into `/greeting.txt`. The second reads it
+back. Notice that `echo hello >` showed nothing on screen -- the output went
+to the file instead of being displayed.
+
+If the file doesn't exist, `>` creates it. If it already exists, `>` **erases
+everything in it** and writes the new content. It's like ripping out all the
+pages of a notebook and starting fresh.
+
+### Append redirection (`>>`)
+
+What if you don't want to erase the file? Use `>>` to **add** to the end:
+
+```
+echo dear diary >> /diary.txt
+echo today was great >> /diary.txt
+```
+
+Think of `>>` as "keep writing where I left off" and `>` as "start a brand new
+page." If you're building a log file where you want to add entries over time,
+`>>` is what you want.
+
+### Input redirection (`<`)
+
+The `<` operator goes the other direction. Instead of redirecting output, it
+redirects **input** -- it feeds the contents of a file into a command:
+
+```
+grep apple < /fruits.txt
+```
+
+This is like saying "open that file and read it out loud to `grep`." The
+`grep` command then filters the lines just like it would with piped input. It
+works with any pipe-aware command like `grep` or `wc`:
+
+```
+wc < /fruits.txt
+```
+
+You can even combine input and output redirection:
+
+```
+grep apple < /fruits.txt > /results.txt
+```
+
+That reads from `/fruits.txt`, filters for lines containing "apple", and writes
+the matching lines into `/results.txt`.
+
+### Error redirection (`2>`)
+
+Sometimes a command fails. When that happens, the shell produces an **error
+message** instead of normal output. The `2>` operator captures those error
+messages and sends them to a file:
+
+```
+cat /nonexistent 2> /errors.txt
+```
+
+If `/nonexistent` doesn't exist, the error message goes into `/errors.txt`
+instead of being displayed. Normal (successful) output is unaffected -- `2>`
+only catches errors.
+
+Think of it like sorting mail. You have two piles: one for regular letters
+(normal output) and one for bills and complaints (errors). The `>` operator
+redirects the regular pile, and `2>` redirects the complaints pile. You can
+even use both at once:
+
+```
+ls / > /output.txt 2> /errors.txt
+```
+
+**Why the `2`?** In real Unix systems, every program has numbered channels
+called **file descriptors**. Channel 1 is "standard output" (stdout) and
+channel 2 is "standard error" (stderr). So `2>` literally means "redirect
+channel 2." PyOS simulates this by looking at whether the output string starts
+with "Error:" -- if it does, it's treated as stderr.
+
+### Redirection and pipes together
+
+You can combine redirection with pipes. Redirection applies to whatever stage
+it appears in:
+
+```
+ls / | grep txt > /matches.txt
+```
+
+Here, `ls /` produces a listing, the pipe feeds it to `grep txt`, and then `>`
+sends grep's filtered output to a file.
+
+**Limitation:** You can't combine redirection with background execution (`&`).
+If you try `echo hello > /out.txt &`, you'll get an error. This keeps things
+simple -- the interaction between backgrounding and file I/O adds complexity
+that belongs in a later feature.
+
+### All redirection operators
+
+| Operator | What it does |
+|----------|-------------|
+| `>` | Write output to a file (create or overwrite) |
+| `>>` | Append output to a file (create if needed) |
+| `<` | Read input from a file |
+| `2>` | Write error output to a file |
+
+### Vocabulary
+
+- **Redirection** -- routing a command's input or output to/from a file instead
+  of the screen
+- **Standard output (stdout)** -- the normal output channel (file descriptor 1)
+- **Standard error (stderr)** -- the error output channel (file descriptor 2)
+- **Overwrite** -- `>` replaces the file's contents completely
+- **Append** -- `>>` adds to the end of the file without erasing
+
 ## Scripting
 
 So far you've been giving the receptionist one request at a time. But what if
