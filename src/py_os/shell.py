@@ -134,6 +134,7 @@ class Shell:
             "ln": self._cmd_ln,
             "readlink": self._cmd_readlink,
             "stat": self._cmd_stat,
+            "journal": self._cmd_journal,
         }
 
     def execute(self, command: str) -> str:
@@ -1354,3 +1355,47 @@ class Shell:
             f"  Links: {info.link_count}",
         ]
         return "\n".join(lines)
+
+    # -- Journal commands ---------------------------------------------------
+
+    def _cmd_journal(self, args: list[str]) -> str:
+        """Manage the filesystem journal — status, checkpoint, recover, crash."""
+        if not args:
+            return "Usage: journal <status|checkpoint|recover|crash>"
+        match args[0]:
+            case "status":
+                return self._cmd_journal_status()
+            case "checkpoint":
+                return self._cmd_journal_checkpoint()
+            case "recover":
+                return self._cmd_journal_recover()
+            case "crash":
+                return self._cmd_journal_crash()
+            case _:
+                return "Usage: journal <status|checkpoint|recover|crash>"
+
+    def _cmd_journal_status(self) -> str:
+        """Show journal transaction status."""
+        status: dict[str, int] = self._kernel.syscall(SyscallNumber.SYS_JOURNAL_STATUS)
+        return (
+            f"Transactions: {status['total']} total"
+            f" ({status['active']} active,"
+            f" {status['committed']} committed,"
+            f" {status['aborted']} aborted)"
+        )
+
+    def _cmd_journal_checkpoint(self) -> str:
+        """Create a journal checkpoint."""
+        self._kernel.syscall(SyscallNumber.SYS_JOURNAL_CHECKPOINT)
+        return "Checkpoint created"
+
+    def _cmd_journal_recover(self) -> str:
+        """Recover from a crash by replaying committed transactions."""
+        result: dict[str, int] = self._kernel.syscall(SyscallNumber.SYS_JOURNAL_RECOVER)
+        count = result["replayed"]
+        return f"Recovery complete: replayed {count} transactions"
+
+    def _cmd_journal_crash(self) -> str:
+        """Simulate a crash for educational purposes."""
+        self._kernel.syscall(SyscallNumber.SYS_JOURNAL_CRASH)
+        return "Crash simulated \u2014 uncommitted work lost"
