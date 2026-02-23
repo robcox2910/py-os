@@ -98,6 +98,27 @@ Here are the commands grouped by what they do. You don't need to memorize them
 | `history` | Show every command you've typed this session |
 | `exit`    | Shut down the kernel and leave the shell |
 
+**Synchronization** -- managing shared resources:
+
+| Command     | What it does |
+|-------------|-------------|
+| `mutex`     | Create, acquire, release, or list mutexes |
+| `semaphore` | Create, acquire, release, or list semaphores |
+| `rwlock`    | Create, acquire, release, or list reader-writer locks |
+| `pi`        | Priority inheritance demo and status |
+
+**Scheduling** -- controlling how processes share the CPU:
+
+| Command     | What it does |
+|-------------|-------------|
+| `scheduler` | Switch scheduling policies or view current settings |
+
+**Storage** -- crash recovery and disk management:
+
+| Command   | What it does |
+|-----------|-------------|
+| `journal` | Show the write-ahead log status for crash recovery |
+
 ## Pipes
 
 Imagine an assembly line in a factory. The first worker makes a part, then
@@ -619,7 +640,7 @@ on what you're typing:
 | Where you are | What completes |
 |---------------|----------------|
 | First word on the line | Command names (`ls`, `cat`, `mkdir`, ...) |
-| After `scheduler`, `mutex`, `semaphore`, `rwlock`, `journal` | Subcommands (`fcfs`, `create`, `list`, `status`, ...) |
+| After `scheduler`, `mutex`, `semaphore`, `rwlock`, `journal`, `pi` | Subcommands (`fcfs`, `create`, `list`, `status`, `demo`, ...) |
 | After a file command (`ls`, `cat`, `rm`, ...) | Filesystem paths |
 | After `run` | Built-in program names |
 | After `unset` | Environment variable names |

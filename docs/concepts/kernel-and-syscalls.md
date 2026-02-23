@@ -81,7 +81,11 @@ method in `kernel.py`, you'll see something like this:
 4. Environment      -- Post the daily schedule on the board
 5. Device Manager   -- Turn on the printers and projectors
 6. Resource Manager -- Set up the rules for sharing supplies
-7. Scheduler        -- Open the doors and let students in
+7. Sync Manager     -- Hand out the shared-equipment sign-out sheets
+                       (mutexes, semaphores, condition variables)
+7b. PI Manager      -- Turn on the "no cutting in line" rule
+                       (priority inheritance to prevent priority inversion)
+8. Scheduler        -- Open the doors and let students in
 ```
 
 Only after every single one of those steps is finished does the kernel
