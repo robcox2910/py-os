@@ -484,9 +484,130 @@ types are just variations on the same theme.
 
 ---
 
+## 6. HTTP -- Talking on the Web (`io/http.py`)
+
+### The Restaurant Analogy
+
+Imagine a restaurant. You (the **client**) sit down and read the menu. When
+you're ready, you fill out an order form and hand it to the waiter. The waiter
+(the **socket**) carries the order form to the kitchen (the **server**). The
+kitchen prepares your food, writes a receipt, and the waiter carries the receipt
+back to your table.
+
+**HTTP** (Hypertext Transfer Protocol) works exactly like this. When you visit
+a website, your browser (the client) writes an **HTTP request** -- an order
+form -- and sends it to a web server. The server reads the request, figures out
+what you're asking for, and sends back an **HTTP response** -- the receipt,
+which includes the actual web page (or an error message).
+
+The important thing is that the order form has a **specific format** that
+everyone agrees on. That agreed-upon format is the **protocol**. Without it,
+the kitchen wouldn't know how to read your order, and you wouldn't know how to
+read the receipt.
+
+### Requests -- The Order Form
+
+An HTTP request has three parts:
+
+1. **Method** -- what you're asking for:
+   - `GET` means "give me this resource" (like asking for a menu item)
+   - `POST` means "here's some data for you" (like submitting a form)
+
+2. **Path** -- which resource you want (like `/index.html` or `/images/logo.png`)
+
+3. **Headers** -- extra information, like metadata. For example, `Host: example.com`
+   tells the server which website you're trying to reach (important because one
+   server can host many websites).
+
+Here's what a real HTTP request looks like "on the wire" -- the raw bytes that
+travel over the socket:
+
+```
+GET /index.html HTTP/1.0
+Host: localhost
+
+```
+
+That's it. A method, a path, a version, some headers, and a blank line at the
+end. Simple.
+
+### Responses -- The Receipt
+
+An HTTP response also has a specific format:
+
+1. **Status code** -- a number that tells you what happened:
+   - `200 OK` -- success! Here's what you asked for.
+   - `404 Not Found` -- that resource doesn't exist.
+   - `400 Bad Request` -- your order form was filled out wrong.
+   - `500 Internal Server Error` -- the kitchen caught fire (something went
+     wrong on the server's end).
+
+2. **Headers** -- metadata like `Content-Length: 42` (how many bytes are in the
+   body) or `Content-Type: text/html` (what kind of data this is).
+
+3. **Body** -- the actual content (the web page, the image, the data).
+
+Here's what a real response looks like:
+
+```
+HTTP/1.0 200 OK
+Content-Type: text/html
+Content-Length: 25
+
+<h1>Welcome to PyOS!</h1>
+```
+
+### Protocol Layering -- HTTP on Top of Sockets
+
+Here's the key insight: HTTP doesn't know or care *how* bytes get from point A
+to point B. That's the socket's job. And sockets don't know or care *what* the
+bytes mean. That's HTTP's job.
+
+This separation is called **protocol layering**. Each layer does one thing well
+and relies on the layer below it for the rest:
+
+```
+  HTTP      (application layer -- what do the bytes mean?)
+    |
+  Sockets   (transport layer -- how do bytes get there?)
+    |
+  Buffers   (in-memory simulation of a network)
+```
+
+In a real OS, there are even more layers (TCP, IP, Ethernet). PyOS simplifies
+this to just HTTP on sockets on in-memory buffers. But the *concept* is
+identical.
+
+### The `http demo` Command
+
+The `http demo` command walks through an end-to-end HTTP exchange:
+
+1. Creates a file in the filesystem (`/www/index.html`)
+2. Registers a DNS name for the web server
+3. Sets up a server socket (bind, listen) and a client socket (connect)
+4. Client builds an HTTP GET request, formats it, and sends it over the socket
+5. Server receives the raw bytes, parses the request, reads the file from the
+   filesystem, builds an HTTP 200 OK response, and sends it back
+6. Client receives and parses the response, displaying the file contents
+7. Then repeats with a file that doesn't exist, showing a 404 Not Found
+
+Every socket operation goes through **syscalls** -- demonstrating full kernel
+integration. This is real protocol layering in action: DNS resolves the name,
+sockets carry the bytes, and HTTP gives those bytes meaning.
+
+### HTTP Is User-Space
+
+One important design decision: HTTP is **not** a kernel subsystem. In PyOS (and
+in real operating systems), the kernel owns sockets, but HTTP is just a library
+of functions that any program can use. The kernel doesn't know or care about
+HTTP -- it just moves bytes. This mirrors reality: your web browser is a regular
+program, not part of the kernel.
+
+---
+
 ## Putting It All Together
 
-These five systems -- devices, IPC, disk scheduling, networking, and DNS --
+These six systems -- devices, IPC, disk scheduling, networking, DNS, and HTTP --
 cover how the OS connects programs to the outside world and to each other.
 
 - **Devices** give programs a simple, uniform way to talk to hardware. Read and
@@ -509,6 +630,10 @@ cover how the OS connects programs to the outside world and to each other.
 - **DNS** translates human-readable hostnames into numeric IP addresses,
   acting as the internet's phone book. Queries travel over sockets,
   demonstrating how protocols layer on top of each other.
+
+- **HTTP** adds meaning to the raw bytes that sockets carry. Clients send
+  structured requests (GET /page) and servers send structured responses
+  (200 OK with a body). It's the top layer in our protocol stack.
 
 All of these follow a common pattern in OS design: give programs a **simple
 interface** (read, write, send, receive) and let the OS handle the complicated

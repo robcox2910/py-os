@@ -80,6 +80,8 @@ method in `kernel.py`, you'll see something like this:
 3. User Manager     -- Get the attendance list ready
 4. Environment      -- Post the daily schedule on the board
 5. Device Manager   -- Turn on the printers and projectors
+5b. DNS Resolver    -- Open the phone book (hostname -> IP)
+5c. Socket Manager  -- Set up the phone lines (network stack)
 6. Resource Manager -- Set up the rules for sharing supplies
 7. Sync Manager     -- Hand out the shared-equipment sign-out sheets
                        (mutexes, semaphores, condition variables)
@@ -187,6 +189,7 @@ Here is every syscall number in PyOS, grouped by what they do:
 | 130-133 | Journal operations (status, checkpoint, recover, crash) |
 | 140-146 | Shared memory IPC (create, attach, detach, destroy, write, read, list) |
 | 150-154 | DNS operations (register, lookup, remove, list, flush) |
+| 160-168 | Socket operations (create, bind, listen, connect, accept, send, recv, close, list) |
 
 You don't need to memorize these. The important thing is that every single
 operation a program can ask for has a number, and every single request goes

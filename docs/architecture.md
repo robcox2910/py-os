@@ -20,7 +20,7 @@ Technical reference for every module in the system. For beginner-friendly explan
 | [Filesystem](concepts/filesystem.md) | Inodes, path resolution, hard/symbolic links, persistence, journaling |
 | [Kernel and System Calls](concepts/kernel-and-syscalls.md) | Boot sequence, lifecycle, syscall dispatch, number ranges |
 | [The Shell](concepts/shell.md) | Commands, pipes, redirection, loops, scripting, jobs, history, aliases, tab completion, env |
-| [Devices and Networking](concepts/devices-and-networking.md) | Device protocol, IPC, disk scheduling, sockets, DNS |
+| [Devices and Networking](concepts/devices-and-networking.md) | Device protocol, IPC, disk scheduling, sockets, DNS, HTTP |
 | [Users and Safety](concepts/users-and-safety.md) | Permissions, signals, logging, deadlock |
 | [Synchronization](concepts/synchronization.md) | Mutex, semaphore, condition variable, reader-writer lock, race conditions, deadlock prevention |
 
@@ -35,7 +35,7 @@ Every source file and what it implements.
 | `kernel.py` | `Kernel` | Central coordinator, boot/shutdown lifecycle, subsystem ownership |
 | `kernel.py` | `KernelState` | SHUTDOWN / BOOTING / RUNNING / SHUTTING_DOWN state machine |
 | `syscalls.py` | `dispatch_syscall()` | Trap handler -- routes syscall numbers to kernel subsystem handlers |
-| `syscalls.py` | `SyscallNumber` | IntEnum of all syscall numbers (1-154) |
+| `syscalls.py` | `SyscallNumber` | IntEnum of all syscall numbers (1-168) |
 | `syscalls.py` | `SyscallError` | User-facing exception wrapping internal errors |
 
 ### Process Management
@@ -126,6 +126,13 @@ Every source file and what it implements.
 | `io/dns.py` | `DnsError` | Exception for DNS operation failures |
 | `io/networking.py` | `SocketManager` | Socket lifecycle, connection routing, data buffers |
 | `io/networking.py` | `Socket` / `SocketState` | Endpoint with CREATED/BOUND/LISTENING/CONNECTED/CLOSED states |
+| `io/networking.py` | `SocketError` | Exception for socket operation failures |
+| `io/http.py` | `HttpMethod` | GET / POST request methods (StrEnum) |
+| `io/http.py` | `HttpStatus` | 200 OK / 400 / 404 / 500 status codes (IntEnum) |
+| `io/http.py` | `HttpRequest` / `HttpResponse` | Frozen dataclasses for HTTP messages |
+| `io/http.py` | `HttpError` | Exception for HTTP operation failures |
+| `io/http.py` | `format_request()` / `parse_request()` | Serialize/deserialize HTTP requests |
+| `io/http.py` | `format_response()` / `parse_response()` | Serialize/deserialize HTTP responses |
 
 ### Synchronization
 
@@ -175,6 +182,7 @@ Every source file and what it implements.
 | 130-133 | Journal operations (status, checkpoint, recover, crash) |
 | 140-146 | Shared memory IPC (create, attach, detach, destroy, write, read, list) |
 | 150-154 | DNS operations (register, lookup, remove, list, flush) |
+| 160-168 | Socket operations (create, bind, listen, connect, accept, send, recv, close, list) |
 
 ## Strategy Pattern Usage
 

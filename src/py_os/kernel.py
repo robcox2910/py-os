@@ -37,6 +37,7 @@ from py_os.fs.filesystem import FileType
 from py_os.fs.journal import JournaledFileSystem
 from py_os.io.devices import ConsoleDevice, DeviceManager, NullDevice, RandomDevice
 from py_os.io.dns import DnsRecord, DnsResolver
+from py_os.io.networking import SocketError, SocketManager
 from py_os.io.shm import SharedMemoryError, SharedMemorySegment
 from py_os.logging import Logger, LogLevel
 from py_os.memory.manager import MemoryManager
@@ -111,6 +112,8 @@ class Kernel:
         self._shared_memory: dict[str, SharedMemorySegment] = {}
         # DNS resolver — phone book for hostname → IP resolution
         self._dns_resolver: DnsResolver | None = None
+        # Socket manager — in-memory network stack
+        self._socket_manager: SocketManager | None = None
 
     @property
     def state(self) -> KernelState:
@@ -204,6 +207,11 @@ class Kernel:
         """Return the slab allocator, or None if not booted."""
         return self._slab_allocator
 
+    @property
+    def socket_manager(self) -> SocketManager | None:
+        """Return the socket manager, or None if not booted."""
+        return self._socket_manager
+
     def set_scheduler_policy(self, policy: SchedulingPolicy) -> None:
         """Replace the scheduler's policy, preserving the ready queue.
 
@@ -293,6 +301,9 @@ class Kernel:
         self._dns_resolver = DnsResolver()
         self._dns_resolver.register("localhost", "127.0.0.1")
 
+        # 6c. Socket manager — in-memory network stack
+        self._socket_manager = SocketManager()
+
         # 7. Resource manager — deadlock detection and avoidance
         self._resource_manager = ResourceManager()
 
@@ -350,6 +361,7 @@ class Kernel:
         self._mmap_regions.clear()
         self._shared_file_frames.clear()
         self._shared_memory.clear()
+        self._socket_manager = None
         self._dns_resolver = None
 
         self._logger = None
@@ -2316,3 +2328,177 @@ class Kernel:
         self._require_running()
         assert self._filesystem is not None  # noqa: S101
         return self._filesystem.recover()
+
+    # -- Socket operations ---------------------------------------------------
+
+    def _require_socket(self, sock_id: int) -> "SocketManager":
+        """Return the socket manager after validating the socket ID exists.
+
+        Args:
+            sock_id: The socket ID to validate.
+
+        Returns:
+            The socket manager.
+
+        Raises:
+            SocketError: If the manager is None or the socket is not found.
+
+        """
+        if self._socket_manager is None:
+            msg = "Socket manager not available"
+            raise SocketError(msg)
+        if self._socket_manager.get_socket(sock_id) is None:
+            msg = f"Socket {sock_id} not found"
+            raise SocketError(msg)
+        return self._socket_manager
+
+    def socket_create(self) -> dict[str, int | str]:
+        """Create a new socket and return its info.
+
+        Returns:
+            Dict with ``sock_id`` and ``state``.
+
+        """
+        self._require_running()
+        if self._socket_manager is None:
+            msg = "Socket manager not available"
+            raise SocketError(msg)
+        sock = self._socket_manager.create_socket()
+        return {"sock_id": sock.sock_id, "state": str(sock.state)}
+
+    def socket_bind(self, sock_id: int, address: str, port: int) -> None:
+        """Bind a socket to an address and port.
+
+        Args:
+            sock_id: The socket to bind.
+            address: The address to bind to.
+            port: The port number.
+
+        """
+        self._require_running()
+        sm = self._require_socket(sock_id)
+        sock = sm.get_socket(sock_id)
+        assert sock is not None  # noqa: S101
+        try:
+            sock.bind(address=address, port=port)
+        except RuntimeError as e:
+            raise SocketError(str(e)) from e
+
+    def socket_listen(self, sock_id: int) -> None:
+        """Mark a socket as listening for connections.
+
+        Args:
+            sock_id: The bound socket to start listening.
+
+        """
+        self._require_running()
+        sm = self._require_socket(sock_id)
+        sock = sm.get_socket(sock_id)
+        assert sock is not None  # noqa: S101
+        try:
+            sock.listen()
+        except RuntimeError as e:
+            raise SocketError(str(e)) from e
+
+    def socket_connect(self, sock_id: int, address: str, port: int) -> None:
+        """Connect a socket to a listening server.
+
+        Args:
+            sock_id: The client socket.
+            address: The server address.
+            port: The server port.
+
+        """
+        self._require_running()
+        sm = self._require_socket(sock_id)
+        sock = sm.get_socket(sock_id)
+        assert sock is not None  # noqa: S101
+        try:
+            sm.connect(sock, address=address, port=port)
+        except ConnectionError as e:
+            raise SocketError(str(e)) from e
+
+    def socket_accept(self, sock_id: int) -> dict[str, int | str] | None:
+        """Accept a pending connection on a listening socket.
+
+        Args:
+            sock_id: The listening socket.
+
+        Returns:
+            Dict with peer ``sock_id`` and ``state``, or None.
+
+        """
+        self._require_running()
+        sm = self._require_socket(sock_id)
+        sock = sm.get_socket(sock_id)
+        assert sock is not None  # noqa: S101
+        peer = sm.accept(sock)
+        if peer is None:
+            return None
+        return {"sock_id": peer.sock_id, "state": str(peer.state)}
+
+    def socket_send(self, sock_id: int, data: bytes) -> None:
+        """Send data over a connected socket.
+
+        Args:
+            sock_id: The sending socket.
+            data: The bytes to send.
+
+        """
+        self._require_running()
+        sm = self._require_socket(sock_id)
+        sock = sm.get_socket(sock_id)
+        assert sock is not None  # noqa: S101
+        try:
+            sm.send(sock, data)
+        except RuntimeError as e:
+            raise SocketError(str(e)) from e
+
+    def socket_recv(self, sock_id: int) -> bytes:
+        """Receive data from a connected socket.
+
+        Args:
+            sock_id: The receiving socket.
+
+        Returns:
+            The received bytes (empty if no data available).
+
+        """
+        self._require_running()
+        sm = self._require_socket(sock_id)
+        sock = sm.get_socket(sock_id)
+        assert sock is not None  # noqa: S101
+        return sm.recv(sock)
+
+    def socket_close(self, sock_id: int) -> None:
+        """Close a socket.
+
+        Args:
+            sock_id: The socket to close.
+
+        """
+        self._require_running()
+        sm = self._require_socket(sock_id)
+        sock = sm.get_socket(sock_id)
+        assert sock is not None  # noqa: S101
+        sock.close()
+
+    def socket_list(self) -> list[dict[str, object]]:
+        """List all sockets managed by the kernel.
+
+        Returns:
+            List of dicts with socket info.
+
+        """
+        self._require_running()
+        if self._socket_manager is None:
+            return []
+        return [
+            {
+                "sock_id": s.sock_id,
+                "state": str(s.state),
+                "address": s.address,
+                "port": s.port,
+            }
+            for s in self._socket_manager.list_sockets()
+        ]
