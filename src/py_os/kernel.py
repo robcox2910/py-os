@@ -47,6 +47,7 @@ from py_os.process.signals import DEFAULT_ACTIONS, UNCATCHABLE, Signal, SignalAc
 from py_os.process.threads import Thread
 from py_os.sync.deadlock import ResourceManager
 from py_os.sync.inheritance import PriorityInheritanceManager
+from py_os.sync.ordering import ResourceOrderingManager
 from py_os.sync.primitives import Condition, Mutex, ReadWriteLock, Semaphore, SyncManager
 from py_os.syscalls import SyscallNumber, dispatch_syscall
 from py_os.users import FilePermissions, UserManager
@@ -96,6 +97,7 @@ class Kernel:
         self._resource_manager: ResourceManager | None = None
         self._sync_manager: SyncManager | None = None
         self._pi_manager: PriorityInheritanceManager | None = None
+        self._ordering_manager: ResourceOrderingManager | None = None
         self._slab_allocator: SlabAllocator | None = None
         # Per-process mmap regions: pid → {start_vpn → MmapRegion}
         self._mmap_regions: dict[int, dict[int, MmapRegion]] = {}
@@ -185,6 +187,11 @@ class Kernel:
     def pi_manager(self) -> PriorityInheritanceManager | None:
         """Return the priority inheritance manager, or None if not booted."""
         return self._pi_manager
+
+    @property
+    def ordering_manager(self) -> ResourceOrderingManager | None:
+        """Return the resource ordering manager, or None if not booted."""
+        return self._ordering_manager
 
     @property
     def slab_allocator(self) -> SlabAllocator | None:
@@ -285,6 +292,9 @@ class Kernel:
         # 8b. Priority inheritance manager — prevent priority inversion
         self._pi_manager = PriorityInheritanceManager()
 
+        # 8c. Resource ordering manager — prevent deadlock via ordering
+        self._ordering_manager = ResourceOrderingManager()
+
         # 9. Scheduler — ready to accept processes
         self._scheduler = Scheduler(policy=FCFSPolicy())
 
@@ -308,6 +318,9 @@ class Kernel:
 
         # Tear down in reverse order
         self._scheduler = None
+        if self._ordering_manager is not None:
+            self._ordering_manager.clear()
+        self._ordering_manager = None
         if self._pi_manager is not None:
             self._pi_manager.clear()
         self._pi_manager = None
@@ -1153,6 +1166,8 @@ class Kernel:
         self._memory.free(pid)
         if self._resource_manager is not None:
             self._resource_manager.remove_process(pid)
+        if self._ordering_manager is not None:
+            self._ordering_manager.remove_process(pid)
 
         self._zombie_or_delete(process)
 
@@ -1184,6 +1199,8 @@ class Kernel:
             self._memory.free(pid)
             if self._resource_manager is not None:
                 self._resource_manager.remove_process(pid)
+            if self._ordering_manager is not None:
+                self._ordering_manager.remove_process(pid)
             self._zombie_or_delete(process)
 
     def register_signal_handler(
@@ -1279,6 +1296,8 @@ class Kernel:
                 self._memory.free(pid)
                 if self._resource_manager is not None:
                     self._resource_manager.remove_process(pid)
+                if self._ordering_manager is not None:
+                    self._ordering_manager.remove_process(pid)
                 self._zombie_or_delete(process)
             case SignalAction.STOP:
                 process.wait()
@@ -1534,21 +1553,36 @@ class Kernel:
         Args:
             name: Name of the mutex.
             tid: Thread ID of the caller.
-            pid: Optional process ID for priority inheritance tracking.
+            pid: Optional process ID for priority inheritance and ordering.
 
         Returns:
-            True if acquired, False if queued.
+            True if acquired, False if queued or rejected by ordering.
 
         """
         self._require_running()
         assert self._sync_manager is not None  # noqa: S101
+
+        # Ordering check before acquire
+        if (
+            pid is not None
+            and self._ordering_manager is not None
+            and not self._ordering_manager.check_acquire(pid, f"mutex:{name}")
+        ):
+            return False
+
         mutex = self._sync_manager.get_mutex(name)
         acquired = mutex.acquire(tid)
+
         if pid is not None and self._pi_manager is not None:
             if acquired:
                 self._pi_manager.on_acquire(name, pid)
             else:
                 self._pi_manager.on_block(name, pid, self._processes)
+
+        # Track acquisition in ordering manager
+        if acquired and pid is not None and self._ordering_manager is not None:
+            self._ordering_manager.on_acquire(pid, f"mutex:{name}")
+
         return acquired
 
     def release_mutex(self, name: str, *, tid: int, pid: int | None = None) -> int | None:
@@ -1557,7 +1591,7 @@ class Kernel:
         Args:
             name: Name of the mutex.
             tid: Thread ID of the caller.
-            pid: Optional process ID for priority inheritance tracking.
+            pid: Optional process ID for priority inheritance and ordering.
 
         Returns:
             The TID of the next waiter, or None.
@@ -1569,6 +1603,8 @@ class Kernel:
         next_tid = mutex.release(tid)
         if pid is not None and self._pi_manager is not None:
             self._pi_manager.on_release(name, pid, new_holder_pid=None, processes=self._processes)
+        if pid is not None and self._ordering_manager is not None:
+            self._ordering_manager.on_release(pid, f"mutex:{name}")
         return next_tid
 
     def create_semaphore(self, name: str, *, count: int) -> Semaphore:
@@ -1586,27 +1622,42 @@ class Kernel:
         assert self._sync_manager is not None  # noqa: S101
         return self._sync_manager.create_semaphore(name, count=count)
 
-    def acquire_semaphore(self, name: str, *, tid: int) -> bool:
+    def acquire_semaphore(self, name: str, *, tid: int, pid: int | None = None) -> bool:
         """Acquire a named semaphore on behalf of a thread.
 
         Args:
             name: Name of the semaphore.
             tid: Thread ID of the caller.
+            pid: Optional process ID for ordering checks.
 
         Returns:
-            True if acquired, False if queued.
+            True if acquired, False if queued or rejected by ordering.
 
         """
         self._require_running()
         assert self._sync_manager is not None  # noqa: S101
-        sem = self._sync_manager.get_semaphore(name)
-        return sem.acquire(tid)
 
-    def release_semaphore(self, name: str) -> int | None:
+        if (
+            pid is not None
+            and self._ordering_manager is not None
+            and not self._ordering_manager.check_acquire(pid, f"sem:{name}")
+        ):
+            return False
+
+        sem = self._sync_manager.get_semaphore(name)
+        acquired = sem.acquire(tid)
+
+        if acquired and pid is not None and self._ordering_manager is not None:
+            self._ordering_manager.on_acquire(pid, f"sem:{name}")
+
+        return acquired
+
+    def release_semaphore(self, name: str, *, pid: int | None = None) -> int | None:
         """Release a named semaphore.
 
         Args:
             name: Name of the semaphore.
+            pid: Optional process ID for ordering tracking.
 
         Returns:
             The TID of the woken waiter, or None.
@@ -1615,7 +1666,10 @@ class Kernel:
         self._require_running()
         assert self._sync_manager is not None  # noqa: S101
         sem = self._sync_manager.get_semaphore(name)
-        return sem.release()
+        result = sem.release()
+        if pid is not None and self._ordering_manager is not None:
+            self._ordering_manager.on_release(pid, f"sem:{name}")
+        return result
 
     def create_condition(self, name: str, *, mutex_name: str) -> Condition:
         """Create a named condition variable via the sync manager.
@@ -1691,44 +1745,73 @@ class Kernel:
         assert self._sync_manager is not None  # noqa: S101
         return self._sync_manager.create_rwlock(name)
 
-    def acquire_read_lock(self, name: str, *, tid: int) -> bool:
+    def acquire_read_lock(self, name: str, *, tid: int, pid: int | None = None) -> bool:
         """Acquire read access on a named reader-writer lock.
 
         Args:
             name: Name of the lock.
             tid: Thread ID of the caller.
+            pid: Optional process ID for ordering checks.
 
         Returns:
-            True if acquired, False if queued.
+            True if acquired, False if queued or rejected by ordering.
 
         """
         self._require_running()
         assert self._sync_manager is not None  # noqa: S101
-        rwl = self._sync_manager.get_rwlock(name)
-        return rwl.acquire_read(tid)
 
-    def acquire_write_lock(self, name: str, *, tid: int) -> bool:
+        if (
+            pid is not None
+            and self._ordering_manager is not None
+            and not self._ordering_manager.check_acquire(pid, f"rwlock:{name}")
+        ):
+            return False
+
+        rwl = self._sync_manager.get_rwlock(name)
+        acquired = rwl.acquire_read(tid)
+
+        if acquired and pid is not None and self._ordering_manager is not None:
+            self._ordering_manager.on_acquire(pid, f"rwlock:{name}")
+
+        return acquired
+
+    def acquire_write_lock(self, name: str, *, tid: int, pid: int | None = None) -> bool:
         """Acquire write access on a named reader-writer lock.
 
         Args:
             name: Name of the lock.
             tid: Thread ID of the caller.
+            pid: Optional process ID for ordering checks.
 
         Returns:
-            True if acquired, False if queued.
+            True if acquired, False if queued or rejected by ordering.
 
         """
         self._require_running()
         assert self._sync_manager is not None  # noqa: S101
-        rwl = self._sync_manager.get_rwlock(name)
-        return rwl.acquire_write(tid)
 
-    def release_read_lock(self, name: str, *, tid: int) -> list[int]:
+        if (
+            pid is not None
+            and self._ordering_manager is not None
+            and not self._ordering_manager.check_acquire(pid, f"rwlock:{name}")
+        ):
+            return False
+
+        rwl = self._sync_manager.get_rwlock(name)
+        acquired = rwl.acquire_write(tid)
+
+        if acquired and pid is not None and self._ordering_manager is not None:
+            self._ordering_manager.on_acquire(pid, f"rwlock:{name}")
+
+        return acquired
+
+    def release_read_lock(self, name: str, *, tid: int, pid: int | None = None) -> list[int]:
         """Release read access on a named reader-writer lock.
 
         Args:
             name: Name of the lock.
             tid: Thread ID of the caller.
+            pid: Optional process ID for ordering tracking.
 
         Returns:
             List of TIDs promoted from the wait queue.
@@ -1737,14 +1820,18 @@ class Kernel:
         self._require_running()
         assert self._sync_manager is not None  # noqa: S101
         rwl = self._sync_manager.get_rwlock(name)
-        return rwl.release_read(tid)
+        result = rwl.release_read(tid)
+        if pid is not None and self._ordering_manager is not None:
+            self._ordering_manager.on_release(pid, f"rwlock:{name}")
+        return result
 
-    def release_write_lock(self, name: str, *, tid: int) -> list[int]:
+    def release_write_lock(self, name: str, *, tid: int, pid: int | None = None) -> list[int]:
         """Release write access on a named reader-writer lock.
 
         Args:
             name: Name of the lock.
             tid: Thread ID of the caller.
+            pid: Optional process ID for ordering tracking.
 
         Returns:
             List of TIDs promoted from the wait queue.
@@ -1753,7 +1840,10 @@ class Kernel:
         self._require_running()
         assert self._sync_manager is not None  # noqa: S101
         rwl = self._sync_manager.get_rwlock(name)
-        return rwl.release_write(tid)
+        result = rwl.release_write(tid)
+        if pid is not None and self._ordering_manager is not None:
+            self._ordering_manager.on_release(pid, f"rwlock:{name}")
+        return result
 
     # -- Journal operations --------------------------------------------------
 

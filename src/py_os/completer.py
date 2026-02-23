@@ -33,6 +33,7 @@ _SUBCOMMANDS: dict[str, list[str]] = {
     "journal": ["status", "checkpoint", "recover", "crash"],
     "rwlock": ["create", "list"],
     "pi": ["demo", "status"],
+    "ordering": ["register", "status", "mode", "violations", "demo"],
 }
 
 # Minimum number of words needed before signal name completion kicks in.
