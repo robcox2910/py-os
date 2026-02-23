@@ -36,6 +36,7 @@ from py_os.fs.fd import FdError, FdTable, FileMode, OpenFileDescription, SeekWhe
 from py_os.fs.filesystem import FileType
 from py_os.fs.journal import JournaledFileSystem
 from py_os.io.devices import ConsoleDevice, DeviceManager, NullDevice, RandomDevice
+from py_os.io.shm import SharedMemoryError, SharedMemorySegment
 from py_os.logging import Logger, LogLevel
 from py_os.memory.manager import MemoryManager
 from py_os.memory.mmap import MmapError, MmapRegion
@@ -105,6 +106,8 @@ class Kernel:
         self._shared_file_frames: dict[tuple[int, int], tuple[int, bytearray]] = {}
         # Per-process file descriptor tables: pid → FdTable
         self._fd_tables: dict[int, FdTable] = {}
+        # Named shared memory segments: name → SharedMemorySegment
+        self._shared_memory: dict[str, SharedMemorySegment] = {}
 
     @property
     def state(self) -> KernelState:
@@ -339,6 +342,7 @@ class Kernel:
         self._fd_tables.clear()
         self._mmap_regions.clear()
         self._shared_file_frames.clear()
+        self._shared_memory.clear()
 
         self._logger = None
         self._boot_time = None
@@ -431,11 +435,8 @@ class Kernel:
         child_vm = VirtualMemory()
         parent_vm = parent.virtual_memory
 
-        # Build set of vpns in MAP_SHARED mmap regions (skip COW for these)
-        shared_vpns: set[int] = set()
-        for region in self._mmap_regions.get(parent_pid, {}).values():
-            if region.shared:
-                shared_vpns.update(range(region.start_vpn, region.start_vpn + region.num_pages))
+        # Build set of vpns that are shared (skip COW for these)
+        shared_vpns = self._shared_vpns_for(parent_pid)
 
         if parent_vm is not None:
             parent_mappings = parent_vm.page_table.mappings()
@@ -465,6 +466,11 @@ class Kernel:
         if parent_regions:
             self._mmap_regions[child.pid] = dict(parent_regions)
 
+        # Copy shm attachments from parent to child
+        for seg in self._shared_memory.values():
+            if parent_pid in seg.attachments:
+                seg.attachments[child.pid] = seg.attachments[parent_pid]
+
         # Copy fd table from parent to child (independent offsets)
         parent_fd_table = self._fd_tables.get(parent_pid)
         if parent_fd_table is not None:
@@ -475,6 +481,21 @@ class Kernel:
         self._scheduler.add(child)
         self._processes[child.pid] = child
         return child
+
+    def _shared_vpns_for(self, pid: int) -> set[int]:
+        """Return VPNs that are shared (mmap MAP_SHARED + shm) for a process.
+
+        These pages should NOT be marked COW during fork.
+        """
+        vpns: set[int] = set()
+        for region in self._mmap_regions.get(pid, {}).values():
+            if region.shared:
+                vpns.update(range(region.start_vpn, region.start_vpn + region.num_pages))
+        for seg in self._shared_memory.values():
+            if pid in seg.attachments:
+                start = seg.attachments[pid]
+                vpns.update(range(start, start + seg.num_pages))
+        return vpns
 
     def _install_cow_handler(self, pid: int, vm: VirtualMemory) -> None:
         """Install a copy-on-write fault handler on a virtual memory space.
@@ -1162,6 +1183,7 @@ class Kernel:
 
         process.terminate()
         self._cleanup_fd_table(pid)
+        self._cleanup_shm(pid)
         self._cleanup_mmap_regions(pid)
         self._memory.free(pid)
         if self._resource_manager is not None:
@@ -1195,6 +1217,7 @@ class Kernel:
         if process is not None:
             process.terminate()
             self._cleanup_fd_table(pid)
+            self._cleanup_shm(pid)
             self._cleanup_mmap_regions(pid)
             self._memory.free(pid)
             if self._resource_manager is not None:
@@ -1292,6 +1315,7 @@ class Kernel:
                 process.force_terminate()
                 assert self._memory is not None  # noqa: S101
                 self._cleanup_fd_table(pid)
+                self._cleanup_shm(pid)
                 self._cleanup_mmap_regions(pid)
                 self._memory.free(pid)
                 if self._resource_manager is not None:
@@ -1418,6 +1442,333 @@ class Kernel:
                             del self._shared_file_frames[cache_key]
 
         self._mmap_regions.pop(pid, None)
+
+    # -- Shared memory IPC ---------------------------------------------------
+
+    def shm_create(self, *, name: str, size: int, pid: int) -> SharedMemorySegment:
+        """Create a named shared memory segment.
+
+        Allocate physical frames owned by the kernel (pid 0) and create
+        backing storage.  The segment is registered by name but no
+        process is attached yet.
+
+        Args:
+            name: Unique identifier for the segment.
+            size: Requested size in bytes (must be > 0).
+            pid: The process requesting creation.
+
+        Returns:
+            The newly created SharedMemorySegment.
+
+        Raises:
+            SharedMemoryError: If the name is taken, size is invalid,
+                or the pid does not exist.
+
+        """
+        self._require_running()
+        assert self._memory is not None  # noqa: S101
+
+        if name in self._shared_memory:
+            msg = f"Shared memory '{name}' already exists"
+            raise SharedMemoryError(msg)
+        if size <= 0:
+            msg = f"Invalid size: {size}"
+            raise SharedMemoryError(msg)
+        if pid not in self._processes:
+            msg = f"Process {pid} not found"
+            raise SharedMemoryError(msg)
+
+        page_size = VirtualMemory().page_size
+        num_pages = (size + page_size - 1) // page_size
+
+        # Allocate frames owned by the kernel (pid 0)
+        frames: list[int] = []
+        storage: list[bytearray] = []
+        for _ in range(num_pages):
+            frame = self._memory.allocate_one(0)
+            frames.append(frame)
+            storage.append(bytearray(page_size))
+
+        segment = SharedMemorySegment(
+            name=name,
+            size=size,
+            num_pages=num_pages,
+            frames=frames,
+            storage=storage,
+            creator_pid=pid,
+        )
+        self._shared_memory[name] = segment
+        return segment
+
+    def shm_attach(self, *, name: str, pid: int) -> int:
+        """Attach a process to a shared memory segment.
+
+        Map the segment's frames into the process's virtual address
+        space and increment refcounts.
+
+        Args:
+            name: Name of the segment to attach to.
+            pid: The process to attach.
+
+        Returns:
+            The virtual address where the segment is mapped.
+
+        Raises:
+            SharedMemoryError: If the segment doesn't exist, is marked
+                for deletion, the pid doesn't exist, or is already
+                attached.
+
+        """
+        self._require_running()
+        assert self._memory is not None  # noqa: S101
+
+        segment = self._shared_memory.get(name)
+        if segment is None:
+            msg = f"Shared memory '{name}' not found"
+            raise SharedMemoryError(msg)
+        if segment.marked_for_deletion:
+            msg = f"Shared memory '{name}' is marked for deletion"
+            raise SharedMemoryError(msg)
+
+        process = self._processes.get(pid)
+        if process is None:
+            msg = f"Process {pid} not found"
+            raise SharedMemoryError(msg)
+        if pid in segment.attachments:
+            msg = f"Process {pid} already attached to '{name}'"
+            raise SharedMemoryError(msg)
+
+        vm = process.virtual_memory
+        if vm is None:
+            msg = f"Process {pid} has no virtual memory"
+            raise SharedMemoryError(msg)
+
+        # Find the next available VPN
+        existing = vm.page_table.mappings()
+        next_vpn = max(existing.keys(), default=-1) + 1
+
+        for i, (frame, store) in enumerate(zip(segment.frames, segment.storage, strict=True)):
+            vm.page_table.map(virtual_page=next_vpn + i, physical_frame=frame)
+            vm.share_physical(frame=frame, storage=store)
+            self._memory.increment_refcount(frame)
+            self._memory.share_frame(pid=pid, frame=frame)
+
+        segment.attachments[pid] = next_vpn
+        page_size = vm.page_size
+        return next_vpn * page_size
+
+    def shm_detach(self, *, name: str, pid: int) -> None:
+        """Detach a process from a shared memory segment.
+
+        Unmap the segment's frames from the process's VAS and decrement
+        refcounts.  If the segment is marked for deletion and no
+        attachments remain, free it.
+
+        Args:
+            name: Name of the segment.
+            pid: The process to detach.
+
+        Raises:
+            SharedMemoryError: If the segment doesn't exist or the pid
+                is not attached.
+
+        """
+        self._require_running()
+        assert self._memory is not None  # noqa: S101
+
+        segment = self._shared_memory.get(name)
+        if segment is None:
+            msg = f"Shared memory '{name}' not found"
+            raise SharedMemoryError(msg)
+        if pid not in segment.attachments:
+            msg = f"Process {pid} not attached to '{name}'"
+            raise SharedMemoryError(msg)
+
+        process = self._processes.get(pid)
+        if process is not None:
+            vm = process.virtual_memory
+            if vm is not None:
+                start_vpn = segment.attachments[pid]
+                for i, frame in enumerate(segment.frames):
+                    vm.page_table.unmap(virtual_page=start_vpn + i)
+                    self._memory.decrement_refcount(frame)
+                    self._memory.unshare_frame(pid=pid, frame=frame)
+
+        del segment.attachments[pid]
+
+        if segment.marked_for_deletion and not segment.attachments:
+            self._shm_free_segment(name)
+
+    def shm_write(self, *, name: str, pid: int, data: bytes, offset: int = 0) -> None:
+        """Write data to a shared memory segment.
+
+        Args:
+            name: Name of the segment.
+            pid: The process writing (must be attached).
+            data: Bytes to write.
+            offset: Byte offset within the segment.
+
+        Raises:
+            SharedMemoryError: If the segment doesn't exist, pid is not
+                attached, or the write exceeds segment bounds.
+
+        """
+        self._require_running()
+
+        segment = self._shared_memory.get(name)
+        if segment is None:
+            msg = f"Shared memory '{name}' not found"
+            raise SharedMemoryError(msg)
+        if pid not in segment.attachments:
+            msg = f"Process {pid} not attached to '{name}'"
+            raise SharedMemoryError(msg)
+        if offset + len(data) > segment.size:
+            msg = f"Write exceeds segment size ({offset + len(data)} > {segment.size})"
+            raise SharedMemoryError(msg)
+
+        process = self._processes.get(pid)
+        if process is None or process.virtual_memory is None:
+            msg = f"Process {pid} not found or has no virtual memory"
+            raise SharedMemoryError(msg)
+
+        vm = process.virtual_memory
+        start_vpn = segment.attachments[pid]
+        vm.write(virtual_address=start_vpn * vm.page_size + offset, data=data)
+
+    def shm_read(self, *, name: str, pid: int, offset: int = 0, size: int | None = None) -> bytes:
+        """Read data from a shared memory segment.
+
+        Args:
+            name: Name of the segment.
+            pid: The process reading (must be attached).
+            offset: Byte offset within the segment.
+            size: Number of bytes to read (defaults to remaining).
+
+        Returns:
+            The bytes read from the segment.
+
+        Raises:
+            SharedMemoryError: If the segment doesn't exist, pid is not
+                attached, or the read exceeds bounds.
+
+        """
+        self._require_running()
+
+        segment = self._shared_memory.get(name)
+        if segment is None:
+            msg = f"Shared memory '{name}' not found"
+            raise SharedMemoryError(msg)
+        if pid not in segment.attachments:
+            msg = f"Process {pid} not attached to '{name}'"
+            raise SharedMemoryError(msg)
+
+        if size is None:
+            size = segment.size - offset
+        if offset + size > segment.size:
+            msg = f"Read exceeds segment size ({offset + size} > {segment.size})"
+            raise SharedMemoryError(msg)
+
+        process = self._processes.get(pid)
+        if process is None or process.virtual_memory is None:
+            msg = f"Process {pid} not found or has no virtual memory"
+            raise SharedMemoryError(msg)
+
+        vm = process.virtual_memory
+        start_vpn = segment.attachments[pid]
+        return vm.read(virtual_address=start_vpn * vm.page_size + offset, size=size)
+
+    def shm_destroy(self, *, name: str) -> None:
+        """Destroy a shared memory segment.
+
+        If no processes are attached, free immediately.  Otherwise, mark
+        for deletion — the last detach will free it.
+
+        Args:
+            name: Name of the segment.
+
+        Raises:
+            SharedMemoryError: If the segment doesn't exist.
+
+        """
+        self._require_running()
+
+        segment = self._shared_memory.get(name)
+        if segment is None:
+            msg = f"Shared memory '{name}' not found"
+            raise SharedMemoryError(msg)
+
+        if not segment.attachments:
+            self._shm_free_segment(name)
+        else:
+            segment.marked_for_deletion = True
+
+    def shm_list(self) -> list[dict[str, object]]:
+        """List all shared memory segments.
+
+        Returns:
+            List of dicts with segment info.
+
+        """
+        self._require_running()
+        return [
+            {
+                "name": seg.name,
+                "size": seg.size,
+                "num_pages": seg.num_pages,
+                "creator_pid": seg.creator_pid,
+                "attached": len(seg.attachments),
+                "marked_for_deletion": seg.marked_for_deletion,
+            }
+            for seg in self._shared_memory.values()
+        ]
+
+    def _shm_free_segment(self, name: str) -> None:
+        """Release the kernel's base reference for a segment and delete it.
+
+        Called when a segment has no attachments and should be freed.
+        """
+        assert self._memory is not None  # noqa: S101
+
+        segment = self._shared_memory.get(name)
+        if segment is None:
+            return
+
+        # Decrement kernel's base refcount for each frame
+        for frame in segment.frames:
+            self._memory.decrement_refcount(frame)
+            self._memory.unshare_frame(pid=0, frame=frame)
+
+        del self._shared_memory[name]
+
+    def _cleanup_shm(self, pid: int) -> None:
+        """Detach a process from all shared memory segments.
+
+        Called during termination BEFORE ``memory.free(pid)``.  Does NOT
+        decrement refcounts — ``memory.free(pid)`` handles that via
+        ``_page_tables[pid]`` entries.
+
+        If a segment is marked for deletion and this was the last
+        attachment, free the segment.
+        """
+        for seg in list(self._shared_memory.values()):
+            if pid not in seg.attachments:
+                continue
+
+            # Unmap from VAS (but don't decrement refcounts — free() will)
+            process = self._processes.get(pid)
+            if process is not None:
+                vm = process.virtual_memory
+                if vm is not None:
+                    start_vpn = seg.attachments[pid]
+                    for i in range(seg.num_pages):
+                        vpn = start_vpn + i
+                        if vpn in vm.page_table.mappings():
+                            vm.page_table.unmap(virtual_page=vpn)
+
+            del seg.attachments[pid]
+
+            if seg.marked_for_deletion and not seg.attachments:
+                self._shm_free_segment(seg.name)
 
     def wait_process(self, *, parent_pid: int) -> dict[str, Any] | None:
         """Wait for any child of the parent to terminate.

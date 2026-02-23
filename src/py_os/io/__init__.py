@@ -19,6 +19,7 @@ from py_os.io.devices import (
 )
 from py_os.io.ipc import MessageQueue, Pipe
 from py_os.io.networking import Socket, SocketManager, SocketState
+from py_os.io.shm import SharedMemoryError, SharedMemorySegment
 
 __all__ = [
     "ConsoleDevice",
@@ -29,6 +30,8 @@ __all__ = [
     "NullDevice",
     "Pipe",
     "RandomDevice",
+    "SharedMemoryError",
+    "SharedMemorySegment",
     "Socket",
     "SocketManager",
     "SocketState",

@@ -108,8 +108,8 @@ two processes *need* to share information?
 That's where **IPC** comes in. IPC stands for "inter-process communication,"
 which is a fancy way of saying "how processes talk to each other."
 
-PyOS provides two IPC mechanisms. Think of them as two different ways students
-in a school can pass information without talking out loud.
+PyOS provides three IPC mechanisms. Think of them as three different ways
+students in a school can pass information without talking out loud.
 
 ### Pipes -- The Tin-Can Telephone
 
@@ -159,13 +159,76 @@ find it and send or receive messages. This is great for many-to-many
 communication -- multiple processes can all send to the same queue, and multiple
 processes can all read from it.
 
-### Pipes vs. Message Queues -- When to Use Which?
+### Shared Memory -- The Shared Whiteboard
+
+Pipes and message queues are great, but they both involve **copying** data. The
+sender writes data into the pipe or queue, and the receiver reads its own copy
+out. For small messages that's fine, but what if two processes need to share a
+huge chunk of data -- like a big spreadsheet or a video frame? Copying all that
+data back and forth would be slow.
+
+**Shared memory** solves this by giving multiple processes access to the *same*
+chunk of memory. No copying at all.
+
+Think of a whiteboard in the school hallway. Any student can walk up and write
+on it, and every other student can see what's there instantly. Nobody has to
+copy anything -- they're all looking at the same board. That's shared memory.
+
+Here's how it works in PyOS:
+
+1. **Create** -- a process asks the kernel to set up a named whiteboard (a
+   shared memory segment) of a certain size. The kernel allocates physical
+   memory frames to back it, just like it does for [virtual memory](memory.md).
+   The name is like a label on the whiteboard ("project-data" or "scoreboard").
+
+2. **Attach** -- any process that knows the name can attach to the segment.
+   The kernel maps the segment's frames into that process's virtual address
+   space so it can read and write directly. Multiple processes can attach at
+   the same time.
+
+3. **Read / Write** -- attached processes read and write bytes directly.
+   Because everyone is looking at the same underlying memory, a write by one
+   process is instantly visible to all others. Zero copying.
+
+4. **Detach** -- when a process is done, it detaches. The kernel unmaps the
+   frames from that process's address space, but the whiteboard stays up for
+   anyone else still using it.
+
+5. **Destroy** -- when nobody needs the whiteboard anymore, any process can
+   ask the kernel to destroy it. If processes are still attached, the kernel
+   marks it "for deletion" and waits. Once the last process detaches, the
+   memory is freed.
+
+#### The Synchronization Problem
+
+Here's the catch. Shared memory is the fastest IPC mechanism -- but it's also
+the most dangerous if you're not careful.
+
+Imagine two students try to write on the whiteboard at the exact same time.
+One writes "Meeting at 3" and the other writes "Pizza party." You might end
+up with "MePizzting party at 3" -- a garbled mess. This is called a **race
+condition**.
+
+To prevent this, processes need a way to take turns. That's where
+[synchronization primitives](synchronization.md) come in -- mutexes,
+semaphores, and reader-writer locks can all coordinate access to shared
+memory. Think of it like a "WRITING -- DO NOT ERASE" sign that a student
+puts on the whiteboard while they're using it.
+
+Real operating systems face this exact same challenge. Shared memory gives you
+speed, but you have to be disciplined about synchronization. That's the
+trade-off.
+
+### Pipes vs. Message Queues vs. Shared Memory -- When to Use Which?
 
 - Use a **pipe** when you have a simple producer-consumer setup: one process
   generates a stream of bytes, and another consumes it. Think "command output."
 - Use a **message queue** when you need structured, discrete messages and
   possibly many senders or receivers. Think "task assignments" or "event
   notifications."
+- Use **shared memory** when you need fast, random-access, bidirectional data
+  sharing between processes. Think "shared spreadsheet" or "game state." Just
+  remember to add synchronization.
 
 ---
 
@@ -366,8 +429,9 @@ how the OS connects programs to the outside world and to each other.
   of hardware behind the scenes.
 
 - **IPC** lets [processes](processes.md) share data even though they live in
-  isolated [memory](memory.md) spaces. Pipes handle byte streams; message
-  queues handle structured messages.
+  isolated [memory](memory.md) spaces. Pipes handle byte streams, message
+  queues handle structured messages, and shared memory lets processes read
+  and write the same underlying bytes with zero copying.
 
 - **Disk scheduling** decides the smartest order to serve disk requests, so
   the read head doesn't waste time zigzagging. The choice of algorithm is a

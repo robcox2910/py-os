@@ -119,6 +119,8 @@ Every source file and what it implements.
 | `io/ipc.py` | `MessageQueue` | Typed generic message queue |
 | `io/disk.py` | `DiskScheduler` | Request queue with pluggable scheduling policy |
 | `io/disk.py` | `FCFSPolicy` / `SSTFPolicy` / `SCANPolicy` / `CSCANPolicy` | Disk I/O scheduling strategies |
+| `io/shm.py` | `SharedMemorySegment` | Named shared memory region (dataclass with frames, storage, attachments) |
+| `io/shm.py` | `SharedMemoryError` | Exception for shared memory operation failures |
 | `io/networking.py` | `SocketManager` | Socket lifecycle, connection routing, data buffers |
 | `io/networking.py` | `Socket` / `SocketState` | Endpoint with CREATED/BOUND/LISTENING/CONNECTED/CLOSED states |
 
@@ -168,6 +170,7 @@ Every source file and what it implements.
 | 110-119, 122-125 | Synchronization (mutex, semaphore, condition, reader-writer lock) |
 | 120-121 | Scheduler operations (policy switching, MLFQ boost) |
 | 130-133 | Journal operations (status, checkpoint, recover, crash) |
+| 140-146 | Shared memory IPC (create, attach, detach, destroy, write, read, list) |
 
 ## Strategy Pattern Usage
 
