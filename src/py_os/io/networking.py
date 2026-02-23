@@ -27,6 +27,10 @@ from enum import StrEnum
 from itertools import count
 
 
+class SocketError(Exception):
+    """Raise when a socket operation fails."""
+
+
 class SocketState(StrEnum):
     """Lifecycle states of a socket.
 

@@ -18,8 +18,20 @@ from py_os.io.devices import (
     RandomDevice,
 )
 from py_os.io.dns import DnsError, DnsRecord, DnsResolver
+from py_os.io.http import (
+    HttpError,
+    HttpMethod,
+    HttpRequest,
+    HttpResponse,
+    HttpStatus,
+    format_request,
+    format_response,
+    parse_request,
+    parse_response,
+    status_reason,
+)
 from py_os.io.ipc import MessageQueue, Pipe
-from py_os.io.networking import Socket, SocketManager, SocketState
+from py_os.io.networking import Socket, SocketError, SocketManager, SocketState
 from py_os.io.shm import SharedMemoryError, SharedMemorySegment
 
 __all__ = [
@@ -30,6 +42,11 @@ __all__ = [
     "DnsError",
     "DnsRecord",
     "DnsResolver",
+    "HttpError",
+    "HttpMethod",
+    "HttpRequest",
+    "HttpResponse",
+    "HttpStatus",
     "MessageQueue",
     "NullDevice",
     "Pipe",
@@ -37,6 +54,12 @@ __all__ = [
     "SharedMemoryError",
     "SharedMemorySegment",
     "Socket",
+    "SocketError",
     "SocketManager",
     "SocketState",
+    "format_request",
+    "format_response",
+    "parse_request",
+    "parse_response",
+    "status_reason",
 ]

@@ -33,6 +33,7 @@ from typing import Any
 
 from py_os.fs.fd import FdError, FileMode, SeekWhence
 from py_os.io.dns import DnsError
+from py_os.io.networking import SocketError
 from py_os.io.shm import SharedMemoryError
 from py_os.memory.mmap import MmapError
 from py_os.memory.slab import SlabError
@@ -176,6 +177,17 @@ class SyscallNumber(IntEnum):
     SYS_DNS_LIST = 153
     SYS_DNS_FLUSH = 154
 
+    # Socket operations
+    SYS_SOCKET_CREATE = 160
+    SYS_SOCKET_BIND = 161
+    SYS_SOCKET_LISTEN = 162
+    SYS_SOCKET_CONNECT = 163
+    SYS_SOCKET_ACCEPT = 164
+    SYS_SOCKET_SEND = 165
+    SYS_SOCKET_RECV = 166
+    SYS_SOCKET_CLOSE = 167
+    SYS_SOCKET_LIST = 168
+
 
 class SyscallError(Exception):
     """Raised when a system call fails.
@@ -292,6 +304,15 @@ def dispatch_syscall(
         SyscallNumber.SYS_DNS_REMOVE: _sys_dns_remove,
         SyscallNumber.SYS_DNS_LIST: _sys_dns_list,
         SyscallNumber.SYS_DNS_FLUSH: _sys_dns_flush,
+        SyscallNumber.SYS_SOCKET_CREATE: _sys_socket_create,
+        SyscallNumber.SYS_SOCKET_BIND: _sys_socket_bind,
+        SyscallNumber.SYS_SOCKET_LISTEN: _sys_socket_listen,
+        SyscallNumber.SYS_SOCKET_CONNECT: _sys_socket_connect,
+        SyscallNumber.SYS_SOCKET_ACCEPT: _sys_socket_accept,
+        SyscallNumber.SYS_SOCKET_SEND: _sys_socket_send,
+        SyscallNumber.SYS_SOCKET_RECV: _sys_socket_recv,
+        SyscallNumber.SYS_SOCKET_CLOSE: _sys_socket_close,
+        SyscallNumber.SYS_SOCKET_LIST: _sys_socket_list,
     }
 
     handler = handlers.get(number)
@@ -1254,3 +1275,75 @@ def _sys_dns_list(kernel: Any, **_kwargs: Any) -> list[dict[str, str]]:
 def _sys_dns_flush(kernel: Any, **_kwargs: Any) -> int:
     """Flush all DNS records."""
     return kernel.dns_flush()
+
+
+# -- Socket syscall handlers ------------------------------------------------
+
+
+def _sys_socket_create(kernel: Any, **_kwargs: Any) -> dict[str, int | str]:
+    """Create a new socket."""
+    try:
+        return kernel.socket_create()
+    except SocketError as e:
+        raise SyscallError(str(e)) from e
+
+
+def _sys_socket_bind(kernel: Any, **kwargs: Any) -> None:
+    """Bind a socket to an address and port."""
+    try:
+        kernel.socket_bind(kwargs["sock_id"], kwargs["address"], kwargs["port"])
+    except SocketError as e:
+        raise SyscallError(str(e)) from e
+
+
+def _sys_socket_listen(kernel: Any, **kwargs: Any) -> None:
+    """Mark a socket as listening."""
+    try:
+        kernel.socket_listen(kwargs["sock_id"])
+    except SocketError as e:
+        raise SyscallError(str(e)) from e
+
+
+def _sys_socket_connect(kernel: Any, **kwargs: Any) -> None:
+    """Connect a socket to a listener."""
+    try:
+        kernel.socket_connect(kwargs["sock_id"], kwargs["address"], kwargs["port"])
+    except SocketError as e:
+        raise SyscallError(str(e)) from e
+
+
+def _sys_socket_accept(kernel: Any, **kwargs: Any) -> dict[str, int | str] | None:
+    """Accept a pending connection."""
+    try:
+        return kernel.socket_accept(kwargs["sock_id"])
+    except SocketError as e:
+        raise SyscallError(str(e)) from e
+
+
+def _sys_socket_send(kernel: Any, **kwargs: Any) -> None:
+    """Send data over a socket."""
+    try:
+        kernel.socket_send(kwargs["sock_id"], kwargs["data"])
+    except SocketError as e:
+        raise SyscallError(str(e)) from e
+
+
+def _sys_socket_recv(kernel: Any, **kwargs: Any) -> bytes:
+    """Receive data from a socket."""
+    try:
+        return kernel.socket_recv(kwargs["sock_id"])
+    except SocketError as e:
+        raise SyscallError(str(e)) from e
+
+
+def _sys_socket_close(kernel: Any, **kwargs: Any) -> None:
+    """Close a socket."""
+    try:
+        kernel.socket_close(kwargs["sock_id"])
+    except SocketError as e:
+        raise SyscallError(str(e)) from e
+
+
+def _sys_socket_list(kernel: Any, **_kwargs: Any) -> list[dict[str, object]]:
+    """List all sockets."""
+    return kernel.socket_list()

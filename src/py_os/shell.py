@@ -27,6 +27,17 @@ from collections.abc import Callable
 from dataclasses import dataclass
 
 from py_os.fs.filesystem import FileType
+from py_os.io.http import (
+    HttpMethod,
+    HttpRequest,
+    HttpResponse,
+    HttpStatus,
+    format_request,
+    format_response,
+    parse_request,
+    parse_response,
+    status_reason,
+)
 from py_os.io.networking import SocketManager
 from py_os.jobs import JobManager, JobStatus
 from py_os.kernel import Kernel, KernelState
@@ -158,6 +169,8 @@ class Shell:
             "waitjob": self._cmd_waitjob,
             "shm": self._cmd_shm,
             "dns": self._cmd_dns,
+            "socket": self._cmd_socket,
+            "http": self._cmd_http,
         }
 
     @property
@@ -2498,5 +2511,364 @@ class Shell:
                 self._kernel.syscall(SyscallNumber.SYS_DNS_REMOVE, hostname=demo_host_1)
             with contextlib.suppress(SyscallError):
                 self._kernel.syscall(SyscallNumber.SYS_DNS_REMOVE, hostname=demo_host_2)
+
+        return "\n".join(lines)
+
+    # -- Socket commands ---------------------------------------------------
+
+    def _cmd_socket(self, args: list[str]) -> str:
+        """Manage raw sockets — create, bind, listen, connect, accept, send, recv, close, list."""
+        dispatch: dict[str, Callable[[list[str]], str]] = {
+            "create": lambda _a: self._cmd_socket_create(),
+            "bind": self._cmd_socket_bind,
+            "listen": self._cmd_socket_listen,
+            "connect": self._cmd_socket_connect,
+            "accept": self._cmd_socket_accept,
+            "send": self._cmd_socket_send,
+            "recv": self._cmd_socket_recv,
+            "close": self._cmd_socket_close,
+            "list": lambda _a: self._cmd_socket_list(),
+        }
+        if not args or args[0] not in dispatch:
+            return "Usage: socket <create|bind|listen|connect|accept|send|recv|close|list>"
+        return dispatch[args[0]](args[1:])
+
+    def _cmd_socket_create(self) -> str:
+        """Create a new socket."""
+        try:
+            result: dict[str, int | str] = self._kernel.syscall(SyscallNumber.SYS_SOCKET_CREATE)
+            return f"Socket {result['sock_id']} created (state: {result['state']})"
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_socket_bind(self, args: list[str]) -> str:
+        """Bind a socket to an address and port."""
+        expected_args = 3
+        if len(args) < expected_args:
+            return "Usage: socket bind <id> <address> <port>"
+        try:
+            sock_id = int(args[0])
+            port = int(args[2])
+        except ValueError:
+            return "Error: id and port must be integers"
+        try:
+            self._kernel.syscall(
+                SyscallNumber.SYS_SOCKET_BIND, sock_id=sock_id, address=args[1], port=port
+            )
+            return f"Socket {sock_id} bound to {args[1]}:{port}"
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_socket_listen(self, args: list[str]) -> str:
+        """Mark a socket as listening."""
+        if not args:
+            return "Usage: socket listen <id>"
+        try:
+            sock_id = int(args[0])
+        except ValueError:
+            return "Error: id must be an integer"
+        try:
+            self._kernel.syscall(SyscallNumber.SYS_SOCKET_LISTEN, sock_id=sock_id)
+            return f"Socket {sock_id} listening"
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_socket_connect(self, args: list[str]) -> str:
+        """Connect a socket to a listener."""
+        expected_args = 3
+        if len(args) < expected_args:
+            return "Usage: socket connect <id> <address> <port>"
+        try:
+            sock_id = int(args[0])
+            port = int(args[2])
+        except ValueError:
+            return "Error: id and port must be integers"
+        try:
+            self._kernel.syscall(
+                SyscallNumber.SYS_SOCKET_CONNECT, sock_id=sock_id, address=args[1], port=port
+            )
+            return f"Socket {sock_id} connected to {args[1]}:{port}"
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_socket_accept(self, args: list[str]) -> str:
+        """Accept a pending connection."""
+        if not args:
+            return "Usage: socket accept <id>"
+        try:
+            sock_id = int(args[0])
+        except ValueError:
+            return "Error: id must be an integer"
+        try:
+            result = self._kernel.syscall(SyscallNumber.SYS_SOCKET_ACCEPT, sock_id=sock_id)
+            if result is None:
+                return "No pending connections"
+            return f"Accepted connection: peer socket {result['sock_id']}"
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_socket_send(self, args: list[str]) -> str:
+        """Send data over a socket."""
+        min_args = 2
+        if len(args) < min_args:
+            return "Usage: socket send <id> <data>"
+        try:
+            sock_id = int(args[0])
+        except ValueError:
+            return "Error: id must be an integer"
+        data = " ".join(args[1:])
+        try:
+            self._kernel.syscall(SyscallNumber.SYS_SOCKET_SEND, sock_id=sock_id, data=data.encode())
+            return f"Sent {len(data)} bytes on socket {sock_id}"
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_socket_recv(self, args: list[str]) -> str:
+        """Receive data from a socket."""
+        if not args:
+            return "Usage: socket recv <id>"
+        try:
+            sock_id = int(args[0])
+        except ValueError:
+            return "Error: id must be an integer"
+        try:
+            data: bytes = self._kernel.syscall(SyscallNumber.SYS_SOCKET_RECV, sock_id=sock_id)
+            if not data:
+                return "(no data)"
+            return data.decode(errors="replace")
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_socket_close(self, args: list[str]) -> str:
+        """Close a socket."""
+        if not args:
+            return "Usage: socket close <id>"
+        try:
+            sock_id = int(args[0])
+        except ValueError:
+            return "Error: id must be an integer"
+        try:
+            self._kernel.syscall(SyscallNumber.SYS_SOCKET_CLOSE, sock_id=sock_id)
+            return f"Socket {sock_id} closed"
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_socket_list(self) -> str:
+        """List all sockets."""
+        sockets: list[dict[str, object]] = self._kernel.syscall(SyscallNumber.SYS_SOCKET_LIST)
+        if not sockets:
+            return "No sockets."
+        lines = ["ID     STATE        ADDRESS          PORT"]
+        for s in sockets:
+            sid = s["sock_id"]
+            state = s["state"]
+            addr = s.get("address") or "-"
+            port = s.get("port") or "-"
+            lines.append(f"{sid:<6} {state:<12} {addr:<16} {port}")
+        return "\n".join(lines)
+
+    # -- HTTP commands -----------------------------------------------------
+
+    def _cmd_http(self, args: list[str]) -> str:
+        """HTTP protocol demo — request/response over sockets."""
+        dispatch: dict[str, Callable[[list[str]], str]] = {
+            "demo": lambda _a: self._cmd_http_demo(),
+        }
+        if not args or args[0] not in dispatch:
+            return "Usage: http <demo>"
+        return dispatch[args[0]](args[1:])
+
+    def _cmd_http_demo(self) -> str:  # noqa: PLR0915
+        """Walk through an HTTP demo — serve a file over sockets."""
+        lines: list[str] = [
+            "=== HTTP Demo: Request/Response Over Sockets ===",
+            "",
+            "HTTP is like a restaurant. The customer (client) fills out an",
+            "order form (request), the waiter (socket) carries it to the",
+            "kitchen (server), and the kitchen sends back a receipt (response).",
+            "",
+        ]
+
+        demo_host = "_demo.webserver"
+        demo_ip = "10.0.0.80"
+        demo_port = 80
+        demo_path = "/www/index.html"
+        demo_content = "<h1>Welcome to PyOS!</h1>"
+        missing_path = "/www/missing.html"
+
+        # Track socket IDs for cleanup
+        sock_ids: list[int] = []
+
+        try:
+            # Step 1: Create file in filesystem
+            self._kernel.syscall(SyscallNumber.SYS_CREATE_DIR, path="/www")
+            self._kernel.syscall(SyscallNumber.SYS_CREATE_FILE, path=demo_path)
+            self._kernel.syscall(
+                SyscallNumber.SYS_WRITE_FILE,
+                path=demo_path,
+                data=demo_content.encode(),
+            )
+            lines.append(f'Step 1: Created {demo_path} with "{demo_content}"')
+            lines.append("")
+
+            # Step 2: Register DNS
+            self._kernel.syscall(
+                SyscallNumber.SYS_DNS_REGISTER,
+                hostname=demo_host,
+                address=demo_ip,
+            )
+            lines.append(f"Step 2: Registered DNS: {demo_host} -> {demo_ip}")
+            lines.append("")
+
+            # Step 3: Server socket — create, bind, listen (via syscalls)
+            srv = self._kernel.syscall(SyscallNumber.SYS_SOCKET_CREATE)
+            srv_id = srv["sock_id"]
+            sock_ids.append(srv_id)
+            self._kernel.syscall(
+                SyscallNumber.SYS_SOCKET_BIND,
+                sock_id=srv_id,
+                address=demo_ip,
+                port=demo_port,
+            )
+            self._kernel.syscall(SyscallNumber.SYS_SOCKET_LISTEN, sock_id=srv_id)
+            lines.append(f"Step 3: Server socket {srv_id} listening on {demo_ip}:{demo_port}")
+
+            # Step 4: Client socket — create and connect
+            cli = self._kernel.syscall(SyscallNumber.SYS_SOCKET_CREATE)
+            cli_id = cli["sock_id"]
+            sock_ids.append(cli_id)
+            self._kernel.syscall(
+                SyscallNumber.SYS_SOCKET_CONNECT,
+                sock_id=cli_id,
+                address=demo_ip,
+                port=demo_port,
+            )
+            lines.append(f"Step 4: Client socket {cli_id} connected to {demo_ip}:{demo_port}")
+            lines.append("")
+
+            # Step 5: Server accepts
+            peer = self._kernel.syscall(SyscallNumber.SYS_SOCKET_ACCEPT, sock_id=srv_id)
+            assert peer is not None  # noqa: S101
+            peer_id = peer["sock_id"]
+            sock_ids.append(peer_id)
+            lines.append(f"Step 5: Server accepted connection (peer socket {peer_id})")
+            lines.append("")
+
+            # Step 6: Client sends HTTP GET request
+            request = HttpRequest(
+                method=HttpMethod.GET,
+                path=demo_path,
+                headers={"Host": demo_host},
+            )
+            request_bytes = format_request(request)
+            self._kernel.syscall(
+                SyscallNumber.SYS_SOCKET_SEND,
+                sock_id=cli_id,
+                data=request_bytes,
+            )
+            lines.append(f"Step 6: Client sends: GET {demo_path} HTTP/1.0")
+
+            # Step 7: Server receives and parses
+            raw_request: bytes = self._kernel.syscall(
+                SyscallNumber.SYS_SOCKET_RECV, sock_id=peer_id
+            )
+            parsed = parse_request(raw_request)
+            lines.append(f"Step 7: Server receives request: {parsed.method} {parsed.path}")
+
+            # Step 8: Server reads file and builds response
+            file_data: bytes = self._kernel.syscall(SyscallNumber.SYS_READ_FILE, path=parsed.path)
+            response = HttpResponse(
+                status=HttpStatus.OK,
+                headers={"Content-Type": "text/html"},
+                body=file_data,
+            )
+            response_bytes = format_response(response)
+            self._kernel.syscall(
+                SyscallNumber.SYS_SOCKET_SEND,
+                sock_id=peer_id,
+                data=response_bytes,
+            )
+            lines.append(
+                f"Step 8: Server reads file, sends: HTTP/1.0 {response.status}"
+                f" {status_reason(response.status)}"
+            )
+            lines.append("")
+
+            # Step 9: Client receives and parses response
+            raw_response: bytes = self._kernel.syscall(
+                SyscallNumber.SYS_SOCKET_RECV, sock_id=cli_id
+            )
+            parsed_resp = parse_response(raw_response)
+            lines.append(
+                f"Step 9: Client receives: {parsed_resp.status} {status_reason(parsed_resp.status)}"
+            )
+            lines.append(f"  Body: {parsed_resp.body.decode()}")
+            lines.append("")
+
+            # Step 10: Show 404 — request a missing file
+            lines.append("--- Now requesting a file that doesn't exist ---")
+            lines.append("")
+            request_404 = HttpRequest(
+                method=HttpMethod.GET,
+                path=missing_path,
+                headers={"Host": demo_host},
+            )
+            self._kernel.syscall(
+                SyscallNumber.SYS_SOCKET_SEND,
+                sock_id=cli_id,
+                data=format_request(request_404),
+            )
+            raw_404: bytes = self._kernel.syscall(SyscallNumber.SYS_SOCKET_RECV, sock_id=peer_id)
+            parsed_404 = parse_request(raw_404)
+
+            # Server tries to read the file — it won't exist
+            try:
+                self._kernel.syscall(SyscallNumber.SYS_READ_FILE, path=parsed_404.path)
+                # If we somehow get here, send 200 (shouldn't happen)
+                resp_404 = HttpResponse(status=HttpStatus.OK, headers={})
+            except SyscallError:
+                resp_404 = HttpResponse(
+                    status=HttpStatus.NOT_FOUND,
+                    headers={},
+                    body=b"404 Not Found",
+                )
+
+            self._kernel.syscall(
+                SyscallNumber.SYS_SOCKET_SEND,
+                sock_id=peer_id,
+                data=format_response(resp_404),
+            )
+            raw_404_resp: bytes = self._kernel.syscall(
+                SyscallNumber.SYS_SOCKET_RECV, sock_id=cli_id
+            )
+            parsed_404_resp = parse_response(raw_404_resp)
+            lines.append(
+                f"Step 10: GET {missing_path} -> {parsed_404_resp.status}"
+                f" {status_reason(parsed_404_resp.status)}"
+            )
+            lines.append(f"  Body: {parsed_404_resp.body.decode()}")
+            lines.append("")
+
+            # Teaching summary
+            lines.append("How it works:")
+            lines.append("  - HTTP is a request/response protocol (client asks, server answers)")
+            lines.append("  - Requests have a method (GET, POST) and a path (/index.html)")
+            lines.append("  - Responses have a status code (200 OK, 404 Not Found)")
+            lines.append("  - HTTP runs ON TOP of sockets — protocol layering!")
+            lines.append("  - All socket operations go through syscalls (kernel integration)")
+
+        except SyscallError as e:
+            lines.append(f"\nError during demo: {e}")
+        finally:
+            # Clean up: close sockets, remove DNS, delete files
+            for sid in sock_ids:
+                with contextlib.suppress(SyscallError):
+                    self._kernel.syscall(SyscallNumber.SYS_SOCKET_CLOSE, sock_id=sid)
+            with contextlib.suppress(SyscallError):
+                self._kernel.syscall(SyscallNumber.SYS_DNS_REMOVE, hostname=demo_host)
+            with contextlib.suppress(SyscallError):
+                self._kernel.syscall(SyscallNumber.SYS_DELETE_FILE, path=demo_path)
+            with contextlib.suppress(SyscallError):
+                self._kernel.syscall(SyscallNumber.SYS_DELETE_FILE, path="/www")
 
         return "\n".join(lines)
