@@ -108,6 +108,7 @@ Here are the commands grouped by what they do. You don't need to memorize them
 | `pi`        | Priority inheritance demo and status |
 | `ordering`  | Deadlock prevention: register ranks, set mode, view violations, demo |
 | `shm`       | Shared memory: create, attach, detach, write, read, list, destroy, demo |
+| `dns`       | DNS: register, lookup, remove, list, flush, demo |
 
 **Scheduling** -- controlling how processes share the CPU:
 
@@ -642,7 +643,7 @@ on what you're typing:
 | Where you are | What completes |
 |---------------|----------------|
 | First word on the line | Command names (`ls`, `cat`, `mkdir`, ...) |
-| After `scheduler`, `mutex`, `semaphore`, `rwlock`, `journal`, `pi`, `ordering`, `shm` | Subcommands (`fcfs`, `create`, `list`, `status`, `demo`, `register`, `mode`, `violations`, ...) |
+| After `scheduler`, `mutex`, `semaphore`, `rwlock`, `journal`, `pi`, `ordering`, `shm`, `dns` | Subcommands (`fcfs`, `create`, `list`, `status`, `demo`, `register`, `mode`, `violations`, ...) |
 | After a file command (`ls`, `cat`, `rm`, ...) | Filesystem paths |
 | After `run` | Built-in program names |
 | After `unset` | Environment variable names |

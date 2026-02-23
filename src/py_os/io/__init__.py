@@ -17,6 +17,7 @@ from py_os.io.devices import (
     NullDevice,
     RandomDevice,
 )
+from py_os.io.dns import DnsError, DnsRecord, DnsResolver
 from py_os.io.ipc import MessageQueue, Pipe
 from py_os.io.networking import Socket, SocketManager, SocketState
 from py_os.io.shm import SharedMemoryError, SharedMemorySegment
@@ -26,6 +27,9 @@ __all__ = [
     "Device",
     "DeviceManager",
     "DeviceState",
+    "DnsError",
+    "DnsRecord",
+    "DnsResolver",
     "MessageQueue",
     "NullDevice",
     "Pipe",

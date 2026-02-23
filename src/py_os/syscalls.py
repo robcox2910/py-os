@@ -32,6 +32,7 @@ from enum import IntEnum
 from typing import Any
 
 from py_os.fs.fd import FdError, FileMode, SeekWhence
+from py_os.io.dns import DnsError
 from py_os.io.shm import SharedMemoryError
 from py_os.memory.mmap import MmapError
 from py_os.memory.slab import SlabError
@@ -168,6 +169,13 @@ class SyscallNumber(IntEnum):
     SYS_SHM_READ = 145
     SYS_SHM_LIST = 146
 
+    # DNS operations
+    SYS_DNS_REGISTER = 150
+    SYS_DNS_LOOKUP = 151
+    SYS_DNS_REMOVE = 152
+    SYS_DNS_LIST = 153
+    SYS_DNS_FLUSH = 154
+
 
 class SyscallError(Exception):
     """Raised when a system call fails.
@@ -279,6 +287,11 @@ def dispatch_syscall(
         SyscallNumber.SYS_SHM_WRITE: _sys_shm_write,
         SyscallNumber.SYS_SHM_READ: _sys_shm_read,
         SyscallNumber.SYS_SHM_LIST: _sys_shm_list,
+        SyscallNumber.SYS_DNS_REGISTER: _sys_dns_register,
+        SyscallNumber.SYS_DNS_LOOKUP: _sys_dns_lookup,
+        SyscallNumber.SYS_DNS_REMOVE: _sys_dns_remove,
+        SyscallNumber.SYS_DNS_LIST: _sys_dns_list,
+        SyscallNumber.SYS_DNS_FLUSH: _sys_dns_flush,
     }
 
     handler = handlers.get(number)
@@ -1199,3 +1212,45 @@ def _sys_shm_read(kernel: Any, **kwargs: Any) -> dict[str, object]:
 def _sys_shm_list(kernel: Any, **_kwargs: Any) -> list[dict[str, object]]:
     """List all shared memory segments."""
     return kernel.shm_list()
+
+
+# -- DNS syscall handlers ---------------------------------------------------
+
+
+def _sys_dns_register(kernel: Any, **kwargs: Any) -> dict[str, str]:
+    """Register a DNS A record."""
+    hostname: str = kwargs["hostname"]
+    address: str = kwargs["address"]
+    try:
+        record = kernel.dns_register(hostname, address)
+    except DnsError as e:
+        raise SyscallError(str(e)) from e
+    return {"hostname": record.hostname, "address": record.address}
+
+
+def _sys_dns_lookup(kernel: Any, **kwargs: Any) -> str:
+    """Look up a hostname via DNS."""
+    hostname: str = kwargs["hostname"]
+    try:
+        return kernel.dns_lookup(hostname)
+    except DnsError as e:
+        raise SyscallError(str(e)) from e
+
+
+def _sys_dns_remove(kernel: Any, **kwargs: Any) -> None:
+    """Remove a DNS record."""
+    hostname: str = kwargs["hostname"]
+    try:
+        kernel.dns_remove(hostname)
+    except DnsError as e:
+        raise SyscallError(str(e)) from e
+
+
+def _sys_dns_list(kernel: Any, **_kwargs: Any) -> list[dict[str, str]]:
+    """List all DNS records."""
+    return kernel.dns_list()
+
+
+def _sys_dns_flush(kernel: Any, **_kwargs: Any) -> int:
+    """Flush all DNS records."""
+    return kernel.dns_flush()

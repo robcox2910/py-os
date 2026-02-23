@@ -35,6 +35,7 @@ _SUBCOMMANDS: dict[str, list[str]] = {
     "pi": ["demo", "status"],
     "ordering": ["register", "status", "mode", "violations", "demo"],
     "shm": ["create", "attach", "detach", "write", "read", "list", "destroy", "demo"],
+    "dns": ["register", "lookup", "remove", "list", "flush", "demo"],
 }
 
 # Minimum number of words needed before signal name completion kicks in.

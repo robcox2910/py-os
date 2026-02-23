@@ -20,7 +20,7 @@ Technical reference for every module in the system. For beginner-friendly explan
 | [Filesystem](concepts/filesystem.md) | Inodes, path resolution, hard/symbolic links, persistence, journaling |
 | [Kernel and System Calls](concepts/kernel-and-syscalls.md) | Boot sequence, lifecycle, syscall dispatch, number ranges |
 | [The Shell](concepts/shell.md) | Commands, pipes, redirection, loops, scripting, jobs, history, aliases, tab completion, env |
-| [Devices and Networking](concepts/devices-and-networking.md) | Device protocol, IPC, disk scheduling, sockets |
+| [Devices and Networking](concepts/devices-and-networking.md) | Device protocol, IPC, disk scheduling, sockets, DNS |
 | [Users and Safety](concepts/users-and-safety.md) | Permissions, signals, logging, deadlock |
 | [Synchronization](concepts/synchronization.md) | Mutex, semaphore, condition variable, reader-writer lock, race conditions, deadlock prevention |
 
@@ -35,7 +35,7 @@ Every source file and what it implements.
 | `kernel.py` | `Kernel` | Central coordinator, boot/shutdown lifecycle, subsystem ownership |
 | `kernel.py` | `KernelState` | SHUTDOWN / BOOTING / RUNNING / SHUTTING_DOWN state machine |
 | `syscalls.py` | `dispatch_syscall()` | Trap handler -- routes syscall numbers to kernel subsystem handlers |
-| `syscalls.py` | `SyscallNumber` | IntEnum of all syscall numbers (1-133+) |
+| `syscalls.py` | `SyscallNumber` | IntEnum of all syscall numbers (1-154) |
 | `syscalls.py` | `SyscallError` | User-facing exception wrapping internal errors |
 
 ### Process Management
@@ -121,6 +121,9 @@ Every source file and what it implements.
 | `io/disk.py` | `FCFSPolicy` / `SSTFPolicy` / `SCANPolicy` / `CSCANPolicy` | Disk I/O scheduling strategies |
 | `io/shm.py` | `SharedMemorySegment` | Named shared memory region (dataclass with frames, storage, attachments) |
 | `io/shm.py` | `SharedMemoryError` | Exception for shared memory operation failures |
+| `io/dns.py` | `DnsResolver` | Local phone book — register, look up, remove, list, flush hostname records |
+| `io/dns.py` | `DnsRecord` | Frozen dataclass — one hostname-to-IP (A record) mapping |
+| `io/dns.py` | `DnsError` | Exception for DNS operation failures |
 | `io/networking.py` | `SocketManager` | Socket lifecycle, connection routing, data buffers |
 | `io/networking.py` | `Socket` / `SocketState` | Endpoint with CREATED/BOUND/LISTENING/CONNECTED/CLOSED states |
 
@@ -171,6 +174,7 @@ Every source file and what it implements.
 | 120-121 | Scheduler operations (policy switching, MLFQ boost) |
 | 130-133 | Journal operations (status, checkpoint, recover, crash) |
 | 140-146 | Shared memory IPC (create, attach, detach, destroy, write, read, list) |
+| 150-154 | DNS operations (register, lookup, remove, list, flush) |
 
 ## Strategy Pattern Usage
 
