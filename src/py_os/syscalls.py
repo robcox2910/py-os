@@ -32,6 +32,7 @@ from enum import IntEnum
 from typing import Any
 
 from py_os.fs.fd import FdError, FileMode, SeekWhence
+from py_os.io.shm import SharedMemoryError
 from py_os.memory.mmap import MmapError
 from py_os.memory.slab import SlabError
 from py_os.process.scheduler import (
@@ -158,6 +159,15 @@ class SyscallNumber(IntEnum):
     SYS_JOURNAL_RECOVER = 132
     SYS_JOURNAL_CRASH = 133
 
+    # Shared memory operations
+    SYS_SHM_CREATE = 140
+    SYS_SHM_ATTACH = 141
+    SYS_SHM_DETACH = 142
+    SYS_SHM_DESTROY = 143
+    SYS_SHM_WRITE = 144
+    SYS_SHM_READ = 145
+    SYS_SHM_LIST = 146
+
 
 class SyscallError(Exception):
     """Raised when a system call fails.
@@ -262,6 +272,13 @@ def dispatch_syscall(
         SyscallNumber.SYS_JOURNAL_CHECKPOINT: _sys_journal_checkpoint,
         SyscallNumber.SYS_JOURNAL_RECOVER: _sys_journal_recover,
         SyscallNumber.SYS_JOURNAL_CRASH: _sys_journal_crash,
+        SyscallNumber.SYS_SHM_CREATE: _sys_shm_create,
+        SyscallNumber.SYS_SHM_ATTACH: _sys_shm_attach,
+        SyscallNumber.SYS_SHM_DETACH: _sys_shm_detach,
+        SyscallNumber.SYS_SHM_DESTROY: _sys_shm_destroy,
+        SyscallNumber.SYS_SHM_WRITE: _sys_shm_write,
+        SyscallNumber.SYS_SHM_READ: _sys_shm_read,
+        SyscallNumber.SYS_SHM_LIST: _sys_shm_list,
     }
 
     handler = handlers.get(number)
@@ -1110,3 +1127,75 @@ def _sys_register_rank(kernel: Any, **kwargs: Any) -> dict[str, Any]:
     rank: int | None = kwargs.get("rank")
     assigned = om.register(name, rank=rank)
     return {"name": name, "rank": assigned}
+
+
+# -- Shared memory syscall handlers -----------------------------------------
+
+
+def _sys_shm_create(kernel: Any, **kwargs: Any) -> dict[str, Any]:
+    """Create a named shared memory segment."""
+    name: str = kwargs["name"]
+    size: int = kwargs["size"]
+    pid: int = kwargs["pid"]
+    try:
+        seg = kernel.shm_create(name=name, size=size, pid=pid)
+    except SharedMemoryError as e:
+        raise SyscallError(str(e)) from e
+    return {"name": seg.name, "size": seg.size, "num_pages": seg.num_pages}
+
+
+def _sys_shm_attach(kernel: Any, **kwargs: Any) -> dict[str, int]:
+    """Attach a process to a shared memory segment."""
+    name: str = kwargs["name"]
+    pid: int = kwargs["pid"]
+    try:
+        address = kernel.shm_attach(name=name, pid=pid)
+    except SharedMemoryError as e:
+        raise SyscallError(str(e)) from e
+    return {"virtual_address": address}
+
+
+def _sys_shm_detach(kernel: Any, **kwargs: Any) -> None:
+    """Detach a process from a shared memory segment."""
+    try:
+        kernel.shm_detach(name=kwargs["name"], pid=kwargs["pid"])
+    except SharedMemoryError as e:
+        raise SyscallError(str(e)) from e
+
+
+def _sys_shm_destroy(kernel: Any, **kwargs: Any) -> None:
+    """Destroy a shared memory segment."""
+    try:
+        kernel.shm_destroy(name=kwargs["name"])
+    except SharedMemoryError as e:
+        raise SyscallError(str(e)) from e
+
+
+def _sys_shm_write(kernel: Any, **kwargs: Any) -> None:
+    """Write data to a shared memory segment."""
+    name: str = kwargs["name"]
+    pid: int = kwargs["pid"]
+    data: bytes = kwargs["data"]
+    offset: int = kwargs.get("offset", 0)
+    try:
+        kernel.shm_write(name=name, pid=pid, data=data, offset=offset)
+    except SharedMemoryError as e:
+        raise SyscallError(str(e)) from e
+
+
+def _sys_shm_read(kernel: Any, **kwargs: Any) -> dict[str, object]:
+    """Read data from a shared memory segment."""
+    name: str = kwargs["name"]
+    pid: int = kwargs["pid"]
+    offset: int = kwargs.get("offset", 0)
+    size: int | None = kwargs.get("size")
+    try:
+        data = kernel.shm_read(name=name, pid=pid, offset=offset, size=size)
+    except SharedMemoryError as e:
+        raise SyscallError(str(e)) from e
+    return {"data": data, "count": len(data)}
+
+
+def _sys_shm_list(kernel: Any, **_kwargs: Any) -> list[dict[str, object]]:
+    """List all shared memory segments."""
+    return kernel.shm_list()

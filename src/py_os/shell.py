@@ -155,6 +155,7 @@ class Shell:
             "pi": self._cmd_pi,
             "ordering": self._cmd_ordering,
             "waitjob": self._cmd_waitjob,
+            "shm": self._cmd_shm,
         }
 
     @property
@@ -2052,6 +2053,245 @@ class Shell:
                     with contextlib.suppress(KeyError):
                         sm.destroy_mutex("_demo_lock_b")
             om.mode = old_mode  # type: ignore[possibly-undefined]
+
+        return "\n".join(lines)
+
+    # -- Shared memory commands ---------------------------------------------
+
+    def _cmd_shm(self, args: list[str]) -> str:
+        """Manage shared memory segments."""
+        dispatch: dict[str, Callable[[list[str]], str]] = {
+            "create": self._cmd_shm_create,
+            "attach": self._cmd_shm_attach,
+            "detach": self._cmd_shm_detach,
+            "write": self._cmd_shm_write,
+            "read": self._cmd_shm_read,
+            "list": lambda _a: self._cmd_shm_list(),
+            "destroy": self._cmd_shm_destroy,
+            "demo": lambda _a: self._cmd_shm_demo(),
+        }
+        if not args or args[0] not in dispatch:
+            return "Usage: shm <create|attach|detach|write|read|list|destroy|demo>"
+        return dispatch[args[0]](args[1:])
+
+    def _cmd_shm_create(self, args: list[str]) -> str:
+        """Create a named shared memory segment."""
+        min_args = 3
+        if len(args) < min_args:
+            return "Usage: shm create <name> <size> <pid>"
+        name = args[0]
+        try:
+            size = int(args[1])
+        except ValueError:
+            return f"Error: invalid size '{args[1]}'"
+        try:
+            pid = int(args[2])
+        except ValueError:
+            return f"Error: invalid PID '{args[2]}'"
+        try:
+            result: dict[str, object] = self._kernel.syscall(
+                SyscallNumber.SYS_SHM_CREATE, name=name, size=size, pid=pid
+            )
+            return (
+                f"Created shared memory '{result['name']}'"
+                f" ({result['size']} bytes, {result['num_pages']} pages)"
+            )
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_shm_attach(self, args: list[str]) -> str:
+        """Attach a process to a shared memory segment."""
+        min_args = 2
+        if len(args) < min_args:
+            return "Usage: shm attach <name> <pid>"
+        name = args[0]
+        try:
+            pid = int(args[1])
+        except ValueError:
+            return f"Error: invalid PID '{args[1]}'"
+        try:
+            result: dict[str, object] = self._kernel.syscall(
+                SyscallNumber.SYS_SHM_ATTACH, name=name, pid=pid
+            )
+            return f"Attached pid {pid} to '{name}' at address {result['virtual_address']}"
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_shm_detach(self, args: list[str]) -> str:
+        """Detach a process from a shared memory segment."""
+        min_args = 2
+        if len(args) < min_args:
+            return "Usage: shm detach <name> <pid>"
+        name = args[0]
+        try:
+            pid = int(args[1])
+        except ValueError:
+            return f"Error: invalid PID '{args[1]}'"
+        try:
+            self._kernel.syscall(SyscallNumber.SYS_SHM_DETACH, name=name, pid=pid)
+            return f"Detached pid {pid} from '{name}'"
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_shm_write(self, args: list[str]) -> str:
+        """Write data to a shared memory segment."""
+        min_args = 3
+        if len(args) < min_args:
+            return "Usage: shm write <name> <pid> <data> [offset]"
+        name = args[0]
+        try:
+            pid = int(args[1])
+        except ValueError:
+            return f"Error: invalid PID '{args[1]}'"
+        offset = 0
+        if len(args) > min_args:
+            try:
+                offset = int(args[-1])
+                data = " ".join(args[2:-1])
+            except ValueError:
+                data = " ".join(args[2:])
+        else:
+            data = args[2]
+        try:
+            self._kernel.syscall(
+                SyscallNumber.SYS_SHM_WRITE,
+                name=name,
+                pid=pid,
+                data=data.encode(),
+                offset=offset,
+            )
+            return f"Wrote {len(data)} bytes to '{name}'"
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_shm_read(self, args: list[str]) -> str:
+        """Read data from a shared memory segment."""
+        min_args = 2
+        if len(args) < min_args:
+            return "Usage: shm read <name> <pid> [offset] [size]"
+        name = args[0]
+        try:
+            pid = int(args[1])
+        except ValueError:
+            return f"Error: invalid PID '{args[1]}'"
+        kwargs: dict[str, object] = {"name": name, "pid": pid}
+        if len(args) > min_args:
+            try:
+                kwargs["offset"] = int(args[2])
+            except ValueError:
+                return f"Error: invalid offset '{args[2]}'"
+        min_args_with_size = 4
+        if len(args) >= min_args_with_size:
+            try:
+                kwargs["size"] = int(args[3])
+            except ValueError:
+                return f"Error: invalid size '{args[3]}'"
+        try:
+            result: dict[str, object] = self._kernel.syscall(SyscallNumber.SYS_SHM_READ, **kwargs)
+            data: bytes = result["data"]  # type: ignore[assignment]
+            return data.decode(errors="replace").rstrip("\x00")
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_shm_list(self) -> str:
+        """List all shared memory segments."""
+        segments: list[dict[str, object]] = self._kernel.syscall(SyscallNumber.SYS_SHM_LIST)
+        if not segments:
+            return "No shared memory segments."
+        lines = ["NAME       SIZE  PAGES  CREATOR  ATTACHED  MARKED"]
+        for seg in segments:
+            marked = "yes" if seg["marked_for_deletion"] else "no"
+            lines.append(
+                f"{seg['name']:<10} {seg['size']!s:>5}"
+                f"  {seg['num_pages']!s:>5}"
+                f"  {seg['creator_pid']!s:>7}"
+                f"  {seg['attached']!s:>8}"
+                f"  {marked}"
+            )
+        return "\n".join(lines)
+
+    def _cmd_shm_destroy(self, args: list[str]) -> str:
+        """Destroy a shared memory segment."""
+        if not args:
+            return "Usage: shm destroy <name>"
+        try:
+            self._kernel.syscall(SyscallNumber.SYS_SHM_DESTROY, name=args[0])
+            return f"Destroyed shared memory '{args[0]}'"
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_shm_demo(self) -> str:
+        """Walk through a shared memory demo — the shared whiteboard."""
+        lines: list[str] = [
+            "=== Shared Memory Demo ===",
+            "",
+            "Imagine a shared whiteboard in the school hallway.",
+            "Any student can walk up and write on it, and everyone",
+            "else can see what's there instantly.",
+            "",
+        ]
+
+        try:
+            # Create two processes
+            writer_r = self._kernel.syscall(
+                SyscallNumber.SYS_CREATE_PROCESS, name="writer", num_pages=1
+            )
+            reader_r = self._kernel.syscall(
+                SyscallNumber.SYS_CREATE_PROCESS, name="reader", num_pages=1
+            )
+            writer_pid: int = writer_r["pid"]
+            reader_pid: int = reader_r["pid"]
+
+            lines.append(
+                f"Step 1: Create two processes: writer (pid={writer_pid})"
+                f" and reader (pid={reader_pid})"
+            )
+
+            # Create a shared memory segment
+            seg_r: dict[str, object] = self._kernel.syscall(
+                SyscallNumber.SYS_SHM_CREATE, name="_demo_board", size=64, pid=writer_pid
+            )
+            lines.append(
+                f"Step 2: Create shared memory 'board'"
+                f" ({seg_r['size']} bytes, {seg_r['num_pages']} pages)"
+            )
+
+            # Attach both processes
+            self._kernel.syscall(SyscallNumber.SYS_SHM_ATTACH, name="_demo_board", pid=writer_pid)
+            self._kernel.syscall(SyscallNumber.SYS_SHM_ATTACH, name="_demo_board", pid=reader_pid)
+            lines.append("Step 3: Both processes attach to the shared memory")
+
+            # Writer writes
+            message = "Hello from Process A!"
+            self._kernel.syscall(
+                SyscallNumber.SYS_SHM_WRITE,
+                name="_demo_board",
+                pid=writer_pid,
+                data=message.encode(),
+            )
+            lines.append(f'Step 4: Writer writes "{message}"')
+
+            # Reader reads
+            read_r: dict[str, object] = self._kernel.syscall(
+                SyscallNumber.SYS_SHM_READ,
+                name="_demo_board",
+                pid=reader_pid,
+                size=len(message),
+            )
+            data: bytes = read_r["data"]  # type: ignore[assignment]
+            lines.append(f'Step 5: Reader reads: "{data.decode()}"')
+            lines.append("  The data appeared instantly -- shared whiteboard!")
+
+            lines.append("")
+            lines.append("Note: Without synchronization (like a semaphore), two")
+            lines.append("processes writing at the same time could corrupt data.")
+            lines.append("Always use a lock or semaphore to protect shared memory!")
+
+        except SyscallError as e:
+            lines.append(f"\nError during demo: {e}")
+        finally:
+            with contextlib.suppress(SyscallError):
+                self._kernel.syscall(SyscallNumber.SYS_SHM_DESTROY, name="_demo_board")
 
         return "\n".join(lines)
 

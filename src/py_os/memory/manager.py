@@ -22,6 +22,7 @@ Why a free list (set) instead of a bitmap?
     learning simulator, clarity wins.
 """
 
+import contextlib
 from collections import defaultdict
 
 
@@ -150,6 +151,22 @@ class MemoryManager:
 
         """
         self._page_tables[pid].append(frame)
+
+    def unshare_frame(self, *, pid: int, frame: int) -> None:
+        """Remove a single frame from a process's page table.
+
+        Counterpart to ``share_frame()``.  Does NOT change refcounts —
+        the caller must decrement separately.
+
+        Args:
+            pid: The process to remove the frame from.
+            frame: The physical frame number to remove.
+
+        """
+        frames = self._page_tables.get(pid)
+        if frames is not None:
+            with contextlib.suppress(ValueError):
+                frames.remove(frame)
 
     @property
     def shared_frame_count(self) -> int:
