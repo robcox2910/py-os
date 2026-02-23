@@ -38,6 +38,7 @@ from py_os.process.scheduler import (
     RoundRobinPolicy,
 )
 from py_os.process.signals import Signal
+from py_os.sync.ordering import OrderingMode
 from py_os.syscalls import SyscallError, SyscallNumber
 
 # Type alias for a command handler: takes a list of args, returns output.
@@ -152,6 +153,7 @@ class Shell:
             "journal": self._cmd_journal,
             "rwlock": self._cmd_rwlock,
             "pi": self._cmd_pi,
+            "ordering": self._cmd_ordering,
             "waitjob": self._cmd_waitjob,
         }
 
@@ -1877,6 +1879,179 @@ class Shell:
             lines.extend(boosted)
         else:
             lines.append("No processes currently boosted.")
+
+        return "\n".join(lines)
+
+    # -- Resource ordering commands -----------------------------------------
+
+    def _cmd_ordering(self, args: list[str]) -> str:
+        """Manage resource ordering — register, status, mode, violations, demo."""
+        subs = {"register", "status", "mode", "violations", "demo"}
+        if not args or args[0] not in subs:
+            return "Usage: ordering <register|status|mode|violations|demo>"
+        sub = args[0]
+        if sub == "register":
+            return self._cmd_ordering_register(args[1:])
+        if sub == "mode":
+            return self._cmd_ordering_mode(args[1:])
+        if sub == "status":
+            return self._cmd_ordering_status()
+        if sub == "violations":
+            return self._cmd_ordering_violations()
+        return self._cmd_ordering_demo()
+
+    def _cmd_ordering_register(self, args: list[str]) -> str:
+        """Register a resource with a rank."""
+        min_args = 2
+        if len(args) < min_args:
+            return "Usage: ordering register <resource> <rank>"
+        name = args[0]
+        try:
+            rank = int(args[1])
+        except ValueError:
+            return f"Error: invalid rank '{args[1]}'"
+        try:
+            result: dict[str, object] = self._kernel.syscall(
+                SyscallNumber.SYS_REGISTER_RANK,
+                name=name,
+                rank=rank,
+            )
+            return f"Registered '{result['name']}' with rank {result['rank']}"
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_ordering_status(self) -> str:
+        """Show ordering table and held resources."""
+        try:
+            result: dict[str, object] = self._kernel.syscall(SyscallNumber.SYS_CHECK_ORDERING)
+        except SyscallError as e:
+            return f"Error: {e}"
+        lines = [
+            "=== Resource Ordering Status ===",
+            f"Mode: {result['mode']}",
+            f"Violations: {result['violations']}",
+        ]
+        ranks: dict[str, int] = result["ranks"]  # type: ignore[assignment]
+        if ranks:
+            lines.append("")
+            lines.append("RESOURCE                     RANK")
+            lines.extend(
+                f"  {name:<26} {ranks[name]}" for name in sorted(ranks, key=lambda n: ranks[n])
+            )
+        else:
+            lines.append("No resources registered.")
+        return "\n".join(lines)
+
+    def _cmd_ordering_mode(self, args: list[str]) -> str:
+        """Set the ordering enforcement mode."""
+        if not args:
+            return "Usage: ordering mode <strict|warn|off>"
+        try:
+            result: str = self._kernel.syscall(
+                SyscallNumber.SYS_SET_ORDERING_MODE,
+                mode=args[0],
+            )
+        except SyscallError as e:
+            return f"Error: {e}"
+        return result
+
+    def _cmd_ordering_violations(self) -> str:
+        """Show recorded ordering violations."""
+        om = self._kernel.ordering_manager
+        if om is None:
+            return "Ordering manager not available."
+        violations = om.violations()
+        if not violations:
+            return "No ordering violations recorded."
+        lines = ["RESOURCE                     REQ_RANK  MAX_HELD  PID"]
+        lines.extend(
+            f"  {v.resource_requested:<26} {v.requested_rank:<9} {v.max_held_rank:<9} {v.pid}"
+            for v in violations
+        )
+        return "\n".join(lines)
+
+    def _cmd_ordering_demo(self) -> str:
+        """Walk through the numbered-lockers resource ordering scenario."""
+        om = self._kernel.ordering_manager
+        if om is None:
+            return "Error: Ordering manager not available."
+
+        lines: list[str] = [
+            "=== Resource Ordering Demo ===",
+            "",
+            "Imagine numbered lockers in a school hallway.",
+            "The rule: you can only walk forward (ascending locker numbers).",
+            "If you need locker 3 and locker 7, open 3 first, then 7.",
+            "You can never go backwards. Nobody ever gets stuck in a circle.",
+            "",
+            "Let's see this in action with two mutexes:",
+        ]
+
+        try:
+            # Create demo mutexes with explicit ranks
+            self._kernel.create_mutex("_demo_lock_a")
+            self._kernel.create_mutex("_demo_lock_b")
+            om.register("mutex:_demo_lock_a", rank=1)
+            om.register("mutex:_demo_lock_b", rank=2)
+
+            # Create two processes
+            p1_r = self._kernel.syscall(
+                SyscallNumber.SYS_CREATE_PROCESS, name="walker_1", num_pages=1
+            )
+            p2_r = self._kernel.syscall(
+                SyscallNumber.SYS_CREATE_PROCESS, name="walker_2", num_pages=1
+            )
+            p1_pid: int = p1_r["pid"]
+            p2_pid: int = p2_r["pid"]
+
+            p1 = self._kernel.processes[p1_pid]
+            p2 = self._kernel.processes[p2_pid]
+
+            lines.append("  mutex:_demo_lock_a  rank=1")
+            lines.append("  mutex:_demo_lock_b  rank=2")
+            lines.append(f"  walker_1 (pid={p1_pid})")
+            lines.append(f"  walker_2 (pid={p2_pid})")
+
+            # Save and set strict mode for the demo
+            old_mode = om.mode
+            om.mode = OrderingMode.WARN
+
+            # Process 1: ascending order (correct)
+            self._kernel.acquire_mutex("_demo_lock_a", tid=p1.main_thread.tid, pid=p1_pid)
+            self._kernel.acquire_mutex("_demo_lock_b", tid=p1.main_thread.tid, pid=p1_pid)
+            lines.append("")
+            lines.append("Step 1: walker_1 acquires lock_a (rank 1) then lock_b (rank 2)")
+            lines.append("  Ascending order -- ALLOWED (walking forward)")
+
+            # Release p1's locks
+            self._kernel.release_mutex("_demo_lock_b", tid=p1.main_thread.tid, pid=p1_pid)
+            self._kernel.release_mutex("_demo_lock_a", tid=p1.main_thread.tid, pid=p1_pid)
+
+            # Process 2: descending order (violation!)
+            self._kernel.acquire_mutex("_demo_lock_b", tid=p2.main_thread.tid, pid=p2_pid)
+            self._kernel.acquire_mutex("_demo_lock_a", tid=p2.main_thread.tid, pid=p2_pid)
+            lines.append("")
+            lines.append("Step 2: walker_2 acquires lock_b (rank 2) then lock_a (rank 1)")
+            lines.append("  Descending order -- VIOLATION! (walking backwards)")
+            lines.append("  In strict mode, this would be rejected.")
+
+            lines.append("")
+            lines.append("This simple rule -- always go forward -- prevents circular wait,")
+            lines.append("one of the four conditions required for deadlock.")
+            lines.append("No circle can form because nobody ever goes backwards.")
+
+        except SyscallError as e:
+            lines.append(f"\nError during demo: {e}")
+        finally:
+            # Clean up demo resources
+            with contextlib.suppress(SyscallError, KeyError):
+                sm = self._kernel.sync_manager
+                if sm is not None:
+                    with contextlib.suppress(KeyError):
+                        sm.destroy_mutex("_demo_lock_a")
+                    with contextlib.suppress(KeyError):
+                        sm.destroy_mutex("_demo_lock_b")
+            om.mode = old_mode  # type: ignore[possibly-undefined]
 
         return "\n".join(lines)
 

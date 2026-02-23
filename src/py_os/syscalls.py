@@ -43,6 +43,7 @@ from py_os.process.scheduler import (
     RoundRobinPolicy,
 )
 from py_os.process.signals import SignalError
+from py_os.sync.ordering import OrderingMode
 from py_os.users import FilePermissions
 from py_os.users import PermissionError as OsPermissionError
 
@@ -115,6 +116,9 @@ class SyscallNumber(IntEnum):
 
     # Deadlock operations
     SYS_DETECT_DEADLOCK = 90
+    SYS_CHECK_ORDERING = 91
+    SYS_SET_ORDERING_MODE = 92
+    SYS_REGISTER_RANK = 93
 
     # Execution operations
     SYS_EXEC = 100
@@ -233,6 +237,9 @@ def dispatch_syscall(
         SyscallNumber.SYS_DELETE_ENV: _sys_delete_env,
         SyscallNumber.SYS_SYSINFO: _sys_sysinfo,
         SyscallNumber.SYS_DETECT_DEADLOCK: _sys_detect_deadlock,
+        SyscallNumber.SYS_CHECK_ORDERING: _sys_check_ordering,
+        SyscallNumber.SYS_SET_ORDERING_MODE: _sys_set_ordering_mode,
+        SyscallNumber.SYS_REGISTER_RANK: _sys_register_rank,
         SyscallNumber.SYS_EXEC: _sys_exec,
         SyscallNumber.SYS_RUN: _sys_run,
         SyscallNumber.SYS_CREATE_MUTEX: _sys_create_mutex,
@@ -861,8 +868,9 @@ def _sys_acquire_semaphore(kernel: Any, **kwargs: Any) -> str:
     """Acquire a named semaphore."""
     name: str = kwargs["name"]
     tid: int = kwargs["tid"]
+    pid: int | None = kwargs.get("pid")
     try:
-        acquired = kernel.acquire_semaphore(name, tid=tid)
+        acquired = kernel.acquire_semaphore(name, tid=tid, pid=pid)
     except KeyError as e:
         raise SyscallError(str(e)) from e
     if acquired:
@@ -873,8 +881,9 @@ def _sys_acquire_semaphore(kernel: Any, **kwargs: Any) -> str:
 def _sys_release_semaphore(kernel: Any, **kwargs: Any) -> str:
     """Release a named semaphore."""
     name: str = kwargs["name"]
+    pid: int | None = kwargs.get("pid")
     try:
-        kernel.release_semaphore(name)
+        kernel.release_semaphore(name, pid=pid)
     except (KeyError, ValueError) as e:
         raise SyscallError(str(e)) from e
     return f"semaphore '{name}' released"
@@ -933,8 +942,9 @@ def _sys_acquire_read_lock(kernel: Any, **kwargs: Any) -> str:
     """Acquire read access on a named reader-writer lock."""
     name: str = kwargs["name"]
     tid: int = kwargs["tid"]
+    pid: int | None = kwargs.get("pid")
     try:
-        acquired = kernel.acquire_read_lock(name, tid=tid)
+        acquired = kernel.acquire_read_lock(name, tid=tid, pid=pid)
     except KeyError as e:
         raise SyscallError(str(e)) from e
     if acquired:
@@ -946,8 +956,9 @@ def _sys_acquire_write_lock(kernel: Any, **kwargs: Any) -> str:
     """Acquire write access on a named reader-writer lock."""
     name: str = kwargs["name"]
     tid: int = kwargs["tid"]
+    pid: int | None = kwargs.get("pid")
     try:
-        acquired = kernel.acquire_write_lock(name, tid=tid)
+        acquired = kernel.acquire_write_lock(name, tid=tid, pid=pid)
     except KeyError as e:
         raise SyscallError(str(e)) from e
     if acquired:
@@ -959,8 +970,9 @@ def _sys_release_read_lock(kernel: Any, **kwargs: Any) -> str:
     """Release read access on a named reader-writer lock."""
     name: str = kwargs["name"]
     tid: int = kwargs["tid"]
+    pid: int | None = kwargs.get("pid")
     try:
-        kernel.release_read_lock(name, tid=tid)
+        kernel.release_read_lock(name, tid=tid, pid=pid)
     except (KeyError, ValueError) as e:
         raise SyscallError(str(e)) from e
     return f"rwlock '{name}' read-released by thread {tid}"
@@ -970,8 +982,9 @@ def _sys_release_write_lock(kernel: Any, **kwargs: Any) -> str:
     """Release write access on a named reader-writer lock."""
     name: str = kwargs["name"]
     tid: int = kwargs["tid"]
+    pid: int | None = kwargs.get("pid")
     try:
-        kernel.release_write_lock(name, tid=tid)
+        kernel.release_write_lock(name, tid=tid, pid=pid)
     except (KeyError, ValueError) as e:
         raise SyscallError(str(e)) from e
     return f"rwlock '{name}' write-released by thread {tid}"
@@ -1053,3 +1066,47 @@ def _sys_journal_recover(kernel: Any, **_kwargs: Any) -> dict[str, int]:
 def _sys_journal_crash(kernel: Any, **_kwargs: Any) -> None:
     """Simulate a crash for educational purposes."""
     kernel.journal_crash()
+
+
+# -- Ordering syscall handlers -----------------------------------------------
+
+
+def _sys_check_ordering(kernel: Any, **_kwargs: Any) -> dict[str, Any]:
+    """Return ordering status — mode, registered ranks, violations."""
+    om = kernel.ordering_manager
+    if om is None:
+        msg = "Ordering manager not available"
+        raise SyscallError(msg)
+    return {
+        "mode": str(om.mode),
+        "enabled": om.enabled,
+        "ranks": om.ranks(),
+        "violations": len(om.violations()),
+    }
+
+
+def _sys_set_ordering_mode(kernel: Any, **kwargs: Any) -> str:
+    """Set the ordering enforcement mode (strict/warn/off)."""
+    om = kernel.ordering_manager
+    if om is None:
+        msg = "Ordering manager not available"
+        raise SyscallError(msg)
+    mode_str: str = kwargs["mode"]
+    try:
+        om.mode = OrderingMode(mode_str)
+    except ValueError:
+        msg = f"Unknown ordering mode: {mode_str}"
+        raise SyscallError(msg) from None
+    return f"Ordering mode set to {om.mode}"
+
+
+def _sys_register_rank(kernel: Any, **kwargs: Any) -> dict[str, Any]:
+    """Register a resource with a rank in the ordering manager."""
+    om = kernel.ordering_manager
+    if om is None:
+        msg = "Ordering manager not available"
+        raise SyscallError(msg)
+    name: str = kwargs["name"]
+    rank: int | None = kwargs.get("rank")
+    assigned = om.register(name, rank=rank)
+    return {"name": name, "rank": assigned}

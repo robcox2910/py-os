@@ -189,9 +189,91 @@ Each process has two priority values:
 
 When no inheritance is active, `effective_priority == base_priority`. When a boost happens, only the effective priority changes. When the mutex is released, the kernel recalculates: it looks at all mutexes the process still holds, finds the highest-priority waiter across all of them, and sets `effective_priority = max(base_priority, max_waiter_priority)`.
 
+## Deadlock
+
+Deadlock is the nightmare scenario: two or more processes are stuck forever,
+each holding a resource the other needs. Nobody can move. It's like two people
+in a narrow hallway, each refusing to step aside.
+
+### The Four Coffman Conditions
+
+In 1971, computer scientists Coffman, Elphick, and Shoshani proved that
+deadlock can only happen when *all four* of these conditions hold at the same
+time:
+
+1. **Mutual exclusion** -- a resource can only be used by one process at a time
+   (like a bathroom with a lock).
+2. **Hold and wait** -- a process can hold resources while waiting for more
+   (like a student holding one textbook while asking for another).
+3. **No preemption** -- you can't forcibly take a resource from someone
+   (no grabbing the textbook out of their hands).
+4. **Circular wait** -- A waits for B, B waits for A, forming a circle
+   (like two people at a revolving door, each waiting for the other to go first).
+
+Break *any one* of these and deadlock becomes impossible.
+
+### Deadlock Prevention: Resource Ordering
+
+PyOS prevents deadlock by attacking the **circular wait** condition using
+**resource ordering**.
+
+**Analogy: Numbered lockers in a school hallway.** The rule: you can only walk
+forward. If you need locker 3 and locker 7, open 3 first, then walk forward
+to 7. You can never go backwards. Nobody ever gets stuck in a circle.
+
+Here's why this works: imagine you need lockers 3 and 7, and your friend needs
+lockers 7 and 3. With the "always go forward" rule:
+
+- You open locker 3 first, then walk to 7.
+- Your friend also opens locker 3 first (they can't start at 7!), then walks to 7.
+- No circle is possible because everyone walks the same direction.
+
+In PyOS, every resource (mutex, semaphore, reader-writer lock) gets a numeric
+**rank**. Before a process acquires a resource, the kernel checks: "Is this
+rank higher than everything I already hold?" If yes, allowed. If no, it's a
+violation.
+
+### Three Modes
+
+| Mode | What happens on violation |
+|------|--------------------------|
+| **strict** | Reject the acquire -- the process can't get the resource |
+| **warn** | Allow it, but record the violation for debugging |
+| **off** | No checking at all (maximum performance) |
+
+**Shell usage:**
+```
+ordering mode strict
+ordering register mutex:lock_a 1
+ordering register mutex:lock_b 2
+ordering status
+ordering violations
+ordering demo
+```
+
+### Prevention vs. Detection
+
+PyOS has *two* complementary approaches to deadlock:
+
+| Aspect | Prevention (ordering) | Detection (Banker's algorithm) |
+|--------|----------------------|-------------------------------|
+| **When** | *Before* deadlock happens | *After* deadlock happens |
+| **How** | Structural rule (rank ordering) | Periodic scan (safety check) |
+| **Overhead** | One comparison per acquire | Full matrix computation |
+| **Guarantee** | Deadlock impossible | Deadlock found and reported |
+| **Trade-off** | May reject valid acquires | Doesn't prevent deadlock |
+| **Module** | `sync/ordering.py` | `sync/deadlock.py` |
+
+Think of it this way: ordering is like a one-way street (prevents collisions),
+while detection is like a traffic camera (catches collisions after they happen).
+Best practice is to use both: ordering prevents most deadlocks cheaply, and
+detection catches any that slip through.
+
 ## How It Works in PyOS
 
-PyOS implements all four primitives in `sync/primitives.py`, plus priority inheritance in `sync/inheritance.py`:
+PyOS implements all four primitives in `sync/primitives.py`, plus priority
+inheritance in `sync/inheritance.py` and deadlock prevention in
+`sync/ordering.py`:
 
 | Class | Purpose | Key Methods |
 |-------|---------|-------------|
@@ -201,8 +283,9 @@ PyOS implements all four primitives in `sync/primitives.py`, plus priority inher
 | `ReadWriteLock` | Multiple readers / one writer | `acquire_read(tid)`, `acquire_write(tid)`, `release_read(tid)`, `release_write(tid)` |
 | `SyncManager` | Registry | `create_mutex()`, `create_semaphore()`, `create_condition()`, `create_rwlock()` |
 | `PriorityInheritanceManager` | Prevent priority inversion | `on_acquire()`, `on_block()`, `on_release()` |
+| `ResourceOrderingManager` | Prevent deadlock (resource ordering) | `register()`, `check_acquire()`, `on_acquire()`, `on_release()` |
 
-The kernel owns a `SyncManager` and a `PriorityInheritanceManager`, both created during boot and torn down during shutdown. All user-space access goes through system calls (110-125), and the shell provides `mutex`, `semaphore`, `rwlock`, and `pi` commands.
+The kernel owns a `SyncManager`, a `PriorityInheritanceManager`, and a `ResourceOrderingManager`, all created during boot and torn down during shutdown. All user-space access goes through system calls (91-93, 110-125), and the shell provides `mutex`, `semaphore`, `rwlock`, `pi`, and `ordering` commands.
 
 The `PriorityInheritanceManager` tracks which process holds each mutex, which processes are blocked waiting, and coordinates priority boosts. The Mutex itself stays simple -- all coordination logic lives in the PI manager.
 
@@ -226,6 +309,14 @@ The `PriorityInheritanceManager` tracks which process holds each mutex, which pr
 | 125 | SYS_RELEASE_WRITE_LOCK | Release write access |
 
 No new syscall numbers were added for priority inheritance -- the existing `SYS_ACQUIRE_MUTEX` (111) and `SYS_RELEASE_MUTEX` (112) accept an optional `pid` parameter that activates PI tracking.
+
+**Deadlock prevention syscalls:**
+
+| Number | Name | What It Does |
+|--------|------|--------------|
+| 91 | SYS_CHECK_ORDERING | Return ordering status (mode, ranks, violations) |
+| 92 | SYS_SET_ORDERING_MODE | Set enforcement mode (strict/warn/off) |
+| 93 | SYS_REGISTER_RANK | Register a resource with an explicit rank |
 
 ## Real-World Examples
 

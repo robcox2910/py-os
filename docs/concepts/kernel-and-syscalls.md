@@ -85,6 +85,8 @@ method in `kernel.py`, you'll see something like this:
                        (mutexes, semaphores, condition variables)
 7b. PI Manager      -- Turn on the "no cutting in line" rule
                        (priority inheritance to prevent priority inversion)
+7c. Ordering Manager -- Post the "walk forward only" rule for lockers
+                       (resource ordering to prevent deadlock)
 8. Scheduler        -- Open the doors and let students in
 ```
 
@@ -178,6 +180,7 @@ Here is every syscall number in PyOS, grouped by what they do:
 | 70-73   | Environment variables (get, set, list, delete) |
 | 80      | System info (like the `top` command) |
 | 90      | Deadlock detection |
+| 91-93   | Deadlock prevention (resource ordering) |
 | 100-101 | Run programs (load and execute) |
 | 110-119, 122-125 | Synchronization (mutexes, semaphores, conditions, reader-writer locks) |
 | 120-121 | Scheduler operations (switch policy, MLFQ boost) |

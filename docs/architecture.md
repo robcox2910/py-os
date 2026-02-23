@@ -22,7 +22,7 @@ Technical reference for every module in the system. For beginner-friendly explan
 | [The Shell](concepts/shell.md) | Commands, pipes, redirection, loops, scripting, jobs, history, aliases, tab completion, env |
 | [Devices and Networking](concepts/devices-and-networking.md) | Device protocol, IPC, disk scheduling, sockets |
 | [Users and Safety](concepts/users-and-safety.md) | Permissions, signals, logging, deadlock |
-| [Synchronization](concepts/synchronization.md) | Mutex, semaphore, condition variable, reader-writer lock, race conditions |
+| [Synchronization](concepts/synchronization.md) | Mutex, semaphore, condition variable, reader-writer lock, race conditions, deadlock prevention |
 
 ## Module Map
 
@@ -132,6 +132,9 @@ Every source file and what it implements.
 | `sync/primitives.py` | `Condition` | Condition variable (wait/notify) paired with a mutex |
 | `sync/primitives.py` | `ReadWriteLock` | Reader-writer lock with writer-preference and batch reader wake |
 | `sync/primitives.py` | `SyncManager` | Registry for all sync primitives (mutexes, semaphores, conditions, rwlocks) |
+| `sync/ordering.py` | `OrderingMode` | STRICT / WARN / OFF enforcement modes for resource ordering |
+| `sync/ordering.py` | `OrderingViolation` | Frozen dataclass recording a single ordering violation |
+| `sync/ordering.py` | `ResourceOrderingManager` | Enforce resource acquisition ordering to prevent circular wait (deadlock prevention) |
 
 ### Observability
 
@@ -160,6 +163,7 @@ Every source file and what it implements.
 | 70-73 | Environment variables |
 | 80 | System info |
 | 90 | Deadlock detection |
+| 91-93 | Deadlock prevention (resource ordering) |
 | 100-101 | Process execution (exec, run) |
 | 110-119, 122-125 | Synchronization (mutex, semaphore, condition, reader-writer lock) |
 | 120-121 | Scheduler operations (policy switching, MLFQ boost) |
