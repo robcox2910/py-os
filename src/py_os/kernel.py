@@ -36,6 +36,7 @@ from py_os.fs.fd import FdError, FdTable, FileMode, OpenFileDescription, SeekWhe
 from py_os.fs.filesystem import FileType
 from py_os.fs.journal import JournaledFileSystem
 from py_os.io.devices import ConsoleDevice, DeviceManager, NullDevice, RandomDevice
+from py_os.io.dns import DnsRecord, DnsResolver
 from py_os.io.shm import SharedMemoryError, SharedMemorySegment
 from py_os.logging import Logger, LogLevel
 from py_os.memory.manager import MemoryManager
@@ -108,6 +109,8 @@ class Kernel:
         self._fd_tables: dict[int, FdTable] = {}
         # Named shared memory segments: name → SharedMemorySegment
         self._shared_memory: dict[str, SharedMemorySegment] = {}
+        # DNS resolver — phone book for hostname → IP resolution
+        self._dns_resolver: DnsResolver | None = None
 
     @property
     def state(self) -> KernelState:
@@ -286,6 +289,10 @@ class Kernel:
         self._device_manager.register(ConsoleDevice())
         self._device_manager.register(RandomDevice())
 
+        # 6b. DNS resolver — pre-seed with localhost
+        self._dns_resolver = DnsResolver()
+        self._dns_resolver.register("localhost", "127.0.0.1")
+
         # 7. Resource manager — deadlock detection and avoidance
         self._resource_manager = ResourceManager()
 
@@ -343,6 +350,7 @@ class Kernel:
         self._mmap_regions.clear()
         self._shared_file_frames.clear()
         self._shared_memory.clear()
+        self._dns_resolver = None
 
         self._logger = None
         self._boot_time = None
@@ -2195,6 +2203,83 @@ class Kernel:
         if pid is not None and self._ordering_manager is not None:
             self._ordering_manager.on_release(pid, f"rwlock:{name}")
         return result
+
+    # -- DNS operations ------------------------------------------------------
+
+    def dns_register(self, hostname: str, address: str) -> DnsRecord:
+        """Register a DNS A record (hostname → IP).
+
+        Args:
+            hostname: The human-readable name to register.
+            address: The IP address to map to.
+
+        Returns:
+            The newly created DnsRecord.
+
+        Raises:
+            DnsError: If the hostname is already registered.
+
+        """
+        self._require_running()
+        assert self._dns_resolver is not None  # noqa: S101
+        return self._dns_resolver.register(hostname, address)
+
+    def dns_lookup(self, hostname: str) -> str:
+        """Resolve a hostname to its IP address.
+
+        Args:
+            hostname: The hostname to look up.
+
+        Returns:
+            The IP address string.
+
+        Raises:
+            DnsError: If the hostname is not found.
+
+        """
+        self._require_running()
+        assert self._dns_resolver is not None  # noqa: S101
+        return self._dns_resolver.lookup(hostname)
+
+    def dns_remove(self, hostname: str) -> None:
+        """Remove a DNS record.
+
+        Args:
+            hostname: The hostname to remove.
+
+        Raises:
+            DnsError: If the hostname is not found.
+
+        """
+        self._require_running()
+        assert self._dns_resolver is not None  # noqa: S101
+        self._dns_resolver.remove(hostname)
+
+    def dns_list(self) -> list[dict[str, str]]:
+        """Return all DNS records as dicts.
+
+        Returns:
+            List of ``{"hostname": ..., "address": ...}`` dicts,
+            sorted by hostname.
+
+        """
+        self._require_running()
+        assert self._dns_resolver is not None  # noqa: S101
+        return [
+            {"hostname": r.hostname, "address": r.address}
+            for r in self._dns_resolver.list_records()
+        ]
+
+    def dns_flush(self) -> int:
+        """Remove all DNS records.
+
+        Returns:
+            The number of records removed.
+
+        """
+        self._require_running()
+        assert self._dns_resolver is not None  # noqa: S101
+        return self._dns_resolver.flush()
 
     # -- Journal operations --------------------------------------------------
 

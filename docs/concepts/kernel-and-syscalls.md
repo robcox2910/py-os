@@ -186,6 +186,7 @@ Here is every syscall number in PyOS, grouped by what they do:
 | 120-121 | Scheduler operations (switch policy, MLFQ boost) |
 | 130-133 | Journal operations (status, checkpoint, recover, crash) |
 | 140-146 | Shared memory IPC (create, attach, detach, destroy, write, read, list) |
+| 150-154 | DNS operations (register, lookup, remove, list, flush) |
 
 You don't need to memorize these. The important thing is that every single
 operation a program can ask for has a number, and every single request goes

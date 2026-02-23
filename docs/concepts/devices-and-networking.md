@@ -419,10 +419,75 @@ layer, which is the part your programs actually interact with.
 
 ---
 
+## 5. DNS -- Name Resolution (`io/dns.py`)
+
+### The Phone Book Analogy
+
+Imagine you want to call your friend Sarah. You know her name, but you don't
+know her phone number. So you open the phone book, find "Sarah," and read
+the number next to her name. Now you can dial it.
+
+**DNS** (Domain Name System) does exactly the same thing, but for the internet.
+When you type `www.example.com` into a browser, your computer doesn't know
+where that website lives -- it only understands numeric **IP addresses** like
+`93.184.216.34`. So it asks a DNS server: "What's the phone number for
+www.example.com?" The DNS server looks it up and says "93.184.216.34." Now
+your computer knows where to connect.
+
+### How It Works in PyOS
+
+PyOS simulates DNS with a `DnsResolver` -- a local phone book that the kernel
+owns. Each entry is called an **A record** (the "A" stands for "Address").
+An A record maps a hostname to an IP address, just like a phone book maps
+a name to a phone number.
+
+You can:
+
+- **Register** -- add a new entry: `dns register example.com 93.184.216.34`
+- **Lookup** -- find the IP for a name: `dns lookup example.com`
+- **Remove** -- delete an entry: `dns remove example.com`
+- **List** -- see all entries: `dns list`
+- **Flush** -- erase everything: `dns flush`
+
+When the kernel boots, it automatically registers `localhost -> 127.0.0.1`.
+That's the computer talking to itself -- like finding your own number in the
+phone book.
+
+### DNS Over Sockets -- How Queries Really Travel
+
+Here's something cool: DNS queries don't just magically appear at the server.
+They travel over **sockets**, just like any other network communication. In the
+real world, DNS uses port 53.
+
+The `dns demo` command shows this in action:
+
+1. A client socket connects to a DNS server socket on port 53.
+2. The client sends a text query: `QUERY A example.com`
+3. The server receives the query, looks up the hostname in the phone book,
+   and sends back: `ANSWER example.com 93.184.216.34`
+4. The client reads the answer.
+
+This is called **protocol layering** -- DNS is a protocol that runs *on top of*
+sockets. The socket handles the "how do I send bytes from here to there" part,
+and DNS handles the "what do those bytes mean" part. It's like how a phone call
+(the socket) carries a conversation (the protocol) -- the phone doesn't care
+what language you speak, and the language doesn't care what kind of phone
+you're using.
+
+### A Records -- Keeping It Simple
+
+Real DNS has many record types: A records (IPv4 addresses), AAAA records (IPv6),
+MX records (email servers), CNAME records (aliases), and more. PyOS only
+implements A records because they're the most fundamental and the easiest to
+understand. Once you get the concept of "name -> number," all the other record
+types are just variations on the same theme.
+
+---
+
 ## Putting It All Together
 
-These four systems -- devices, IPC, disk scheduling, and networking -- cover
-how the OS connects programs to the outside world and to each other.
+These five systems -- devices, IPC, disk scheduling, networking, and DNS --
+cover how the OS connects programs to the outside world and to each other.
 
 - **Devices** give programs a simple, uniform way to talk to hardware. Read and
   write -- that's it. The OS handles the messy details of each specific piece
@@ -440,6 +505,10 @@ how the OS connects programs to the outside world and to each other.
 - **Networking** lets processes talk to each other across a connection, using
   the familiar socket lifecycle: create, bind, listen, accept, send, receive,
   close.
+
+- **DNS** translates human-readable hostnames into numeric IP addresses,
+  acting as the internet's phone book. Queries travel over sockets,
+  demonstrating how protocols layer on top of each other.
 
 All of these follow a common pattern in OS design: give programs a **simple
 interface** (read, write, send, receive) and let the OS handle the complicated

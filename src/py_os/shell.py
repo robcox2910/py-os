@@ -27,6 +27,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 
 from py_os.fs.filesystem import FileType
+from py_os.io.networking import SocketManager
 from py_os.jobs import JobManager, JobStatus
 from py_os.kernel import Kernel, KernelState
 from py_os.process.scheduler import (
@@ -156,6 +157,7 @@ class Shell:
             "ordering": self._cmd_ordering,
             "waitjob": self._cmd_waitjob,
             "shm": self._cmd_shm,
+            "dns": self._cmd_dns,
         }
 
     @property
@@ -2338,3 +2340,163 @@ class Shell:
         """Simulate a crash for educational purposes."""
         self._kernel.syscall(SyscallNumber.SYS_JOURNAL_CRASH)
         return "Crash simulated \u2014 uncommitted work lost"
+
+    # -- DNS commands -------------------------------------------------------
+
+    def _cmd_dns(self, args: list[str]) -> str:
+        """Manage DNS records — the phone book for hostname → IP resolution."""
+        dispatch: dict[str, Callable[[list[str]], str]] = {
+            "register": self._cmd_dns_register,
+            "lookup": self._cmd_dns_lookup,
+            "remove": self._cmd_dns_remove,
+            "list": lambda _a: self._cmd_dns_list(),
+            "flush": lambda _a: self._cmd_dns_flush(),
+            "demo": lambda _a: self._cmd_dns_demo(),
+        }
+        if not args or args[0] not in dispatch:
+            return "Usage: dns <register|lookup|remove|list|flush|demo>"
+        return dispatch[args[0]](args[1:])
+
+    def _cmd_dns_register(self, args: list[str]) -> str:
+        """Register a DNS A record."""
+        min_args = 2
+        if len(args) < min_args:
+            return "Usage: dns register <hostname> <ip>"
+        hostname = args[0]
+        address = args[1]
+        try:
+            result: dict[str, str] = self._kernel.syscall(
+                SyscallNumber.SYS_DNS_REGISTER, hostname=hostname, address=address
+            )
+            return f"Registered {result['hostname']} -> {result['address']}"
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_dns_lookup(self, args: list[str]) -> str:
+        """Look up a hostname."""
+        if not args:
+            return "Usage: dns lookup <hostname>"
+        hostname = args[0]
+        try:
+            address: str = self._kernel.syscall(SyscallNumber.SYS_DNS_LOOKUP, hostname=hostname)
+            return f"{hostname} -> {address}"
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_dns_remove(self, args: list[str]) -> str:
+        """Remove a DNS record."""
+        if not args:
+            return "Usage: dns remove <hostname>"
+        hostname = args[0]
+        try:
+            self._kernel.syscall(SyscallNumber.SYS_DNS_REMOVE, hostname=hostname)
+            return f"Removed {hostname}"
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_dns_list(self) -> str:
+        """List all DNS records."""
+        records: list[dict[str, str]] = self._kernel.syscall(SyscallNumber.SYS_DNS_LIST)
+        if not records:
+            return "No DNS records."
+        lines = ["HOSTNAME                 ADDRESS"]
+        lines.extend(f"{rec['hostname']:<24} {rec['address']}" for rec in records)
+        return "\n".join(lines)
+
+    def _cmd_dns_flush(self) -> str:
+        """Flush all DNS records."""
+        count: int = self._kernel.syscall(SyscallNumber.SYS_DNS_FLUSH)
+        return f"Flushed {count} DNS records"
+
+    def _cmd_dns_demo(self) -> str:
+        """Walk through a DNS demo — name resolution over sockets."""
+        lines: list[str] = [
+            "=== DNS Demo: Name Resolution Over Sockets ===",
+            "",
+            "DNS is like a phone book. You know your friend's name",
+            "but not their phone number. You open the phone book,",
+            "look up the name, and find the number.",
+            "",
+        ]
+
+        demo_host_1 = "_demo.example.com"
+        demo_ip_1 = "93.184.216.34"
+        demo_host_2 = "_demo.pyos.local"
+        demo_ip_2 = "10.0.0.42"
+        dns_port = 53
+
+        try:
+            # Step 1: Register demo records
+            self._kernel.syscall(
+                SyscallNumber.SYS_DNS_REGISTER,
+                hostname=demo_host_1,
+                address=demo_ip_1,
+            )
+            self._kernel.syscall(
+                SyscallNumber.SYS_DNS_REGISTER,
+                hostname=demo_host_2,
+                address=demo_ip_2,
+            )
+            lines.append(
+                f"Step 1: Register demo records:"
+                f"\n  {demo_host_1} -> {demo_ip_1}"
+                f"\n  {demo_host_2} -> {demo_ip_2}"
+            )
+            lines.append("")
+
+            # Step 2: Set up sockets (used directly — not kernel-integrated yet)
+            sm = SocketManager()
+            server = sm.create_socket()
+            server.bind(address="localhost", port=dns_port)
+            server.listen()
+            lines.append(f"Step 2: DNS server socket bound to localhost:{dns_port}, listening")
+
+            # Step 3: Client connects
+            client = sm.create_socket()
+            sm.connect(client, address="localhost", port=dns_port)
+            peer = sm.accept(server)
+            assert peer is not None  # noqa: S101
+            lines.append("Step 3: Client connects to the DNS server")
+            lines.append("")
+
+            # Step 4: Client sends a query
+            query = f"QUERY A {demo_host_1}"
+            sm.send(client, query.encode())
+            lines.append(f'Step 4: Client sends: "{query}"')
+
+            # Step 5: Server receives and resolves
+            raw = sm.recv(peer)
+            query_text = raw.decode()
+            parts = query_text.split()
+            queried_host = parts[2]
+            resolved_ip: str = self._kernel.syscall(
+                SyscallNumber.SYS_DNS_LOOKUP, hostname=queried_host
+            )
+            answer = f"ANSWER {queried_host} {resolved_ip}"
+            sm.send(peer, answer.encode())
+            lines.append(
+                f"Step 5: Server receives query, looks up '{queried_host}',"
+                f'\n  resolves to {resolved_ip}, sends: "{answer}"'
+            )
+
+            # Step 6: Client receives the answer
+            response = sm.recv(client).decode()
+            lines.append(f'Step 6: Client receives: "{response}"')
+            lines.append("")
+
+            # Teaching summary
+            lines.append("How it works:")
+            lines.append("  - DNS queries travel over sockets (real DNS uses port 53)")
+            lines.append("  - The query/answer is just text (real DNS uses a binary format)")
+            lines.append("  - This is protocol layering: DNS runs ON TOP of sockets")
+
+        except SyscallError as e:
+            lines.append(f"\nError during demo: {e}")
+        finally:
+            # Clean up demo records
+            with contextlib.suppress(SyscallError):
+                self._kernel.syscall(SyscallNumber.SYS_DNS_REMOVE, hostname=demo_host_1)
+            with contextlib.suppress(SyscallError):
+                self._kernel.syscall(SyscallNumber.SYS_DNS_REMOVE, hostname=demo_host_2)
+
+        return "\n".join(lines)
