@@ -38,6 +38,7 @@ _SUBCOMMANDS: dict[str, list[str]] = {
     "dns": ["register", "lookup", "remove", "list", "flush", "demo"],
     "socket": ["create", "bind", "listen", "connect", "accept", "send", "recv", "close", "list"],
     "http": ["demo"],
+    "proc": ["demo"],
 }
 
 # Minimum number of words needed before signal name completion kicks in.
@@ -145,6 +146,8 @@ class Completer:
         Split the partial path into a directory and a name prefix,
         list the directory via SYS_LIST_DIR, and filter by prefix.
         Directories get a trailing ``/`` suffix.
+
+        For /proc paths, use SYS_PROC_LIST instead of SYS_LIST_DIR.
         """
         if "/" not in text:
             return []
@@ -154,8 +157,13 @@ class Completer:
         directory = text[: last_slash + 1] or "/"
         prefix = text[last_slash + 1 :]
 
+        syscall = (
+            SyscallNumber.SYS_PROC_LIST
+            if directory.startswith("/proc")
+            else SyscallNumber.SYS_LIST_DIR
+        )
         try:
-            entries: list[str] = self._kernel.syscall(SyscallNumber.SYS_LIST_DIR, path=directory)
+            entries: list[str] = self._kernel.syscall(syscall, path=directory)
         except SyscallError:
             return []
 
@@ -172,8 +180,11 @@ class Completer:
 
     def _is_directory(self, path: str) -> bool:
         """Return True if *path* is a directory in the filesystem."""
+        syscall = (
+            SyscallNumber.SYS_PROC_LIST if path.startswith("/proc") else SyscallNumber.SYS_LIST_DIR
+        )
         try:
-            self._kernel.syscall(SyscallNumber.SYS_LIST_DIR, path=path)
+            self._kernel.syscall(syscall, path=path)
         except (SyscallError, NotADirectoryError):
             return False
         return True

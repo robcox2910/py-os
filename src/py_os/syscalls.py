@@ -188,6 +188,10 @@ class SyscallNumber(IntEnum):
     SYS_SOCKET_CLOSE = 167
     SYS_SOCKET_LIST = 168
 
+    # /proc virtual filesystem operations
+    SYS_PROC_READ = 170
+    SYS_PROC_LIST = 171
+
 
 class SyscallError(Exception):
     """Raised when a system call fails.
@@ -313,6 +317,8 @@ def dispatch_syscall(
         SyscallNumber.SYS_SOCKET_RECV: _sys_socket_recv,
         SyscallNumber.SYS_SOCKET_CLOSE: _sys_socket_close,
         SyscallNumber.SYS_SOCKET_LIST: _sys_socket_list,
+        SyscallNumber.SYS_PROC_READ: _sys_proc_read,
+        SyscallNumber.SYS_PROC_LIST: _sys_proc_list,
     }
 
     handler = handlers.get(number)
@@ -1347,3 +1353,22 @@ def _sys_socket_close(kernel: Any, **kwargs: Any) -> None:
 def _sys_socket_list(kernel: Any, **_kwargs: Any) -> list[dict[str, object]]:
     """List all sockets."""
     return kernel.socket_list()
+
+
+# -- /proc virtual filesystem syscall handlers --------------------------------
+
+
+def _sys_proc_read(kernel: Any, **kwargs: Any) -> str:
+    """Read a virtual /proc file."""
+    try:
+        return kernel.proc_read(kwargs["path"])
+    except ValueError as e:
+        raise SyscallError(str(e)) from e
+
+
+def _sys_proc_list(kernel: Any, **kwargs: Any) -> list[str]:
+    """List a virtual /proc directory."""
+    try:
+        return kernel.proc_list(kwargs["path"])
+    except ValueError as e:
+        raise SyscallError(str(e)) from e

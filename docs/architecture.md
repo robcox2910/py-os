@@ -17,7 +17,7 @@ Technical reference for every module in the system. For beginner-friendly explan
 | [What Is an OS?](concepts/what-is-an-os.md) | Big picture, layered architecture, how PyOS works |
 | [Processes](concepts/processes.md) | PCB, five-state model, scheduler, fork (COW), threads, execution, zombies, wait/waitpid |
 | [Memory](concepts/memory.md) | Frames/pages, virtual memory, page replacement, swap, copy-on-write, mmap, slab allocator |
-| [Filesystem](concepts/filesystem.md) | Inodes, path resolution, hard/symbolic links, persistence, journaling |
+| [Filesystem](concepts/filesystem.md) | Inodes, path resolution, hard/symbolic links, persistence, journaling, /proc virtual filesystem |
 | [Kernel and System Calls](concepts/kernel-and-syscalls.md) | Boot sequence, lifecycle, syscall dispatch, number ranges |
 | [The Shell](concepts/shell.md) | Commands, pipes, redirection, loops, scripting, jobs, history, aliases, tab completion, env |
 | [Devices and Networking](concepts/devices-and-networking.md) | Device protocol, IPC, disk scheduling, sockets, DNS, HTTP |
@@ -35,7 +35,7 @@ Every source file and what it implements.
 | `kernel.py` | `Kernel` | Central coordinator, boot/shutdown lifecycle, subsystem ownership |
 | `kernel.py` | `KernelState` | SHUTDOWN / BOOTING / RUNNING / SHUTTING_DOWN state machine |
 | `syscalls.py` | `dispatch_syscall()` | Trap handler -- routes syscall numbers to kernel subsystem handlers |
-| `syscalls.py` | `SyscallNumber` | IntEnum of all syscall numbers (1-168) |
+| `syscalls.py` | `SyscallNumber` | IntEnum of all syscall numbers (1-171) |
 | `syscalls.py` | `SyscallError` | User-facing exception wrapping internal errors |
 
 ### Process Management
@@ -96,6 +96,8 @@ Every source file and what it implements.
 | `fs/persistence.py` | `load_filesystem()` | Deserialize filesystem from JSON |
 | `fs/persistence.py` | `dump_journaled_filesystem()` | Serialize journaled filesystem (fs + journal + checkpoint) to JSON |
 | `fs/persistence.py` | `load_journaled_filesystem()` | Deserialize journaled filesystem from JSON |
+| `fs/procfs.py` | `ProcFilesystem` | Virtual /proc filesystem generating content from live kernel state |
+| `fs/procfs.py` | `ProcError` | Exception for /proc operation failures |
 
 ### User Space
 
@@ -183,6 +185,7 @@ Every source file and what it implements.
 | 140-146 | Shared memory IPC (create, attach, detach, destroy, write, read, list) |
 | 150-154 | DNS operations (register, lookup, remove, list, flush) |
 | 160-168 | Socket operations (create, bind, listen, connect, accept, send, recv, close, list) |
+| 170-171 | /proc virtual filesystem (read, list) |
 
 ## Strategy Pattern Usage
 

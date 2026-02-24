@@ -90,6 +90,8 @@ method in `kernel.py`, you'll see something like this:
 7c. Ordering Manager -- Post the "walk forward only" rule for lockers
                        (resource ordering to prevent deadlock)
 8. Scheduler        -- Open the doors and let students in
+9. /proc Filesystem -- Turn on the magic bulletin board
+                       (live stats from all subsystems)
 ```
 
 Only after every single one of those steps is finished does the kernel
@@ -190,6 +192,7 @@ Here is every syscall number in PyOS, grouped by what they do:
 | 140-146 | Shared memory IPC (create, attach, detach, destroy, write, read, list) |
 | 150-154 | DNS operations (register, lookup, remove, list, flush) |
 | 160-168 | Socket operations (create, bind, listen, connect, accept, send, recv, close, list) |
+| 170-171 | /proc virtual filesystem (read, list) |
 
 You don't need to memorize these. The important thing is that every single
 operation a program can ask for has a number, and every single request goes
