@@ -118,6 +118,13 @@ class Kernel:
         # Virtual /proc filesystem — generates content from live kernel state
         self._proc_fs: ProcFilesystem | None = None
 
+        # Performance metrics — track process lifecycle statistics
+        self._total_created: int = 0
+        self._total_completed: int = 0
+        self._total_wait_time: float = 0.0
+        self._total_turnaround_time: float = 0.0
+        self._total_response_time: float = 0.0
+
     @property
     def state(self) -> KernelState:
         """Return the current kernel state."""
@@ -420,6 +427,7 @@ class Kernel:
         process.admit()
         self._scheduler.add(process)
         self._processes[process.pid] = process
+        self._total_created += 1
         return process
 
     def fork_process(self, *, parent_pid: int) -> Process:
@@ -512,6 +520,7 @@ class Kernel:
         child.admit()
         self._scheduler.add(child)
         self._processes[child.pid] = child
+        self._total_created += 1
         return child
 
     def _shared_vpns_for(self, pid: int) -> set[int]:
@@ -1223,6 +1232,7 @@ class Kernel:
         if self._ordering_manager is not None:
             self._ordering_manager.remove_process(pid)
 
+        self._record_completion(process)
         self._zombie_or_delete(process)
 
         return {"output": output, "exit_code": exit_code}
@@ -1256,6 +1266,7 @@ class Kernel:
                 self._resource_manager.remove_process(pid)
             if self._ordering_manager is not None:
                 self._ordering_manager.remove_process(pid)
+            self._record_completion(process)
             self._zombie_or_delete(process)
 
     def register_signal_handler(
@@ -1354,11 +1365,45 @@ class Kernel:
                     self._resource_manager.remove_process(pid)
                 if self._ordering_manager is not None:
                     self._ordering_manager.remove_process(pid)
+                self._record_completion(process)
                 self._zombie_or_delete(process)
             case SignalAction.STOP:
                 process.wait()
             case SignalAction.CONTINUE | SignalAction.IGNORE:
                 pass
+
+    # -- Performance metrics ---------------------------------------------------
+
+    def _record_completion(self, process: Process) -> None:
+        """Accumulate a terminated process's timing into kernel totals."""
+        self._total_completed += 1
+        self._total_wait_time += process.wait_time
+        turnaround = process.turnaround_time
+        if turnaround is not None:
+            self._total_turnaround_time += turnaround
+        response = process.response_time
+        if response is not None:
+            self._total_response_time += response
+
+    def perf_metrics(self) -> dict[str, float | int]:
+        """Aggregate performance metrics from all subsystems."""
+        self._require_running()
+        assert self._scheduler is not None  # noqa: S101
+        completed = self._total_completed
+        avg_wait = self._total_wait_time / completed if completed else 0.0
+        avg_turnaround = self._total_turnaround_time / completed if completed else 0.0
+        avg_response = self._total_response_time / completed if completed else 0.0
+        uptime = self.uptime
+        throughput = completed / uptime if uptime > 0 else 0.0
+        return {
+            "context_switches": self._scheduler.context_switches,
+            "total_created": self._total_created,
+            "total_completed": completed,
+            "avg_wait_time": avg_wait,
+            "avg_turnaround_time": avg_turnaround,
+            "avg_response_time": avg_response,
+            "throughput": throughput,
+        }
 
     # -- Wait / zombie helpers -------------------------------------------------
 

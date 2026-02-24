@@ -378,6 +378,7 @@ class Scheduler:
         self._policy = policy
         self._ready_queue: deque[Process] = deque()
         self._current: Process | None = None
+        self._context_switches: int = 0
 
     @property
     def policy(self) -> SchedulingPolicy:
@@ -393,6 +394,11 @@ class Scheduler:
     def current(self) -> Process | None:
         """Return the currently running process, or None."""
         return self._current
+
+    @property
+    def context_switches(self) -> int:
+        """Return the total number of context switches (dispatches)."""
+        return self._context_switches
 
     def add(self, process: Process) -> None:
         """Add a READY process to the ready queue.
@@ -421,6 +427,7 @@ class Scheduler:
             return None
         process.dispatch()
         self._current = process
+        self._context_switches += 1
         return process
 
     def preempt(self) -> None:
