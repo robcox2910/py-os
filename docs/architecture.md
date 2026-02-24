@@ -35,16 +35,16 @@ Every source file and what it implements.
 | `kernel.py` | `Kernel` | Central coordinator, boot/shutdown lifecycle, subsystem ownership |
 | `kernel.py` | `KernelState` | SHUTDOWN / BOOTING / RUNNING / SHUTTING_DOWN state machine |
 | `syscalls.py` | `dispatch_syscall()` | Trap handler -- routes syscall numbers to kernel subsystem handlers |
-| `syscalls.py` | `SyscallNumber` | IntEnum of all syscall numbers (1-171) |
+| `syscalls.py` | `SyscallNumber` | IntEnum of all syscall numbers (1-172) |
 | `syscalls.py` | `SyscallError` | User-facing exception wrapping internal errors |
 
 ### Process Management
 
 | File | Class/Function | Purpose |
 |------|---------------|---------|
-| `process/pcb.py` | `Process` | PCB with five-state model, program/output/exit_code, thread management, effective_priority for PI |
+| `process/pcb.py` | `Process` | PCB with five-state model, program/output/exit_code, thread management, effective_priority for PI, performance timing (wait_time, cpu_time, response_time, turnaround_time) |
 | `process/pcb.py` | `ProcessState` | NEW / READY / RUNNING / WAITING / TERMINATED |
-| `process/scheduler.py` | `Scheduler` | Ready queue management, dispatch using pluggable policy |
+| `process/scheduler.py` | `Scheduler` | Ready queue management, dispatch using pluggable policy, context_switches counter |
 | `process/scheduler.py` | `FCFSPolicy` | First Come, First Served scheduling |
 | `process/scheduler.py` | `RoundRobinPolicy` | Time-sliced scheduling with configurable quantum |
 | `process/scheduler.py` | `PriorityPolicy` | Highest-priority-first scheduling with FIFO tiebreaker |
@@ -186,6 +186,7 @@ Every source file and what it implements.
 | 150-154 | DNS operations (register, lookup, remove, list, flush) |
 | 160-168 | Socket operations (create, bind, listen, connect, accept, send, recv, close, list) |
 | 170-171 | /proc virtual filesystem (read, list) |
+| 172 | Performance metrics |
 
 ## Strategy Pattern Usage
 

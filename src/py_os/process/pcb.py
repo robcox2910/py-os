@@ -18,6 +18,7 @@ from __future__ import annotations
 
 from enum import StrEnum
 from itertools import count
+from time import monotonic
 from typing import TYPE_CHECKING
 
 from py_os.process.threads import Thread
@@ -91,6 +92,16 @@ class Process:
         self._output: str | None = None
         self._exit_code: int | None = None
         self._wait_target: int | None = None
+
+        # Performance timing fields — track how long the process spends
+        # in each state so we can compute wait, response, and turnaround times.
+        self._created_at: float = monotonic()
+        self._first_dispatched_at: float | None = None
+        self._terminated_at: float | None = None
+        self._last_ready_at: float | None = None
+        self._last_dispatched_at: float | None = None
+        self._total_ready_time: float = 0.0
+        self._total_cpu_time: float = 0.0
 
         # Thread management — every process has at least one thread
         self._next_tid = count(start=1)
@@ -177,6 +188,37 @@ class Process:
         """Set the child PID this process is waiting for."""
         self._wait_target = target
 
+    # -- Performance timing properties -----------------------------------------
+
+    @property
+    def created_at(self) -> float:
+        """Return the monotonic timestamp when this process was created."""
+        return self._created_at
+
+    @property
+    def wait_time(self) -> float:
+        """Return total accumulated time spent in the READY queue."""
+        return self._total_ready_time
+
+    @property
+    def cpu_time(self) -> float:
+        """Return total accumulated time spent RUNNING on the CPU."""
+        return self._total_cpu_time
+
+    @property
+    def turnaround_time(self) -> float | None:
+        """Return total time from creation to termination, or None if alive."""
+        if self._terminated_at is None:
+            return None
+        return self._terminated_at - self._created_at
+
+    @property
+    def response_time(self) -> float | None:
+        """Return time from creation to first dispatch, or None if never dispatched."""
+        if self._first_dispatched_at is None:
+            return None
+        return self._first_dispatched_at - self._created_at
+
     def execute(self) -> None:
         """Run the loaded program and capture its output and exit code.
 
@@ -250,26 +292,49 @@ class Process:
     def admit(self) -> None:
         """Transition NEW → READY. Admit the process to the ready queue."""
         self._transition("admit", ProcessState.NEW, ProcessState.READY)
+        self._last_ready_at = monotonic()
 
     def dispatch(self) -> None:
         """Transition READY → RUNNING. Give the process the CPU."""
         self._transition("dispatch", ProcessState.READY, ProcessState.RUNNING)
+        now = monotonic()
+        if self._first_dispatched_at is None:
+            self._first_dispatched_at = now
+        if self._last_ready_at is not None:
+            self._total_ready_time += now - self._last_ready_at
+            self._last_ready_at = None
+        self._last_dispatched_at = now
 
     def preempt(self) -> None:
         """Transition RUNNING → READY. Yield the CPU back to the scheduler."""
         self._transition("preempt", ProcessState.RUNNING, ProcessState.READY)
+        now = monotonic()
+        if self._last_dispatched_at is not None:
+            self._total_cpu_time += now - self._last_dispatched_at
+            self._last_dispatched_at = None
+        self._last_ready_at = now
 
     def wait(self) -> None:
         """Transition RUNNING → WAITING. Block on I/O or an event."""
         self._transition("wait", ProcessState.RUNNING, ProcessState.WAITING)
+        now = monotonic()
+        if self._last_dispatched_at is not None:
+            self._total_cpu_time += now - self._last_dispatched_at
+            self._last_dispatched_at = None
 
     def wake(self) -> None:
         """Transition WAITING → READY. I/O or event completed."""
         self._transition("wake", ProcessState.WAITING, ProcessState.READY)
+        self._last_ready_at = monotonic()
 
     def terminate(self) -> None:
         """Transition RUNNING → TERMINATED. End the process."""
         self._transition("terminate", ProcessState.RUNNING, ProcessState.TERMINATED)
+        now = monotonic()
+        if self._last_dispatched_at is not None:
+            self._total_cpu_time += now - self._last_dispatched_at
+            self._last_dispatched_at = None
+        self._terminated_at = now
 
     def force_terminate(self) -> None:
         """Force termination from any non-terminated state.
@@ -287,6 +352,11 @@ class Process:
         if self._state is ProcessState.NEW:
             msg = f"Cannot force_terminate: process {self._pid} is not yet admitted"
             raise RuntimeError(msg)
+        now = monotonic()
+        if self._state is ProcessState.RUNNING and self._last_dispatched_at is not None:
+            self._total_cpu_time += now - self._last_dispatched_at
+            self._last_dispatched_at = None
+        self._terminated_at = now
         self._state = ProcessState.TERMINATED
 
     def __repr__(self) -> str:

@@ -243,13 +243,14 @@ class TestProcListDir:
     """Verify listing /proc directories."""
 
     def test_root_has_global_files(self) -> None:
-        """Root listing should include meminfo, uptime, cpuinfo, self."""
+        """Root listing should include meminfo, uptime, cpuinfo, stat, self."""
         k = _booted_kernel()
         pfs = ProcFilesystem(kernel=k)
         entries = pfs.list_dir("/proc")
         assert "meminfo" in entries
         assert "uptime" in entries
         assert "cpuinfo" in entries
+        assert "stat" in entries
         assert "self" in entries
         k.shutdown()
 
@@ -270,17 +271,18 @@ class TestProcListDir:
         assert "meminfo" in entries
         k.shutdown()
 
-    def test_pid_dir_has_three_entries(self) -> None:
-        """Listing a PID directory should return status, maps, cmdline."""
+    def test_pid_dir_has_four_entries(self) -> None:
+        """Listing a PID directory should return status, maps, cmdline, sched."""
         k = _booted_kernel()
         pfs = ProcFilesystem(kernel=k)
         p = k.create_process(name="lister", num_pages=1)
         entries = pfs.list_dir(f"/proc/{p.pid}")
-        expected_entries = 3
+        expected_entries = 4
         assert len(entries) == expected_entries
         assert "status" in entries
         assert "maps" in entries
         assert "cmdline" in entries
+        assert "sched" in entries
         k.shutdown()
 
     def test_bad_pid_dir_raises(self) -> None:

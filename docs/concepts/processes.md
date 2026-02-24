@@ -377,6 +377,65 @@ Process 1 is now waiting for a child.
 
 ---
 
+## Performance Metrics
+
+How do we know if our scheduler is doing a good job? Imagine a **sports day stopwatch station**. Every time a runner (process) steps up to the start line (READY queue), a helper clicks a stopwatch. When the runner actually starts running (dispatched to the CPU), the helper notes how long they waited. When they cross the finish line (terminate), we record their total race time. At the end of the day, we calculate averages to see how the event went.
+
+PyOS tracks four key measurements:
+
+| Metric | What it measures | Sports day equivalent |
+|--------|-----------------|----------------------|
+| **Wait time** | How long a process sits in the READY queue | How long a runner waits at the start line |
+| **Turnaround time** | Total time from creation to termination | Time from a runner arriving at the field to crossing the finish line |
+| **Response time** | Time from creation to first CPU dispatch | How quickly a runner gets their first turn |
+| **Context switches** | How many times the CPU switches between processes | How many times the baton gets handed off |
+
+These metrics help answer important questions:
+- "Are processes waiting too long?" (high average wait time)
+- "Is the system getting work done?" (throughput — completed processes per second)
+- "Does the system feel responsive?" (low average response time)
+
+### Try it in the PyOS shell
+
+```
+pyos> perf
+=== PyOS Performance Metrics ===
+Context switches:    0
+Processes created:   0
+Processes completed: 0
+Avg wait time:       0.00s
+Avg turnaround:      0.00s
+Avg response:        0.00s
+Throughput:          0.00 procs/sec
+```
+
+You can also read the raw numbers from the virtual filesystem:
+
+```
+pyos> cat /proc/stat
+CtxSwitches:    42
+TotalCreated:   10
+TotalCompleted: 7
+AvgWaitTime:    0.15 seconds
+AvgTurnaround:  1.23 seconds
+AvgResponse:    0.05 seconds
+Throughput:     2.33 procs/sec
+```
+
+Or check individual process timing:
+
+```
+pyos> cat /proc/42/sched
+WaitTime:       0.05 seconds
+CpuTime:        0.10 seconds
+ResponseTime:   0.02 seconds
+Turnaround:     0.15 seconds
+```
+
+Run `perf demo` for a guided walkthrough that creates processes and shows how the numbers change.
+
+---
+
 ## Putting It All Together
 
 Here is the big picture. A process is a program in action, tracked by a PCB. The scheduler decides which process gets the CPU, using a pluggable policy (FCFS, Round Robin, Priority, Aging Priority, MLFQ, or CFS). Processes can create copies of themselves through forking, or run lightweight parallel work using threads. When a process runs a program, it goes through the full lifecycle -- create, load, execute, output, and exit. When a child terminates, it becomes a zombie until its parent collects the exit code with `wait()` or `waitpid()`.
@@ -409,3 +468,8 @@ All of these pieces work together inside the [kernel](kernel-and-syscalls.md), w
 | **wait()** | Block until any child terminates, then collect its exit code |
 | **waitpid()** | Block until a specific child terminates, then collect its exit code |
 | **Orphan** | A process whose parent no longer exists -- cleaned up immediately on termination |
+| **Wait time** | How long a process spends in the READY queue, waiting for the CPU |
+| **Turnaround time** | Total time from process creation to termination |
+| **Response time** | Time from process creation to first CPU dispatch |
+| **Context switch** | When the CPU stops running one process and starts running another |
+| **Throughput** | Number of processes completed per second of system uptime |

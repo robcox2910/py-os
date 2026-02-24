@@ -192,6 +192,9 @@ class SyscallNumber(IntEnum):
     SYS_PROC_READ = 170
     SYS_PROC_LIST = 171
 
+    # Performance metrics
+    SYS_PERF_METRICS = 172
+
 
 class SyscallError(Exception):
     """Raised when a system call fails.
@@ -319,6 +322,7 @@ def dispatch_syscall(
         SyscallNumber.SYS_SOCKET_LIST: _sys_socket_list,
         SyscallNumber.SYS_PROC_READ: _sys_proc_read,
         SyscallNumber.SYS_PROC_LIST: _sys_proc_list,
+        SyscallNumber.SYS_PERF_METRICS: _sys_perf_metrics,
     }
 
     handler = handlers.get(number)
@@ -1371,4 +1375,15 @@ def _sys_proc_list(kernel: Any, **kwargs: Any) -> list[str]:
     try:
         return kernel.proc_list(kwargs["path"])
     except ValueError as e:
+        raise SyscallError(str(e)) from e
+
+
+# -- Performance metrics syscall handler -------------------------------------
+
+
+def _sys_perf_metrics(kernel: Any, **_kwargs: Any) -> dict[str, float | int]:
+    """Read aggregate performance metrics."""
+    try:
+        return kernel.perf_metrics()
+    except (ValueError, RuntimeError) as e:
         raise SyscallError(str(e)) from e

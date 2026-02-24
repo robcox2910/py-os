@@ -36,10 +36,10 @@ if TYPE_CHECKING:
     from py_os.process.pcb import Process
 
 # Global files that live directly under /proc
-_GLOBAL_FILES: frozenset[str] = frozenset({"meminfo", "uptime", "cpuinfo"})
+_GLOBAL_FILES: frozenset[str] = frozenset({"meminfo", "uptime", "cpuinfo", "stat"})
 
 # Per-process files under /proc/{pid}/
-_PER_PROCESS_FILES: list[str] = ["status", "maps", "cmdline"]
+_PER_PROCESS_FILES: list[str] = ["status", "maps", "cmdline", "sched"]
 
 
 class ProcError(Exception):
@@ -90,6 +90,8 @@ class ProcFilesystem:
                 return self._generate_uptime()
             case ["cpuinfo"]:
                 return self._generate_cpuinfo()
+            case ["stat"]:
+                return self._generate_stat()
             case ["self", subfile]:
                 pid = self._resolve_self_pid()
                 return self._read_process_file(pid, subfile)
@@ -158,6 +160,33 @@ class ProcFilesystem:
         current_str = f"pid {current.pid} ({current.name})" if current is not None else "none"
         return (
             f"Policy:         {policy_name}\nReadyQueue:     {ready}\nCurrent:        {current_str}"
+        )
+
+    def _generate_stat(self) -> str:
+        """Generate /proc/stat from kernel performance metrics."""
+        metrics = self._kernel.perf_metrics()
+        return (
+            f"CtxSwitches:    {metrics['context_switches']}\n"
+            f"TotalCreated:   {metrics['total_created']}\n"
+            f"TotalCompleted: {metrics['total_completed']}\n"
+            f"AvgWaitTime:    {metrics['avg_wait_time']:.2f} seconds\n"
+            f"AvgTurnaround:  {metrics['avg_turnaround_time']:.2f} seconds\n"
+            f"AvgResponse:    {metrics['avg_response_time']:.2f} seconds\n"
+            f"Throughput:     {metrics['throughput']:.2f} procs/sec"
+        )
+
+    def _generate_sched(self, pid: int) -> str:
+        """Generate /proc/{pid}/sched from per-process timing."""
+        proc = self._get_process(pid)
+        response = proc.response_time
+        turnaround = proc.turnaround_time
+        resp_str = f"{response:.2f} seconds" if response is not None else "pending"
+        turn_str = f"{turnaround:.2f} seconds" if turnaround is not None else "pending"
+        return (
+            f"WaitTime:       {proc.wait_time:.2f} seconds\n"
+            f"CpuTime:        {proc.cpu_time:.2f} seconds\n"
+            f"ResponseTime:   {resp_str}\n"
+            f"Turnaround:     {turn_str}"
         )
 
     def _generate_status(self, pid: int) -> str:
@@ -257,6 +286,8 @@ class ProcFilesystem:
                 return self._generate_maps(pid)
             case "cmdline":
                 return self._generate_cmdline(pid)
+            case "sched":
+                return self._generate_sched(pid)
             case _:
                 msg = f"No such file: /proc/{pid}/{subfile}"
                 raise ProcError(msg)

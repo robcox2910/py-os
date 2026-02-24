@@ -96,6 +96,7 @@ Here are the commands grouped by what they do. You don't need to memorize them
 | `env`     | List all environment variables |
 | `export`  | Set an environment variable |
 | `history` | Show every command you've typed this session |
+| `perf`    | Show performance metrics (context switches, wait time, throughput) |
 | `exit`    | Shut down the kernel and leave the shell |
 
 **Synchronization** -- managing shared resources:
@@ -121,9 +122,11 @@ virtual filesystem instead of the real one. For example:
 ```
 cat /proc/meminfo       -- memory statistics
 cat /proc/uptime        -- system uptime
+cat /proc/stat          -- performance metrics (context switches, throughput)
 ls /proc                -- list all /proc entries
 ls /proc/42             -- list files for process 42
 cat /proc/42/status     -- process 42's details
+cat /proc/42/sched      -- per-process timing (wait, CPU, response, turnaround)
 ```
 
 **Scheduling** -- controlling how processes share the CPU:

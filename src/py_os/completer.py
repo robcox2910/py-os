@@ -39,6 +39,7 @@ _SUBCOMMANDS: dict[str, list[str]] = {
     "socket": ["create", "bind", "listen", "connect", "accept", "send", "recv", "close", "list"],
     "http": ["demo"],
     "proc": ["demo"],
+    "perf": ["demo"],
 }
 
 # Minimum number of words needed before signal name completion kicks in.

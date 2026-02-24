@@ -172,6 +172,7 @@ class Shell:
             "socket": self._cmd_socket,
             "http": self._cmd_http,
             "proc": self._cmd_proc,
+            "perf": self._cmd_perf,
         }
 
     @property
@@ -2969,4 +2970,121 @@ class Shell:
                 pass
 
         lines.append("Virtual files are generated live — no disk storage needed!")
+        return "\n".join(lines)
+
+    # -- perf command -----------------------------------------------------------
+
+    def _cmd_perf(self, args: list[str]) -> str:
+        """Show performance metrics or run a guided demo."""
+        dispatch: dict[str, Callable[[list[str]], str]] = {
+            "demo": lambda _a: self._cmd_perf_demo(),
+        }
+        if args and args[0] in dispatch:
+            return dispatch[args[0]](args[1:])
+        return self._cmd_perf_summary()
+
+    def _cmd_perf_summary(self) -> str:
+        """Format a performance metrics summary."""
+        try:
+            metrics: dict[str, object] = self._kernel.syscall(SyscallNumber.SYS_PERF_METRICS)
+        except SyscallError as e:
+            return f"Error: {e}"
+        return (
+            "=== PyOS Performance Metrics ===\n"
+            f"Context switches:    {metrics['context_switches']}\n"
+            f"Processes created:   {metrics['total_created']}\n"
+            f"Processes completed: {metrics['total_completed']}\n"
+            f"Avg wait time:       {float(str(metrics['avg_wait_time'])):.2f}s\n"
+            f"Avg turnaround:      {float(str(metrics['avg_turnaround_time'])):.2f}s\n"
+            f"Avg response:        {float(str(metrics['avg_response_time'])):.2f}s\n"
+            f"Throughput:          {float(str(metrics['throughput'])):.2f} procs/sec"
+        )
+
+    def _cmd_perf_demo(self) -> str:
+        """Walk through performance metrics with a guided demo."""
+        lines: list[str] = [
+            "=== Performance Metrics Demo ===",
+            "",
+            "Imagine a sports day. Every time a runner steps up to the start line,",
+            "a helper clicks a stopwatch. When the runner starts, the helper notes",
+            "how long they waited. When they finish, we record the total race time.",
+            "",
+        ]
+
+        # Step 1: Show initial metrics
+        try:
+            metrics: dict[str, object] = self._kernel.syscall(SyscallNumber.SYS_PERF_METRICS)
+            lines.append("Step 1: Initial metrics (before any work)")
+            lines.append(f"  Context switches:    {metrics['context_switches']}")
+            lines.append(f"  Processes created:   {metrics['total_created']}")
+            lines.append(f"  Processes completed: {metrics['total_completed']}")
+            lines.append("")
+        except SyscallError as e:
+            lines.append(f"Step 1 failed: {e}")
+            return "\n".join(lines)
+
+        # Step 2: Create and run a process
+        demo_pid: int | None = None
+        try:
+            result: dict[str, object] = self._kernel.syscall(
+                SyscallNumber.SYS_CREATE_PROCESS, name="perf_demo", num_pages=1
+            )
+            demo_pid = int(str(result["pid"]))
+            self._kernel.syscall(
+                SyscallNumber.SYS_EXEC,
+                pid=demo_pid,
+                program=lambda: "demo output",
+            )
+            self._kernel.syscall(SyscallNumber.SYS_RUN, pid=demo_pid)
+
+            metrics = self._kernel.syscall(SyscallNumber.SYS_PERF_METRICS)
+            lines.append("Step 2: After creating and running one process")
+            lines.append(f"  Context switches:    {metrics['context_switches']}")
+            lines.append(f"  Processes completed: {metrics['total_completed']}")
+            lines.append("")
+        except SyscallError as e:
+            lines.append(f"Step 2 failed: {e}")
+
+        # Step 3: Create and run multiple processes
+        try:
+            for name in ("worker_a", "worker_b", "worker_c"):
+                r: dict[str, object] = self._kernel.syscall(
+                    SyscallNumber.SYS_CREATE_PROCESS, name=name, num_pages=1
+                )
+                pid = int(str(r["pid"]))
+                self._kernel.syscall(
+                    SyscallNumber.SYS_EXEC,
+                    pid=pid,
+                    program=lambda: "batch output",
+                )
+                self._kernel.syscall(SyscallNumber.SYS_RUN, pid=pid)
+
+            lines.append("Step 3: After running 3 more processes")
+            metrics = self._kernel.syscall(SyscallNumber.SYS_PERF_METRICS)
+            lines.append(f"  Processes created:   {metrics['total_created']}")
+            lines.append(f"  Processes completed: {metrics['total_completed']}")
+            lines.append(f"  Avg wait time:       {float(str(metrics['avg_wait_time'])):.4f}s")
+            lines.append(
+                f"  Avg turnaround:      {float(str(metrics['avg_turnaround_time'])):.4f}s"
+            )
+            lines.append(f"  Avg response:        {float(str(metrics['avg_response_time'])):.4f}s")
+            lines.append(
+                f"  Throughput:          {float(str(metrics['throughput'])):.2f} procs/sec"
+            )
+            lines.append("")
+        except SyscallError as e:
+            lines.append(f"Step 3 failed: {e}")
+
+        # Step 4: Explain each metric
+        lines.extend(
+            [
+                "Step 4: What each metric means",
+                "  Wait time:       How long a process sat in the READY queue",
+                "  Turnaround time: Total time from creation to termination",
+                "  Response time:   Time from creation to first CPU dispatch",
+                "  Context switches: How many times the CPU switched processes",
+                "  Throughput:      Processes completed per second of uptime",
+            ]
+        )
+
         return "\n".join(lines)

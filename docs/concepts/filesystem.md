@@ -634,14 +634,17 @@ vanishes.
 ├── meminfo          -- Memory statistics (total, free, used, shared)
 ├── uptime           -- How long the system has been running
 ├── cpuinfo          -- Scheduler policy, ready queue size
+├── stat             -- Performance metrics (context switches, throughput)
 ├── [pid]/           -- One directory per process
 │   ├── status       -- Name, PID, parent, state, priority, threads
 │   ├── maps         -- Which memory pages the process uses
-│   └── cmdline      -- The process name
+│   ├── cmdline      -- The process name
+│   └── sched        -- Timing info (wait time, CPU time, response time)
 └── self/            -- Alias for whatever process is running right now
     ├── status
     ├── maps
-    └── cmdline
+    ├── cmdline
+    └── sched
 ```
 
 ### How to use it
@@ -654,8 +657,10 @@ real one.
 ls /proc            -- see what's on the bulletin board
 cat /proc/meminfo   -- check memory usage
 cat /proc/uptime    -- see how long the system has been up
+cat /proc/stat      -- see performance metrics (context switches, throughput)
 ls /proc/42         -- list files for process 42
 cat /proc/42/status -- see process 42's details
+cat /proc/42/sched  -- see process 42's timing (wait, CPU, response time)
 ```
 
 ### Why does this exist?
