@@ -111,6 +111,20 @@ Here are the commands grouped by what they do. You don't need to memorize them
 | `dns`       | DNS: register, lookup, remove, list, flush, demo |
 | `socket`    | Raw sockets: create, bind, listen, connect, accept, send, recv, close, list |
 | `http`      | HTTP protocol demo (request/response over sockets) |
+| `proc`      | /proc virtual filesystem demo (live kernel state as files) |
+
+**Virtual filesystem** -- inspecting the system through /proc:
+
+`cat` and `ls` automatically detect `/proc` paths and read from the
+virtual filesystem instead of the real one. For example:
+
+```
+cat /proc/meminfo       -- memory statistics
+cat /proc/uptime        -- system uptime
+ls /proc                -- list all /proc entries
+ls /proc/42             -- list files for process 42
+cat /proc/42/status     -- process 42's details
+```
 
 **Scheduling** -- controlling how processes share the CPU:
 
@@ -645,7 +659,7 @@ on what you're typing:
 | Where you are | What completes |
 |---------------|----------------|
 | First word on the line | Command names (`ls`, `cat`, `mkdir`, ...) |
-| After `scheduler`, `mutex`, `semaphore`, `rwlock`, `journal`, `pi`, `ordering`, `shm`, `dns`, `socket`, `http` | Subcommands (`fcfs`, `create`, `list`, `status`, `demo`, `register`, `mode`, `violations`, ...) |
+| After `scheduler`, `mutex`, `semaphore`, `rwlock`, `journal`, `pi`, `ordering`, `shm`, `dns`, `socket`, `http`, `proc` | Subcommands (`fcfs`, `create`, `list`, `status`, `demo`, `register`, `mode`, `violations`, ...) |
 | After a file command (`ls`, `cat`, `rm`, ...) | Filesystem paths |
 | After `run` | Built-in program names |
 | After `unset` | Environment variable names |

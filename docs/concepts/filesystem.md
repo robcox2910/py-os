@@ -613,6 +613,74 @@ across reboots.
 | **Recovery**      | Restoring from checkpoint and replaying committed transactions |
 | **Crash consistency** | The guarantee that the filesystem is valid after a crash   |
 
+## Virtual Filesystems -- /proc
+
+So far, every file we've talked about lives on "disk" (in memory, for our
+simulator). But what if you could have a directory that doesn't store
+anything at all -- and yet, every time you open a file inside it, you get
+fresh, live information?
+
+That's exactly what `/proc` is. Think of it as a **magic bulletin board**
+in the school hallway. Nobody writes real papers and pins them there.
+When you walk up and look at a section, the information appears
+automatically from the school's current records. A new student arrives?
+Their name instantly appears on the board. A student leaves? Their entry
+vanishes.
+
+### What's inside /proc?
+
+```
+/proc/
+├── meminfo          -- Memory statistics (total, free, used, shared)
+├── uptime           -- How long the system has been running
+├── cpuinfo          -- Scheduler policy, ready queue size
+├── [pid]/           -- One directory per process
+│   ├── status       -- Name, PID, parent, state, priority, threads
+│   ├── maps         -- Which memory pages the process uses
+│   └── cmdline      -- The process name
+└── self/            -- Alias for whatever process is running right now
+    ├── status
+    ├── maps
+    └── cmdline
+```
+
+### How to use it
+
+You use the same commands you already know! `cat` and `ls` automatically
+detect `/proc` paths and route to the virtual filesystem instead of the
+real one.
+
+```
+ls /proc            -- see what's on the bulletin board
+cat /proc/meminfo   -- check memory usage
+cat /proc/uptime    -- see how long the system has been up
+ls /proc/42         -- list files for process 42
+cat /proc/42/status -- see process 42's details
+```
+
+### Why does this exist?
+
+In real Linux, tools like `ps`, `top`, and `free` don't have special
+access to the kernel. They're just ordinary programs that read files from
+`/proc`. This is a beautiful design: instead of needing a special API for
+every kind of system information, the kernel just makes it look like files.
+If you know how to read a file, you know how to inspect the entire system.
+
+### Virtual vs real files
+
+| Property     | Real files (`/data/report.txt`) | Virtual files (`/proc/meminfo`) |
+|-------------|--------------------------------|-------------------------------|
+| Stored on disk? | Yes | No -- generated on every read |
+| Content changes? | Only when someone writes | Every read may be different |
+| Can you write? | Yes (`write` command) | No -- read-only |
+| Uses inodes? | Yes | No -- separate ProcFilesystem class |
+
+| Term | Meaning |
+|------|---------|
+| **Virtual filesystem** | A filesystem where files don't exist on disk -- content is generated live |
+| **/proc** | The virtual filesystem that exposes kernel state as readable files |
+| **/proc/self** | A shortcut that always points to whatever process is currently running |
+
 ## Where to Go Next
 
 - [The Kernel](kernel-and-syscalls.md) -- How the kernel routes your filesystem

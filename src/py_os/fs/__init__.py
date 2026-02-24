@@ -14,6 +14,7 @@ from py_os.fs.persistence import (
     load_filesystem,
     load_journaled_filesystem,
 )
+from py_os.fs.procfs import ProcError, ProcFilesystem
 
 __all__ = [
     "MAX_SYMLINK_DEPTH",
@@ -27,6 +28,8 @@ __all__ = [
     "JournalOp",
     "JournaledFileSystem",
     "OpenFileDescription",
+    "ProcError",
+    "ProcFilesystem",
     "SeekWhence",
     "TransactionState",
     "dump_filesystem",

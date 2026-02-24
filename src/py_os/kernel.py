@@ -35,6 +35,7 @@ from py_os.env import Environment
 from py_os.fs.fd import FdError, FdTable, FileMode, OpenFileDescription, SeekWhence
 from py_os.fs.filesystem import FileType
 from py_os.fs.journal import JournaledFileSystem
+from py_os.fs.procfs import ProcError, ProcFilesystem
 from py_os.io.devices import ConsoleDevice, DeviceManager, NullDevice, RandomDevice
 from py_os.io.dns import DnsRecord, DnsResolver
 from py_os.io.networking import SocketError, SocketManager
@@ -114,6 +115,8 @@ class Kernel:
         self._dns_resolver: DnsResolver | None = None
         # Socket manager — in-memory network stack
         self._socket_manager: SocketManager | None = None
+        # Virtual /proc filesystem — generates content from live kernel state
+        self._proc_fs: ProcFilesystem | None = None
 
     @property
     def state(self) -> KernelState:
@@ -211,6 +214,11 @@ class Kernel:
     def socket_manager(self) -> SocketManager | None:
         """Return the socket manager, or None if not booted."""
         return self._socket_manager
+
+    @property
+    def proc_filesystem(self) -> ProcFilesystem | None:
+        """Return the /proc virtual filesystem, or None if not booted."""
+        return self._proc_fs
 
     def set_scheduler_policy(self, policy: SchedulingPolicy) -> None:
         """Replace the scheduler's policy, preserving the ready queue.
@@ -319,6 +327,9 @@ class Kernel:
         # 9. Scheduler — ready to accept processes
         self._scheduler = Scheduler(policy=FCFSPolicy())
 
+        # 10. /proc virtual filesystem — reads live state from all subsystems
+        self._proc_fs = ProcFilesystem(kernel=self)
+
         self._state = KernelState.RUNNING
         self._logger.log(LogLevel.INFO, "Kernel boot complete", source="kernel")
 
@@ -338,6 +349,7 @@ class Kernel:
         self._state = KernelState.SHUTTING_DOWN
 
         # Tear down in reverse order
+        self._proc_fs = None
         self._scheduler = None
         if self._ordering_manager is not None:
             self._ordering_manager.clear()
@@ -2502,3 +2514,55 @@ class Kernel:
             }
             for s in self._socket_manager.list_sockets()
         ]
+
+    # -- /proc virtual filesystem ---------------------------------------------
+
+    def proc_read(self, path: str) -> str:
+        """Read a virtual /proc file.
+
+        Delegate to the ProcFilesystem, converting ProcError to ValueError
+        so that the syscall layer can wrap it in SyscallError.
+
+        Args:
+            path: Absolute path starting with ``/proc/``.
+
+        Returns:
+            The generated file content.
+
+        Raises:
+            ValueError: If the path is invalid or the /proc fs is unavailable.
+
+        """
+        self._require_running()
+        if self._proc_fs is None:
+            msg = "/proc filesystem not available"
+            raise ValueError(msg)
+        try:
+            return self._proc_fs.read(path)
+        except ProcError as e:
+            raise ValueError(str(e)) from e
+
+    def proc_list(self, path: str) -> list[str]:
+        """List entries in a virtual /proc directory.
+
+        Delegate to the ProcFilesystem, converting ProcError to ValueError
+        so that the syscall layer can wrap it in SyscallError.
+
+        Args:
+            path: Absolute path starting with ``/proc``.
+
+        Returns:
+            Sorted list of entry names.
+
+        Raises:
+            ValueError: If the path is invalid or the /proc fs is unavailable.
+
+        """
+        self._require_running()
+        if self._proc_fs is None:
+            msg = "/proc filesystem not available"
+            raise ValueError(msg)
+        try:
+            return self._proc_fs.list_dir(path)
+        except ProcError as e:
+            raise ValueError(str(e)) from e

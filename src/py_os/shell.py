@@ -171,6 +171,7 @@ class Shell:
             "dns": self._cmd_dns,
             "socket": self._cmd_socket,
             "http": self._cmd_http,
+            "proc": self._cmd_proc,
         }
 
     @property
@@ -567,8 +568,14 @@ class Shell:
     def _cmd_ls(self, args: list[str]) -> str:
         """List directory contents."""
         path = args[0] if args else "/"
+        if path.startswith("/proc"):
+            try:
+                entries: list[str] = self._kernel.syscall(SyscallNumber.SYS_PROC_LIST, path=path)
+            except SyscallError as e:
+                return f"Error: {e}"
+            return "\n".join(entries) if entries else ""
         try:
-            entries: list[str] = self._kernel.syscall(SyscallNumber.SYS_LIST_DIR, path=path)
+            entries = self._kernel.syscall(SyscallNumber.SYS_LIST_DIR, path=path)
         except SyscallError as e:
             return f"Error: {e}"
         return "\n".join(entries) if entries else ""
@@ -610,6 +617,11 @@ class Shell:
         """Read file contents."""
         if not args:
             return "Usage: cat <path>"
+        if args[0].startswith("/proc"):
+            try:
+                return self._kernel.syscall(SyscallNumber.SYS_PROC_READ, path=args[0])
+            except SyscallError as e:
+                return f"Error: not found — {e}"
         try:
             data: bytes = self._kernel.syscall(SyscallNumber.SYS_READ_FILE, path=args[0])
             return data.decode()
@@ -2871,4 +2883,90 @@ class Shell:
             with contextlib.suppress(SyscallError):
                 self._kernel.syscall(SyscallNumber.SYS_DELETE_FILE, path="/www")
 
+        return "\n".join(lines)
+
+    # -- /proc virtual filesystem command ------------------------------------
+
+    def _cmd_proc(self, args: list[str]) -> str:
+        """/proc virtual filesystem — inspect live kernel state."""
+        dispatch: dict[str, Callable[[list[str]], str]] = {
+            "demo": lambda _a: self._cmd_proc_demo(),
+        }
+        if not args or args[0] not in dispatch:
+            return "Usage: proc <demo>"
+        return dispatch[args[0]](args[1:])
+
+    def _cmd_proc_demo(self) -> str:
+        """Walk through the /proc virtual filesystem."""
+        lines: list[str] = [
+            "=== /proc Virtual Filesystem Demo ===",
+            "",
+            "/proc is like a magic bulletin board. Nobody writes real papers and",
+            "pins them there. When you look at a section, the information appears",
+            "automatically from the school's current records.",
+            "",
+        ]
+
+        # Step 1: List /proc root
+        try:
+            entries: list[str] = self._kernel.syscall(SyscallNumber.SYS_PROC_LIST, path="/proc")
+            lines.append("Step 1: ls /proc — what's on the bulletin board?")
+            lines.append(f"  {', '.join(entries)}")
+            lines.append("")
+        except SyscallError as e:
+            lines.append(f"Step 1 failed: {e}")
+            return "\n".join(lines)
+
+        # Step 2: Read global files
+        lines.append("Step 2: Reading global /proc files...")
+        for name in ("meminfo", "uptime", "cpuinfo"):
+            try:
+                content: str = self._kernel.syscall(
+                    SyscallNumber.SYS_PROC_READ, path=f"/proc/{name}"
+                )
+                lines.append(f"  cat /proc/{name}:")
+                lines.extend(f"    {line}" for line in content.splitlines())
+                lines.append("")
+            except SyscallError as e:
+                lines.append(f"  /proc/{name} failed: {e}")
+
+        # Step 3: Create a demo process and explore its /proc entry
+        demo_pid: int | None = None
+        try:
+            result: dict[str, object] = self._kernel.syscall(
+                SyscallNumber.SYS_CREATE_PROCESS, name="demo_proc", num_pages=2
+            )
+            demo_pid = int(str(result["pid"]))
+            lines.append(f"Step 3: Created process 'demo_proc' (pid {demo_pid})")
+            lines.append("")
+
+            # List the process directory
+            proc_entries: list[str] = self._kernel.syscall(
+                SyscallNumber.SYS_PROC_LIST, path=f"/proc/{demo_pid}"
+            )
+            lines.append(f"  ls /proc/{demo_pid}: {', '.join(proc_entries)}")
+            lines.append("")
+
+            # Read each file
+            for fname in proc_entries:
+                content = self._kernel.syscall(
+                    SyscallNumber.SYS_PROC_READ, path=f"/proc/{demo_pid}/{fname}"
+                )
+                lines.append(f"  cat /proc/{demo_pid}/{fname}:")
+                lines.extend(f"    {line}" for line in content.splitlines())
+                lines.append("")
+        except SyscallError as e:
+            lines.append(f"Step 3 failed: {e}")
+
+        # Cleanup — dispatch then terminate (process must be RUNNING to terminate)
+        if demo_pid is not None:
+            try:
+                assert self._kernel.scheduler is not None  # noqa: S101
+                dispatched = self._kernel.scheduler.dispatch()
+                if dispatched is not None:
+                    self._kernel.syscall(SyscallNumber.SYS_TERMINATE_PROCESS, pid=demo_pid)
+            except (SyscallError, RuntimeError):
+                pass
+
+        lines.append("Virtual files are generated live — no disk storage needed!")
         return "\n".join(lines)
