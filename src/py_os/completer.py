@@ -40,6 +40,7 @@ _SUBCOMMANDS: dict[str, list[str]] = {
     "http": ["demo"],
     "proc": ["demo"],
     "perf": ["demo"],
+    "strace": ["on", "off", "show", "clear", "demo"],
 }
 
 # Minimum number of words needed before signal name completion kicks in.
