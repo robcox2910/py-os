@@ -194,6 +194,7 @@ Here is every syscall number in PyOS, grouped by what they do:
 | 160-168 | Socket operations (create, bind, listen, connect, accept, send, recv, close, list) |
 | 170-171 | /proc virtual filesystem (read, list) |
 | 172       | Performance metrics (perf_metrics) |
+| 180-183 | Strace operations (enable, disable, log, clear) |
 
 You don't need to memorize these. The important thing is that every single
 operation a program can ask for has a number, and every single request goes
@@ -270,6 +271,84 @@ The shell is where you talk to the OS (see [The Shell](shell.md)). System
 calls are the only way the shell -- or any program -- can ask the kernel to
 do something. And the kernel coordinates all the subsystems to make it
 happen.
+
+---
+
+## 6. Tracing System Calls with strace
+
+Imagine you're sitting in a restaurant, and your food just magically appears.
+You have no idea what happened in the kitchen. What ingredients were used? What
+order were the steps done in? Did anything go wrong along the way?
+
+**strace** is like standing in the kitchen with a clipboard. Every time the
+chef (your program) asks an assistant (the kernel) for something -- "Get me
+flour," "Turn on the oven," "Plate the pasta" -- you write it down. You also
+write down what the assistant gives back: "Here's the flour," "Oven is on,"
+or "Error: we're out of pasta."
+
+In real Linux, `strace` intercepts every system call a program makes and shows
+you a log like this:
+
+```
+open("/etc/passwd", O_RDONLY) = 3
+read(3, "root:x:0:0...", 4096) = 1024
+close(3) = 0
+```
+
+PyOS has its own strace. When you turn it on, every syscall gets recorded:
+the syscall name, the arguments, and what came back (or if there was an error).
+
+### Using strace in the shell
+
+```
+$ strace on
+Strace enabled.
+$ ls /
+bin  home  tmp
+--- strace ---
+#1 SYS_LIST_DIR(path="/") = ["bin", "home", "tmp"]
+$ strace off
+Strace disabled.
+```
+
+The `--- strace ---` section appears automatically after every command when
+strace is on. Each entry has a sequence number (`#1`, `#2`, ...), the syscall
+name, the arguments, and the return value (or `ERROR:` if it failed).
+
+Other strace commands:
+- `strace show` -- display all captured entries so far
+- `strace clear` -- wipe the log and start fresh
+- `strace demo` -- a guided walkthrough that shows strace in action
+
+### Why is strace useful?
+
+When something goes wrong and you can't figure out why, strace shows you
+exactly what happened step by step. Did a file not exist? Did a permission
+check fail? Was the wrong path used? The trace log tells you.
+
+It's also a fantastic learning tool. If you're curious what `ls` actually does
+behind the scenes, just turn on strace and watch. You'll see every syscall
+the shell makes to produce the output.
+
+### How it works inside the kernel
+
+The kernel's `syscall()` method is the single gateway for all requests. When
+strace is enabled, the kernel wraps each syscall dispatch: it calls the
+handler, captures the result (or error), formats a log entry with the syscall
+name, arguments, and return value, and appends it to a ring buffer (capped at
+1,000 entries).
+
+Strace management syscalls (enable, disable, log, clear) and the read-log
+syscall are excluded from tracing to avoid infinite loops and noise.
+
+### Strace syscall numbers
+
+| Number | Name | What it does |
+|--------|------|-------------|
+| 180 | SYS_STRACE_ENABLE | Turn on syscall tracing |
+| 181 | SYS_STRACE_DISABLE | Turn off tracing (log is kept) |
+| 182 | SYS_STRACE_LOG | Read the current trace entries |
+| 183 | SYS_STRACE_CLEAR | Clear the log and reset the counter |
 
 ---
 

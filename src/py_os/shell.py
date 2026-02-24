@@ -173,6 +173,7 @@ class Shell:
             "http": self._cmd_http,
             "proc": self._cmd_proc,
             "perf": self._cmd_perf,
+            "strace": self._cmd_strace,
         }
 
     @property
@@ -245,7 +246,7 @@ class Shell:
             if output.startswith(("Unknown command:", "Error:")):
                 break
         self._pipe_input = ""
-        return output
+        return self._append_strace_output(output)
 
     def run_script(self, script: str) -> list[str]:
         """Execute a multi-line script, returning output from each command.
@@ -3086,5 +3087,117 @@ class Shell:
                 "  Throughput:      Processes completed per second of uptime",
             ]
         )
+
+        return "\n".join(lines)
+
+    # -- strace command ---------------------------------------------------------
+
+    def _append_strace_output(self, output: str) -> str:
+        """Append strace entries to output if strace is enabled."""
+        if not self._kernel.strace_enabled:
+            return output
+        entries: list[str] = self._kernel.syscall(SyscallNumber.SYS_STRACE_LOG)
+        if not entries:
+            return output
+        self._kernel.syscall(SyscallNumber.SYS_STRACE_CLEAR)
+        strace_section = "\n--- strace ---\n" + "\n".join(entries)
+        return output + strace_section
+
+    def _cmd_strace(self, args: list[str]) -> str:
+        """Syscall tracing — see every request the kernel handles."""
+        dispatch: dict[str, Callable[[list[str]], str]] = {
+            "on": lambda _a: self._cmd_strace_on(),
+            "off": lambda _a: self._cmd_strace_off(),
+            "show": lambda _a: self._cmd_strace_show(),
+            "clear": lambda _a: self._cmd_strace_clear(),
+            "demo": lambda _a: self._cmd_strace_demo(),
+        }
+        if not args or args[0] not in dispatch:
+            return "Usage: strace <on|off|show|clear|demo>"
+        return dispatch[args[0]](args[1:])
+
+    def _cmd_strace_on(self) -> str:
+        """Enable syscall tracing."""
+        self._kernel.syscall(SyscallNumber.SYS_STRACE_ENABLE)
+        return "Strace enabled."
+
+    def _cmd_strace_off(self) -> str:
+        """Disable syscall tracing."""
+        self._kernel.syscall(SyscallNumber.SYS_STRACE_DISABLE)
+        return "Strace disabled."
+
+    def _cmd_strace_show(self) -> str:
+        """Display the current strace log."""
+        entries: list[str] = self._kernel.syscall(SyscallNumber.SYS_STRACE_LOG)
+        if not entries:
+            return "(strace log is empty)"
+        return "\n".join(entries)
+
+    def _cmd_strace_clear(self) -> str:
+        """Clear the strace log."""
+        self._kernel.syscall(SyscallNumber.SYS_STRACE_CLEAR)
+        return "Strace log cleared."
+
+    def _cmd_strace_demo(self) -> str:
+        """Walk through strace with a guided demo."""
+        lines: list[str] = [
+            "=== Strace Demo ===",
+            "",
+            "Strace is like standing in a kitchen with a clipboard. Normally",
+            "you sit in the dining room and just see the food appear. But strace",
+            "lets you write down every order the chef (program) makes to the",
+            "assistants (kernel): 'Get me flour' -> 'Here's the flour.'",
+            "You see every request and every response.",
+            "",
+        ]
+
+        # Step 1: Enable strace
+        self._kernel.syscall(SyscallNumber.SYS_STRACE_ENABLE)
+        lines.append("Step 1: Strace enabled — now every syscall is recorded.")
+        lines.append("")
+
+        # Step 2: Run some syscalls
+        lines.append("Step 2: Making some syscalls...")
+        try:
+            self._kernel.syscall(SyscallNumber.SYS_CREATE_DIR, path="/strace_demo")
+            lines.append("  mkdir /strace_demo")
+        except SyscallError:
+            lines.append("  mkdir /strace_demo (already exists)")
+
+        try:
+            self._kernel.syscall(SyscallNumber.SYS_CREATE_FILE, path="/strace_demo/hello.txt")
+            self._kernel.syscall(
+                SyscallNumber.SYS_WRITE_FILE,
+                path="/strace_demo/hello.txt",
+                data=b"Hello from strace!",
+            )
+            lines.append("  write /strace_demo/hello.txt")
+        except SyscallError:
+            lines.append("  write /strace_demo/hello.txt (error)")
+
+        try:
+            self._kernel.syscall(SyscallNumber.SYS_LIST_DIR, path="/strace_demo")
+            lines.append("  ls /strace_demo")
+        except SyscallError:
+            pass
+
+        lines.append("")
+
+        # Step 3: Show the captured trace
+        lines.append("Step 3: Here's what strace captured:")
+        entries: list[str] = self._kernel.syscall(SyscallNumber.SYS_STRACE_LOG)
+        lines.extend(f"  {entry}" for entry in entries)
+        lines.append("")
+
+        # Step 4: Disable and cleanup
+        self._kernel.syscall(SyscallNumber.SYS_STRACE_DISABLE)
+        lines.append("Step 4: Strace disabled. The log is preserved for review.")
+
+        # Cleanup demo files
+        try:
+            self._kernel.syscall(SyscallNumber.SYS_DELETE_FILE, path="/strace_demo/hello.txt")
+            self._kernel.syscall(SyscallNumber.SYS_DELETE_FILE, path="/strace_demo")
+        except SyscallError:
+            pass
 
         return "\n".join(lines)

@@ -58,6 +58,19 @@ from py_os.users import FilePermissions, UserManager
 
 DEFAULT_TOTAL_FRAMES = 64
 
+_MAX_STRACE_ENTRIES = 1000
+_STRACE_MAX_ARG_LEN = 50
+_STRACE_MAX_LIST_ITEMS = 5
+_STRACE_EXCLUDED_SYSCALLS: frozenset[SyscallNumber] = frozenset(
+    {
+        SyscallNumber.SYS_STRACE_ENABLE,
+        SyscallNumber.SYS_STRACE_DISABLE,
+        SyscallNumber.SYS_STRACE_LOG,
+        SyscallNumber.SYS_STRACE_CLEAR,
+        SyscallNumber.SYS_READ_LOG,
+    }
+)
+
 
 class KernelState(StrEnum):
     """Represent the lifecycle phases of the kernel.
@@ -124,6 +137,11 @@ class Kernel:
         self._total_wait_time: float = 0.0
         self._total_turnaround_time: float = 0.0
         self._total_response_time: float = 0.0
+
+        # Strace — syscall tracing for debugging and education
+        self._strace_enabled: bool = False
+        self._strace_log: list[str] = []
+        self._strace_sequence: int = 0
 
     @property
     def state(self) -> KernelState:
@@ -1929,6 +1947,98 @@ class Kernel:
         parent.wait_target = child_pid
         return None
 
+    # -- Strace — syscall tracing -----------------------------------------------
+
+    @property
+    def strace_enabled(self) -> bool:
+        """Return whether strace is currently enabled."""
+        return self._strace_enabled
+
+    def strace_enable(self) -> None:
+        """Enable strace, clearing the log and resetting the sequence."""
+        self._strace_enabled = True
+        self._strace_log.clear()
+        self._strace_sequence = 0
+
+    def strace_disable(self) -> None:
+        """Disable strace, keeping the log for post-hoc review."""
+        self._strace_enabled = False
+
+    def strace_log(self) -> list[str]:
+        """Return a copy of the strace log entries."""
+        return list(self._strace_log)
+
+    def strace_clear(self) -> None:
+        """Clear the strace log and reset the sequence counter."""
+        self._strace_log.clear()
+        self._strace_sequence = 0
+
+    def _append_strace_entry(
+        self,
+        number: SyscallNumber,
+        kwargs: dict[str, Any],
+        result: Any,
+        *,
+        error: str | None = None,
+    ) -> None:
+        """Format and append a strace entry, FIFO-evicting if over limit."""
+        self._strace_sequence += 1
+        name = number.name
+        args_str = ", ".join(f"{k}={self._sanitize_value(v)}" for k, v in kwargs.items())
+        if error is not None:
+            entry = f"#{self._strace_sequence} {name}({args_str}) = ERROR: {error}"
+        else:
+            entry = f"#{self._strace_sequence} {name}({args_str}) = {self._sanitize_value(result)}"
+        self._strace_log.append(entry)
+        if len(self._strace_log) > _MAX_STRACE_ENTRIES:
+            del self._strace_log[: len(self._strace_log) - _MAX_STRACE_ENTRIES]
+
+    def _sanitize_value(self, value: Any) -> str:  # noqa: PLR0911
+        """Sanitize a value for strace display.
+
+        Callable → ``<callable>``, long strings truncated, bytes →
+        ``<N bytes>``, long lists/dicts truncated.
+        """
+        if callable(value):
+            return "<callable>"
+        if isinstance(value, bytes):
+            return f"<{len(value)} bytes>"
+        if isinstance(value, str):
+            if len(value) > _STRACE_MAX_ARG_LEN:
+                return f'"{value[:_STRACE_MAX_ARG_LEN]}..."'
+            return f'"{value}"'
+        if isinstance(value, list):
+            return self._sanitize_sequence(
+                value,  # pyright: ignore[reportUnknownArgumentType]
+                "[",
+                "]",
+            )
+        if isinstance(value, dict):
+            return self._sanitize_dict(value)  # pyright: ignore[reportUnknownArgumentType]
+        return str(value)
+
+    def _sanitize_sequence(self, items: list[Any], open_br: str, close_br: str) -> str:
+        """Sanitize a list for strace display, truncating if long."""
+        if len(items) > _STRACE_MAX_LIST_ITEMS:
+            shown = ", ".join(self._sanitize_value(v) for v in items[:_STRACE_MAX_LIST_ITEMS])
+            return f"{open_br}{shown}, ...{close_br}"
+        shown = ", ".join(self._sanitize_value(v) for v in items)
+        return f"{open_br}{shown}{close_br}"
+
+    def _sanitize_dict(self, mapping: dict[Any, Any]) -> str:
+        """Sanitize a dict for strace display, truncating if large."""
+        entries = list(mapping.items())
+        if len(entries) > _STRACE_MAX_LIST_ITEMS:
+            shown = ", ".join(
+                f"{self._sanitize_value(k)}: {self._sanitize_value(v)}"
+                for k, v in entries[:_STRACE_MAX_LIST_ITEMS]
+            )
+            return "{" + shown + ", ...}"
+        shown = ", ".join(
+            f"{self._sanitize_value(k)}: {self._sanitize_value(v)}" for k, v in entries
+        )
+        return "{" + shown + "}"
+
     def syscall(self, number: SyscallNumber, **kwargs: Any) -> Any:
         """Execute a system call — the user-space → kernel-space gateway.
 
@@ -1957,6 +2067,15 @@ class Kernel:
                 source="syscall",
                 uid=self._current_uid,
             )
+        should_trace = self._strace_enabled and number not in _STRACE_EXCLUDED_SYSCALLS
+        if should_trace:
+            try:
+                result = dispatch_syscall(self, number, **kwargs)
+            except Exception as exc:
+                self._append_strace_entry(number, kwargs, None, error=str(exc))
+                raise
+            self._append_strace_entry(number, kwargs, result)
+            return result
         return dispatch_syscall(self, number, **kwargs)
 
     # -- Synchronization delegation ------------------------------------------

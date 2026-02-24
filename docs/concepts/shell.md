@@ -97,6 +97,7 @@ Here are the commands grouped by what they do. You don't need to memorize them
 | `export`  | Set an environment variable |
 | `history` | Show every command you've typed this session |
 | `perf`    | Show performance metrics (context switches, wait time, throughput) |
+| `strace`  | Syscall tracing: on, off, show, clear, demo |
 | `exit`    | Shut down the kernel and leave the shell |
 
 **Synchronization** -- managing shared resources:

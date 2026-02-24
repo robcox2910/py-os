@@ -195,6 +195,12 @@ class SyscallNumber(IntEnum):
     # Performance metrics
     SYS_PERF_METRICS = 172
 
+    # Strace operations
+    SYS_STRACE_ENABLE = 180
+    SYS_STRACE_DISABLE = 181
+    SYS_STRACE_LOG = 182
+    SYS_STRACE_CLEAR = 183
+
 
 class SyscallError(Exception):
     """Raised when a system call fails.
@@ -323,6 +329,10 @@ def dispatch_syscall(
         SyscallNumber.SYS_PROC_READ: _sys_proc_read,
         SyscallNumber.SYS_PROC_LIST: _sys_proc_list,
         SyscallNumber.SYS_PERF_METRICS: _sys_perf_metrics,
+        SyscallNumber.SYS_STRACE_ENABLE: _sys_strace_enable,
+        SyscallNumber.SYS_STRACE_DISABLE: _sys_strace_disable,
+        SyscallNumber.SYS_STRACE_LOG: _sys_strace_log,
+        SyscallNumber.SYS_STRACE_CLEAR: _sys_strace_clear,
     }
 
     handler = handlers.get(number)
@@ -1387,3 +1397,26 @@ def _sys_perf_metrics(kernel: Any, **_kwargs: Any) -> dict[str, float | int]:
         return kernel.perf_metrics()
     except (ValueError, RuntimeError) as e:
         raise SyscallError(str(e)) from e
+
+
+# -- Strace syscall handlers ------------------------------------------------
+
+
+def _sys_strace_enable(kernel: Any, **_kwargs: Any) -> None:
+    """Enable syscall tracing."""
+    kernel.strace_enable()
+
+
+def _sys_strace_disable(kernel: Any, **_kwargs: Any) -> None:
+    """Disable syscall tracing."""
+    kernel.strace_disable()
+
+
+def _sys_strace_log(kernel: Any, **_kwargs: Any) -> list[str]:
+    """Return the current strace log entries."""
+    return kernel.strace_log()
+
+
+def _sys_strace_clear(kernel: Any, **_kwargs: Any) -> None:
+    """Clear the strace log and reset the sequence counter."""
+    kernel.strace_clear()
