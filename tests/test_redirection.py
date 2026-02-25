@@ -5,7 +5,7 @@ input from files, just like a real Unix shell.  It's a shell-only
 feature that reuses existing file I/O syscalls.
 """
 
-from py_os.kernel import Kernel
+from py_os.kernel import ExecutionMode, Kernel
 from py_os.shell import Shell, _Redirections
 from py_os.syscalls import SyscallNumber
 
@@ -14,6 +14,7 @@ def _booted_shell() -> tuple[Kernel, Shell]:
     """Create a booted kernel and shell for testing."""
     kernel = Kernel()
     kernel.boot()
+    kernel._execution_mode = ExecutionMode.KERNEL
     return kernel, Shell(kernel=kernel)
 
 

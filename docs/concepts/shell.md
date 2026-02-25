@@ -21,6 +21,13 @@ it doesn't fiddle with memory. It always goes through the official front door
 receptionist uses the hotel's booking system instead of personally moving
 furniture between rooms.
 
+In fact, the kernel **enforces** this. The shell runs in **user mode**, where
+accessing kernel subsystems directly raises an error. The only way to get
+anything done is through `kernel.syscall(...)`, which temporarily switches to
+**kernel mode** for the duration of the request. See
+[User Mode vs Kernel Mode](kernel-and-syscalls.md#7-user-mode-vs-kernel-mode)
+for the full story.
+
 One more thing to know: everything the shell gives back to you is a **string**
 (text). Even a list of processes or a count of files comes back as plain text.
 That turns out to be really powerful, as you'll see when we get to pipes.

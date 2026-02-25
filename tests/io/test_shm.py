@@ -10,7 +10,7 @@ import pytest
 
 from py_os.completer import Completer
 from py_os.io.shm import SharedMemoryError, SharedMemorySegment
-from py_os.kernel import Kernel
+from py_os.kernel import ExecutionMode, Kernel
 from py_os.shell import Shell
 from py_os.syscalls import SyscallError, SyscallNumber
 
@@ -25,6 +25,7 @@ def kernel() -> Kernel:
     """Return a booted kernel."""
     k = Kernel()
     k.boot()
+    k._execution_mode = ExecutionMode.KERNEL
     return k
 
 
@@ -372,6 +373,7 @@ class TestShmCleanup:
         # After shutdown, kernel is in SHUTDOWN state
         # Re-boot to verify no stale segments
         k.boot()
+        k._execution_mode = ExecutionMode.KERNEL
         assert not k.shm_list()
 
 

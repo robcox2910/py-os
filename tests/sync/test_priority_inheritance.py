@@ -22,7 +22,7 @@ return the textbook, and the fast student can proceed.
 
 from collections import deque
 
-from py_os.kernel import Kernel
+from py_os.kernel import ExecutionMode, Kernel
 from py_os.process.pcb import Process
 from py_os.process.scheduler import AgingPriorityPolicy, CFSPolicy, PriorityPolicy
 from py_os.shell import Shell
@@ -43,6 +43,7 @@ def _booted_kernel() -> Kernel:
     """Create and boot a kernel for testing."""
     kernel = Kernel()
     kernel.boot()
+    kernel._execution_mode = ExecutionMode.KERNEL  # tests run as kernel code
     return kernel
 
 
@@ -50,6 +51,7 @@ def _booted_shell() -> tuple[Kernel, Shell]:
     """Create a booted kernel and shell for testing."""
     kernel = Kernel()
     kernel.boot()
+    kernel._execution_mode = ExecutionMode.KERNEL  # tests run as kernel code
     return kernel, Shell(kernel=kernel)
 
 

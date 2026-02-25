@@ -7,7 +7,7 @@ SIGSTOP (pause), SIGCONT (resume), and user-defined SIGUSR1/SIGUSR2.
 
 import pytest
 
-from py_os.kernel import Kernel
+from py_os.kernel import ExecutionMode, Kernel
 from py_os.process.pcb import Process, ProcessState
 from py_os.process.signals import (
     DEFAULT_ACTIONS,
@@ -24,6 +24,7 @@ def _booted_kernel() -> Kernel:
     """Create and boot a kernel for testing."""
     kernel = Kernel()
     kernel.boot()
+    kernel._execution_mode = ExecutionMode.KERNEL  # tests run as kernel code
     return kernel
 
 

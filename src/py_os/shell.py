@@ -26,7 +26,6 @@ import re
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from py_os.fs.filesystem import FileType
 from py_os.io.http import (
     HttpMethod,
     HttpRequest,
@@ -41,16 +40,7 @@ from py_os.io.http import (
 from py_os.io.networking import SocketManager
 from py_os.jobs import JobManager, JobStatus
 from py_os.kernel import Kernel, KernelState
-from py_os.process.scheduler import (
-    AgingPriorityPolicy,
-    CFSPolicy,
-    FCFSPolicy,
-    MLFQPolicy,
-    PriorityPolicy,
-    RoundRobinPolicy,
-)
 from py_os.process.signals import Signal
-from py_os.sync.ordering import OrderingMode
 from py_os.syscalls import SyscallError, SyscallNumber
 
 # Type alias for a command handler: takes a list of args, returns output.
@@ -848,7 +838,7 @@ class Shell:
 
     def _cmd_exit(self, _args: list[str]) -> str:
         """Shut down the kernel and signal the REPL to stop."""
-        self._kernel.shutdown()
+        self._kernel.syscall(SyscallNumber.SYS_SHUTDOWN)
         return self.EXIT_SENTINEL
 
     def _cmd_history(self, _args: list[str]) -> str:
@@ -943,14 +933,11 @@ class Shell:
 
     def _cmd_resources(self, _args: list[str]) -> str:
         """Show resource allocation status."""
-        rm = self._kernel.resource_manager
-        if rm is None:
-            return "Resource manager not available."
-        resources = rm.resources()
+        resources: list[dict[str, object]] = self._kernel.syscall(SyscallNumber.SYS_LIST_RESOURCES)
         if not resources:
             return "No resources registered."
         lines = ["RESOURCE   AVAIL"]
-        lines.extend(f"{r:<10} {rm.available(r)}" for r in resources)
+        lines.extend(f"{r['name']!s:<10} {r['available']}" for r in resources)
         return "\n".join(lines)
 
     def _cmd_deadlock(self, _args: list[str]) -> str:
@@ -1108,26 +1095,8 @@ class Shell:
 
     def _cmd_scheduler_show(self) -> str:
         """Display the current scheduling policy name."""
-        scheduler = self._kernel.scheduler
-        if scheduler is None:
-            return "Scheduler not available."
-        policy = scheduler.policy
-        match policy:
-            case FCFSPolicy():
-                label = "FCFS"
-            case RoundRobinPolicy():
-                label = f"Round Robin (quantum={policy.quantum})"
-            case PriorityPolicy():
-                label = "Priority"
-            case AgingPriorityPolicy():
-                label = f"Aging Priority (boost={policy.aging_boost}, max_age={policy.max_age})"
-            case MLFQPolicy():
-                label = f"MLFQ ({policy.num_levels} levels, quanta={policy.quantums})"
-            case CFSPolicy():
-                label = f"CFS (base_slice={policy.base_slice})"
-            case _:
-                label = type(policy).__name__
-        return f"Current policy: {label}"
+        result: dict[str, str] = self._kernel.syscall(SyscallNumber.SYS_SCHEDULER_INFO)
+        return f"Current policy: {result['policy']}"
 
     def _cmd_scheduler_switch(self, name: str, args: list[str]) -> str:
         """Switch the scheduling policy via syscall."""
@@ -1223,18 +1192,14 @@ class Shell:
 
     def _cmd_mutex_list(self) -> str:
         """List all mutexes and their state."""
-        sm = self._kernel.sync_manager
-        if sm is None:
-            return "Sync manager not available."
-        names = sm.list_mutexes()
-        if not names:
+        mutexes: list[dict[str, object]] = self._kernel.syscall(SyscallNumber.SYS_LIST_MUTEXES)
+        if not mutexes:
             return "No mutexes."
         lines: list[str] = ["NAME       STATE       OWNER"]
-        for name in sorted(names):
-            mutex = sm.get_mutex(name)
-            state = "locked" if mutex.is_locked else "unlocked"
-            owner = str(mutex.owner) if mutex.owner is not None else "-"
-            lines.append(f"{name:<10} {state:<11} {owner}")
+        for m in mutexes:
+            state = "locked" if m["locked"] else "unlocked"
+            owner = str(m["owner"]) if m["owner"] is not None else "-"
+            lines.append(f"{m['name']!s:<10} {state:<11} {owner}")
         return "\n".join(lines)
 
     def _cmd_semaphore(self, args: list[str]) -> str:
@@ -1265,16 +1230,11 @@ class Shell:
 
     def _cmd_semaphore_list(self) -> str:
         """List all semaphores and their counts."""
-        sm = self._kernel.sync_manager
-        if sm is None:
-            return "Sync manager not available."
-        names = sm.list_semaphores()
-        if not names:
+        sems: list[dict[str, object]] = self._kernel.syscall(SyscallNumber.SYS_LIST_SEMAPHORES)
+        if not sems:
             return "No semaphores."
         lines: list[str] = ["NAME       COUNT"]
-        for name in sorted(names):
-            sem = sm.get_semaphore(name)
-            lines.append(f"{name:<10} {sem.count}")
+        lines.extend(f"{s['name']!s:<10} {s['count']}" for s in sems)
         return "\n".join(lines)
 
     def _cmd_rwlock(self, args: list[str]) -> str:
@@ -1297,19 +1257,15 @@ class Shell:
 
     def _cmd_rwlock_list(self) -> str:
         """List all reader-writer locks and their state."""
-        sm = self._kernel.sync_manager
-        if sm is None:
-            return "Sync manager not available."
-        names = sm.list_rwlocks()
-        if not names:
+        rwlocks: list[dict[str, object]] = self._kernel.syscall(SyscallNumber.SYS_LIST_RWLOCKS)
+        if not rwlocks:
             return "No reader-writer locks."
         lines: list[str] = ["NAME       READERS  WRITER  WAITING"]
-        for name in sorted(names):
-            rwl = sm.get_rwlock(name)
-            readers = str(rwl.reader_count)
-            writer = str(rwl.writer_tid) if rwl.writer_tid is not None else "-"
-            waiting = str(rwl.wait_queue_size)
-            lines.append(f"{name:<10} {readers:<8} {writer:<7} {waiting}")
+        for r in rwlocks:
+            readers = str(r["reader_count"])
+            writer = str(r["writer_tid"]) if r["writer_tid"] is not None else "-"
+            waiting = str(r["wait_queue_size"])
+            lines.append(f"{r['name']!s:<10} {readers:<8} {writer:<7} {waiting}")
         return "\n".join(lines)
 
     def _cmd_handle(self, args: list[str]) -> str:
@@ -1698,13 +1654,15 @@ class Shell:
             pid = int(args[0])
         except ValueError:
             return f"Error: invalid PID '{args[0]}'"
-        fds = self._kernel.list_fds(pid)
+        fds: list[dict[str, object]] = self._kernel.syscall(SyscallNumber.SYS_LIST_FDS, pid=pid)
         if not fds:
             return f"No open file descriptors for pid {pid}."
         lines = ["FD  MODE  OFFSET  PATH"]
-        for fd_num in sorted(fds):
-            ofd = fds[fd_num]
-            lines.append(f"{fd_num:<3} {ofd.mode!s:<5} {ofd.offset:<7} {ofd.path}")
+        lines.extend(
+            f"{fd_info['fd']!s:<3} {fd_info['mode']!s:<5}"
+            f" {fd_info['offset']!s:<7} {fd_info['path']}"
+            for fd_info in fds
+        )
         return "\n".join(lines)
 
     # -- Link commands -------------------------------------------------------
@@ -1744,29 +1702,27 @@ class Shell:
     def _cmd_stat(self, args: list[str]) -> str:
         """Display file metadata (inode, type, size, links).
 
-        Uses lstat internally so symlinks show their own metadata.
+        Use lstat internally so symlinks show their own metadata.
         """
         if not args:
             return "Usage: stat <path>"
         path = args[0]
-        assert self._kernel.filesystem is not None  # noqa: S101
         try:
-            info = self._kernel.filesystem.lstat(path)
-        except FileNotFoundError as e:
+            info: dict[str, object] = self._kernel.syscall(SyscallNumber.SYS_LSTAT, path=path)
+        except SyscallError as e:
             return f"Error: {e}"
 
-        if info.file_type is FileType.SYMLINK:
-            target = self._kernel.filesystem.readlink(path)
-            file_line = f"  File: {path} -> {target}"
+        if str(info["file_type"]) == "symlink" and "target" in info:
+            file_line = f"  File: {path} -> {info['target']}"
         else:
             file_line = f"  File: {path}"
 
         lines = [
             file_line,
-            f"  Inode: {info.inode_number}",
-            f"  Type: {info.file_type}",
-            f"  Size: {info.size}",
-            f"  Links: {info.link_count}",
+            f"  Inode: {info['inode_number']}",
+            f"  Type: {info['file_type']}",
+            f"  Size: {info['size']}",
+            f"  Links: {info['link_count']}",
         ]
         return "\n".join(lines)
 
@@ -1787,10 +1743,6 @@ class Shell:
 
     def _cmd_pi_demo(self) -> str:
         """Walk through the Mars Pathfinder priority inversion scenario."""
-        pi_mgr = self._kernel.pi_manager
-        if pi_mgr is None:
-            return "Error: Priority inheritance manager not available."
-
         lines: list[str] = [
             "=== Mars Pathfinder Priority Inversion Demo ===",
             "",
@@ -1816,9 +1768,15 @@ class Shell:
             med_pid: int = med_r["pid"]
             high_pid: int = high_r["pid"]
 
-            low_proc = self._kernel.processes[low_pid]
-            med_proc = self._kernel.processes[med_pid]
-            high_proc = self._kernel.processes[high_pid]
+            low_info: dict[str, object] = self._kernel.syscall(
+                SyscallNumber.SYS_PROCESS_INFO, pid=low_pid
+            )
+            med_info: dict[str, object] = self._kernel.syscall(
+                SyscallNumber.SYS_PROCESS_INFO, pid=med_pid
+            )
+            high_info: dict[str, object] = self._kernel.syscall(
+                SyscallNumber.SYS_PROCESS_INFO, pid=high_pid
+            )
 
             lines.append(f"  low_task  (pid={low_pid}, priority=1)")
             lines.append(f"  med_task  (pid={med_pid}, priority=5)")
@@ -1831,27 +1789,30 @@ class Shell:
             self._kernel.syscall(
                 SyscallNumber.SYS_ACQUIRE_MUTEX,
                 name="_pi_demo_lock",
-                tid=low_proc.main_thread.tid,
+                tid=int(str(low_info["main_tid"])),
                 pid=low_pid,
             )
+            low_info = self._kernel.syscall(SyscallNumber.SYS_PROCESS_INFO, pid=low_pid)
             lines.append("")
             lines.append("Step 1: low_task acquires the mutex.")
-            lines.append(f"  low_task effective_priority = {low_proc.effective_priority}")
+            lines.append(f"  low_task effective_priority = {low_info['effective_priority']}")
 
             # High tries to acquire — blocked, triggers PI
             self._kernel.syscall(
                 SyscallNumber.SYS_ACQUIRE_MUTEX,
                 name="_pi_demo_lock",
-                tid=high_proc.main_thread.tid,
+                tid=int(str(high_info["main_tid"])),
                 pid=high_pid,
             )
+            low_info = self._kernel.syscall(SyscallNumber.SYS_PROCESS_INFO, pid=low_pid)
+            med_info = self._kernel.syscall(SyscallNumber.SYS_PROCESS_INFO, pid=med_pid)
             lines.append("")
             lines.append("Step 2: high_task tries to acquire — blocked!")
             lines.append("  Priority inheritance kicks in:")
             lines.append(
-                f"  low_task effective_priority = {low_proc.effective_priority} (boosted!)"
+                f"  low_task effective_priority = {low_info['effective_priority']} (boosted!)"
             )
-            lines.append(f"  med_task effective_priority = {med_proc.effective_priority}")
+            lines.append(f"  med_task effective_priority = {med_info['effective_priority']}")
             lines.append("")
             lines.append("  Now low_task runs at priority 10, so the scheduler picks it")
             lines.append("  over med_task (priority 5). low_task finishes and releases.")
@@ -1860,13 +1821,14 @@ class Shell:
             self._kernel.syscall(
                 SyscallNumber.SYS_RELEASE_MUTEX,
                 name="_pi_demo_lock",
-                tid=low_proc.main_thread.tid,
+                tid=int(str(low_info["main_tid"])),
                 pid=low_pid,
             )
+            low_info = self._kernel.syscall(SyscallNumber.SYS_PROCESS_INFO, pid=low_pid)
             lines.append("")
             lines.append("Step 3: low_task releases the mutex.")
             lines.append(
-                f"  low_task effective_priority = {low_proc.effective_priority} (restored)"
+                f"  low_task effective_priority = {low_info['effective_priority']} (restored)"
             )
             lines.append("  high_task can now acquire and proceed.")
 
@@ -1878,35 +1840,26 @@ class Shell:
             lines.append(f"\nError during demo: {e}")
         finally:
             # Clean up demo resources
-            with contextlib.suppress(SyscallError, KeyError):
-                sm = self._kernel.sync_manager
-                if sm is not None:
-                    with contextlib.suppress(KeyError):
-                        sm.destroy_mutex("_pi_demo_lock")
-            pi_mgr.clear()
+            with contextlib.suppress(SyscallError):
+                self._kernel.syscall(SyscallNumber.SYS_DESTROY_MUTEX, name="_pi_demo_lock")
 
         return "\n".join(lines)
 
     def _cmd_pi_status(self) -> str:
         """Show priority inheritance status."""
-        pi_mgr = self._kernel.pi_manager
-        if pi_mgr is None:
-            return "Priority inheritance manager not available."
+        result: dict[str, object] = self._kernel.syscall(SyscallNumber.SYS_PI_STATUS)
 
         lines = ["=== Priority Inheritance Status ==="]
-        lines.append(f"Enabled: {pi_mgr.enabled}")
+        lines.append(f"Enabled: {result['enabled']}")
 
-        # Show boosted processes
-        boosted: list[str] = []
-        for pid, proc in self._kernel.processes.items():
-            if proc.effective_priority != proc.priority:
-                boosted.append(
-                    f"  pid {pid} ({proc.name}):"
-                    f" base={proc.priority}, effective={proc.effective_priority}"
-                )
-        if boosted:
+        boosted_list: list[dict[str, object]] = result["boosted"]  # type: ignore[assignment]
+        if boosted_list:
             lines.append("Boosted processes:")
-            lines.extend(boosted)
+            lines.extend(
+                f"  pid {b['pid']} ({b['name']}):"
+                f" base={b['base_priority']}, effective={b['effective_priority']}"
+                for b in boosted_list
+            )
         else:
             lines.append("No processes currently boosted.")
 
@@ -1987,25 +1940,23 @@ class Shell:
 
     def _cmd_ordering_violations(self) -> str:
         """Show recorded ordering violations."""
-        om = self._kernel.ordering_manager
-        if om is None:
-            return "Ordering manager not available."
-        violations = om.violations()
+        violations: list[dict[str, object]] = self._kernel.syscall(
+            SyscallNumber.SYS_ORDERING_VIOLATIONS
+        )
         if not violations:
             return "No ordering violations recorded."
         lines = ["RESOURCE                     REQ_RANK  MAX_HELD  PID"]
         lines.extend(
-            f"  {v.resource_requested:<26} {v.requested_rank:<9} {v.max_held_rank:<9} {v.pid}"
+            f"  {v['resource_requested']!s:<26}"
+            f" {v['requested_rank']!s:<9}"
+            f" {v['max_held_rank']!s:<9}"
+            f" {v['pid']}"
             for v in violations
         )
         return "\n".join(lines)
 
     def _cmd_ordering_demo(self) -> str:
         """Walk through the numbered-lockers resource ordering scenario."""
-        om = self._kernel.ordering_manager
-        if om is None:
-            return "Error: Ordering manager not available."
-
         lines: list[str] = [
             "=== Resource Ordering Demo ===",
             "",
@@ -2017,12 +1968,16 @@ class Shell:
             "Let's see this in action with two mutexes:",
         ]
 
+        # Remember the current ordering mode so we can restore it
+        ordering_status: dict[str, object] = self._kernel.syscall(SyscallNumber.SYS_CHECK_ORDERING)
+        old_mode = str(ordering_status["mode"])
+
         try:
             # Create demo mutexes with explicit ranks
-            self._kernel.create_mutex("_demo_lock_a")
-            self._kernel.create_mutex("_demo_lock_b")
-            om.register("mutex:_demo_lock_a", rank=1)
-            om.register("mutex:_demo_lock_b", rank=2)
+            self._kernel.syscall(SyscallNumber.SYS_CREATE_MUTEX, name="_demo_lock_a")
+            self._kernel.syscall(SyscallNumber.SYS_CREATE_MUTEX, name="_demo_lock_b")
+            self._kernel.syscall(SyscallNumber.SYS_REGISTER_RANK, name="mutex:_demo_lock_a", rank=1)
+            self._kernel.syscall(SyscallNumber.SYS_REGISTER_RANK, name="mutex:_demo_lock_b", rank=2)
 
             # Create two processes
             p1_r = self._kernel.syscall(
@@ -2034,32 +1989,49 @@ class Shell:
             p1_pid: int = p1_r["pid"]
             p2_pid: int = p2_r["pid"]
 
-            p1 = self._kernel.processes[p1_pid]
-            p2 = self._kernel.processes[p2_pid]
+            p1_info: dict[str, object] = self._kernel.syscall(
+                SyscallNumber.SYS_PROCESS_INFO, pid=p1_pid
+            )
+            p2_info: dict[str, object] = self._kernel.syscall(
+                SyscallNumber.SYS_PROCESS_INFO, pid=p2_pid
+            )
+            p1_tid = int(str(p1_info["main_tid"]))
+            p2_tid = int(str(p2_info["main_tid"]))
 
             lines.append("  mutex:_demo_lock_a  rank=1")
             lines.append("  mutex:_demo_lock_b  rank=2")
             lines.append(f"  walker_1 (pid={p1_pid})")
             lines.append(f"  walker_2 (pid={p2_pid})")
 
-            # Save and set strict mode for the demo
-            old_mode = om.mode
-            om.mode = OrderingMode.WARN
+            # Set warn mode for the demo
+            self._kernel.syscall(SyscallNumber.SYS_SET_ORDERING_MODE, mode="warn")
 
             # Process 1: ascending order (correct)
-            self._kernel.acquire_mutex("_demo_lock_a", tid=p1.main_thread.tid, pid=p1_pid)
-            self._kernel.acquire_mutex("_demo_lock_b", tid=p1.main_thread.tid, pid=p1_pid)
+            self._kernel.syscall(
+                SyscallNumber.SYS_ACQUIRE_MUTEX, name="_demo_lock_a", tid=p1_tid, pid=p1_pid
+            )
+            self._kernel.syscall(
+                SyscallNumber.SYS_ACQUIRE_MUTEX, name="_demo_lock_b", tid=p1_tid, pid=p1_pid
+            )
             lines.append("")
             lines.append("Step 1: walker_1 acquires lock_a (rank 1) then lock_b (rank 2)")
             lines.append("  Ascending order -- ALLOWED (walking forward)")
 
             # Release p1's locks
-            self._kernel.release_mutex("_demo_lock_b", tid=p1.main_thread.tid, pid=p1_pid)
-            self._kernel.release_mutex("_demo_lock_a", tid=p1.main_thread.tid, pid=p1_pid)
+            self._kernel.syscall(
+                SyscallNumber.SYS_RELEASE_MUTEX, name="_demo_lock_b", tid=p1_tid, pid=p1_pid
+            )
+            self._kernel.syscall(
+                SyscallNumber.SYS_RELEASE_MUTEX, name="_demo_lock_a", tid=p1_tid, pid=p1_pid
+            )
 
             # Process 2: descending order (violation!)
-            self._kernel.acquire_mutex("_demo_lock_b", tid=p2.main_thread.tid, pid=p2_pid)
-            self._kernel.acquire_mutex("_demo_lock_a", tid=p2.main_thread.tid, pid=p2_pid)
+            self._kernel.syscall(
+                SyscallNumber.SYS_ACQUIRE_MUTEX, name="_demo_lock_b", tid=p2_tid, pid=p2_pid
+            )
+            self._kernel.syscall(
+                SyscallNumber.SYS_ACQUIRE_MUTEX, name="_demo_lock_a", tid=p2_tid, pid=p2_pid
+            )
             lines.append("")
             lines.append("Step 2: walker_2 acquires lock_b (rank 2) then lock_a (rank 1)")
             lines.append("  Descending order -- VIOLATION! (walking backwards)")
@@ -2074,14 +2046,12 @@ class Shell:
             lines.append(f"\nError during demo: {e}")
         finally:
             # Clean up demo resources
-            with contextlib.suppress(SyscallError, KeyError):
-                sm = self._kernel.sync_manager
-                if sm is not None:
-                    with contextlib.suppress(KeyError):
-                        sm.destroy_mutex("_demo_lock_a")
-                    with contextlib.suppress(KeyError):
-                        sm.destroy_mutex("_demo_lock_b")
-            om.mode = old_mode  # type: ignore[possibly-undefined]
+            with contextlib.suppress(SyscallError):
+                self._kernel.syscall(SyscallNumber.SYS_DESTROY_MUTEX, name="_demo_lock_a")
+            with contextlib.suppress(SyscallError):
+                self._kernel.syscall(SyscallNumber.SYS_DESTROY_MUTEX, name="_demo_lock_b")
+            with contextlib.suppress(SyscallError):
+                self._kernel.syscall(SyscallNumber.SYS_SET_ORDERING_MODE, mode=old_mode)
 
         return "\n".join(lines)
 
@@ -2963,8 +2933,7 @@ class Shell:
         # Cleanup — dispatch then terminate (process must be RUNNING to terminate)
         if demo_pid is not None:
             try:
-                assert self._kernel.scheduler is not None  # noqa: S101
-                dispatched = self._kernel.scheduler.dispatch()
+                dispatched = self._kernel.syscall(SyscallNumber.SYS_DISPATCH)
                 if dispatched is not None:
                     self._kernel.syscall(SyscallNumber.SYS_TERMINATE_PROCESS, pid=demo_pid)
             except (SyscallError, RuntimeError):
@@ -3094,7 +3063,10 @@ class Shell:
 
     def _append_strace_output(self, output: str) -> str:
         """Append strace entries to output if strace is enabled."""
-        if not self._kernel.strace_enabled:
+        if self._kernel.state is not KernelState.RUNNING:
+            return output
+        status: dict[str, bool] = self._kernel.syscall(SyscallNumber.SYS_STRACE_STATUS)
+        if not status["enabled"]:
             return output
         entries: list[str] = self._kernel.syscall(SyscallNumber.SYS_STRACE_LOG)
         if not entries:

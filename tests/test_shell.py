@@ -7,7 +7,7 @@ booted kernel, using its subsystems (scheduler, memory, file system).
 
 import pytest
 
-from py_os.kernel import Kernel
+from py_os.kernel import ExecutionMode, Kernel
 from py_os.shell import Shell
 
 NUM_PAGES = 2
@@ -17,6 +17,7 @@ def _booted_shell() -> tuple[Kernel, Shell]:
     """Create a booted kernel and shell for testing."""
     kernel = Kernel()
     kernel.boot()
+    kernel._execution_mode = ExecutionMode.KERNEL
     return kernel, Shell(kernel=kernel)
 
 

@@ -13,7 +13,7 @@ as well as kernel-level fd integration.
 import pytest
 
 from py_os.fs.fd import FdError, FdTable, FileMode, OpenFileDescription, SeekWhence
-from py_os.kernel import Kernel
+from py_os.kernel import ExecutionMode, Kernel
 from py_os.process.signals import Signal
 from py_os.shell import Shell
 from py_os.syscalls import SyscallError, SyscallNumber
@@ -159,6 +159,7 @@ def _booted_kernel_with_file(path: str = "/data.txt", content: bytes = b"Hello, 
     """Return a booted kernel with a file already created and written."""
     kernel = Kernel()
     kernel.boot()
+    kernel._execution_mode = ExecutionMode.KERNEL  # tests run as kernel code
     assert kernel.filesystem is not None
     kernel.filesystem.create_file(path)
     kernel.filesystem.write(path, content)
@@ -396,6 +397,7 @@ class TestFdCleanup:
         """run_process should clean up fds after execution."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL  # tests run as kernel code
         assert kernel.filesystem is not None
         kernel.filesystem.create_file("/data.txt")
         kernel.filesystem.write("/data.txt", b"test")
@@ -530,6 +532,7 @@ def _shell_with_file() -> tuple[Shell, int]:
     """Return a shell and the pid of a process with /data.txt written."""
     kernel = Kernel()
     kernel.boot()
+    kernel._execution_mode = ExecutionMode.KERNEL  # tests run as kernel code
     assert kernel.filesystem is not None
     kernel.filesystem.create_file("/data.txt")
     kernel.filesystem.write("/data.txt", b"Hello, world!")

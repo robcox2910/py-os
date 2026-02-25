@@ -4,7 +4,7 @@ The logger records structured log entries for system events.
 It provides an audit trail of what happened, when, and who did it.
 """
 
-from py_os.kernel import Kernel
+from py_os.kernel import ExecutionMode, Kernel
 from py_os.logging import LogEntry, Logger, LogLevel
 from py_os.shell import Shell
 from py_os.syscalls import SyscallNumber
@@ -14,6 +14,7 @@ def _booted_kernel() -> Kernel:
     """Create and boot a kernel for testing."""
     kernel = Kernel()
     kernel.boot()
+    kernel._execution_mode = ExecutionMode.KERNEL  # tests run as kernel code
     return kernel
 
 

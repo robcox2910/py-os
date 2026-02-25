@@ -15,7 +15,7 @@ Cycle 6: Shell commands
 
 import pytest
 
-from py_os.kernel import Kernel
+from py_os.kernel import ExecutionMode, Kernel
 from py_os.memory.manager import MemoryManager
 from py_os.memory.slab import Slab, SlabAllocator, SlabCache, SlabError
 from py_os.shell import Shell
@@ -373,6 +373,7 @@ def _booted_kernel() -> Kernel:
     """Create and boot a kernel for testing."""
     kernel = Kernel()
     kernel.boot()
+    kernel._execution_mode = ExecutionMode.KERNEL  # tests run as kernel code
     return kernel
 
 

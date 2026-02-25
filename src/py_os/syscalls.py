@@ -28,6 +28,7 @@ Why bother with this layer?
     - **Auditability**: one choke-point for logging, rate-limiting, etc.
 """
 
+import contextlib
 from enum import IntEnum
 from typing import Any
 
@@ -201,6 +202,22 @@ class SyscallNumber(IntEnum):
     SYS_STRACE_LOG = 182
     SYS_STRACE_CLEAR = 183
 
+    # Kernel-mode enforcement operations
+    SYS_SHUTDOWN = 190
+    SYS_SCHEDULER_INFO = 191
+    SYS_LSTAT = 192
+    SYS_LIST_MUTEXES = 193
+    SYS_LIST_SEMAPHORES = 194
+    SYS_LIST_RWLOCKS = 195
+    SYS_LIST_FDS = 196
+    SYS_LIST_RESOURCES = 197
+    SYS_PI_STATUS = 198
+    SYS_ORDERING_VIOLATIONS = 199
+    SYS_DESTROY_MUTEX = 200
+    SYS_DISPATCH = 201
+    SYS_PROCESS_INFO = 202
+    SYS_STRACE_STATUS = 203
+
 
 class SyscallError(Exception):
     """Raised when a system call fails.
@@ -333,6 +350,20 @@ def dispatch_syscall(
         SyscallNumber.SYS_STRACE_DISABLE: _sys_strace_disable,
         SyscallNumber.SYS_STRACE_LOG: _sys_strace_log,
         SyscallNumber.SYS_STRACE_CLEAR: _sys_strace_clear,
+        SyscallNumber.SYS_SHUTDOWN: _sys_shutdown,
+        SyscallNumber.SYS_SCHEDULER_INFO: _sys_scheduler_info,
+        SyscallNumber.SYS_LSTAT: _sys_lstat,
+        SyscallNumber.SYS_LIST_MUTEXES: _sys_list_mutexes,
+        SyscallNumber.SYS_LIST_SEMAPHORES: _sys_list_semaphores,
+        SyscallNumber.SYS_LIST_RWLOCKS: _sys_list_rwlocks,
+        SyscallNumber.SYS_LIST_FDS: _sys_list_fds,
+        SyscallNumber.SYS_LIST_RESOURCES: _sys_list_resources,
+        SyscallNumber.SYS_PI_STATUS: _sys_pi_status,
+        SyscallNumber.SYS_ORDERING_VIOLATIONS: _sys_ordering_violations,
+        SyscallNumber.SYS_DESTROY_MUTEX: _sys_destroy_mutex,
+        SyscallNumber.SYS_DISPATCH: _sys_dispatch,
+        SyscallNumber.SYS_PROCESS_INFO: _sys_process_info,
+        SyscallNumber.SYS_STRACE_STATUS: _sys_strace_status,
     }
 
     handler = handlers.get(number)
@@ -1420,3 +1451,204 @@ def _sys_strace_log(kernel: Any, **_kwargs: Any) -> list[str]:
 def _sys_strace_clear(kernel: Any, **_kwargs: Any) -> None:
     """Clear the strace log and reset the sequence counter."""
     kernel.strace_clear()
+
+
+# -- Kernel-mode enforcement syscall handlers --------------------------------
+
+
+def _sys_shutdown(kernel: Any, **_kwargs: Any) -> None:
+    """Shut down the kernel."""
+    kernel.shutdown()
+
+
+def _sys_scheduler_info(kernel: Any, **_kwargs: Any) -> dict[str, str]:
+    """Return scheduler policy name and parameters."""
+    assert kernel.scheduler is not None  # noqa: S101
+    policy = kernel.scheduler.policy
+    match policy:
+        case FCFSPolicy():
+            label = "FCFS"
+        case RoundRobinPolicy():
+            label = f"Round Robin (quantum={policy.quantum})"
+        case PriorityPolicy():
+            label = "Priority"
+        case AgingPriorityPolicy():
+            label = f"Aging Priority (boost={policy.aging_boost}, max_age={policy.max_age})"
+        case MLFQPolicy():
+            label = f"MLFQ ({policy.num_levels} levels, quanta={list(policy.quantums)})"
+        case CFSPolicy():
+            label = f"CFS (base_slice={policy.base_slice})"
+        case _:
+            label = type(policy).__name__
+    return {"policy": label}
+
+
+def _sys_lstat(kernel: Any, **kwargs: Any) -> dict[str, Any]:
+    """Return file metadata without following symlinks."""
+    assert kernel.filesystem is not None  # noqa: S101
+    path: str = kwargs["path"]
+    try:
+        info = kernel.filesystem.lstat(path)
+    except FileNotFoundError as e:
+        raise SyscallError(str(e)) from e
+    result: dict[str, Any] = {
+        "inode_number": info.inode_number,
+        "file_type": str(info.file_type),
+        "size": info.size,
+        "link_count": info.link_count,
+    }
+    if str(info.file_type) == "symlink":
+        with contextlib.suppress(FileNotFoundError, OSError):
+            result["target"] = kernel.filesystem.readlink(path)
+    return result
+
+
+def _sys_list_mutexes(kernel: Any, **_kwargs: Any) -> list[dict[str, Any]]:
+    """List all mutexes with their state."""
+    sm = kernel.sync_manager
+    if sm is None:
+        return []
+    result: list[dict[str, Any]] = []
+    for name in sorted(sm.list_mutexes()):
+        mutex = sm.get_mutex(name)
+        result.append(
+            {
+                "name": name,
+                "locked": mutex.is_locked,
+                "owner": mutex.owner,
+            }
+        )
+    return result
+
+
+def _sys_list_semaphores(kernel: Any, **_kwargs: Any) -> list[dict[str, Any]]:
+    """List all semaphores with their counts."""
+    sm = kernel.sync_manager
+    if sm is None:
+        return []
+    result: list[dict[str, Any]] = []
+    for name in sorted(sm.list_semaphores()):
+        sem = sm.get_semaphore(name)
+        result.append({"name": name, "count": sem.count})
+    return result
+
+
+def _sys_list_rwlocks(kernel: Any, **_kwargs: Any) -> list[dict[str, Any]]:
+    """List all reader-writer locks with their state."""
+    sm = kernel.sync_manager
+    if sm is None:
+        return []
+    result: list[dict[str, Any]] = []
+    for name in sorted(sm.list_rwlocks()):
+        rwl = sm.get_rwlock(name)
+        result.append(
+            {
+                "name": name,
+                "reader_count": rwl.reader_count,
+                "writer_tid": rwl.writer_tid,
+                "wait_queue_size": rwl.wait_queue_size,
+            }
+        )
+    return result
+
+
+def _sys_list_fds(kernel: Any, **kwargs: Any) -> list[dict[str, Any]]:
+    """List open file descriptors for a process."""
+    pid: int = kwargs["pid"]
+    fds = kernel.list_fds(pid)
+    return [
+        {"fd": fd_num, "path": ofd.path, "mode": str(ofd.mode), "offset": ofd.offset}
+        for fd_num, ofd in sorted(fds.items())
+    ]
+
+
+def _sys_list_resources(kernel: Any, **_kwargs: Any) -> list[dict[str, Any]]:
+    """List resources and their availability."""
+    rm = kernel.resource_manager
+    if rm is None:
+        return []
+    return [{"name": r, "available": rm.available(r)} for r in rm.resources()]
+
+
+def _sys_pi_status(kernel: Any, **_kwargs: Any) -> dict[str, Any]:
+    """Return priority inheritance status and boosted processes."""
+    pi_mgr = kernel.pi_manager
+    if pi_mgr is None:
+        return {"enabled": False, "boosted": []}
+    boosted: list[dict[str, Any]] = []
+    for pid, proc in kernel.processes.items():
+        if proc.effective_priority != proc.priority:
+            boosted.append(
+                {
+                    "pid": pid,
+                    "name": proc.name,
+                    "base_priority": proc.priority,
+                    "effective_priority": proc.effective_priority,
+                }
+            )
+    return {"enabled": pi_mgr.enabled, "boosted": boosted}
+
+
+def _sys_ordering_violations(kernel: Any, **_kwargs: Any) -> list[dict[str, Any]]:
+    """Return ordering violations."""
+    om = kernel.ordering_manager
+    if om is None:
+        return []
+    return [
+        {
+            "resource_requested": v.resource_requested,
+            "requested_rank": v.requested_rank,
+            "max_held_rank": v.max_held_rank,
+            "pid": v.pid,
+        }
+        for v in om.violations()
+    ]
+
+
+def _sys_destroy_mutex(kernel: Any, **kwargs: Any) -> None:
+    """Destroy a named mutex."""
+    name: str = kwargs["name"]
+    sm = kernel.sync_manager
+    if sm is None:
+        msg = "Sync manager not available"
+        raise SyscallError(msg)
+    try:
+        sm.destroy_mutex(name)
+    except KeyError as e:
+        raise SyscallError(str(e)) from e
+
+
+def _sys_dispatch(kernel: Any, **_kwargs: Any) -> dict[str, Any] | None:
+    """Dispatch the next process from the scheduler."""
+    assert kernel.scheduler is not None  # noqa: S101
+    process = kernel.scheduler.dispatch()
+    if process is None:
+        return None
+    return {
+        "pid": process.pid,
+        "name": process.name,
+        "state": str(process.state),
+    }
+
+
+def _sys_process_info(kernel: Any, **kwargs: Any) -> dict[str, Any]:
+    """Return detailed info about a single process."""
+    pid: int = kwargs["pid"]
+    processes = kernel.processes
+    if pid not in processes:
+        msg = f"Process {pid} not found"
+        raise SyscallError(msg)
+    proc = processes[pid]
+    return {
+        "pid": proc.pid,
+        "name": proc.name,
+        "state": str(proc.state),
+        "priority": proc.priority,
+        "effective_priority": proc.effective_priority,
+        "main_tid": proc.main_thread.tid,
+    }
+
+
+def _sys_strace_status(kernel: Any, **_kwargs: Any) -> dict[str, bool]:
+    """Return whether strace is enabled."""
+    return {"enabled": kernel.strace_enabled}
