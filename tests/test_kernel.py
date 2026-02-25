@@ -193,9 +193,9 @@ class TestKernelCreateProcess:
         kernel = Kernel()
         kernel.boot()
         kernel._execution_mode = ExecutionMode.KERNEL
-        kernel.create_process(name="init", num_pages=NUM_MEMORY_PAGES)
+        kernel.create_process(name="worker", num_pages=NUM_MEMORY_PAGES)
         assert kernel.scheduler is not None
-        expected_count = 1
+        expected_count = 2  # init + created process
         assert kernel.scheduler.ready_count == expected_count
 
     def test_create_process_before_boot_raises(self) -> None:
@@ -213,7 +213,7 @@ class TestKernelCreateProcess:
         p2 = kernel.create_process(name="daemon", num_pages=NUM_MEMORY_PAGES)
         assert p1.pid != p2.pid
         assert kernel.scheduler is not None
-        expected_count = 2
+        expected_count = 3  # init + 2 created processes
         assert kernel.scheduler.ready_count == expected_count
 
 
@@ -225,13 +225,20 @@ class TestKernelTerminateProcess:
         kernel = Kernel()
         kernel.boot()
         kernel._execution_mode = ExecutionMode.KERNEL
-        process = kernel.create_process(name="init", num_pages=NUM_MEMORY_PAGES)
+        process = kernel.create_process(name="worker", num_pages=NUM_MEMORY_PAGES)
         assert kernel.memory is not None
         free_before = kernel.memory.free_frames
 
-        # Must dispatch first (only RUNNING processes can be terminated)
+        # Must dispatch first (only RUNNING processes can be terminated).
+        # init is first in the queue, so dispatch+preempt it, then dispatch ours.
         assert kernel.scheduler is not None
-        kernel.scheduler.dispatch()
+        init_proc = kernel.scheduler.dispatch()
+        assert init_proc is not None
+        init_proc.preempt()
+        kernel.scheduler.add(init_proc)
+        dispatched = kernel.scheduler.dispatch()
+        assert dispatched is not None
+        assert dispatched.pid == process.pid
         kernel.terminate_process(pid=process.pid)
 
         assert kernel.memory.free_frames == free_before + NUM_MEMORY_PAGES

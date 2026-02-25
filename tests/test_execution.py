@@ -17,7 +17,7 @@ pipes between fork and exec.
 import pytest
 
 from py_os.kernel import ExecutionMode, Kernel
-from py_os.process.pcb import Process
+from py_os.process.pcb import Process, ProcessState
 from py_os.shell import Shell
 from py_os.syscalls import SyscallError, SyscallNumber
 
@@ -157,7 +157,7 @@ class TestKernelRun:
         kernel.shutdown()
 
     def test_run_process_terminates(self) -> None:
-        """The process is terminated and removed after running."""
+        """The process is terminated after running (zombie if parent exists)."""
         kernel = Kernel()
         kernel.boot()
         kernel._execution_mode = ExecutionMode.KERNEL
@@ -165,7 +165,8 @@ class TestKernelRun:
         pid = proc.pid
         kernel.exec_process(pid=pid, program=lambda: "done")
         kernel.run_process(pid=pid)
-        assert pid not in kernel.processes
+        # Process stays as zombie because init is its parent
+        assert kernel.processes[pid].state is ProcessState.TERMINATED
         kernel.shutdown()
 
     def test_run_process_frees_memory(self) -> None:

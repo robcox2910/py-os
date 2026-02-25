@@ -18,6 +18,7 @@ Technical reference for every module in the system. For beginner-friendly explan
 | [Processes](concepts/processes.md) | PCB, five-state model, scheduler, fork (COW), threads, execution, zombies, wait/waitpid |
 | [Memory](concepts/memory.md) | Frames/pages, virtual memory, page replacement, swap, copy-on-write, mmap, slab allocator |
 | [Filesystem](concepts/filesystem.md) | Inodes, path resolution, hard/symbolic links, persistence, journaling, /proc virtual filesystem |
+| [The Boot Chain](concepts/bootloader.md) | Firmware POST, bootloader, kernel image, init process, dmesg |
 | [Kernel and System Calls](concepts/kernel-and-syscalls.md) | Boot sequence, lifecycle, syscall dispatch, number ranges |
 | [The Shell](concepts/shell.md) | Commands, pipes, redirection, loops, scripting, jobs, history, aliases, tab completion, env |
 | [Devices and Networking](concepts/devices-and-networking.md) | Device protocol, IPC, disk scheduling, sockets, DNS, HTTP |
@@ -27,6 +28,16 @@ Technical reference for every module in the system. For beginner-friendly explan
 ## Module Map
 
 Every source file and what it implements.
+
+### Boot Layer
+
+| File | Class/Function | Purpose |
+|------|---------------|---------|
+| `bootloader.py` | `Bootloader` | Simulated firmware + bootloader: POST, load kernel image, boot kernel |
+| `bootloader.py` | `BootStage` | FIRMWARE / BOOTLOADER / KERNEL / USERSPACE stage enum |
+| `bootloader.py` | `PostResult` | Frozen dataclass capturing POST check outcomes |
+| `bootloader.py` | `KernelImage` | Frozen dataclass representing the kernel binary on disk |
+| `bootloader.py` | `BootError` | Raised when the boot chain cannot continue |
 
 ### Kernel Layer
 
@@ -41,7 +52,9 @@ Every source file and what it implements.
 | `kernel.py` | `strace_log()` / `strace_clear()` | Read/clear the strace trace log |
 | `kernel.py` | `_sanitize_value()` | Format values for strace display (truncation, callable/bytes placeholders) |
 | `syscalls.py` | `dispatch_syscall()` | Trap handler -- routes syscall numbers to kernel subsystem handlers |
-| `syscalls.py` | `SyscallNumber` | IntEnum of all syscall numbers (1-203) |
+| `kernel.py` | `dmesg()` | Return the kernel boot log (like Linux dmesg) |
+| `kernel.py` | `init_pid` | PID of the init process (root of process tree) |
+| `syscalls.py` | `SyscallNumber` | IntEnum of all syscall numbers (1-211) |
 | `syscalls.py` | `SyscallError` | User-facing exception wrapping internal errors |
 
 ### Process Management
@@ -163,7 +176,8 @@ Every source file and what it implements.
 | `logging.py` | `Logger` | Ring buffer of structured log entries |
 | `logging.py` | `LogLevel` | DEBUG / INFO / WARNING / ERROR (IntEnum) |
 | `sync/deadlock.py` | `ResourceManager` | Banker's algorithm matrices, deadlock detection |
-| `repl.py` | `main()` | Interactive terminal with boot banner |
+| `repl.py` | `run()` | Interactive terminal with bootloader chain and dynamic boot banner |
+| `repl.py` | `format_boot_log()` | Format boot log messages into a displayable banner |
 
 ## Syscall Number Ranges
 
@@ -195,6 +209,7 @@ Every source file and what it implements.
 | 172 | Performance metrics |
 | 180-183 | Strace operations (enable, disable, log, clear) |
 | 190-203 | Kernel-mode helpers (shutdown, scheduler info, lstat, sync listing, fd listing, resource listing, PI status, ordering violations, destroy mutex, dispatch, process info, strace status) |
+| 210-211 | Boot info (dmesg boot log, boot metadata) |
 
 ## Strategy Pattern Usage
 

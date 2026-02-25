@@ -43,18 +43,18 @@ class TestSyscallSysinfo:
         assert info["memory_total"] == info["memory_free"]  # no processes yet
 
     def test_sysinfo_has_process_count(self) -> None:
-        """Sysinfo should include the number of processes."""
+        """Sysinfo should include the number of processes (init always present)."""
         kernel = _booted_kernel()
         info = kernel.syscall(SyscallNumber.SYS_SYSINFO)
-        expected_count = 0
+        expected_count = 1  # init process
         assert info["process_count"] == expected_count
 
     def test_sysinfo_process_count_after_create(self) -> None:
-        """Process count should reflect created processes."""
+        """Process count should reflect created processes plus init."""
         kernel = _booted_kernel()
         kernel.create_process(name="test", num_pages=2)
         info = kernel.syscall(SyscallNumber.SYS_SYSINFO)
-        expected_count = 1
+        expected_count = 2  # init + created process
         assert info["process_count"] == expected_count
 
     def test_sysinfo_has_device_count(self) -> None:

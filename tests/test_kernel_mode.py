@@ -285,9 +285,10 @@ class TestNewSyscalls:
         """SYS_DISPATCH dispatches the next process from the scheduler."""
         k = _booted_kernel()
         k.syscall(SyscallNumber.SYS_CREATE_PROCESS, name="disp_test", num_pages=1)
+        # First dispatch returns init (FCFS ordering)
         result = k.syscall(SyscallNumber.SYS_DISPATCH)
         assert result is not None
-        assert result["name"] == "disp_test"
+        assert result["name"] == "init"
         k._execution_mode = ExecutionMode.KERNEL
         k.shutdown()
 

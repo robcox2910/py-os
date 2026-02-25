@@ -114,9 +114,16 @@ class Kernel:
     and are initialised during boot.
     """
 
-    def __init__(self) -> None:
-        """Create a kernel in the SHUTDOWN state."""
+    def __init__(self, *, total_frames: int = DEFAULT_TOTAL_FRAMES) -> None:
+        """Create a kernel in the SHUTDOWN state.
+
+        Args:
+            total_frames: Number of physical memory frames to allocate
+                during boot.  Defaults to DEFAULT_TOTAL_FRAMES (64).
+
+        """
         self._state: KernelState = KernelState.SHUTDOWN
+        self._total_frames = total_frames
         self._execution_mode: ExecutionMode = ExecutionMode.KERNEL
         self._boot_time: float | None = None
         self._scheduler: Scheduler | None = None
@@ -156,6 +163,10 @@ class Kernel:
         self._total_wait_time: float = 0.0
         self._total_turnaround_time: float = 0.0
         self._total_response_time: float = 0.0
+
+        # Boot log — dmesg-style messages from subsystem initialisation
+        self._boot_log: list[str] = []
+        self._init_pid: int | None = None
 
         # Strace — syscall tracing for debugging and education
         self._strace_enabled: bool = False
@@ -311,6 +322,18 @@ class Kernel:
         self._require_kernel_mode()
         return self._proc_fs
 
+    @property
+    def init_pid(self) -> int | None:
+        """Return the PID of the init process, or None before boot."""
+        return self._init_pid
+
+    def dmesg(self) -> list[str]:
+        """Return the kernel boot log (like Linux dmesg).
+
+        Each entry is a string logged during subsystem initialisation.
+        """
+        return list(self._boot_log)
+
     def set_scheduler_policy(self, policy: SchedulingPolicy) -> None:
         """Replace the scheduler's policy, preserving the ready queue.
 
@@ -361,9 +384,11 @@ class Kernel:
 
         # 0. Logger — capture events from the start
         self._logger = Logger()
+        self._boot_log.append("[OK] Logger")
 
         # 1. Memory — everything else needs it
-        self._memory = MemoryManager(total_frames=DEFAULT_TOTAL_FRAMES)
+        self._memory = MemoryManager(total_frames=self._total_frames)
+        self._boot_log.append(f"[OK] Memory manager ({self._total_frames} frames)")
 
         # 1b. Slab allocator — kernel-level fixed-size object pools
         self._slab_allocator = SlabAllocator(
@@ -373,13 +398,16 @@ class Kernel:
         )
         self._slab_allocator.create_cache("pcb", obj_size=64)
         self._slab_allocator.create_cache("inode", obj_size=48)
+        self._boot_log.append("[OK] Slab allocator")
 
         # 2. File system — processes may need files (with journaling for crash recovery)
         self._filesystem = JournaledFileSystem()
+        self._boot_log.append("[OK] File system (journaled)")
 
         # 3. User manager — identity before scheduling
         self._user_manager = UserManager()
         self._current_uid = 0  # root
+        self._boot_log.append("[OK] User manager")
 
         # 5. Environment — default variables
         self._env = Environment(
@@ -389,25 +417,30 @@ class Kernel:
                 "USER": "root",
             }
         )
+        self._boot_log.append("[OK] Environment")
 
         # 6. Device manager — register default devices
         self._device_manager = DeviceManager()
         self._device_manager.register(NullDevice())
         self._device_manager.register(ConsoleDevice())
         self._device_manager.register(RandomDevice())
+        self._boot_log.append("[OK] Device manager")
 
         # 6b. DNS resolver — pre-seed with localhost
         self._dns_resolver = DnsResolver()
         self._dns_resolver.register("localhost", "127.0.0.1")
+        self._boot_log.append("[OK] DNS resolver")
 
         # 6c. Socket manager — in-memory network stack
         self._socket_manager = SocketManager()
+        self._boot_log.append("[OK] Network stack")
 
         # 7. Resource manager — deadlock detection and avoidance
         self._resource_manager = ResourceManager()
 
         # 8. Sync manager — mutexes, semaphores, condition variables
         self._sync_manager = SyncManager()
+        self._boot_log.append("[OK] Sync primitives")
 
         # 8b. Priority inheritance manager — prevent priority inversion
         self._pi_manager = PriorityInheritanceManager()
@@ -417,9 +450,19 @@ class Kernel:
 
         # 9. Scheduler — ready to accept processes
         self._scheduler = Scheduler(policy=FCFSPolicy())
+        self._boot_log.append("[OK] Scheduler (FCFS)")
 
         # 10. /proc virtual filesystem — reads live state from all subsystems
         self._proc_fs = ProcFilesystem(kernel=self)
+        self._boot_log.append("[OK] /proc filesystem")
+
+        # 11. Init process — the root of the process tree (like PID 1)
+        init = Process(name="init", priority=0)
+        init.admit()
+        self._scheduler.add(init)
+        self._processes[init.pid] = init
+        self._init_pid = init.pid
+        self._boot_log.append(f"[OK] Init process (PID {init.pid})")
 
         self._state = KernelState.RUNNING
         self._logger.log(LogLevel.INFO, "Kernel boot complete", source="kernel")
@@ -469,6 +512,8 @@ class Kernel:
         self._socket_manager = None
         self._dns_resolver = None
 
+        self._init_pid = None
+        self._boot_log.clear()
         self._logger = None
         self._boot_time = None
         self._state = KernelState.SHUTDOWN
@@ -501,7 +546,7 @@ class Kernel:
         assert self._memory is not None  # guaranteed by _require_running  # noqa: S101
         assert self._scheduler is not None  # noqa: S101
 
-        process = Process(name=name, priority=priority)
+        process = Process(name=name, priority=priority, parent_pid=self._init_pid)
         frames = self._memory.allocate(process.pid, num_pages=num_pages)
 
         # Set up virtual memory: map virtual pages 0..N-1 to physical frames
@@ -1269,7 +1314,7 @@ class Kernel:
         """
         self._require_running()
         process = self._processes.get(pid)
-        if process is None:
+        if process is None or process.state is ProcessState.TERMINATED:
             msg = f"Process {pid} not found"
             raise ValueError(msg)
         process.program = program

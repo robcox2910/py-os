@@ -220,6 +220,11 @@ class TestProcSelf:
         pfs = ProcFilesystem(kernel=k)
         k.create_process(name="runner", num_pages=1)
         assert k.scheduler is not None
+        # Dispatch init first (FCFS), preempt it, then dispatch runner
+        init_proc = k.scheduler.dispatch()
+        assert init_proc is not None
+        init_proc.preempt()
+        k.scheduler.add(init_proc)
         dispatched = k.scheduler.dispatch()
         assert dispatched is not None
         content = pfs.read("/proc/self/cmdline")

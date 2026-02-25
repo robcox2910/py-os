@@ -254,6 +254,11 @@ class TestKernelMetrics:
         k = _booted_kernel()
         p = k.create_process(name="a", num_pages=1)
         assert k.scheduler is not None
+        # Dispatch init first (FCFS), preempt it, then dispatch our process
+        init_proc = k.scheduler.dispatch()
+        assert init_proc is not None
+        init_proc.preempt()
+        k.scheduler.add(init_proc)
         k.scheduler.dispatch()
         k.terminate_process(pid=p.pid)
         assert k.perf_metrics()["total_completed"] >= 1
