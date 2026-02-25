@@ -8,7 +8,7 @@ via ``fg`` or ``waitjob``.
 
 import re
 
-from py_os.kernel import Kernel
+from py_os.kernel import ExecutionMode, Kernel
 from py_os.process.pcb import Process
 from py_os.shell import Shell
 
@@ -17,6 +17,7 @@ def _shell() -> Shell:
     """Create a booted kernel and shell for testing."""
     kernel = Kernel()
     kernel.boot()
+    kernel._execution_mode = ExecutionMode.KERNEL
     return Shell(kernel=kernel)
 
 
@@ -159,6 +160,7 @@ class TestFgWithOutput:
         """``fg`` on a ``bg``-created job should show the old-style message."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         shell = Shell(kernel=kernel)
         proc = _running_process(kernel, name="worker")
         shell.execute(f"bg {proc.pid}")

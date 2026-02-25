@@ -34,11 +34,14 @@ Every source file and what it implements.
 |------|---------------|---------|
 | `kernel.py` | `Kernel` | Central coordinator, boot/shutdown lifecycle, subsystem ownership |
 | `kernel.py` | `KernelState` | SHUTDOWN / BOOTING / RUNNING / SHUTTING_DOWN state machine |
+| `kernel.py` | `ExecutionMode` | USER / KERNEL privilege level (enforced at property access) |
+| `kernel.py` | `KernelModeError` | Raised when user-mode code accesses a kernel-only resource |
+| `kernel.py` | `kernel_mode()` | Context manager that switches to kernel mode and restores on exit |
 | `kernel.py` | `strace_enable()` / `strace_disable()` | Enable/disable syscall tracing |
 | `kernel.py` | `strace_log()` / `strace_clear()` | Read/clear the strace trace log |
 | `kernel.py` | `_sanitize_value()` | Format values for strace display (truncation, callable/bytes placeholders) |
 | `syscalls.py` | `dispatch_syscall()` | Trap handler -- routes syscall numbers to kernel subsystem handlers |
-| `syscalls.py` | `SyscallNumber` | IntEnum of all syscall numbers (1-183) |
+| `syscalls.py` | `SyscallNumber` | IntEnum of all syscall numbers (1-203) |
 | `syscalls.py` | `SyscallError` | User-facing exception wrapping internal errors |
 
 ### Process Management
@@ -191,6 +194,7 @@ Every source file and what it implements.
 | 170-171 | /proc virtual filesystem (read, list) |
 | 172 | Performance metrics |
 | 180-183 | Strace operations (enable, disable, log, clear) |
+| 190-203 | Kernel-mode helpers (shutdown, scheduler info, lstat, sync listing, fd listing, resource listing, PI status, ordering violations, destroy mutex, dispatch, process info, strace status) |
 
 ## Strategy Pattern Usage
 

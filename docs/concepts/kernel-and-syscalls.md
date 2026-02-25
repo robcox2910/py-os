@@ -95,7 +95,8 @@ method in `kernel.py`, you'll see something like this:
 ```
 
 Only after every single one of those steps is finished does the kernel
-switch its state to `RUNNING`.
+switch its state to `RUNNING` -- and it also flips the CPU from
+**kernel mode** to **user mode** (more on that in section 7 below).
 
 ### Why does order matter?
 
@@ -195,6 +196,7 @@ Here is every syscall number in PyOS, grouped by what they do:
 | 170-171 | /proc virtual filesystem (read, list) |
 | 172       | Performance metrics (perf_metrics) |
 | 180-183 | Strace operations (enable, disable, log, clear) |
+| 190-203 | Kernel-mode helpers (shutdown, scheduler info, lstat, list mutexes/semaphores/rwlocks, list fds, list resources, PI status, ordering violations, destroy mutex, dispatch, process info, strace status) |
 
 You don't need to memorize these. The important thing is that every single
 operation a program can ask for has a number, and every single request goes
@@ -349,6 +351,110 @@ syscall are excluded from tracing to avoid infinite loops and noise.
 | 181 | SYS_STRACE_DISABLE | Turn off tracing (log is kept) |
 | 182 | SYS_STRACE_LOG | Read the current trace entries |
 | 183 | SYS_STRACE_CLEAR | Clear the log and reset the counter |
+
+---
+
+## 7. User Mode vs Kernel Mode
+
+Imagine your security badge at a building. Most of the time your badge is
+**blue** (user mode) -- you can enter the lobby and talk to the front desk,
+but you can't open the door to the server room. When you make a system call,
+the badge flips to **red** (kernel mode) -- now you can enter the server room
+and do whatever the request asks for. The moment the system call finishes,
+your badge flips right back to blue.
+
+In a real CPU, this protection is built into the hardware using **privilege
+rings**:
+
+```
+Ring 0 (kernel mode) -- full access to hardware and memory
+Ring 3 (user mode)   -- restricted, can only ask the kernel for help
+```
+
+User programs always run in ring 3. They can't read the kernel's memory,
+they can't talk to hardware directly, and they can't touch the scheduler or
+filesystem structures. The only way to do any of those things is to make a
+**system call**, which temporarily switches the CPU to ring 0, runs the
+handler, and switches back.
+
+### How PyOS enforces this
+
+PyOS has an `ExecutionMode` enum with two values:
+
+```python
+class ExecutionMode(StrEnum):
+    USER = "user"
+    KERNEL = "kernel"
+```
+
+When the kernel boots, it starts in **kernel mode** (the janitor is setting up
+the building, so they need full access). At the very end of `boot()`, the mode
+flips to **user mode** -- the doors are open, and normal rules apply.
+
+Every sensitive kernel property (scheduler, memory, filesystem, processes,
+etc.) has a guard at the top:
+
+```python
+@property
+def scheduler(self):
+    self._require_kernel_mode()   # raises KernelModeError if in USER mode
+    return self._scheduler
+```
+
+If the shell (or any other user-space code) tries to reach past the front desk
+and grab the scheduler directly, they'll get a `KernelModeError`. The only way
+to get scheduler information is through the proper syscall:
+
+```python
+kernel.syscall(SyscallNumber.SYS_SCHEDULER_INFO)
+```
+
+Inside `syscall()`, the kernel temporarily switches to kernel mode (flips the
+badge to red), runs the handler, and switches back (flips it to blue again).
+This is done with a context manager that always restores the previous mode,
+even if the handler crashes:
+
+```python
+with self._kernel_mode():
+    result = dispatch_syscall(self, number, **kwargs)
+```
+
+### Why bother?
+
+Without this enforcement, nothing stops a programmer from writing
+`kernel.filesystem.create_file(...)` directly in the shell. It works, but
+it's cheating -- it bypasses all the safety checks, logging, and error
+wrapping that the syscall layer provides. With mode enforcement turned on:
+
+- **Every access goes through syscalls.** No shortcuts, no backdoors.
+- **Bugs are caught early.** If you accidentally access a kernel resource
+  from user-space code, you get an immediate, clear error message instead of
+  a subtle data corruption later.
+- **The architecture matches reality.** Real operating systems enforce this
+  boundary in hardware. PyOS enforces it in software, but the principle is
+  the same.
+
+### Kernel-mode helper syscalls
+
+To replace every direct kernel access in the shell, PyOS added 14 new
+syscalls in the 190-203 range:
+
+| Number | Name | What it does |
+|--------|------|-------------|
+| 190 | SYS_SHUTDOWN | Shut down the kernel cleanly |
+| 191 | SYS_SCHEDULER_INFO | Return the current scheduling policy name |
+| 192 | SYS_LSTAT | Get file metadata (without following symlinks) |
+| 193 | SYS_LIST_MUTEXES | List all mutexes with locked/owner state |
+| 194 | SYS_LIST_SEMAPHORES | List all semaphores with their counts |
+| 195 | SYS_LIST_RWLOCKS | List all reader-writer locks with state |
+| 196 | SYS_LIST_FDS | List open file descriptors for a process |
+| 197 | SYS_LIST_RESOURCES | List resources managed by the deadlock detector |
+| 198 | SYS_PI_STATUS | Priority inheritance status and boosted processes |
+| 199 | SYS_ORDERING_VIOLATIONS | List resource ordering violations |
+| 200 | SYS_DESTROY_MUTEX | Destroy a named mutex |
+| 201 | SYS_DISPATCH | Dispatch the next process from the scheduler |
+| 202 | SYS_PROCESS_INFO | Get details about a single process |
+| 203 | SYS_STRACE_STATUS | Check whether strace is currently enabled |
 
 ---
 

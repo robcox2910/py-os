@@ -16,7 +16,7 @@ pipes between fork and exec.
 
 import pytest
 
-from py_os.kernel import Kernel
+from py_os.kernel import ExecutionMode, Kernel
 from py_os.process.pcb import Process
 from py_os.shell import Shell
 from py_os.syscalls import SyscallError, SyscallNumber
@@ -111,6 +111,7 @@ class TestKernelExec:
         """exec_process loads a callable into an existing process."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         proc = kernel.create_process(name="target", num_pages=_NUM_PAGES)
         kernel.exec_process(pid=proc.pid, program=lambda: "loaded")
         assert proc.program is not None
@@ -120,6 +121,7 @@ class TestKernelExec:
         """exec_process raises for a PID that doesn't exist."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         pid_nonexistent = 9999
         with pytest.raises(ValueError, match="not found"):
             kernel.exec_process(pid=pid_nonexistent, program=lambda: "x")
@@ -129,6 +131,7 @@ class TestKernelExec:
         """exec_process raises for a terminated process."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         proc = kernel.create_process(name="done", num_pages=_NUM_PAGES)
         proc.dispatch()
         kernel.terminate_process(pid=proc.pid)
@@ -145,6 +148,7 @@ class TestKernelRun:
         """run_process dispatches, executes, and returns the output."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         proc = kernel.create_process(name="runner", num_pages=_NUM_PAGES)
         kernel.exec_process(pid=proc.pid, program=lambda: "result")
         result = kernel.run_process(pid=proc.pid)
@@ -156,6 +160,7 @@ class TestKernelRun:
         """The process is terminated and removed after running."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         proc = kernel.create_process(name="oneshot", num_pages=_NUM_PAGES)
         pid = proc.pid
         kernel.exec_process(pid=pid, program=lambda: "done")
@@ -167,6 +172,7 @@ class TestKernelRun:
         """Memory is freed after the process completes."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         assert kernel.memory is not None
         free_before = kernel.memory.free_frames
         proc = kernel.create_process(name="memuser", num_pages=_NUM_PAGES)
@@ -184,6 +190,7 @@ class TestKernelRun:
 
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         proc = kernel.create_process(name="crasher", num_pages=_NUM_PAGES)
         kernel.exec_process(pid=proc.pid, program=crasher)
         result = kernel.run_process(pid=proc.pid)
@@ -195,6 +202,7 @@ class TestKernelRun:
         """run_process raises for a PID that doesn't exist."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         pid_nonexistent = 9999
         with pytest.raises(ValueError, match="not found"):
             kernel.run_process(pid=pid_nonexistent)
@@ -204,6 +212,7 @@ class TestKernelRun:
         """run_process raises if no program is loaded."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         proc = kernel.create_process(name="empty", num_pages=_NUM_PAGES)
         with pytest.raises(ValueError, match="No program"):
             kernel.run_process(pid=proc.pid)
@@ -220,6 +229,7 @@ class TestExecSyscall:
         """SYS_EXEC loads a program through the syscall interface."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         result = kernel.syscall(
             SyscallNumber.SYS_CREATE_PROCESS, name="sys-proc", num_pages=_NUM_PAGES
         )
@@ -234,6 +244,7 @@ class TestExecSyscall:
         """SYS_EXEC on a missing PID raises SyscallError."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         pid_nonexistent = 9999
         with pytest.raises(SyscallError, match="not found"):
             kernel.syscall(SyscallNumber.SYS_EXEC, pid=pid_nonexistent, program=lambda: "x")
@@ -243,6 +254,7 @@ class TestExecSyscall:
         """SYS_RUN dispatches and executes through the syscall interface."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         result = kernel.syscall(
             SyscallNumber.SYS_CREATE_PROCESS, name="runnable", num_pages=_NUM_PAGES
         )
@@ -256,6 +268,7 @@ class TestExecSyscall:
         """SYS_RUN without a loaded program raises SyscallError."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         result = kernel.syscall(
             SyscallNumber.SYS_CREATE_PROCESS, name="no-prog", num_pages=_NUM_PAGES
         )
@@ -275,6 +288,7 @@ class TestShellRun:
         """The 'run hello' command runs a built-in hello program."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         shell = Shell(kernel=kernel)
         output = shell.execute("run hello")
         assert "Hello" in output
@@ -284,6 +298,7 @@ class TestShellRun:
         """The 'run counter' command runs a built-in counter program."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         shell = Shell(kernel=kernel)
         output = shell.execute("run counter")
         assert "1" in output
@@ -293,6 +308,7 @@ class TestShellRun:
         """Running an unknown program name shows an error."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         shell = Shell(kernel=kernel)
         output = shell.execute("run nosuchprogram")
         assert "Unknown program" in output
@@ -302,6 +318,7 @@ class TestShellRun:
         """Running without a program name shows usage."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         shell = Shell(kernel=kernel)
         output = shell.execute("run")
         assert "Usage" in output or "run <program>" in output

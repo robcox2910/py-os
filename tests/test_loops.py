@@ -8,7 +8,7 @@ using ``_collect_block()`` for block collection and recursive
 
 import pytest
 
-from py_os.kernel import Kernel
+from py_os.kernel import ExecutionMode, Kernel
 from py_os.shell import _MAX_LOOP_ITERATIONS, Shell
 from py_os.syscalls import SyscallNumber
 
@@ -22,6 +22,7 @@ def _booted_shell() -> tuple[Kernel, Shell]:
     """Create a booted kernel and shell for testing."""
     kernel = Kernel()
     kernel.boot()
+    kernel._execution_mode = ExecutionMode.KERNEL
     return kernel, Shell(kernel=kernel)
 
 

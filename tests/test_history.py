@@ -4,7 +4,7 @@ The shell records every command for recall, and supports aliases
 that expand shorthand names into full commands.
 """
 
-from py_os.kernel import Kernel
+from py_os.kernel import ExecutionMode, Kernel
 from py_os.shell import Shell
 
 
@@ -12,6 +12,7 @@ def _booted_shell() -> tuple[Kernel, Shell]:
     """Create a booted kernel and shell for testing."""
     kernel = Kernel()
     kernel.boot()
+    kernel._execution_mode = ExecutionMode.KERNEL
     return kernel, Shell(kernel=kernel)
 
 

@@ -14,7 +14,7 @@ import pytest
 
 from py_os.completer import Completer
 from py_os.fs.procfs import ProcError, ProcFilesystem
-from py_os.kernel import Kernel
+from py_os.kernel import ExecutionMode, Kernel
 from py_os.shell import Shell
 from py_os.syscalls import SyscallError, SyscallNumber
 
@@ -30,6 +30,7 @@ def _booted_kernel() -> Kernel:
     """Return a freshly booted kernel."""
     k = Kernel()
     k.boot()
+    k._execution_mode = ExecutionMode.KERNEL  # tests run as kernel code
     return k
 
 

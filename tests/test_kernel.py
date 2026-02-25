@@ -7,7 +7,7 @@ other modules (scheduler, memory, file system).
 
 import pytest
 
-from py_os.kernel import Kernel, KernelState
+from py_os.kernel import ExecutionMode, Kernel, KernelState
 from py_os.process.pcb import ProcessState
 
 
@@ -33,12 +33,14 @@ class TestKernelBoot:
         """Booting should move the kernel from SHUTDOWN to RUNNING."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         assert kernel.state is KernelState.RUNNING
 
     def test_boot_when_already_running_raises(self) -> None:
         """Booting an already-running kernel is an error."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         with pytest.raises(RuntimeError, match="Cannot boot"):
             kernel.boot()
 
@@ -46,6 +48,7 @@ class TestKernelBoot:
         """After booting, uptime should be greater than zero."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         min_uptime = 0.0
         assert kernel.uptime > min_uptime
 
@@ -57,6 +60,7 @@ class TestKernelShutdown:
         """Shutting down should return the kernel to SHUTDOWN."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         kernel.shutdown()
         assert kernel.state is KernelState.SHUTDOWN
 
@@ -70,6 +74,7 @@ class TestKernelShutdown:
         """Uptime should be zero after shutdown."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         kernel.shutdown()
         expected_uptime = 0.0
         assert kernel.uptime == expected_uptime
@@ -82,8 +87,10 @@ class TestKernelReboot:
         """A full reboot cycle should leave the kernel RUNNING."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         kernel.shutdown()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         assert kernel.state is KernelState.RUNNING
 
 
@@ -98,12 +105,14 @@ class TestKernelSubsystems:
         """The scheduler should be accessible after booting."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         assert kernel.scheduler is not None
 
     def test_memory_manager_available_after_boot(self) -> None:
         """The memory manager should be accessible after booting."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         assert kernel.memory is not None
         assert kernel.memory.total_frames == TOTAL_FRAMES
 
@@ -111,6 +120,7 @@ class TestKernelSubsystems:
         """The file system should be accessible after booting."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         assert kernel.filesystem is not None
         assert kernel.filesystem.exists("/")
 
@@ -118,12 +128,14 @@ class TestKernelSubsystems:
         """The user manager should be accessible after booting."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         assert kernel.user_manager is not None
 
     def test_device_manager_available_after_boot(self) -> None:
         """The device manager should be accessible after booting."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         assert kernel.device_manager is not None
 
     def test_subsystems_none_before_boot(self) -> None:
@@ -139,6 +151,7 @@ class TestKernelSubsystems:
         """Subsystems should be torn down after shutdown."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         kernel.shutdown()
         assert kernel.scheduler is None
         assert kernel.memory is None
@@ -154,6 +167,7 @@ class TestKernelCreateProcess:
         """Creating a process should return a Process object."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         process = kernel.create_process(name="init", num_pages=NUM_MEMORY_PAGES)
         assert process.name == "init"
 
@@ -161,6 +175,7 @@ class TestKernelCreateProcess:
         """A newly created process should be admitted and READY."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         process = kernel.create_process(name="init", num_pages=NUM_MEMORY_PAGES)
         assert process.state is ProcessState.READY
 
@@ -168,6 +183,7 @@ class TestKernelCreateProcess:
         """The kernel should allocate memory for the new process."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         process = kernel.create_process(name="init", num_pages=NUM_MEMORY_PAGES)
         assert kernel.memory is not None
         assert len(kernel.memory.pages_for(process.pid)) == NUM_MEMORY_PAGES
@@ -176,6 +192,7 @@ class TestKernelCreateProcess:
         """The new process should be added to the scheduler's ready queue."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         kernel.create_process(name="init", num_pages=NUM_MEMORY_PAGES)
         assert kernel.scheduler is not None
         expected_count = 1
@@ -191,6 +208,7 @@ class TestKernelCreateProcess:
         """Multiple processes can be created and tracked independently."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         p1 = kernel.create_process(name="shell", num_pages=NUM_MEMORY_PAGES)
         p2 = kernel.create_process(name="daemon", num_pages=NUM_MEMORY_PAGES)
         assert p1.pid != p2.pid
@@ -206,6 +224,7 @@ class TestKernelTerminateProcess:
         """Terminating a process should release its memory frames."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         process = kernel.create_process(name="init", num_pages=NUM_MEMORY_PAGES)
         assert kernel.memory is not None
         free_before = kernel.memory.free_frames

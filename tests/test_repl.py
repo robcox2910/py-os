@@ -6,7 +6,7 @@ we test the components it depends on rather than the loop itself:
 - The REPL module's helper functions are testable in isolation.
 """
 
-from py_os.kernel import Kernel, KernelState
+from py_os.kernel import ExecutionMode, Kernel, KernelState
 from py_os.repl import boot_banner, build_prompt
 from py_os.shell import Shell
 from py_os.syscalls import SyscallNumber
@@ -16,6 +16,7 @@ def _booted_shell() -> tuple[Kernel, Shell]:
     """Create a booted kernel and shell for testing."""
     kernel = Kernel()
     kernel.boot()
+    kernel._execution_mode = ExecutionMode.KERNEL
     return kernel, Shell(kernel=kernel)
 
 

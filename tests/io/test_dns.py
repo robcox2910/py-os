@@ -12,7 +12,7 @@ import pytest
 
 from py_os.completer import Completer
 from py_os.io.dns import DnsError, DnsRecord, DnsResolver
-from py_os.kernel import Kernel
+from py_os.kernel import ExecutionMode, Kernel
 from py_os.shell import Shell
 from py_os.syscalls import SyscallError, SyscallNumber
 
@@ -143,6 +143,7 @@ class TestKernelDns:
         """Kernel boot registers localhost -> 127.0.0.1."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         try:
             assert kernel.dns_lookup("localhost") == "127.0.0.1"
         finally:
@@ -152,6 +153,7 @@ class TestKernelDns:
         """Kernel dns_register + dns_lookup round-trip."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         try:
             record = kernel.dns_register("example.com", "93.184.216.34")
             assert record.hostname == "example.com"
@@ -163,6 +165,7 @@ class TestKernelDns:
         """Dns_list returns a dict-list that includes the pre-seeded localhost."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         try:
             records = kernel.dns_list()
             hostnames = [r["hostname"] for r in records]
@@ -174,6 +177,7 @@ class TestKernelDns:
         """After shutdown, the DNS resolver is None."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         kernel.shutdown()
         # Attempting dns_lookup on a shut-down kernel should raise
         with pytest.raises(RuntimeError, match="not running"):
@@ -192,6 +196,7 @@ class TestDnsSyscalls:
         """SYS_DNS_REGISTER creates a record via the kernel."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         try:
             result = kernel.syscall(
                 SyscallNumber.SYS_DNS_REGISTER,
@@ -207,6 +212,7 @@ class TestDnsSyscalls:
         """SYS_DNS_LOOKUP resolves a hostname via the kernel."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         try:
             kernel.syscall(
                 SyscallNumber.SYS_DNS_REGISTER,
@@ -225,6 +231,7 @@ class TestDnsSyscalls:
         """Register, list, remove, flush via syscalls."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         try:
             # Register
             kernel.syscall(
@@ -251,6 +258,7 @@ class TestDnsSyscalls:
         """DnsError is wrapped as SyscallError at the boundary."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         try:
             with pytest.raises(SyscallError, match="not found"):
                 kernel.syscall(
@@ -273,6 +281,7 @@ class TestDnsShell:
         """Register and lookup round-trip via shell."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         try:
             shell = Shell(kernel=kernel)
             reg_out = shell.execute("dns register example.com 93.184.216.34")
@@ -288,6 +297,7 @@ class TestDnsShell:
         """Dns list includes the pre-seeded localhost entry."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         try:
             shell = Shell(kernel=kernel)
             out = shell.execute("dns list")
@@ -300,6 +310,7 @@ class TestDnsShell:
         """Dns demo produces output without errors."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         try:
             shell = Shell(kernel=kernel)
             out = shell.execute("dns demo")
@@ -314,6 +325,7 @@ class TestDnsShell:
         """Unknown subcommand returns usage message."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         try:
             shell = Shell(kernel=kernel)
             out = shell.execute("dns bogus")
@@ -334,6 +346,7 @@ class TestDnsCompleter:
         """Typing 'dns ' offers all subcommands."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         try:
             shell = Shell(kernel=kernel)
             comp = Completer(shell)
@@ -347,6 +360,7 @@ class TestDnsCompleter:
         """Typing 'dns re' filters to register and remove."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         try:
             shell = Shell(kernel=kernel)
             comp = Completer(shell)

@@ -15,7 +15,7 @@ from py_os.fs.journal import (
     TransactionState,
 )
 from py_os.fs.persistence import dump_journaled_filesystem, load_journaled_filesystem
-from py_os.kernel import Kernel
+from py_os.kernel import ExecutionMode, Kernel
 from py_os.shell import Shell
 from py_os.syscalls import SyscallNumber
 
@@ -770,6 +770,7 @@ class TestKernelJournal:
         """Return a booted kernel."""
         k = Kernel()
         k.boot()
+        k._execution_mode = ExecutionMode.KERNEL  # tests run as kernel code
         return k
 
     def test_kernel_filesystem_is_journaled(self) -> None:
@@ -839,6 +840,7 @@ class TestJournalSyscalls:
         """Return a booted kernel."""
         k = Kernel()
         k.boot()
+        k._execution_mode = ExecutionMode.KERNEL  # tests run as kernel code
         return k
 
     def test_sys_journal_status(self) -> None:

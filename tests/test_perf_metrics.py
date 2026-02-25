@@ -13,7 +13,7 @@ import pytest
 
 from py_os.completer import Completer
 from py_os.fs.procfs import ProcFilesystem
-from py_os.kernel import Kernel
+from py_os.kernel import ExecutionMode, Kernel
 from py_os.process.pcb import Process
 from py_os.process.scheduler import FCFSPolicy, Scheduler
 from py_os.shell import Shell
@@ -33,6 +33,7 @@ def _booted_kernel() -> Kernel:
     """Return a freshly booted kernel."""
     k = Kernel()
     k.boot()
+    k._execution_mode = ExecutionMode.KERNEL  # tests run as kernel code
     return k
 
 

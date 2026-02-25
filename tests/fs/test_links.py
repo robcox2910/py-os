@@ -14,7 +14,7 @@ import pytest
 
 from py_os.fs.fd import FileMode
 from py_os.fs.filesystem import MAX_SYMLINK_DEPTH, FileSystem, FileType, InodeInfo, _Inode
-from py_os.kernel import Kernel
+from py_os.kernel import ExecutionMode, Kernel
 from py_os.shell import Shell
 from py_os.syscalls import SyscallError, SyscallNumber
 
@@ -629,6 +629,7 @@ def _booted_kernel() -> Kernel:
     """Return a booted kernel ready for testing."""
     k = Kernel()
     k.boot()
+    k._execution_mode = ExecutionMode.KERNEL  # tests run as kernel code
     return k
 
 

@@ -26,7 +26,8 @@ Shutdown sequence (reverse order):
     0. Logger — last to go (captures shutdown events).
 """
 
-from collections.abc import Callable
+from collections.abc import Callable, Generator
+from contextlib import AbstractContextManager, contextmanager
 from enum import StrEnum
 from time import monotonic
 from typing import Any
@@ -67,6 +68,7 @@ _STRACE_EXCLUDED_SYSCALLS: frozenset[SyscallNumber] = frozenset(
         SyscallNumber.SYS_STRACE_DISABLE,
         SyscallNumber.SYS_STRACE_LOG,
         SyscallNumber.SYS_STRACE_CLEAR,
+        SyscallNumber.SYS_STRACE_STATUS,
         SyscallNumber.SYS_READ_LOG,
     }
 )
@@ -88,6 +90,22 @@ class KernelState(StrEnum):
     SHUTTING_DOWN = "shutting_down"
 
 
+class ExecutionMode(StrEnum):
+    """Represent the CPU privilege level.
+
+    Real CPUs have ring 0 (kernel) and ring 3 (user).  User programs
+    can only access kernel services through system calls.  Our
+    simulation enforces the same boundary at runtime.
+    """
+
+    USER = "user"
+    KERNEL = "kernel"
+
+
+class KernelModeError(RuntimeError):
+    """Raise when user-mode code accesses a kernel-only resource."""
+
+
 class Kernel:
     """The central coordinator of the operating system.
 
@@ -99,6 +117,7 @@ class Kernel:
     def __init__(self) -> None:
         """Create a kernel in the SHUTDOWN state."""
         self._state: KernelState = KernelState.SHUTDOWN
+        self._execution_mode: ExecutionMode = ExecutionMode.KERNEL
         self._boot_time: float | None = None
         self._scheduler: Scheduler | None = None
         self._memory: MemoryManager | None = None
@@ -156,93 +175,140 @@ class Kernel:
         return monotonic() - self._boot_time
 
     @property
+    def execution_mode(self) -> ExecutionMode:
+        """Return the current execution mode (always safe to inspect)."""
+        return self._execution_mode
+
+    def _require_kernel_mode(self) -> None:
+        """Raise KernelModeError if the CPU is in USER mode."""
+        if self._execution_mode is ExecutionMode.USER:
+            msg = "Cannot access kernel resource from user mode — use a syscall"
+            raise KernelModeError(msg)
+
+    @contextmanager
+    def _kernel_mode(self) -> Generator[None]:
+        """Switch to KERNEL mode for the duration, then restore."""
+        previous = self._execution_mode
+        self._execution_mode = ExecutionMode.KERNEL
+        try:
+            yield
+        finally:
+            self._execution_mode = previous
+
+    def kernel_mode(self) -> AbstractContextManager[None]:
+        """Return a public context manager that enters KERNEL mode.
+
+        Use in tests and kernel-internal code that needs to access
+        guarded properties outside of a syscall.
+        """
+        return self._kernel_mode()
+
+    @property
     def scheduler(self) -> Scheduler | None:
         """Return the scheduler, or None if not booted."""
+        self._require_kernel_mode()
         return self._scheduler
 
     @property
     def memory(self) -> MemoryManager | None:
         """Return the memory manager, or None if not booted."""
+        self._require_kernel_mode()
         return self._memory
 
     @property
     def filesystem(self) -> JournaledFileSystem | None:
         """Return the file system, or None if not booted."""
+        self._require_kernel_mode()
         return self._filesystem
 
     @property
     def user_manager(self) -> UserManager | None:
         """Return the user manager, or None if not booted."""
+        self._require_kernel_mode()
         return self._user_manager
 
     @property
     def device_manager(self) -> DeviceManager | None:
         """Return the device manager, or None if not booted."""
+        self._require_kernel_mode()
         return self._device_manager
 
     @property
     def env(self) -> Environment | None:
         """Return the global environment, or None if not booted."""
+        self._require_kernel_mode()
         return self._env
 
     @property
     def logger(self) -> Logger | None:
         """Return the logger, or None if not booted."""
+        self._require_kernel_mode()
         return self._logger
 
     @property
     def current_uid(self) -> int:
         """Return the uid of the current user."""
+        self._require_kernel_mode()
         return self._current_uid
 
     @current_uid.setter
     def current_uid(self, uid: int) -> None:
         """Set the current user uid."""
+        self._require_kernel_mode()
         self._current_uid = uid
 
     @property
     def file_permissions(self) -> dict[str, FilePermissions]:
         """Return the file permissions table (path → permissions)."""
+        self._require_kernel_mode()
         return self._file_permissions
 
     @property
     def processes(self) -> dict[int, Process]:
         """Return the process table (PID → Process mapping)."""
+        self._require_kernel_mode()
         return dict(self._processes)
 
     @property
     def resource_manager(self) -> ResourceManager | None:
         """Return the resource manager, or None if not booted."""
+        self._require_kernel_mode()
         return self._resource_manager
 
     @property
     def sync_manager(self) -> SyncManager | None:
         """Return the sync manager, or None if not booted."""
+        self._require_kernel_mode()
         return self._sync_manager
 
     @property
     def pi_manager(self) -> PriorityInheritanceManager | None:
         """Return the priority inheritance manager, or None if not booted."""
+        self._require_kernel_mode()
         return self._pi_manager
 
     @property
     def ordering_manager(self) -> ResourceOrderingManager | None:
         """Return the resource ordering manager, or None if not booted."""
+        self._require_kernel_mode()
         return self._ordering_manager
 
     @property
     def slab_allocator(self) -> SlabAllocator | None:
         """Return the slab allocator, or None if not booted."""
+        self._require_kernel_mode()
         return self._slab_allocator
 
     @property
     def socket_manager(self) -> SocketManager | None:
         """Return the socket manager, or None if not booted."""
+        self._require_kernel_mode()
         return self._socket_manager
 
     @property
     def proc_filesystem(self) -> ProcFilesystem | None:
         """Return the /proc virtual filesystem, or None if not booted."""
+        self._require_kernel_mode()
         return self._proc_fs
 
     def set_scheduler_policy(self, policy: SchedulingPolicy) -> None:
@@ -357,6 +423,7 @@ class Kernel:
 
         self._state = KernelState.RUNNING
         self._logger.log(LogLevel.INFO, "Kernel boot complete", source="kernel")
+        self._execution_mode = ExecutionMode.USER
 
     def shutdown(self) -> None:
         """Transition the kernel from RUNNING → SHUTDOWN.
@@ -371,6 +438,7 @@ class Kernel:
             msg = f"Cannot shutdown: kernel is {self._state}, expected running"
             raise RuntimeError(msg)
 
+        self._execution_mode = ExecutionMode.KERNEL
         self._state = KernelState.SHUTTING_DOWN
 
         # Tear down in reverse order
@@ -1952,6 +2020,7 @@ class Kernel:
     @property
     def strace_enabled(self) -> bool:
         """Return whether strace is currently enabled."""
+        self._require_kernel_mode()
         return self._strace_enabled
 
     def strace_enable(self) -> None:
@@ -2059,24 +2128,25 @@ class Kernel:
 
         """
         self._require_running()
-        if self._logger is not None:
-            label = number.name if hasattr(number, "name") else str(number)
-            self._logger.log(
-                LogLevel.DEBUG,
-                f"syscall {label}",
-                source="syscall",
-                uid=self._current_uid,
-            )
-        should_trace = self._strace_enabled and number not in _STRACE_EXCLUDED_SYSCALLS
-        if should_trace:
-            try:
-                result = dispatch_syscall(self, number, **kwargs)
-            except Exception as exc:
-                self._append_strace_entry(number, kwargs, None, error=str(exc))
-                raise
-            self._append_strace_entry(number, kwargs, result)
-            return result
-        return dispatch_syscall(self, number, **kwargs)
+        with self._kernel_mode():
+            if self._logger is not None:
+                label = number.name if hasattr(number, "name") else str(number)
+                self._logger.log(
+                    LogLevel.DEBUG,
+                    f"syscall {label}",
+                    source="syscall",
+                    uid=self._current_uid,
+                )
+            should_trace = self._strace_enabled and number not in _STRACE_EXCLUDED_SYSCALLS
+            if should_trace:
+                try:
+                    result = dispatch_syscall(self, number, **kwargs)
+                except Exception as exc:
+                    self._append_strace_entry(number, kwargs, None, error=str(exc))
+                    raise
+                self._append_strace_entry(number, kwargs, result)
+                return result
+            return dispatch_syscall(self, number, **kwargs)
 
     # -- Synchronization delegation ------------------------------------------
 

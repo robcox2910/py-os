@@ -25,7 +25,7 @@ from py_os.io.http import (
     status_reason,
 )
 from py_os.io.networking import SocketError
-from py_os.kernel import Kernel
+from py_os.kernel import ExecutionMode, Kernel
 from py_os.shell import Shell
 from py_os.syscalls import SyscallError, SyscallNumber
 
@@ -238,6 +238,7 @@ def _booted_kernel() -> Kernel:
     """Return a booted kernel for integration tests."""
     k = Kernel()
     k.boot()
+    k._execution_mode = ExecutionMode.KERNEL  # tests run as kernel code
     return k
 
 

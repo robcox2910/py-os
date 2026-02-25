@@ -8,7 +8,7 @@ process's view of memory from the physical layout.
 
 import pytest
 
-from py_os.kernel import Kernel
+from py_os.kernel import ExecutionMode, Kernel
 from py_os.memory.virtual import PageFaultError, PageTable, VirtualMemory
 
 PAGE_SIZE = 256
@@ -226,6 +226,7 @@ class TestKernelVirtualMemory:
         """A created process should have virtual memory with mapped pages."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         num_pages = 4
         proc = kernel.create_process(name="test", num_pages=num_pages)
         assert proc.virtual_memory is not None
@@ -235,6 +236,7 @@ class TestKernelVirtualMemory:
         """Virtual pages should be 0, 1, 2, ... regardless of physical layout."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         num_pages = 3
         proc = kernel.create_process(name="test", num_pages=num_pages)
         assert proc.virtual_memory is not None
@@ -249,6 +251,7 @@ class TestKernelVirtualMemory:
         """Two processes should have independent virtual memory."""
         kernel = Kernel()
         kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
         p1 = kernel.create_process(name="a", num_pages=2)
         p2 = kernel.create_process(name="b", num_pages=2)
         assert p1.virtual_memory is not None

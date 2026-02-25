@@ -4,7 +4,7 @@ The sysinfo syscall aggregates status from all kernel subsystems
 into a single snapshot — like ``top`` or ``/proc`` in Linux.
 """
 
-from py_os.kernel import Kernel
+from py_os.kernel import ExecutionMode, Kernel
 from py_os.shell import Shell
 from py_os.syscalls import SyscallNumber
 
@@ -13,6 +13,7 @@ def _booted_kernel() -> Kernel:
     """Create and boot a kernel for testing."""
     kernel = Kernel()
     kernel.boot()
+    kernel._execution_mode = ExecutionMode.KERNEL  # tests run as kernel code
     return kernel
 
 
