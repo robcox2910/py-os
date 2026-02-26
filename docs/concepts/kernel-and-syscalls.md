@@ -61,7 +61,17 @@ class KernelState(StrEnum):
 
 ---
 
-## 2. The Boot Sequence
+## 2. Before the Kernel: The Boot Chain
+
+Before the kernel even starts, a **bootloader** does the hard work of checking
+the hardware and loading the kernel from disk. Think of it as the security
+guard and janitor preparing the school building before the principal arrives.
+The full boot chain is covered in the [Boot Chain](bootloader.md) guide.
+
+In short: **Firmware POST** checks the hardware, the **Bootloader** loads the
+kernel image from disk, and then the kernel takes over.
+
+## 3. The Kernel Boot Sequence
 
 When a school opens in the morning, things happen in a specific order. You
 can't let students in before the teachers arrive, and teachers can't teach
@@ -92,11 +102,17 @@ method in `kernel.py`, you'll see something like this:
 8. Scheduler        -- Open the doors and let students in
 9. /proc Filesystem -- Turn on the magic bulletin board
                        (live stats from all subsystems)
+10. Init Process    -- The vice principal sits at the front desk
+                       (first process, parent of all others)
 ```
 
 Only after every single one of those steps is finished does the kernel
 switch its state to `RUNNING` -- and it also flips the CPU from
-**kernel mode** to **user mode** (more on that in section 7 below).
+**kernel mode** to **user mode** (more on that in section 8 below).
+
+The init process is special: it is the **root of the process tree**. Every
+process you create afterwards becomes a child of init. You can read more
+about init in the [Boot Chain](bootloader.md) guide.
 
 ### Why does order matter?
 
@@ -122,7 +138,7 @@ You'll see it again when you learn about [memory](memory.md) and stacks.
 
 ---
 
-## 3. System Calls
+## 4. System Calls
 
 Now we know the kernel is in charge. But here's the problem: if a program
 (like a text editor or a game) needs something -- say, "please save this
@@ -197,6 +213,7 @@ Here is every syscall number in PyOS, grouped by what they do:
 | 172       | Performance metrics (perf_metrics) |
 | 180-183 | Strace operations (enable, disable, log, clear) |
 | 190-203 | Kernel-mode helpers (shutdown, scheduler info, lstat, list mutexes/semaphores/rwlocks, list fds, list resources, PI status, ordering violations, destroy mutex, dispatch, process info, strace status) |
+| 210-211 | Boot info (dmesg boot log, boot metadata) |
 
 You don't need to memorize these. The important thing is that every single
 operation a program can ask for has a number, and every single request goes
@@ -219,7 +236,7 @@ to touch the user manager directly.
 
 ---
 
-## 4. Why Have System Calls at All?
+## 5. Why Have System Calls at All?
 
 You might be thinking: "This seems like a lot of extra work. Why not just let
 programs talk to the kernel directly?"
@@ -249,7 +266,7 @@ tried to switch users at 3am?").
 
 ---
 
-## 5. Tying It All Together
+## 6. Tying It All Together
 
 Here is the full picture of how a request flows through the system:
 
@@ -276,7 +293,7 @@ happen.
 
 ---
 
-## 6. Tracing System Calls with strace
+## 7. Tracing System Calls with strace
 
 Imagine you're sitting in a restaurant, and your food just magically appears.
 You have no idea what happened in the kitchen. What ingredients were used? What
@@ -354,7 +371,7 @@ syscall are excluded from tracing to avoid infinite loops and noise.
 
 ---
 
-## 7. User Mode vs Kernel Mode
+## 8. User Mode vs Kernel Mode
 
 Imagine your security badge at a building. Most of the time your badge is
 **blue** (user mode) -- you can enter the lobby and talk to the front desk,

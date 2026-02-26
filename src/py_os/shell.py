@@ -164,6 +164,7 @@ class Shell:
             "proc": self._cmd_proc,
             "perf": self._cmd_perf,
             "strace": self._cmd_strace,
+            "dmesg": self._cmd_dmesg,
         }
 
     @property
@@ -3173,3 +3174,10 @@ class Shell:
             pass
 
         return "\n".join(lines)
+
+    # -- Boot info commands ---------------------------------------------------
+
+    def _cmd_dmesg(self, _args: list[str]) -> str:
+        """Show kernel boot messages."""
+        messages: list[str] = self._kernel.syscall(SyscallNumber.SYS_DMESG)
+        return "\n".join(messages) if messages else "No boot messages."

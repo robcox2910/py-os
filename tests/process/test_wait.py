@@ -275,9 +275,13 @@ class TestZombieBehavior:
         assert child.state is ProcessState.TERMINATED
 
     def test_orphan_is_deleted_immediately(self) -> None:
-        """A process with no parent should be deleted after termination."""
+        """A process with no living parent should be deleted after termination."""
         kernel = _booted_kernel()
-        process = kernel.create_process(name="orphan", num_pages=1)
+        process = Process(name="orphan", priority=0, parent_pid=None)
+        process.admit()
+        assert kernel._scheduler is not None
+        kernel._scheduler.add(process)
+        kernel._processes[process.pid] = process
         kernel.exec_process(pid=process.pid, program=lambda: "bye")
         kernel.run_process(pid=process.pid)
 
@@ -320,7 +324,11 @@ class TestZombieBehavior:
     def test_sigkill_orphan_deleted(self) -> None:
         """SIGKILL on an orphan should delete it from the table."""
         kernel = _booted_kernel()
-        process = kernel.create_process(name="orphan", num_pages=1)
+        process = Process(name="orphan", priority=0, parent_pid=None)
+        process.admit()
+        assert kernel._scheduler is not None
+        kernel._scheduler.add(process)
+        kernel._processes[process.pid] = process
         process.dispatch()
         kernel.send_signal(process.pid, Signal.SIGKILL)
 

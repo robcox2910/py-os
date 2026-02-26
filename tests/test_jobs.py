@@ -23,7 +23,14 @@ def _running_process(kernel: Kernel, name: str = "test") -> Process:
     """Create a process and dispatch it so it's RUNNING."""
     proc = kernel.create_process(name=name, num_pages=4)
     assert kernel.scheduler is not None
-    kernel.scheduler.dispatch()
+    # Dispatch may return init first (FCFS); skip it to get our process.
+    while True:
+        dispatched = kernel.scheduler.dispatch()
+        if dispatched is not None and dispatched.pid == proc.pid:
+            break
+        if dispatched is not None:
+            dispatched.preempt()
+            kernel.scheduler.add(dispatched)
     return proc
 
 

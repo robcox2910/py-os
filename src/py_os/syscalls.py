@@ -218,6 +218,10 @@ class SyscallNumber(IntEnum):
     SYS_PROCESS_INFO = 202
     SYS_STRACE_STATUS = 203
 
+    # Boot info operations
+    SYS_DMESG = 210
+    SYS_BOOT_INFO = 211
+
 
 class SyscallError(Exception):
     """Raised when a system call fails.
@@ -364,6 +368,8 @@ def dispatch_syscall(
         SyscallNumber.SYS_DISPATCH: _sys_dispatch,
         SyscallNumber.SYS_PROCESS_INFO: _sys_process_info,
         SyscallNumber.SYS_STRACE_STATUS: _sys_strace_status,
+        SyscallNumber.SYS_DMESG: _sys_dmesg,
+        SyscallNumber.SYS_BOOT_INFO: _sys_boot_info,
     }
 
     handler = handlers.get(number)
@@ -1652,3 +1658,20 @@ def _sys_process_info(kernel: Any, **kwargs: Any) -> dict[str, Any]:
 def _sys_strace_status(kernel: Any, **_kwargs: Any) -> dict[str, bool]:
     """Return whether strace is enabled."""
     return {"enabled": kernel.strace_enabled}
+
+
+# -- Boot info syscall handlers ------------------------------------------------
+
+
+def _sys_dmesg(kernel: Any, **_kwargs: Any) -> list[str]:
+    """Return the kernel boot log messages."""
+    return kernel.dmesg()
+
+
+def _sys_boot_info(kernel: Any, **_kwargs: Any) -> dict[str, Any]:
+    """Return boot metadata: init PID, uptime, kernel version."""
+    return {
+        "init_pid": kernel.init_pid,
+        "uptime": kernel.uptime,
+        "kernel_version": "0.1.0",
+    }

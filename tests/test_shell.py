@@ -72,11 +72,12 @@ class TestShellHelp:
 class TestShellPs:
     """Verify the ps (process status) command."""
 
-    def test_ps_with_no_processes(self) -> None:
-        """Ps with no user processes should show a header only or empty."""
+    def test_ps_shows_init(self) -> None:
+        """Ps should always show the init process."""
         _kernel, shell = _booted_shell()
         result = shell.execute("ps")
         assert "PID" in result
+        assert "init" in result
 
     def test_ps_shows_created_process(self) -> None:
         """Ps should list processes created via the kernel."""
@@ -260,8 +261,12 @@ class TestShellKill:
         """Kill should terminate a process by PID."""
         kernel, shell = _booted_shell()
         process = kernel.create_process(name="victim", num_pages=NUM_PAGES)
-        # Dispatch so it's RUNNING (only RUNNING can be terminated)
+        # Dispatch init first (FCFS), preempt it, then dispatch victim
         assert kernel.scheduler is not None
+        init_proc = kernel.scheduler.dispatch()
+        assert init_proc is not None
+        init_proc.preempt()
+        kernel.scheduler.add(init_proc)
         kernel.scheduler.dispatch()
         result = shell.execute(f"kill {process.pid}")
         assert "terminated" in result.lower() or "killed" in result.lower()

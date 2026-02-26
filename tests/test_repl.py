@@ -7,7 +7,7 @@ we test the components it depends on rather than the loop itself:
 """
 
 from py_os.kernel import ExecutionMode, Kernel, KernelState
-from py_os.repl import boot_banner, build_prompt
+from py_os.repl import build_prompt, format_boot_log
 from py_os.shell import Shell
 from py_os.syscalls import SyscallNumber
 
@@ -59,7 +59,19 @@ class TestREPLHelpers:
         prompt = build_prompt(kernel)
         assert "alice" in prompt
 
-    def test_boot_banner(self) -> None:
-        """The boot banner should contain OS info."""
-        banner = boot_banner()
-        assert "py-os" in banner.lower() or "PyOS" in banner
+    def test_format_boot_log(self) -> None:
+        """format_boot_log should produce a displayable boot banner."""
+        log = ["[POST] Memory: 64 frames ... OK", "[OK] Scheduler"]
+        banner = format_boot_log(log)
+        assert "PyOS" in banner
+        assert "[POST]" in banner
+        assert "[OK] Scheduler" in banner
+
+    def test_boot_banner_dynamic(self) -> None:
+        """The boot banner built from real boot log should contain OS info."""
+        kernel = Kernel()
+        kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
+        banner = format_boot_log(kernel.dmesg())
+        assert "PyOS" in banner
+        assert "[OK]" in banner

@@ -42,7 +42,7 @@ class TestSyscallProcessOps:
         assert result["state"] == ProcessState.READY
 
     def test_list_processes(self) -> None:
-        """SYS_LIST_PROCESSES should return all processes."""
+        """SYS_LIST_PROCESSES should return all processes including init."""
         kernel = _booted_kernel()
         kernel.syscall(
             SyscallNumber.SYS_CREATE_PROCESS,
@@ -50,14 +50,18 @@ class TestSyscallProcessOps:
             num_pages=NUM_PAGES,
         )
         result = kernel.syscall(SyscallNumber.SYS_LIST_PROCESSES)
-        assert len(result) == 1
-        assert result[0]["name"] == "daemon"
+        expected_count = 2  # init + daemon
+        assert len(result) == expected_count
+        names = {p["name"] for p in result}
+        assert "init" in names
+        assert "daemon" in names
 
-    def test_list_processes_empty(self) -> None:
-        """SYS_LIST_PROCESSES with no processes returns empty list."""
+    def test_list_processes_only_init(self) -> None:
+        """SYS_LIST_PROCESSES with no user processes returns only init."""
         kernel = _booted_kernel()
         result = kernel.syscall(SyscallNumber.SYS_LIST_PROCESSES)
-        assert result == []
+        assert len(result) == 1
+        assert result[0]["name"] == "init"
 
     def test_terminate_process(self) -> None:
         """SYS_TERMINATE_PROCESS should terminate by PID."""
@@ -68,12 +72,17 @@ class TestSyscallProcessOps:
             num_pages=NUM_PAGES,
         )
         pid = result["pid"]
-        # Dispatch so it's RUNNING (required for termination)
+        # Dispatch init first (FCFS), preempt it, then dispatch victim
         assert kernel.scheduler is not None
+        init_proc = kernel.scheduler.dispatch()
+        assert init_proc is not None
+        init_proc.preempt()
+        kernel.scheduler.add(init_proc)
         kernel.scheduler.dispatch()
         kernel.syscall(SyscallNumber.SYS_TERMINATE_PROCESS, pid=pid)
         procs = kernel.syscall(SyscallNumber.SYS_LIST_PROCESSES)
-        assert all(p["pid"] != pid for p in procs)
+        victim = next(p for p in procs if p["pid"] == pid)
+        assert victim["state"] == ProcessState.TERMINATED
 
     def test_terminate_nonexistent_process(self) -> None:
         """Terminating a non-existent PID should raise SyscallError."""
