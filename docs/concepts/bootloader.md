@@ -84,6 +84,7 @@ contains:
 
 - **version** -- which version of the kernel to boot (e.g. "0.1.0")
 - **total_frames** -- how much memory the kernel should manage
+- **num_cpus** -- how many CPUs the kernel should use (default 1)
 - **default_policy** -- which scheduling policy to start with
 - **boot_args** -- extra configuration settings
 
