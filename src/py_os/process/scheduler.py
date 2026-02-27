@@ -31,9 +31,12 @@ Design: Strategy pattern
 from __future__ import annotations
 
 from collections import deque
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
 from py_os.process.pcb import Process, ProcessState
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class SchedulingPolicy(Protocol):
@@ -456,3 +459,262 @@ class Scheduler:
             raise RuntimeError(msg)
         self._current.terminate()
         self._current = None
+
+    @property
+    def ready_processes(self) -> list[Process]:
+        """Return a snapshot of the ready queue as a list."""
+        return list(self._ready_queue)
+
+    def extract_from_ready(self, pid: int) -> Process | None:
+        """Remove a process by PID from the ready queue.
+
+        Args:
+            pid: The PID to search for and remove.
+
+        Returns:
+            The removed process, or None if not found.
+
+        """
+        for i, proc in enumerate(self._ready_queue):
+            if proc.pid == pid:
+                del self._ready_queue[i]
+                return proc
+        return None
+
+
+class MultiCPUScheduler:
+    """Coordinate N per-CPU schedulers with load balancing.
+
+    Wraps N ``Scheduler`` instances — one per CPU.  Each CPU has its
+    own ready queue and current process.  The wrapper provides:
+
+    - **Backward-compatible interface** — ``add()``, ``dispatch()``,
+      ``preempt()``, ``current``, ``ready_count`` all default to CPU 0,
+      so existing kernel code works unchanged for ``num_cpus=1``.
+    - **Per-CPU access** — ``cpu_scheduler()``, ``cpu_current()``,
+      ``cpu_ready_count()`` for inspecting individual CPUs.
+    - **Load balancing** — ``balance()`` moves processes from overloaded
+      CPUs to underloaded ones, respecting affinity constraints.
+    - **CPU affinity** — ``set_affinity()`` / ``get_affinity()`` pin
+      processes to specific CPUs.
+
+    Think of it like a school with multiple whiteboards.  Each whiteboard
+    has its own queue of students.  The teacher (scheduler) can move
+    students between queues when one gets too long.
+    """
+
+    def __init__(
+        self,
+        *,
+        num_cpus: int = 1,
+        policy_factory: Callable[[], SchedulingPolicy],
+    ) -> None:
+        """Create a multi-CPU scheduler with N per-CPU schedulers.
+
+        Args:
+            num_cpus: Number of CPUs (each gets its own Scheduler).
+            policy_factory: Callable that creates a fresh policy instance
+                for each CPU (e.g. ``FCFSPolicy`` or
+                ``lambda: RoundRobinPolicy(quantum=4)``).
+
+        """
+        if num_cpus < 1:
+            msg = "num_cpus must be at least 1"
+            raise ValueError(msg)
+        self._num_cpus = num_cpus
+        self._policy_factory = policy_factory
+        self._schedulers: list[Scheduler] = [
+            Scheduler(policy=policy_factory()) for _ in range(num_cpus)
+        ]
+        self._affinities: dict[int, frozenset[int]] = {}
+        self._migrations: int = 0
+
+    # -- Backward-compatible interface (defaults to CPU 0) --------------------
+
+    def add(self, process: Process, *, cpu_id: int | None = None) -> None:
+        """Add a READY process to a CPU's ready queue.
+
+        When ``cpu_id`` is None, the process is placed on the
+        least-loaded CPU that is allowed by its affinity mask.
+
+        Args:
+            process: A process that has been admitted (state=READY).
+            cpu_id: Explicit CPU, or None for auto-assignment.
+
+        """
+        if cpu_id is not None:
+            self._schedulers[cpu_id].add(process)
+            process.cpu_id = cpu_id
+            return
+        # Auto-assign: pick the least-loaded allowed CPU
+        target = self._least_loaded_cpu(process.pid)
+        self._schedulers[target].add(process)
+        process.cpu_id = target
+
+    def dispatch(self, *, cpu_id: int = 0) -> Process | None:
+        """Select the next process on *cpu_id* and give it the CPU.
+
+        Returns:
+            The dispatched process, or None if the queue is empty.
+
+        """
+        proc = self._schedulers[cpu_id].dispatch()
+        if proc is not None:
+            proc.cpu_id = cpu_id
+        return proc
+
+    def preempt(self, *, cpu_id: int = 0) -> None:
+        """Preempt the current process on *cpu_id*."""
+        self._schedulers[cpu_id].preempt()
+
+    def terminate_current(self, *, cpu_id: int = 0) -> None:
+        """Terminate the current process on *cpu_id*."""
+        self._schedulers[cpu_id].terminate_current()
+
+    # -- Aggregate properties (backward compat) -------------------------------
+
+    @property
+    def current(self) -> Process | None:
+        """Return CPU 0's current process (backward compat)."""
+        return self._schedulers[0].current
+
+    @property
+    def ready_count(self) -> int:
+        """Return total ready processes across all CPUs."""
+        return sum(s.ready_count for s in self._schedulers)
+
+    @property
+    def context_switches(self) -> int:
+        """Return total context switches across all CPUs."""
+        return sum(s.context_switches for s in self._schedulers)
+
+    @property
+    def policy(self) -> SchedulingPolicy:
+        """Return CPU 0's policy (backward compat)."""
+        return self._schedulers[0].policy
+
+    # -- Multi-CPU specific ---------------------------------------------------
+
+    @property
+    def num_cpus(self) -> int:
+        """Return the number of CPUs."""
+        return self._num_cpus
+
+    @property
+    def migrations(self) -> int:
+        """Return the total number of process migrations."""
+        return self._migrations
+
+    def cpu_scheduler(self, cpu_id: int) -> Scheduler:
+        """Return the per-CPU scheduler for *cpu_id*."""
+        return self._schedulers[cpu_id]
+
+    def cpu_current(self, cpu_id: int) -> Process | None:
+        """Return the current process on *cpu_id*."""
+        return self._schedulers[cpu_id].current
+
+    def cpu_ready_count(self, cpu_id: int) -> int:
+        """Return the ready queue length for *cpu_id*."""
+        return self._schedulers[cpu_id].ready_count
+
+    def dispatch_all(self) -> dict[int, Process | None]:
+        """Dispatch on every CPU and return the results.
+
+        Returns:
+            Dict mapping cpu_id to the dispatched process (or None).
+
+        """
+        return {i: self.dispatch(cpu_id=i) for i in range(self._num_cpus)}
+
+    def balance(self) -> list[tuple[int, int, int]]:
+        """Balance load across CPUs by migrating processes.
+
+        Move processes from the busiest CPU to the least busy until
+        the difference is at most 1.  Respects affinity — pinned
+        processes are never moved.
+
+        Returns:
+            List of (pid, from_cpu, to_cpu) tuples for each migration.
+
+        """
+        moved: list[tuple[int, int, int]] = []
+        while True:
+            loads = [s.ready_count for s in self._schedulers]
+            max_cpu = loads.index(max(loads))
+            min_cpu = loads.index(min(loads))
+            threshold = 2
+            if loads[max_cpu] - loads[min_cpu] < threshold:
+                break
+            migrated = self._migrate_one(max_cpu, min_cpu)
+            if migrated is None:
+                break
+            moved.append(migrated)
+        return moved
+
+    def migrate(self, pid: int, from_cpu: int, to_cpu: int) -> bool:
+        """Migrate a specific process between CPUs.
+
+        Args:
+            pid: The process ID to migrate.
+            from_cpu: Source CPU.
+            to_cpu: Destination CPU.
+
+        Returns:
+            True if migration succeeded, False otherwise.
+
+        """
+        allowed = self._affinities.get(pid, frozenset(range(self._num_cpus)))
+        if to_cpu not in allowed:
+            return False
+        sched = self._schedulers[from_cpu]
+        proc = sched.extract_from_ready(pid)
+        if proc is None:
+            return False
+        proc.cpu_id = to_cpu
+        self._schedulers[to_cpu].add(proc)
+        self._migrations += 1
+        return True
+
+    def set_affinity(self, pid: int, cpus: frozenset[int]) -> None:
+        """Set the CPU affinity mask for a process.
+
+        Args:
+            pid: The process ID.
+            cpus: Frozenset of allowed CPU IDs.
+
+        """
+        self._affinities[pid] = cpus
+
+    def get_affinity(self, pid: int) -> frozenset[int]:
+        """Return the CPU affinity mask for a process.
+
+        Defaults to all CPUs if no affinity has been set.
+        """
+        return self._affinities.get(pid, frozenset(range(self._num_cpus)))
+
+    # -- Private helpers ------------------------------------------------------
+
+    def _least_loaded_cpu(self, pid: int) -> int:
+        """Return the CPU with the fewest ready processes allowed by affinity."""
+        allowed = self._affinities.get(pid, frozenset(range(self._num_cpus)))
+        return min(allowed, key=lambda c: self._schedulers[c].ready_count)
+
+    def _migrate_one(self, from_cpu: int, to_cpu: int) -> tuple[int, int, int] | None:
+        """Move one migratable process from *from_cpu* to *to_cpu*.
+
+        Returns:
+            ``(pid, from_cpu, to_cpu)`` on success, or None if nothing
+            can be moved (all processes are pinned).
+
+        """
+        sched = self._schedulers[from_cpu]
+        for proc in sched.ready_processes:
+            allowed = self._affinities.get(proc.pid, frozenset(range(self._num_cpus)))
+            if to_cpu in allowed:
+                extracted = sched.extract_from_ready(proc.pid)
+                if extracted is not None:
+                    extracted.cpu_id = to_cpu
+                    self._schedulers[to_cpu].add(extracted)
+                    self._migrations += 1
+                    return (extracted.pid, from_cpu, to_cpu)
+        return None

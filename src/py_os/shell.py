@@ -165,6 +165,8 @@ class Shell:
             "perf": self._cmd_perf,
             "strace": self._cmd_strace,
             "dmesg": self._cmd_dmesg,
+            "cpu": self._cmd_cpu,
+            "taskset": self._cmd_taskset,
         }
 
     @property
@@ -554,8 +556,10 @@ class Shell:
     def _cmd_ps(self, _args: list[str]) -> str:
         """Show running processes."""
         procs: list[dict[str, object]] = self._kernel.syscall(SyscallNumber.SYS_LIST_PROCESSES)
-        lines = ["PID    STATE       NAME"]
-        lines.extend(f"{p['pid']:<6} {p['state']!s:<11} {p['name']}" for p in procs)
+        lines = ["PID    CPU  STATE       NAME"]
+        for p in procs:
+            cpu = str(p["cpu_id"]) if p["cpu_id"] is not None else "-"
+            lines.append(f"{p['pid']:<6} {cpu:<4} {p['state']!s:<11} {p['name']}")
         return "\n".join(lines)
 
     def _cmd_ls(self, args: list[str]) -> str:
@@ -1075,7 +1079,7 @@ class Shell:
         job.exit_code = exit_code
         return f"[{job.job_id}] {pid}"
 
-    def _cmd_scheduler(self, args: list[str]) -> str:
+    def _cmd_scheduler(self, args: list[str]) -> str:  # noqa: PLR0911
         """Show or switch the scheduling policy."""
         if not args:
             return self._cmd_scheduler_show()
@@ -1088,16 +1092,20 @@ class Shell:
                 return self._cmd_scheduler_cfs(args[1:])
             case "boost":
                 return self._cmd_scheduler_boost()
+            case "balance":
+                return self._cmd_scheduler_balance()
             case _:
                 return (
                     f"Error: unknown policy '{args[0]}'."
-                    " Use fcfs, rr, priority, aging, mlfq, or cfs."
+                    " Use fcfs, rr, priority, aging, mlfq, cfs, or balance."
                 )
 
     def _cmd_scheduler_show(self) -> str:
         """Display the current scheduling policy name."""
-        result: dict[str, str] = self._kernel.syscall(SyscallNumber.SYS_SCHEDULER_INFO)
-        return f"Current policy: {result['policy']}"
+        result: dict[str, object] = self._kernel.syscall(SyscallNumber.SYS_SCHEDULER_INFO)
+        num_cpus = result.get("num_cpus", 1)
+        cpu_info = f" ({num_cpus} CPUs)" if int(str(num_cpus)) > 1 else ""
+        return f"Current policy: {result['policy']}{cpu_info}"
 
     def _cmd_scheduler_switch(self, name: str, args: list[str]) -> str:
         """Switch the scheduling policy via syscall."""
@@ -2968,7 +2976,8 @@ class Shell:
             f"Avg wait time:       {float(str(metrics['avg_wait_time'])):.2f}s\n"
             f"Avg turnaround:      {float(str(metrics['avg_turnaround_time'])):.2f}s\n"
             f"Avg response:        {float(str(metrics['avg_response_time'])):.2f}s\n"
-            f"Throughput:          {float(str(metrics['throughput'])):.2f} procs/sec"
+            f"Throughput:          {float(str(metrics['throughput'])):.2f} procs/sec\n"
+            f"Migrations:          {metrics['migrations']}"
         )
 
     def _cmd_perf_demo(self) -> str:
@@ -3181,3 +3190,68 @@ class Shell:
         """Show kernel boot messages."""
         messages: list[str] = self._kernel.syscall(SyscallNumber.SYS_DMESG)
         return "\n".join(messages) if messages else "No boot messages."
+
+    # -- Multi-CPU commands ---------------------------------------------------
+
+    def _cmd_cpu(self, _args: list[str]) -> str:
+        """Show per-CPU status."""
+        try:
+            cpu_info: list[dict[str, object]] = self._kernel.syscall(SyscallNumber.SYS_CPU_INFO)
+        except SyscallError as e:
+            return f"Error: {e}"
+        lines: list[str] = [f"=== {len(cpu_info)} CPU(s) ==="]
+        for info in cpu_info:
+            current = info["current"]
+            current_str = f"pid {current}" if current is not None else "idle"
+            lines.append(
+                f"CPU {info['cpu_id']}: policy={info['policy']}"
+                f"  ready={info['ready_count']}  current={current_str}"
+            )
+        return "\n".join(lines)
+
+    def _cmd_taskset(self, args: list[str]) -> str:
+        """Show or set CPU affinity for a process."""
+        if not args:
+            return "Usage: taskset <pid> [cpu_list]"
+        try:
+            pid = int(args[0])
+        except ValueError:
+            return f"Error: invalid PID '{args[0]}'"
+        if len(args) == 1:
+            return self._cmd_taskset_show(pid)
+        return self._cmd_taskset_set(pid, args[1:])
+
+    def _cmd_taskset_show(self, pid: int) -> str:
+        """Display CPU affinity for a process."""
+        try:
+            affinity: list[int] = self._kernel.syscall(SyscallNumber.SYS_GET_AFFINITY, pid=pid)
+        except SyscallError as e:
+            return f"Error: {e}"
+        return f"PID {pid} affinity: {affinity}"
+
+    def _cmd_taskset_set(self, pid: int, cpu_args: list[str]) -> str:
+        """Set CPU affinity for a process."""
+        try:
+            cpus = [int(c) for c in cpu_args]
+        except ValueError:
+            return "Error: CPU IDs must be integers"
+        try:
+            self._kernel.syscall(SyscallNumber.SYS_SET_AFFINITY, pid=pid, cpus=cpus)
+        except SyscallError as e:
+            return f"Error: {e}"
+        return f"PID {pid} affinity set to {cpus}"
+
+    def _cmd_scheduler_balance(self) -> str:
+        """Trigger load balancing across CPUs."""
+        try:
+            result: dict[str, object] = self._kernel.syscall(SyscallNumber.SYS_BALANCE)
+        except SyscallError as e:
+            return f"Error: {e}"
+        count = result["count"]
+        migrations = result["migrations"]
+        if not migrations:
+            return "Load balanced: 0 migrations (already balanced)"
+        lines = [f"Load balanced: {count} migration(s)"]
+        for pid, from_cpu, to_cpu in migrations:  # type: ignore[union-attr]
+            lines.append(f"  PID {pid}: CPU {from_cpu} → CPU {to_cpu}")
+        return "\n".join(lines)

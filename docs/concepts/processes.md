@@ -436,9 +436,56 @@ Run `perf demo` for a guided walkthrough that creates processes and shows how th
 
 ---
 
+## Multiple CPUs
+
+So far we've talked about **one** whiteboard -- one CPU, one student at a time. But modern computers have multiple CPUs (called **cores**). That is like a classroom with **several whiteboards**, each with its own queue of students.
+
+### How it works
+
+Each whiteboard has its own line of waiting students and its own scheduling policy. A teacher (the `MultiCPUScheduler`) coordinates all the whiteboards:
+
+- When a new student arrives, the teacher sends them to the whiteboard with the **shortest line**.
+- Periodically, the teacher checks if one queue is much longer than the others. If so, they move a student from the crowded queue to a shorter one. This is called **load balancing**.
+- Some students have a preference -- maybe they're left-handed and whiteboard 2 is easier for them. That preference is called **CPU affinity**. The teacher respects it: a student pinned to whiteboard 2 won't be moved to whiteboard 0, even during load balancing.
+
+### Try it in the PyOS shell
+
+PyOS supports multiple CPUs through the bootloader or kernel configuration:
+
+```
+pyos> cpu
+CPU 0: FCFSPolicy  ready=2  current=pid 1 (init)
+CPU 1: FCFSPolicy  ready=1  current=none
+
+pyos> taskset 3
+Process 3 affinity: CPU 0, 1
+
+pyos> taskset 3 0
+Set process 3 affinity to CPU 0
+
+pyos> scheduler balance
+Balanced: 1 migration(s)
+```
+
+The `ps` command shows which CPU each process is on:
+
+```
+pyos> ps
+PID    CPU  STATE       NAME
+1      0    running     init
+2      1    ready       worker-a
+3      0    ready       worker-b
+```
+
+### Under the hood
+
+The `MultiCPUScheduler` wraps N `Scheduler` instances -- one per CPU. It exposes the same interface as a single-CPU scheduler (so existing code works unchanged), plus new methods for load balancing, affinity, and migration. Each per-CPU scheduler has its own ready queue, current process, and context-switch counter.
+
+---
+
 ## Putting It All Together
 
-Here is the big picture. A process is a program in action, tracked by a PCB. The scheduler decides which process gets the CPU, using a pluggable policy (FCFS, Round Robin, Priority, Aging Priority, MLFQ, or CFS). Processes can create copies of themselves through forking, or run lightweight parallel work using threads. When a process runs a program, it goes through the full lifecycle -- create, load, execute, output, and exit. When a child terminates, it becomes a zombie until its parent collects the exit code with `wait()` or `waitpid()`.
+Here is the big picture. A process is a program in action, tracked by a PCB. The scheduler decides which process gets the CPU, using a pluggable policy (FCFS, Round Robin, Priority, Aging Priority, MLFQ, or CFS). On multi-CPU systems, a `MultiCPUScheduler` coordinates per-CPU schedulers with load balancing and CPU affinity. Processes can create copies of themselves through forking, or run lightweight parallel work using threads. When a process runs a program, it goes through the full lifecycle -- create, load, execute, output, and exit. When a child terminates, it becomes a zombie until its parent collects the exit code with `wait()` or `waitpid()`.
 
 All of these pieces work together inside the [kernel](kernel-and-syscalls.md), which coordinates the scheduler, [memory](memory.md) manager, and process table to keep everything running smoothly.
 
@@ -473,3 +520,7 @@ All of these pieces work together inside the [kernel](kernel-and-syscalls.md), w
 | **Response time** | Time from process creation to first CPU dispatch |
 | **Context switch** | When the CPU stops running one process and starts running another |
 | **Throughput** | Number of processes completed per second of system uptime |
+| **CPU affinity** | The set of CPUs a process is allowed to run on |
+| **Load balancing** | Moving processes from busy CPUs to less busy ones to keep work even |
+| **Migration** | Moving a process from one CPU's ready queue to another |
+| **MultiCPUScheduler** | A wrapper that coordinates N per-CPU schedulers with load balancing and affinity |

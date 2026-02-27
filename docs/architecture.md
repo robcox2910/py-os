@@ -54,7 +54,7 @@ Every source file and what it implements.
 | `syscalls.py` | `dispatch_syscall()` | Trap handler -- routes syscall numbers to kernel subsystem handlers |
 | `kernel.py` | `dmesg()` | Return the kernel boot log (like Linux dmesg) |
 | `kernel.py` | `init_pid` | PID of the init process (root of process tree) |
-| `syscalls.py` | `SyscallNumber` | IntEnum of all syscall numbers (1-211) |
+| `syscalls.py` | `SyscallNumber` | IntEnum of all syscall numbers (1-224) |
 | `syscalls.py` | `SyscallError` | User-facing exception wrapping internal errors |
 
 ### Process Management
@@ -63,7 +63,8 @@ Every source file and what it implements.
 |------|---------------|---------|
 | `process/pcb.py` | `Process` | PCB with five-state model, program/output/exit_code, thread management, effective_priority for PI, performance timing (wait_time, cpu_time, response_time, turnaround_time) |
 | `process/pcb.py` | `ProcessState` | NEW / READY / RUNNING / WAITING / TERMINATED |
-| `process/scheduler.py` | `Scheduler` | Ready queue management, dispatch using pluggable policy, context_switches counter |
+| `process/scheduler.py` | `Scheduler` | Per-CPU ready queue management, dispatch using pluggable policy, context_switches counter |
+| `process/scheduler.py` | `MultiCPUScheduler` | Wraps N per-CPU Schedulers with load balancing, CPU affinity, migration |
 | `process/scheduler.py` | `FCFSPolicy` | First Come, First Served scheduling |
 | `process/scheduler.py` | `RoundRobinPolicy` | Time-sliced scheduling with configurable quantum |
 | `process/scheduler.py` | `PriorityPolicy` | Highest-priority-first scheduling with FIFO tiebreaker |
@@ -210,6 +211,7 @@ Every source file and what it implements.
 | 180-183 | Strace operations (enable, disable, log, clear) |
 | 190-203 | Kernel-mode helpers (shutdown, scheduler info, lstat, sync listing, fd listing, resource listing, PI status, ordering violations, destroy mutex, dispatch, process info, strace status) |
 | 210-211 | Boot info (dmesg boot log, boot metadata) |
+| 220-224 | Multi-CPU operations (cpu info, set/get affinity, balance, migrate) |
 
 ## Strategy Pattern Usage
 

@@ -222,6 +222,13 @@ class SyscallNumber(IntEnum):
     SYS_DMESG = 210
     SYS_BOOT_INFO = 211
 
+    # Multi-CPU operations
+    SYS_CPU_INFO = 220
+    SYS_SET_AFFINITY = 221
+    SYS_GET_AFFINITY = 222
+    SYS_BALANCE = 223
+    SYS_MIGRATE = 224
+
 
 class SyscallError(Exception):
     """Raised when a system call fails.
@@ -370,6 +377,11 @@ def dispatch_syscall(
         SyscallNumber.SYS_STRACE_STATUS: _sys_strace_status,
         SyscallNumber.SYS_DMESG: _sys_dmesg,
         SyscallNumber.SYS_BOOT_INFO: _sys_boot_info,
+        SyscallNumber.SYS_CPU_INFO: _sys_cpu_info,
+        SyscallNumber.SYS_SET_AFFINITY: _sys_set_affinity,
+        SyscallNumber.SYS_GET_AFFINITY: _sys_get_affinity,
+        SyscallNumber.SYS_BALANCE: _sys_balance,
+        SyscallNumber.SYS_MIGRATE: _sys_migrate,
     }
 
     handler = handlers.get(number)
@@ -409,6 +421,7 @@ def _sys_list_processes(kernel: Any, **_kwargs: Any) -> list[dict[str, Any]]:
             "name": p.name,
             "state": p.state,
             "parent_pid": p.parent_pid,
+            "cpu_id": p.cpu_id,
         }
         for p in kernel.processes.values()
     ]
@@ -1108,33 +1121,34 @@ def _sys_set_scheduler(kernel: Any, **kwargs: Any) -> str:
 
     match policy_name:
         case "fcfs":
-            kernel.set_scheduler_policy(FCFSPolicy())
+            kernel.set_scheduler_policy(FCFSPolicy)
             return "Scheduler set to FCFS"
         case "rr":
             if quantum is None:
                 msg = "Round Robin requires a quantum"
                 raise SyscallError(msg)
-            kernel.set_scheduler_policy(RoundRobinPolicy(quantum=quantum))
+            q = quantum  # capture for lambda
+            kernel.set_scheduler_policy(lambda: RoundRobinPolicy(quantum=q))
             return f"Scheduler set to Round Robin (quantum={quantum})"
         case "priority":
-            kernel.set_scheduler_policy(PriorityPolicy())
+            kernel.set_scheduler_policy(PriorityPolicy)
             return "Scheduler set to Priority"
         case "aging":
             aging_boost: int = kwargs.get("aging_boost", 1)
             max_age: int = kwargs.get("max_age", 10)
-            policy = AgingPriorityPolicy(aging_boost=aging_boost, max_age=max_age)
-            kernel.set_scheduler_policy(policy)
+            ab, ma = aging_boost, max_age  # capture for lambda
+            kernel.set_scheduler_policy(lambda: AgingPriorityPolicy(aging_boost=ab, max_age=ma))
             return f"Scheduler set to Aging Priority (boost={aging_boost}, max_age={max_age})"
         case "mlfq":
             num_levels: int = kwargs.get("num_levels", 3)
             base_quantum: int = kwargs.get("base_quantum", 2)
-            mlfq_policy = MLFQPolicy(num_levels=num_levels, base_quantum=base_quantum)
-            kernel.set_scheduler_policy(mlfq_policy)
+            nl, bq = num_levels, base_quantum  # capture for lambda
+            kernel.set_scheduler_policy(lambda: MLFQPolicy(num_levels=nl, base_quantum=bq))
             return f"Scheduler set to MLFQ ({num_levels} levels, base_quantum={base_quantum})"
         case "cfs":
             base_slice: int = kwargs.get("base_slice", 1)
-            cfs_policy = CFSPolicy(base_slice=base_slice)
-            kernel.set_scheduler_policy(cfs_policy)
+            bs = base_slice  # capture for lambda
+            kernel.set_scheduler_policy(lambda: CFSPolicy(base_slice=bs))
             return f"Scheduler set to CFS (base_slice={base_slice})"
         case _:
             msg = f"Unknown scheduling policy: {policy_name}"
@@ -1486,7 +1500,7 @@ def _sys_scheduler_info(kernel: Any, **_kwargs: Any) -> dict[str, str]:
             label = f"CFS (base_slice={policy.base_slice})"
         case _:
             label = type(policy).__name__
-    return {"policy": label}
+    return {"policy": label, "num_cpus": kernel.scheduler.num_cpus}
 
 
 def _sys_lstat(kernel: Any, **kwargs: Any) -> dict[str, Any]:
@@ -1652,6 +1666,7 @@ def _sys_process_info(kernel: Any, **kwargs: Any) -> dict[str, Any]:
         "priority": proc.priority,
         "effective_priority": proc.effective_priority,
         "main_tid": proc.main_thread.tid,
+        "cpu_id": proc.cpu_id,
     }
 
 
@@ -1675,3 +1690,73 @@ def _sys_boot_info(kernel: Any, **_kwargs: Any) -> dict[str, Any]:
         "uptime": kernel.uptime,
         "kernel_version": "0.1.0",
     }
+
+
+# -- Multi-CPU syscall handlers -----------------------------------------------
+
+
+def _sys_cpu_info(kernel: Any, **_kwargs: Any) -> list[dict[str, Any]]:
+    """Return per-CPU scheduler information."""
+    sched = kernel.scheduler
+    assert sched is not None  # noqa: S101
+    result: list[dict[str, Any]] = []
+    for cpu_id in range(sched.num_cpus):
+        current = sched.cpu_current(cpu_id)
+        cpu_sched = sched.cpu_scheduler(cpu_id)
+        result.append(
+            {
+                "cpu_id": cpu_id,
+                "policy": type(cpu_sched.policy).__name__,
+                "ready_count": sched.cpu_ready_count(cpu_id),
+                "current": current.pid if current is not None else None,
+            }
+        )
+    return result
+
+
+def _sys_set_affinity(kernel: Any, **kwargs: Any) -> None:
+    """Set CPU affinity for a process."""
+    sched = kernel.scheduler
+    assert sched is not None  # noqa: S101
+    pid: int = kwargs["pid"]
+    cpus: list[int] = kwargs["cpus"]
+    if pid not in kernel.processes:
+        msg = f"Process {pid} not found"
+        raise SyscallError(msg)
+    sched.set_affinity(pid, frozenset(cpus))
+
+
+def _sys_get_affinity(kernel: Any, **kwargs: Any) -> list[int]:
+    """Return CPU affinity for a process."""
+    sched = kernel.scheduler
+    assert sched is not None  # noqa: S101
+    pid: int = kwargs["pid"]
+    if pid not in kernel.processes:
+        msg = f"Process {pid} not found"
+        raise SyscallError(msg)
+    return sorted(sched.get_affinity(pid))
+
+
+def _sys_balance(kernel: Any, **_kwargs: Any) -> dict[str, Any]:
+    """Trigger load balancing across CPUs."""
+    sched = kernel.scheduler
+    assert sched is not None  # noqa: S101
+    moved = sched.balance()
+    return {
+        "migrations": [(pid, from_cpu, to_cpu) for pid, from_cpu, to_cpu in moved],
+        "count": len(moved),
+    }
+
+
+def _sys_migrate(kernel: Any, **kwargs: Any) -> dict[str, bool]:
+    """Migrate a process between CPUs."""
+    sched = kernel.scheduler
+    assert sched is not None  # noqa: S101
+    pid: int = kwargs["pid"]
+    from_cpu: int = kwargs["from_cpu"]
+    to_cpu: int = kwargs["to_cpu"]
+    if pid not in kernel.processes:
+        msg = f"Process {pid} not found"
+        raise SyscallError(msg)
+    success = sched.migrate(pid, from_cpu, to_cpu)
+    return {"success": success}

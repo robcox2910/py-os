@@ -22,7 +22,7 @@ from py_os.syscalls import SyscallError, SyscallNumber
 # Helpers
 # ---------------------------------------------------------------------------
 
-EXPECTED_STATUS_LINES = 7
+EXPECTED_STATUS_LINES = 8
 EXPECTED_MEMINFO_LINES = 4
 
 
