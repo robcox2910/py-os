@@ -75,6 +75,7 @@ class KernelImage:
     total_frames: int
     default_policy: str
     boot_args: dict[str, str] = field(default_factory=lambda: {})  # noqa: PIE807
+    num_cpus: int = 1
 
 
 class BootError(RuntimeError):
@@ -99,6 +100,7 @@ class Bootloader:
         *,
         kernel_image_path: Path | None = None,
         total_frames: int = 64,
+        num_cpus: int = 1,
     ) -> None:
         """Create a bootloader with optional kernel image path.
 
@@ -107,10 +109,12 @@ class Bootloader:
                 If None, a default image is constructed in memory.
             total_frames: Default memory frame count (used when no
                 image file is provided).
+            num_cpus: Number of CPUs to simulate (default 1).
 
         """
         self._kernel_image_path = kernel_image_path
         self._total_frames = total_frames
+        self._num_cpus = num_cpus
         self._stage: BootStage = BootStage.FIRMWARE
         self._boot_log: list[str] = []
         self._kernel: Kernel | None = None
@@ -152,7 +156,7 @@ class Bootloader:
 
         # Stage 3: Boot kernel
         self._stage = BootStage.KERNEL
-        kernel = Kernel(total_frames=image.total_frames)
+        kernel = Kernel(total_frames=image.total_frames, num_cpus=image.num_cpus)
         kernel.boot()
         self._kernel = kernel
 
@@ -201,6 +205,7 @@ class Bootloader:
                     total_frames=data.get("total_frames", self._total_frames),
                     default_policy=data.get("default_policy", "fcfs"),
                     boot_args=data.get("boot_args", {}),
+                    num_cpus=data.get("num_cpus", self._num_cpus),
                 )
             except (OSError, json.JSONDecodeError) as e:
                 msg = f"Cannot load kernel image: {e}"
@@ -210,4 +215,5 @@ class Bootloader:
             version="0.1.0",
             total_frames=self._total_frames,
             default_policy="fcfs",
+            num_cpus=self._num_cpus,
         )

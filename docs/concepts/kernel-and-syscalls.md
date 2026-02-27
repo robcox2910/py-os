@@ -214,6 +214,7 @@ Here is every syscall number in PyOS, grouped by what they do:
 | 180-183 | Strace operations (enable, disable, log, clear) |
 | 190-203 | Kernel-mode helpers (shutdown, scheduler info, lstat, list mutexes/semaphores/rwlocks, list fds, list resources, PI status, ordering violations, destroy mutex, dispatch, process info, strace status) |
 | 210-211 | Boot info (dmesg boot log, boot metadata) |
+| 220-224 | Multi-CPU operations (cpu info, set/get affinity, balance, migrate) |
 
 You don't need to memorize these. The important thing is that every single
 operation a program can ask for has a number, and every single request goes

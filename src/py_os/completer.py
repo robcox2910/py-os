@@ -27,7 +27,7 @@ _PATH_COMMANDS: frozenset[str] = frozenset(
 
 # Commands that accept subcommands as a second word.
 _SUBCOMMANDS: dict[str, list[str]] = {
-    "scheduler": ["fcfs", "rr", "priority", "aging", "mlfq", "cfs", "boost"],
+    "scheduler": ["fcfs", "rr", "priority", "aging", "mlfq", "cfs", "boost", "balance"],
     "mutex": ["create", "list"],
     "semaphore": ["create", "list"],
     "journal": ["status", "checkpoint", "recover", "crash"],

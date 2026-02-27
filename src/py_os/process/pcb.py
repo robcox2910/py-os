@@ -103,6 +103,9 @@ class Process:
         self._total_ready_time: float = 0.0
         self._total_cpu_time: float = 0.0
 
+        # CPU assignment — which CPU this process is running on (None = unassigned)
+        self._cpu_id: int | None = None
+
         # Thread management — every process has at least one thread
         self._next_tid = count(start=1)
         self._threads: dict[int, Thread] = {
@@ -187,6 +190,16 @@ class Process:
     def wait_target(self, target: int | None) -> None:
         """Set the child PID this process is waiting for."""
         self._wait_target = target
+
+    @property
+    def cpu_id(self) -> int | None:
+        """Return the CPU this process is assigned to, or None."""
+        return self._cpu_id
+
+    @cpu_id.setter
+    def cpu_id(self, value: int | None) -> None:
+        """Set the CPU this process is assigned to."""
+        self._cpu_id = value
 
     # -- Performance timing properties -----------------------------------------
 
@@ -335,6 +348,7 @@ class Process:
             self._total_cpu_time += now - self._last_dispatched_at
             self._last_dispatched_at = None
         self._terminated_at = now
+        self._cpu_id = None
 
     def force_terminate(self) -> None:
         """Force termination from any non-terminated state.
@@ -358,6 +372,7 @@ class Process:
             self._last_dispatched_at = None
         self._terminated_at = now
         self._state = ProcessState.TERMINATED
+        self._cpu_id = None
 
     def __repr__(self) -> str:
         """Return a debug-friendly representation."""

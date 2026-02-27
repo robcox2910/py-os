@@ -154,6 +154,23 @@ class ProcFilesystem:
         """Generate /proc/cpuinfo from the scheduler."""
         sched = self._kernel.scheduler
         assert sched is not None  # noqa: S101
+
+        if sched.num_cpus > 1:
+            lines = [f"NumCPUs:        {sched.num_cpus}"]
+            for cpu_id in range(sched.num_cpus):
+                cpu_sched = sched.cpu_scheduler(cpu_id)
+                policy_name = type(cpu_sched.policy).__name__
+                ready = sched.cpu_ready_count(cpu_id)
+                current = sched.cpu_current(cpu_id)
+                current_str = (
+                    f"pid {current.pid} ({current.name})" if current is not None else "none"
+                )
+                lines.append(f"CPU {cpu_id}:")
+                lines.append(f"  Policy:       {policy_name}")
+                lines.append(f"  ReadyQueue:   {ready}")
+                lines.append(f"  Current:      {current_str}")
+            return "\n".join(lines)
+
         policy_name = type(sched.policy).__name__
         ready = sched.ready_count
         current = sched.current
@@ -172,7 +189,8 @@ class ProcFilesystem:
             f"AvgWaitTime:    {metrics['avg_wait_time']:.2f} seconds\n"
             f"AvgTurnaround:  {metrics['avg_turnaround_time']:.2f} seconds\n"
             f"AvgResponse:    {metrics['avg_response_time']:.2f} seconds\n"
-            f"Throughput:     {metrics['throughput']:.2f} procs/sec"
+            f"Throughput:     {metrics['throughput']:.2f} procs/sec\n"
+            f"Migrations:     {metrics['migrations']}"
         )
 
     def _generate_sched(self, pid: int) -> str:
@@ -193,6 +211,7 @@ class ProcFilesystem:
         """Generate /proc/{pid}/status from the process control block."""
         proc = self._get_process(pid)
         thread_count = len(proc.threads)
+        cpu_str = str(proc.cpu_id) if proc.cpu_id is not None else "none"
         return (
             f"Name:           {proc.name}\n"
             f"Pid:            {proc.pid}\n"
@@ -200,7 +219,8 @@ class ProcFilesystem:
             f"State:          {proc.state}\n"
             f"Priority:       {proc.priority}\n"
             f"EffPriority:    {proc.effective_priority}\n"
-            f"Threads:        {thread_count}"
+            f"Threads:        {thread_count}\n"
+            f"CPU:            {cpu_str}"
         )
 
     def _generate_maps(self, pid: int) -> str:

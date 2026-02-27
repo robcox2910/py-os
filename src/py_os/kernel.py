@@ -47,7 +47,7 @@ from py_os.memory.mmap import MmapError, MmapRegion
 from py_os.memory.slab import SlabAllocator, SlabCache
 from py_os.memory.virtual import VirtualMemory
 from py_os.process.pcb import Process, ProcessState
-from py_os.process.scheduler import FCFSPolicy, Scheduler, SchedulingPolicy
+from py_os.process.scheduler import FCFSPolicy, MultiCPUScheduler, SchedulingPolicy
 from py_os.process.signals import DEFAULT_ACTIONS, UNCATCHABLE, Signal, SignalAction, SignalError
 from py_os.process.threads import Thread
 from py_os.sync.deadlock import ResourceManager
@@ -114,19 +114,26 @@ class Kernel:
     and are initialised during boot.
     """
 
-    def __init__(self, *, total_frames: int = DEFAULT_TOTAL_FRAMES) -> None:
+    def __init__(
+        self,
+        *,
+        total_frames: int = DEFAULT_TOTAL_FRAMES,
+        num_cpus: int = 1,
+    ) -> None:
         """Create a kernel in the SHUTDOWN state.
 
         Args:
             total_frames: Number of physical memory frames to allocate
                 during boot.  Defaults to DEFAULT_TOTAL_FRAMES (64).
+            num_cpus: Number of CPUs to simulate (default 1).
 
         """
         self._state: KernelState = KernelState.SHUTDOWN
         self._total_frames = total_frames
+        self._num_cpus = num_cpus
         self._execution_mode: ExecutionMode = ExecutionMode.KERNEL
         self._boot_time: float | None = None
-        self._scheduler: Scheduler | None = None
+        self._scheduler: MultiCPUScheduler | None = None
         self._memory: MemoryManager | None = None
         self._filesystem: JournaledFileSystem | None = None
         self._user_manager: UserManager | None = None
@@ -215,10 +222,15 @@ class Kernel:
         return self._kernel_mode()
 
     @property
-    def scheduler(self) -> Scheduler | None:
+    def scheduler(self) -> MultiCPUScheduler | None:
         """Return the scheduler, or None if not booted."""
         self._require_kernel_mode()
         return self._scheduler
+
+    @property
+    def num_cpus(self) -> int:
+        """Return the number of CPUs."""
+        return self._num_cpus
 
     @property
     def memory(self) -> MemoryManager | None:
@@ -334,28 +346,33 @@ class Kernel:
         """
         return list(self._boot_log)
 
-    def set_scheduler_policy(self, policy: SchedulingPolicy) -> None:
+    def set_scheduler_policy(self, policy_factory: Callable[[], SchedulingPolicy]) -> None:
         """Replace the scheduler's policy, preserving the ready queue.
 
-        Creates a new Scheduler with the given policy and re-adds every
-        process that was in the old ready queue.
+        Create a new MultiCPUScheduler with the given policy factory
+        and re-add every process that was in the old ready queues.
 
         Args:
-            policy: The new scheduling policy to use.
+            policy_factory: A callable that creates a fresh policy instance
+                for each CPU.
 
         """
         self._require_running()
         assert self._scheduler is not None  # noqa: S101
 
         old = self._scheduler
-        new = Scheduler(policy=policy)
+        new = MultiCPUScheduler(
+            num_cpus=self._num_cpus,
+            policy_factory=policy_factory,
+        )
 
-        # Drain the old ready queue into the new scheduler
-        while old.ready_count > 0:
-            process = old.dispatch()
-            if process is not None:
-                process.preempt()  # RUNNING → READY
-                new.add(process)
+        # Drain all per-CPU ready queues into the new scheduler
+        for cpu_id in range(old.num_cpus):
+            while old.cpu_ready_count(cpu_id) > 0:
+                process = old.dispatch(cpu_id=cpu_id)
+                if process is not None:
+                    process.preempt()  # RUNNING → READY
+                    new.add(process)
 
         self._scheduler = new
 
@@ -449,8 +466,9 @@ class Kernel:
         self._ordering_manager = ResourceOrderingManager()
 
         # 9. Scheduler — ready to accept processes
-        self._scheduler = Scheduler(policy=FCFSPolicy())
-        self._boot_log.append("[OK] Scheduler (FCFS)")
+        self._scheduler = MultiCPUScheduler(num_cpus=self._num_cpus, policy_factory=FCFSPolicy)
+        cpu_label = f" — {self._num_cpus} CPU(s)" if self._num_cpus > 1 else ""
+        self._boot_log.append(f"[OK] Scheduler (FCFS){cpu_label}")
 
         # 10. /proc virtual filesystem — reads live state from all subsystems
         self._proc_fs = ProcFilesystem(kernel=self)
@@ -1534,6 +1552,7 @@ class Kernel:
             "avg_turnaround_time": avg_turnaround,
             "avg_response_time": avg_response,
             "throughput": throughput,
+            "migrations": self._scheduler.migrations,
         }
 
     # -- Wait / zombie helpers -------------------------------------------------
