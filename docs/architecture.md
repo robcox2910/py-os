@@ -15,7 +15,7 @@ Technical reference for every module in the system. For beginner-friendly explan
 | Guide | Topics |
 |-------|--------|
 | [What Is an OS?](concepts/what-is-an-os.md) | Big picture, layered architecture, how PyOS works |
-| [Processes](concepts/processes.md) | PCB, five-state model, scheduler, fork (COW), threads, execution, zombies, wait/waitpid |
+| [Processes](concepts/processes.md) | PCB, five-state model, scheduler, multi-CPU, fork (COW), threads, execution, zombies, wait/waitpid |
 | [Memory](concepts/memory.md) | Frames/pages, virtual memory, page replacement, swap, copy-on-write, mmap, slab allocator |
 | [Filesystem](concepts/filesystem.md) | Inodes, path resolution, hard/symbolic links, persistence, journaling, /proc virtual filesystem |
 | [The Boot Chain](concepts/bootloader.md) | Firmware POST, bootloader, kernel image, init process, dmesg |

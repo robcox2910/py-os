@@ -85,6 +85,7 @@ Here are the commands grouped by what they do. You don't need to memorize them
 | `waitpid` | Wait for a specific child process to finish |
 | `signal`  | Send a signal (like SIGTERM or SIGKILL) to a process |
 | `handle`  | Register a custom signal handler for a process |
+| `taskset` | Show or set a process's CPU affinity (which CPUs it can run on) |
 
 **Users** -- who's using the system:
 
@@ -105,6 +106,7 @@ Here are the commands grouped by what they do. You don't need to memorize them
 | `history` | Show every command you've typed this session |
 | `perf`    | Show performance metrics (context switches, wait time, throughput) |
 | `strace`  | Syscall tracing: on, off, show, clear, demo |
+| `dmesg`   | Display the kernel boot log |
 | `exit`    | Shut down the kernel and leave the shell |
 
 **Synchronization** -- managing shared resources:
@@ -141,7 +143,8 @@ cat /proc/42/sched      -- per-process timing (wait, CPU, response, turnaround)
 
 | Command     | What it does |
 |-------------|-------------|
-| `scheduler` | Switch scheduling policies or view current settings |
+| `scheduler` | Switch scheduling policies, view settings, or trigger load balancing |
+| `cpu`       | Show per-CPU status (policy, queue size, current process) |
 
 **Storage** -- crash recovery and disk management:
 

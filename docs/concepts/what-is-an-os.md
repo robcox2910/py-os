@@ -146,5 +146,7 @@ topic stands on its own.
 - [The Shell](shell.md) -- Your command-line interface to the OS
 - [Devices and Networking](devices-and-networking.md) -- How the OS talks to hardware and the internet
 - [Users and Safety](users-and-safety.md) -- How the OS keeps users and their data separate
+- [Synchronization](synchronization.md) -- How threads share resources without stepping on each other
+- [The Boot Chain](bootloader.md) -- What happens between pressing the power button and seeing a prompt
 
 Happy exploring!

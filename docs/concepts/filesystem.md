@@ -633,7 +633,7 @@ vanishes.
 /proc/
 ├── meminfo          -- Memory statistics (total, free, used, shared)
 ├── uptime           -- How long the system has been running
-├── cpuinfo          -- Scheduler policy, ready queue size
+├── cpuinfo          -- Scheduler policy, ready queue size (per-CPU on multi-CPU systems)
 ├── stat             -- Performance metrics (context switches, throughput)
 ├── [pid]/           -- One directory per process
 │   ├── status       -- Name, PID, parent, state, priority, threads
