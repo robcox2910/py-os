@@ -1534,6 +1534,36 @@ class Kernel:
         if response is not None:
             self._total_response_time += response
 
+    def reset_perf_metrics(self) -> None:
+        """Zero all aggregate performance counters.
+
+        Resets context switches, completed/created counts, and timing
+        accumulators so that subsequent ``perf_metrics()`` calls reflect
+        only activity after this reset.
+        """
+        self._require_running()
+        assert self._scheduler is not None  # noqa: S101
+        self._total_created = 0
+        self._total_completed = 0
+        self._total_wait_time = 0.0
+        self._total_turnaround_time = 0.0
+        self._total_response_time = 0.0
+        self._scheduler.reset_counters()
+
+    def purge_terminated_from_scheduler(self) -> int:
+        """Remove terminated processes from the scheduler ready queues.
+
+        Useful after ``run_process()`` which dispatches directly and
+        leaves stale entries in the scheduler queue.
+
+        Returns:
+            Number of processes removed.
+
+        """
+        self._require_running()
+        assert self._scheduler is not None  # noqa: S101
+        return self._scheduler.purge_terminated()
+
     def perf_metrics(self) -> dict[str, float | int]:
         """Aggregate performance metrics from all subsystems."""
         self._require_running()

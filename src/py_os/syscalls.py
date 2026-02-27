@@ -195,6 +195,7 @@ class SyscallNumber(IntEnum):
 
     # Performance metrics
     SYS_PERF_METRICS = 172
+    SYS_PERF_RESET = 173
 
     # Strace operations
     SYS_STRACE_ENABLE = 180
@@ -357,6 +358,7 @@ def dispatch_syscall(
         SyscallNumber.SYS_PROC_READ: _sys_proc_read,
         SyscallNumber.SYS_PROC_LIST: _sys_proc_list,
         SyscallNumber.SYS_PERF_METRICS: _sys_perf_metrics,
+        SyscallNumber.SYS_PERF_RESET: _sys_perf_reset,
         SyscallNumber.SYS_STRACE_ENABLE: _sys_strace_enable,
         SyscallNumber.SYS_STRACE_DISABLE: _sys_strace_disable,
         SyscallNumber.SYS_STRACE_LOG: _sys_strace_log,
@@ -1448,6 +1450,15 @@ def _sys_perf_metrics(kernel: Any, **_kwargs: Any) -> dict[str, float | int]:
         return kernel.perf_metrics()
     except (ValueError, RuntimeError) as e:
         raise SyscallError(str(e)) from e
+
+
+def _sys_perf_reset(kernel: Any, **_kwargs: Any) -> dict[str, str]:
+    """Reset aggregate performance metrics to zero."""
+    try:
+        kernel.reset_perf_metrics()
+    except (ValueError, RuntimeError) as e:
+        raise SyscallError(str(e)) from e
+    return {"status": "reset"}
 
 
 # -- Strace syscall handlers ------------------------------------------------

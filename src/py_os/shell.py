@@ -25,6 +25,7 @@ import contextlib
 import re
 from collections.abc import Callable
 from dataclasses import dataclass
+from typing import ClassVar
 
 from py_os.io.http import (
     HttpMethod,
@@ -167,6 +168,7 @@ class Shell:
             "dmesg": self._cmd_dmesg,
             "cpu": self._cmd_cpu,
             "taskset": self._cmd_taskset,
+            "benchmark": self._cmd_benchmark,
         }
 
     @property
@@ -3254,4 +3256,155 @@ class Shell:
         lines = [f"Load balanced: {count} migration(s)"]
         for pid, from_cpu, to_cpu in migrations:  # type: ignore[union-attr]
             lines.append(f"  PID {pid}: CPU {from_cpu} → CPU {to_cpu}")
+        return "\n".join(lines)
+
+    # -- benchmark command ------------------------------------------------------
+
+    _BENCHMARK_POLICIES: ClassVar[list[tuple[str, str]]] = [
+        ("fcfs", "FCFS"),
+        ("rr", "RR"),
+        ("priority", "Priority"),
+        ("aging", "Aging"),
+        ("cfs", "CFS"),
+    ]
+
+    def _cmd_benchmark(self, args: list[str]) -> str:
+        """Compare scheduler policies with standardised workloads."""
+        if not args:
+            return "Usage: benchmark <run [cpu|io|mixed]|demo>"
+        match args[0]:
+            case "run":
+                workload = args[1] if len(args) > 1 else "cpu"
+                return self._benchmark_run(workload)
+            case "demo":
+                return self._benchmark_demo()
+            case _:
+                return "Usage: benchmark <run [cpu|io|mixed]|demo>"
+
+    def _benchmark_run(self, workload: str) -> str:
+        """Run a workload under each policy and display a comparison table."""
+        workload_labels = {"cpu": "CPU-bound", "io": "IO-bound", "mixed": "Mixed"}
+        label = workload_labels.get(workload)
+        if label is None:
+            return f"Unknown workload: {workload}. Use cpu, io, or mixed."
+
+        # Save the original policy name
+        info: dict[str, object] = self._kernel.syscall(SyscallNumber.SYS_SCHEDULER_INFO)
+        original_policy = str(info["policy"])
+
+        proc_count = 5
+        rows: list[tuple[str, int, int, float]] = []
+
+        for policy_key, policy_name in self._BENCHMARK_POLICIES:
+            self._benchmark_switch_policy(policy_key)
+            self._kernel.syscall(SyscallNumber.SYS_PERF_RESET)
+            self._benchmark_run_workload(workload, proc_count)
+            metrics: dict[str, object] = self._kernel.syscall(SyscallNumber.SYS_PERF_METRICS)
+            switches = int(str(metrics["context_switches"]))
+            completed = int(str(metrics["total_completed"]))
+            avg_wait = float(str(metrics["avg_wait_time"]))
+            rows.append((policy_name, switches, completed, avg_wait))
+
+        # Restore original policy
+        self._benchmark_restore_policy(original_policy)
+
+        return self._benchmark_format_table(label, rows)
+
+    def _benchmark_switch_policy(self, policy_key: str) -> None:
+        """Switch to the given scheduling policy for benchmarking."""
+        kwargs: dict[str, object] = {"policy": policy_key}
+        if policy_key == "rr":
+            kwargs["quantum"] = 2
+        self._kernel.syscall(SyscallNumber.SYS_SET_SCHEDULER, **kwargs)
+
+    def _benchmark_restore_policy(self, original: str) -> None:
+        """Restore the scheduling policy to its original state."""
+        # Parse the original policy string to extract the policy key
+        lower = original.lower()
+        if "fcfs" in lower:
+            self._kernel.syscall(SyscallNumber.SYS_SET_SCHEDULER, policy="fcfs")
+        elif "round robin" in lower:
+            self._kernel.syscall(SyscallNumber.SYS_SET_SCHEDULER, policy="rr", quantum=2)
+        elif "aging" in lower:
+            self._kernel.syscall(SyscallNumber.SYS_SET_SCHEDULER, policy="aging")
+        elif "priority" in lower:
+            self._kernel.syscall(SyscallNumber.SYS_SET_SCHEDULER, policy="priority")
+        elif "mlfq" in lower:
+            self._kernel.syscall(SyscallNumber.SYS_SET_SCHEDULER, policy="mlfq")
+        elif "cfs" in lower:
+            self._kernel.syscall(SyscallNumber.SYS_SET_SCHEDULER, policy="cfs")
+
+    def _benchmark_run_workload(self, workload: str, count: int) -> None:
+        """Create, execute, and run *count* processes for the given workload type."""
+        pids: list[int] = []
+        for i in range(count):
+            priority = i if workload in ("io", "mixed") else 0
+            try:
+                result = self._kernel.syscall(
+                    SyscallNumber.SYS_CREATE_PROCESS,
+                    name=f"bench-{workload}-{i}",
+                    num_pages=1,
+                    priority=priority,
+                )
+                pid = result["pid"]
+                pids.append(pid)
+                self._kernel.syscall(
+                    SyscallNumber.SYS_EXEC,
+                    pid=pid,
+                    program=lambda: "done",
+                )
+                self._kernel.syscall(SyscallNumber.SYS_RUN, pid=pid)
+            except SyscallError:
+                continue
+        # SYS_RUN bypasses the scheduler dispatch — clean up leftover
+        # entries so set_scheduler_policy won't encounter terminated procs.
+        self._kernel.purge_terminated_from_scheduler()
+
+    def _benchmark_format_table(self, label: str, rows: list[tuple[str, int, int, float]]) -> str:
+        """Format benchmark results as an ASCII comparison table."""
+        lines: list[str] = [
+            f"=== Benchmark: {label} Workload ===",
+            "",
+            f"{'Policy':<12} {'Switches':>10} {'Completed':>10} {'Avg Wait':>10}",
+            f"{'-' * 12} {'-' * 10} {'-' * 10} {'-' * 10}",
+        ]
+        for name, switches, completed, avg_wait in rows:
+            lines.append(f"{name:<12} {switches:>10} {completed:>10} {avg_wait:>10.4f}")
+        return "\n".join(lines)
+
+    def _benchmark_demo(self) -> str:
+        """Walk through benchmarking with a sports day analogy."""
+        lines: list[str] = [
+            "=== Benchmark Demo ===",
+            "",
+            "Imagine a sports day at school. Five coaches each organise the same",
+            "set of races, but each coach uses a different strategy:",
+            "",
+            "  - Coach FCFS:     First Come, First Served — whoever signs up first runs first.",
+            "  - Coach RR:       Round Robin — everyone gets a short turn, then goes to the back.",
+            "  - Coach Priority: Fastest runners go first.",
+            "  - Coach Aging:    Like Priority, but slower runners gradually move up.",
+            "  - Coach CFS:      Completely Fair — tracks who has run least and picks them.",
+            "",
+        ]
+
+        # Step 1: Explain what we're doing
+        lines.append("Step 1: We run the SAME races under each coach's rules.")
+        lines.append("Step 2: We compare how many context switches each coach needed,")
+        lines.append("        how many races were completed, and how long runners waited.")
+        lines.append("")
+
+        # Step 3: Run a mini benchmark
+        lines.append("Step 3: Running a mini CPU-bound benchmark...")
+        lines.append("")
+        table = self._benchmark_run("cpu")
+        lines.append(table)
+        lines.append("")
+
+        # Step 4: Summary
+        lines.append("Step 4: What to look for")
+        lines.append("  - Fewer context switches = less overhead")
+        lines.append("  - Lower avg wait = processes start sooner")
+        lines.append("  - Each policy has trade-offs — no single 'best' answer!")
+
         return "\n".join(lines)
