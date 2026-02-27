@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PyOS — Web Terminal</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div id="terminal">
+        <div id="output"><pre>{{ boot_log }}</pre>
+<pre>Kernel running. Type 'help' for commands.</pre></div>
+        <div id="input-line">
+            <span id="prompt">PyOS&gt; </span>
+            <input type="text" id="command" autofocus autocomplete="off"
+                   aria-label="Command input">
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='terminal.js') }}"></script>
+</body>
+</html>

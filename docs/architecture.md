@@ -189,6 +189,16 @@ Every source file and what it implements.
 | `tutorials.py` | `run(name)` | Execute a single lesson by name |
 | `tutorials.py` | `run_all()` | Execute every lesson in recommended order |
 
+### Web Frontend
+
+| File | Class/Function | Purpose |
+|------|---------------|---------|
+| `web/app.py` | `create_app()` | Flask application factory — boots kernel, creates shell, wires routes |
+| `web/app.py` | `main()` | Console entry point for ``py-os-web`` development server |
+| `web/templates/index.html` | — | Single-page terminal UI with dark theme |
+| `web/static/style.css` | — | Dark terminal aesthetic (green on dark blue) |
+| `web/static/terminal.js` | — | Command input, history (Up/Down), fetch API calls |
+
 ## Syscall Number Ranges
 
 | Range | Category |
