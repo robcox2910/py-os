@@ -167,6 +167,7 @@ class Shell:
             "dmesg": self._cmd_dmesg,
             "cpu": self._cmd_cpu,
             "taskset": self._cmd_taskset,
+            "dashboard": self._cmd_dashboard,
         }
 
     @property
@@ -3255,3 +3256,129 @@ class Shell:
         for pid, from_cpu, to_cpu in migrations:  # type: ignore[union-attr]
             lines.append(f"  PID {pid}: CPU {from_cpu} → CPU {to_cpu}")
         return "\n".join(lines)
+
+    # -- dashboard command ------------------------------------------------------
+
+    _DASHBOARD_BAR_WIDTH = 30
+
+    def _cmd_dashboard(self, args: list[str]) -> str:
+        """Display an ASCII system dashboard (cpu, memory, processes, fs)."""
+        if not args:
+            return self._dashboard_full()
+        match args[0]:
+            case "cpu":
+                return self._dashboard_cpu()
+            case "memory":
+                return self._dashboard_memory()
+            case "processes":
+                return self._dashboard_processes()
+            case "fs":
+                return self._dashboard_fs()
+            case _:
+                return "Usage: dashboard [cpu|memory|processes|fs]"
+
+    def _dashboard_full(self) -> str:
+        """Assemble all four panels into a full dashboard."""
+        lines: list[str] = [
+            "+====== PyOS Dashboard ======+",
+            "",
+            self._dashboard_cpu(),
+            "",
+            self._dashboard_memory(),
+            "",
+            self._dashboard_processes(),
+            "",
+            self._dashboard_fs(),
+        ]
+        return "\n".join(lines)
+
+    def _dashboard_cpu(self) -> str:
+        """Render the CPU panel with policy and per-CPU status."""
+        try:
+            cpus: list[dict[str, object]] = self._kernel.syscall(SyscallNumber.SYS_CPU_INFO)
+        except SyscallError as e:
+            return f"CPU: Error — {e}"
+
+        lines: list[str] = ["--- CPU ---"]
+        for cpu in cpus:
+            current = cpu["current"]
+            proc_str = f"PID {current}" if current is not None else "idle"
+            lines.append(
+                f"  CPU {cpu['cpu_id']}: {cpu['policy']}  "
+                f"current={proc_str}  ready={cpu['ready_count']}"
+            )
+        return "\n".join(lines)
+
+    def _dashboard_memory(self) -> str:
+        """Render the memory panel with a visual bar and stats."""
+        try:
+            mem: dict[str, int] = self._kernel.syscall(SyscallNumber.SYS_MEMORY_INFO)
+        except SyscallError as e:
+            return f"Memory: Error — {e}"
+
+        total = mem["total_frames"]
+        free = mem["free_frames"]
+        used = total - free
+        pct = (used / total * 100) if total > 0 else 0
+
+        bar_width = self._DASHBOARD_BAR_WIDTH
+        filled = round(used / total * bar_width) if total > 0 else 0
+        empty = bar_width - filled
+        bar = "[" + "#" * filled + "." * empty + "]"
+
+        lines: list[str] = [
+            "--- Memory ---",
+            f"  {bar} {pct:.0f}%",
+            f"  {used}/{total} frames allocated  (#=allocated .=free)",
+        ]
+        return "\n".join(lines)
+
+    def _dashboard_processes(self) -> str:
+        """Render the process table panel."""
+        try:
+            procs: list[dict[str, object]] = self._kernel.syscall(SyscallNumber.SYS_LIST_PROCESSES)
+        except SyscallError as e:
+            return f"Processes: Error — {e}"
+
+        lines: list[str] = [
+            "--- Processes ---",
+            f"  {'PID':<6} {'CPU':<4} {'STATE':<11} {'NAME'}",
+        ]
+        for p in procs:
+            cpu = str(p["cpu_id"]) if p["cpu_id"] is not None else "-"
+            lines.append(f"  {p['pid']:<6} {cpu:<4} {p['state']!s:<11} {p['name']}")
+        return "\n".join(lines)
+
+    def _dashboard_fs(self) -> str:
+        """Render the filesystem tree panel (depth-limited to 2 levels)."""
+        lines: list[str] = ["--- Filesystem ---"]
+        self._dashboard_fs_tree(lines, "/", depth=0, max_depth=2)
+        # /proc is a virtual filesystem not in the regular tree
+        lines.append("  /proc/ (virtual)")
+        return "\n".join(lines)
+
+    def _dashboard_fs_tree(
+        self, lines: list[str], path: str, *, depth: int, max_depth: int
+    ) -> None:
+        """Recursively build a filesystem tree with indentation."""
+        if depth > max_depth:
+            return
+        indent = "  " + "  " * depth
+        name = path.rsplit("/", maxsplit=1)[-1] or "/"
+        suffix = " (virtual)" if path == "/proc" else ""
+        lines.append(f"{indent}{name}/{suffix}")
+
+        try:
+            entries: list[str] = self._kernel.syscall(SyscallNumber.SYS_LIST_DIR, path=path)
+        except SyscallError:
+            return
+
+        for entry in sorted(entries):
+            child_path = f"{path.rstrip('/')}/{entry}"
+            # Try listing as directory; if it fails, it's a file
+            try:
+                self._kernel.syscall(SyscallNumber.SYS_LIST_DIR, path=child_path)
+            except (SyscallError, NotADirectoryError):
+                lines.append(f"{indent}  {entry}")
+                continue
+            self._dashboard_fs_tree(lines, child_path, depth=depth + 1, max_depth=max_depth)
