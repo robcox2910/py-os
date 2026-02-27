@@ -161,3 +161,8 @@ uv run pre-commit run --all-files
 **Branch workflow:** `feat/`, `fix/`, `chore/` prefixes, squash merges to protected `main`.
 
 **TDD cycle:** Write failing tests (Red) -> Implement (Green) -> Lint and refactor (Refactor).
+
+## Contributing
+
+Want to add a feature or fix a bug? See [CONTRIBUTING.md](CONTRIBUTING.md) for
+setup instructions, coding standards, and the PR workflow.
