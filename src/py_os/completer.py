@@ -41,6 +41,7 @@ _SUBCOMMANDS: dict[str, list[str]] = {
     "proc": ["demo"],
     "perf": ["demo"],
     "strace": ["on", "off", "show", "clear", "demo"],
+    "dashboard": ["cpu", "memory", "processes", "fs"],
 }
 
 # Minimum number of words needed before signal name completion kicks in.
