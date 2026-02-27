@@ -460,10 +460,27 @@ class Scheduler:
         self._current.terminate()
         self._current = None
 
+    def reset_counters(self) -> None:
+        """Reset the context switch counter to zero."""
+        self._context_switches = 0
+
     @property
     def ready_processes(self) -> list[Process]:
         """Return a snapshot of the ready queue as a list."""
         return list(self._ready_queue)
+
+    def purge_terminated(self) -> int:
+        """Remove all terminated processes from the ready queue.
+
+        Returns:
+            Number of processes removed.
+
+        """
+        before = len(self._ready_queue)
+        self._ready_queue = deque(
+            p for p in self._ready_queue if p.state is not ProcessState.TERMINATED
+        )
+        return before - len(self._ready_queue)
 
     def extract_from_ready(self, pid: int) -> Process | None:
         """Remove a process by PID from the ready queue.
@@ -604,6 +621,21 @@ class MultiCPUScheduler:
     def migrations(self) -> int:
         """Return the total number of process migrations."""
         return self._migrations
+
+    def reset_counters(self) -> None:
+        """Reset all context switch counters and migration count to zero."""
+        for s in self._schedulers:
+            s.reset_counters()
+        self._migrations = 0
+
+    def purge_terminated(self) -> int:
+        """Remove terminated processes from all CPU ready queues.
+
+        Returns:
+            Total number of processes removed.
+
+        """
+        return sum(s.purge_terminated() for s in self._schedulers)
 
     def cpu_scheduler(self, cpu_id: int) -> Scheduler:
         """Return the per-CPU scheduler for *cpu_id*."""
