@@ -180,6 +180,15 @@ Every source file and what it implements.
 | `repl.py` | `run()` | Interactive terminal with bootloader chain and dynamic boot banner |
 | `repl.py` | `format_boot_log()` | Format boot log messages into a displayable banner |
 
+### Tutorials
+
+| File | Class/Function | Purpose |
+|------|---------------|---------|
+| `tutorials.py` | `TutorialRunner` | Guided, hands-on lessons that use real syscalls with educational commentary |
+| `tutorials.py` | `list_lessons()` | Return sorted list of available lesson names |
+| `tutorials.py` | `run(name)` | Execute a single lesson by name |
+| `tutorials.py` | `run_all()` | Execute every lesson in recommended order |
+
 ## Syscall Number Ranges
 
 | Range | Category |
@@ -207,7 +216,7 @@ Every source file and what it implements.
 | 150-154 | DNS operations (register, lookup, remove, list, flush) |
 | 160-168 | Socket operations (create, bind, listen, connect, accept, send, recv, close, list) |
 | 170-171 | /proc virtual filesystem (read, list) |
-| 172 | Performance metrics |
+| 172-173 | Performance metrics (read, reset) |
 | 180-183 | Strace operations (enable, disable, log, clear) |
 | 190-203 | Kernel-mode helpers (shutdown, scheduler info, lstat, sync listing, fd listing, resource listing, PI status, ordering violations, destroy mutex, dispatch, process info, strace status) |
 | 210-211 | Boot info (dmesg boot log, boot metadata) |

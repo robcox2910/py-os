@@ -42,6 +42,7 @@ from py_os.jobs import JobManager, JobStatus
 from py_os.kernel import Kernel, KernelState
 from py_os.process.signals import Signal
 from py_os.syscalls import SyscallError, SyscallNumber
+from py_os.tutorials import TutorialRunner
 
 # Type alias for a command handler: takes a list of args, returns output.
 type _Handler = Callable[[list[str]], str]
@@ -167,6 +168,7 @@ class Shell:
             "dmesg": self._cmd_dmesg,
             "cpu": self._cmd_cpu,
             "taskset": self._cmd_taskset,
+            "learn": self._cmd_learn,
         }
 
     @property
@@ -3255,3 +3257,25 @@ class Shell:
         for pid, from_cpu, to_cpu in migrations:  # type: ignore[union-attr]
             lines.append(f"  PID {pid}: CPU {from_cpu} → CPU {to_cpu}")
         return "\n".join(lines)
+
+    # -- learn command ----------------------------------------------------------
+
+    def _cmd_learn(self, args: list[str]) -> str:
+        """Run an interactive tutorial lesson."""
+        runner = TutorialRunner(self._kernel)
+
+        if not args:
+            lessons = runner.list_lessons()
+            lines = ["Available lessons:"]
+            lines.extend(f"  {name}" for name in lessons)
+            lines.append("")
+            lines.append("Usage: learn <lesson> or learn all")
+            return "\n".join(lines)
+
+        if args[0] == "all":
+            return runner.run_all()
+
+        try:
+            return runner.run(args[0])
+        except KeyError:
+            return f"Error: unknown lesson '{args[0]}'. Run 'learn' to see available lessons."
