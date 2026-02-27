@@ -55,3 +55,9 @@ Reading about an operating system is one thing. *Watching* one work is
 another. Tutorials bridge that gap by letting you see concepts in
 action without needing to write any code yourself. They are a great
 starting point before you explore the shell commands on your own.
+
+## Where to Go Next
+
+- [What Is an OS?](what-is-an-os.md) -- Start here if you haven't already
+- [The Shell](shell.md) -- All the commands you can type after the tutorials
+- [Web UI](web-ui.md) -- Run PyOS from your browser instead of the terminal
