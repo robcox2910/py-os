@@ -4,6 +4,8 @@ A simulated operating system built in Python for learning. If you know basic Pyt
 
 Every module mirrors a real OS subsystem -- processes, memory, filesystems, networking -- built piece by piece using test-driven development.
 
+**[Read the docs](https://robcox2910.github.io/py-os/)**
+
 ## What Will I Learn?
 
 Ever wondered what happens when you open a program, save a file, or connect to the internet? An operating system makes all of that work. PyOS builds a mini version of one so you can see the pieces and how they fit together.

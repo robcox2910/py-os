@@ -1,0 +1,50 @@
+site_name: PyOS
+site_description: A simulated operating system built in Python for learning
+site_url: https://robcox2910.github.io/py-os/
+repo_url: https://github.com/robcox2910/py-os
+repo_name: robcox2910/py-os
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: teal
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: teal
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - content.code.copy
+    - navigation.sections
+    - navigation.expand
+    - toc.integrate
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
+  - admonition
+  - pymdownx.details
+  - tables
+
+nav:
+  - Home: index.md
+  - Concepts:
+      - What Is an OS?: concepts/what-is-an-os.md
+      - Processes: concepts/processes.md
+      - Memory: concepts/memory.md
+      - Filesystem: concepts/filesystem.md
+      - The Kernel: concepts/kernel-and-syscalls.md
+      - The Shell: concepts/shell.md
+      - Bootloader: concepts/bootloader.md
+      - Devices and Networking: concepts/devices-and-networking.md
+      - Users and Safety: concepts/users-and-safety.md
+      - Synchronization: concepts/synchronization.md
+  - Architecture: architecture.md
