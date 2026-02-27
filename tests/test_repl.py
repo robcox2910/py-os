@@ -4,10 +4,13 @@ The REPL is the interactive terminal interface. Since it involves I/O,
 we test the components it depends on rather than the loop itself:
 - The shell's ``exit`` command signals shutdown.
 - The REPL module's helper functions are testable in isolation.
+- The ``run`` entry point is importable and callable.
 """
 
+from collections.abc import Callable
+
 from py_os.kernel import ExecutionMode, Kernel, KernelState
-from py_os.repl import build_prompt, format_boot_log
+from py_os.repl import build_prompt, format_boot_log, run
 from py_os.shell import Shell
 from py_os.syscalls import SyscallNumber
 
@@ -75,3 +78,11 @@ class TestREPLHelpers:
         banner = format_boot_log(kernel.dmesg())
         assert "PyOS" in banner
         assert "[OK]" in banner
+
+
+class TestEntryPoint:
+    """Verify the ``run`` function is importable and callable."""
+
+    def test_run_is_callable(self) -> None:
+        """The run entry point should be a callable function."""
+        assert isinstance(run, Callable)
