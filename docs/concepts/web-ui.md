@@ -4,7 +4,7 @@
 
 The web UI lets you use PyOS from a **web browser** instead of the
 terminal. It looks like a dark terminal window with green text on a
-dark blue background — just like computers in old movies!
+dark blue background -- just like computers in old movies!
 
 ## How It Works
 
@@ -19,7 +19,7 @@ Think of the web UI like a **TV remote for your OS**:
    channel).
 
 Behind the scenes, a small Python web framework called **Flask** handles
-the communication.  Flask is like a postal worker — it receives your
+the communication.  Flask is like a postal worker -- it receives your
 letters (HTTP requests), delivers them to the right person (the shell),
 and brings back the reply (JSON responses).
 
@@ -43,11 +43,17 @@ py-os-web
 ```
 
 Open your browser to ``http://localhost:8080`` and start typing
-commands — just like the regular terminal, but in your browser!
+commands -- just like the regular terminal, but in your browser!
 
 ## Why a Web UI?
 
 A web interface makes PyOS accessible to anyone with a browser.  You
 do not need to install Python or know how to use a terminal.  It is
-also a great example of the **client-server model** — the same
+also a great example of the **client-server model** -- the same
 pattern used by every website you visit.
+
+## Where to Go Next
+
+- [The Shell](shell.md) -- All the commands available in the web terminal
+- [Interactive Tutorials](tutorials.md) -- Try the guided lessons from your browser
+- [Devices and Networking](devices-and-networking.md) -- How the client-server model works under the hood

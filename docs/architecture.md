@@ -24,6 +24,8 @@ Technical reference for every module in the system. For beginner-friendly explan
 | [Devices and Networking](concepts/devices-and-networking.md) | Device protocol, IPC, disk scheduling, sockets, DNS, HTTP |
 | [Users and Safety](concepts/users-and-safety.md) | Permissions, signals, logging, deadlock |
 | [Synchronization](concepts/synchronization.md) | Mutex, semaphore, condition variable, reader-writer lock, race conditions, deadlock prevention |
+| [Interactive Tutorials](concepts/tutorials.md) | Guided hands-on lessons using real syscalls |
+| [Web UI](concepts/web-ui.md) | Browser-based terminal via Flask |
 
 ## Module Map
 

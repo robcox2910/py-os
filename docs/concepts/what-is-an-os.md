@@ -148,5 +148,6 @@ topic stands on its own.
 - [Users and Safety](users-and-safety.md) -- How the OS keeps users and their data separate
 - [Synchronization](synchronization.md) -- How threads share resources without stepping on each other
 - [The Boot Chain](bootloader.md) -- What happens between pressing the power button and seeing a prompt
+- [Interactive Tutorials](tutorials.md) -- Guided lessons that teach OS concepts hands-on
 
 Happy exploring!

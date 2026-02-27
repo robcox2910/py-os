@@ -38,6 +38,9 @@ Each guide explains one part of the OS with real-world analogies and simple lang
 | [Devices and Networking](docs/concepts/devices-and-networking.md) | Hardware, inter-process communication, disk scheduling, and sockets |
 | [Users and Safety](docs/concepts/users-and-safety.md) | Permissions, signals, logging, and deadlocks |
 | [Synchronization](docs/concepts/synchronization.md) | Mutexes, semaphores, condition variables, and race conditions |
+| [The Boot Chain](docs/concepts/bootloader.md) | What happens between pressing power and seeing a prompt |
+| [Interactive Tutorials](docs/concepts/tutorials.md) | Guided lessons that teach OS concepts hands-on |
+| [Web UI](docs/concepts/web-ui.md) | Browser-based terminal interface |
 
 For a technical overview of every module, see [docs/architecture.md](docs/architecture.md).
 
@@ -70,6 +73,9 @@ For a technical overview of every module, see [docs/architecture.md](docs/archit
 | Persistence | `fs/persistence.py` | Save/load filesystem to JSON |
 | Execution | `process/pcb.py` | Running programs, exit codes |
 | Synchronization | `sync/primitives.py` | Mutex, semaphore, condition variable |
+| Bootloader | `bootloader.py` | Firmware POST, kernel image loading, boot chain |
+| Tutorials | `tutorials.py` | Guided hands-on lessons using real syscalls |
+| Web Frontend | `web/app.py` | Browser-based terminal via Flask |
 | REPL | `repl.py` | Interactive terminal |
 
 ## Shell Commands
@@ -119,6 +125,9 @@ source path Run a script from a file
 run prog [p] Run a built-in program with optional priority
 grep pat    Filter piped input (used with |)
 wc          Count lines in piped input
+benchmark   Compare scheduling policies (run cpu|io|mixed, demo)
+dashboard   ASCII system visualization (cpu, memory, processes, fs)
+learn       Interactive tutorials (processes, memory, filesystem, ...)
 exit        Shut down the kernel
 ```
 

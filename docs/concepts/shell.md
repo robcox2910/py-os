@@ -152,6 +152,14 @@ cat /proc/42/sched      -- per-process timing (wait, CPU, response, turnaround)
 |-----------|-------------|
 | `journal` | Show the write-ahead log status for crash recovery |
 
+**Learning and monitoring** -- explore the OS in action:
+
+| Command     | What it does |
+|-------------|-------------|
+| `learn`     | Interactive tutorials (processes, memory, filesystem, scheduling, signals, ipc, networking) |
+| `benchmark` | Compare scheduling policies with timed workloads (run cpu\|io\|mixed, demo) |
+| `dashboard` | ASCII system visualization (cpu, memory, processes, fs) |
+
 ## Pipes
 
 Imagine an assembly line in a factory. The first worker makes a part, then
