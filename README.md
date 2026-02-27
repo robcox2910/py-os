@@ -141,6 +141,17 @@ fi
 
 Scripts can be run from files with `source /path/to/script.sh`.
 
+## Web UI
+
+PyOS includes an optional browser-based terminal. Install Flask and start the server:
+
+```bash
+pip install py-os[web]
+py-os-web
+```
+
+Then open `http://localhost:8080` in your browser. See [docs/concepts/web-ui.md](docs/concepts/web-ui.md) for details.
+
 ## Development
 
 ```bash

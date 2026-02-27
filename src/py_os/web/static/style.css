@@ -1,0 +1,77 @@
+/* PyOS Web Terminal — dark terminal aesthetic */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #0a0e27;
+    color: #33ff33;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 14px;
+    line-height: 1.4;
+    height: 100vh;
+    overflow: hidden;
+}
+
+#terminal {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    padding: 12px;
+}
+
+#output {
+    flex: 1;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    padding-bottom: 8px;
+}
+
+#output pre {
+    margin: 0;
+    font-family: inherit;
+    font-size: inherit;
+    color: inherit;
+}
+
+#input-line {
+    display: flex;
+    align-items: center;
+    border-top: 1px solid #1a2040;
+    padding-top: 8px;
+}
+
+#prompt {
+    color: #5599ff;
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+
+#command {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #33ff33;
+    font-family: inherit;
+    font-size: inherit;
+    caret-color: #33ff33;
+}
+
+/* Scrollbar styling */
+#output::-webkit-scrollbar {
+    width: 6px;
+}
+
+#output::-webkit-scrollbar-track {
+    background: #0a0e27;
+}
+
+#output::-webkit-scrollbar-thumb {
+    background: #1a2040;
+    border-radius: 3px;
+}
