@@ -114,7 +114,7 @@ class Logger:
             result = [e for e in result if e.level >= min_level]
         if source is not None:
             result = [e for e in result if e.source == source]
-        return result
+        return result if result is not self._entries else list(result)
 
     def clear(self) -> None:
         """Remove all log entries."""

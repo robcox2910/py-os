@@ -131,7 +131,7 @@ def format_request(request: HttpRequest) -> bytes:
     parts: list[bytes] = []
 
     # Request line
-    parts.append(f"{request.method} {request.path} HTTP/1.0".encode())
+    parts.append(f"{request.method} {request.path} ".encode() + _HTTP_VERSION)
     parts.append(_CRLF)
 
     # Headers
@@ -151,6 +151,27 @@ def format_request(request: HttpRequest) -> bytes:
         parts.append(request.body)
 
     return b"".join(parts)
+
+
+def _parse_headers(lines: list[bytes], start_index: int) -> dict[str, str]:
+    """Parse header lines into a name→value dict.
+
+    Args:
+        lines: All lines from the header section.
+        start_index: Index of the first header line (after request/status line).
+
+    Returns:
+        A dict mapping header names to their values.
+
+    """
+    headers: dict[str, str] = {}
+    for line in lines[start_index:]:
+        decoded = line.decode()
+        colon = decoded.index(":")
+        name = decoded[:colon].strip()
+        value = decoded[colon + 1 :].strip()
+        headers[name] = value
+    return headers
 
 
 def parse_request(data: bytes) -> HttpRequest:
@@ -175,14 +196,7 @@ def parse_request(data: bytes) -> HttpRequest:
 
         method = HttpMethod(parts[0])
         path = parts[1]
-
-        headers: dict[str, str] = {}
-        for line in lines[1:]:
-            decoded = line.decode()
-            colon = decoded.index(":")
-            name = decoded[:colon].strip()
-            value = decoded[colon + 1 :].strip()
-            headers[name] = value
+        headers = _parse_headers(lines, start_index=1)
 
         return HttpRequest(method=method, path=path, headers=headers, body=body)
     except HttpError:
@@ -208,7 +222,7 @@ def format_response(response: HttpResponse) -> bytes:
 
     # Status line
     reason = status_reason(response.status)
-    parts.append(f"HTTP/1.0 {response.status} {reason}".encode())
+    parts.append(_HTTP_VERSION + f" {response.status} {reason}".encode())
     parts.append(_CRLF)
 
     # Headers
@@ -250,14 +264,7 @@ def parse_response(data: bytes) -> HttpResponse:
             raise HttpError(msg)
 
         status = HttpStatus(int(parts[1]))
-
-        headers: dict[str, str] = {}
-        for line in lines[1:]:
-            decoded = line.decode()
-            colon = decoded.index(":")
-            name = decoded[:colon].strip()
-            value = decoded[colon + 1 :].strip()
-            headers[name] = value
+        headers = _parse_headers(lines, start_index=1)
 
         return HttpResponse(status=status, headers=headers, body=body)
     except HttpError:
