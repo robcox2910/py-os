@@ -946,6 +946,7 @@ class Kernel:
             Dict mapping fd numbers to open file descriptions (empty if none).
 
         """
+        self._require_running()
         table = self._fd_tables.get(pid)
         if table is None:
             return {}
@@ -1095,6 +1096,7 @@ class Kernel:
                 num_pages=num_pages,
                 mapped_data=mapped_data,
                 page_size=page_size,
+                file_offset=offset,
             )
         else:
             # MAP_PRIVATE: allocate fresh frames and copy data in
@@ -1131,6 +1133,7 @@ class Kernel:
         num_pages: int,
         mapped_data: bytes,
         page_size: int,
+        file_offset: int,
     ) -> None:
         """Set up MAP_SHARED pages — reuse cached frames or allocate new ones.
 
@@ -1142,12 +1145,13 @@ class Kernel:
             num_pages: Number of pages to map.
             mapped_data: The file data to load.
             page_size: Size of each page in bytes.
+            file_offset: Byte offset into the file for the mapping.
 
         """
         assert self._memory is not None  # noqa: S101
 
         for i in range(num_pages):
-            cache_key = (inode_number, i)
+            cache_key = (inode_number, file_offset + i * page_size)
             if cache_key in self._shared_file_frames:
                 # Reuse existing shared frame
                 frame, storage = self._shared_file_frames[cache_key]
@@ -1215,7 +1219,7 @@ class Kernel:
 
             # Clean up shared frame cache if no one else references it
             if region.shared:
-                cache_key = (region.inode_number, i)
+                cache_key = (region.inode_number, region.offset + i * page_size)
                 if cache_key in self._shared_file_frames and self._memory.refcount(frame) == 0:
                     del self._shared_file_frames[cache_key]
 
@@ -1338,8 +1342,11 @@ class Kernel:
         """
         self._require_running()
         process = self._processes.get(pid)
-        if process is None or process.state is ProcessState.TERMINATED:
+        if process is None:
             msg = f"Process {pid} not found"
+            raise ValueError(msg)
+        if process.state is ProcessState.TERMINATED:
+            msg = f"Process {pid} is terminated"
             raise ValueError(msg)
         process.program = program
 
@@ -1489,7 +1496,8 @@ class Kernel:
             case SignalAction.TERMINATE:
                 self._terminate_and_cleanup(process, force=True)
             case SignalAction.STOP:
-                process.wait()
+                if process.state is ProcessState.RUNNING:
+                    process.wait()
             case SignalAction.CONTINUE | SignalAction.IGNORE:
                 pass
 
@@ -1649,10 +1657,12 @@ class Kernel:
                 if vpn in mappings:
                     frame = mappings[vpn]
                     vm.page_table.unmap(virtual_page=vpn)
-                    self._memory.decrement_refcount(frame)  # type: ignore[union-attr]
-
+                    # Only decrement refcount for shared frames — private
+                    # frames are freed by memory.free(pid) afterwards.
                     if region.shared:
-                        cache_key = (region.inode_number, i)
+                        self._memory.decrement_refcount(frame)  # type: ignore[union-attr]
+                        page_size = vm.page_size
+                        cache_key = (region.inode_number, region.offset + i * page_size)
                         if (
                             cache_key in self._shared_file_frames
                             and self._memory.refcount(frame) == 0  # type: ignore[union-attr]
@@ -1840,6 +1850,9 @@ class Kernel:
         if pid not in segment.attachments:
             msg = f"Process {pid} not attached to '{name}'"
             raise SharedMemoryError(msg)
+        if offset < 0:
+            msg = f"Negative offset: {offset}"
+            raise ValueError(msg)
         if offset + len(data) > segment.size:
             msg = f"Write exceeds segment size ({offset + len(data)} > {segment.size})"
             raise SharedMemoryError(msg)
@@ -1879,6 +1892,9 @@ class Kernel:
         if pid not in segment.attachments:
             msg = f"Process {pid} not attached to '{name}'"
             raise SharedMemoryError(msg)
+        if offset < 0:
+            msg = f"Negative offset: {offset}"
+            raise ValueError(msg)
 
         if size is None:
             size = segment.size - offset
