@@ -1481,7 +1481,7 @@ def _sys_shutdown(kernel: Any, **_kwargs: Any) -> None:
     kernel.shutdown()
 
 
-def _sys_scheduler_info(kernel: Any, **_kwargs: Any) -> dict[str, str]:
+def _sys_scheduler_info(kernel: Any, **_kwargs: Any) -> dict[str, str | int]:
     """Return scheduler policy name and parameters."""
     assert kernel.scheduler is not None  # noqa: S101
     policy = kernel.scheduler.policy
@@ -1634,7 +1634,7 @@ def _sys_destroy_mutex(kernel: Any, **kwargs: Any) -> None:
         raise SyscallError(msg)
     try:
         sm.destroy_mutex(name)
-    except KeyError as e:
+    except (KeyError, ValueError) as e:
         raise SyscallError(str(e)) from e
 
 

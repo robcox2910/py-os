@@ -39,7 +39,7 @@ from py_os.fs.journal import JournaledFileSystem
 from py_os.fs.procfs import ProcError, ProcFilesystem
 from py_os.io.devices import ConsoleDevice, DeviceManager, NullDevice, RandomDevice
 from py_os.io.dns import DnsRecord, DnsResolver
-from py_os.io.networking import SocketError, SocketManager
+from py_os.io.networking import Socket, SocketError, SocketManager
 from py_os.io.shm import SharedMemoryError, SharedMemorySegment
 from py_os.logging import Logger, LogLevel
 from py_os.memory.manager import MemoryManager
@@ -530,6 +530,16 @@ class Kernel:
         self._socket_manager = None
         self._dns_resolver = None
 
+        # Reset performance metrics and strace state
+        self._total_created = 0
+        self._total_completed = 0
+        self._total_wait_time = 0.0
+        self._total_turnaround_time = 0.0
+        self._total_response_time = 0.0
+        self._strace_enabled = False
+        self._strace_log.clear()
+        self._strace_sequence = 0
+
         self._init_pid = None
         self._boot_log.clear()
         self._logger = None
@@ -946,6 +956,7 @@ class Kernel:
             Dict mapping fd numbers to open file descriptions (empty if none).
 
         """
+        self._require_running()
         table = self._fd_tables.get(pid)
         if table is None:
             return {}
@@ -1095,6 +1106,7 @@ class Kernel:
                 num_pages=num_pages,
                 mapped_data=mapped_data,
                 page_size=page_size,
+                file_offset=offset,
             )
         else:
             # MAP_PRIVATE: allocate fresh frames and copy data in
@@ -1131,6 +1143,7 @@ class Kernel:
         num_pages: int,
         mapped_data: bytes,
         page_size: int,
+        file_offset: int,
     ) -> None:
         """Set up MAP_SHARED pages — reuse cached frames or allocate new ones.
 
@@ -1142,12 +1155,13 @@ class Kernel:
             num_pages: Number of pages to map.
             mapped_data: The file data to load.
             page_size: Size of each page in bytes.
+            file_offset: Byte offset into the file for the mapping.
 
         """
         assert self._memory is not None  # noqa: S101
 
         for i in range(num_pages):
-            cache_key = (inode_number, i)
+            cache_key = (inode_number, file_offset + i * page_size)
             if cache_key in self._shared_file_frames:
                 # Reuse existing shared frame
                 frame, storage = self._shared_file_frames[cache_key]
@@ -1215,7 +1229,7 @@ class Kernel:
 
             # Clean up shared frame cache if no one else references it
             if region.shared:
-                cache_key = (region.inode_number, i)
+                cache_key = (region.inode_number, region.offset + i * page_size)
                 if cache_key in self._shared_file_frames and self._memory.refcount(frame) == 0:
                     del self._shared_file_frames[cache_key]
 
@@ -1338,8 +1352,11 @@ class Kernel:
         """
         self._require_running()
         process = self._processes.get(pid)
-        if process is None or process.state is ProcessState.TERMINATED:
+        if process is None:
             msg = f"Process {pid} not found"
+            raise ValueError(msg)
+        if process.state is ProcessState.TERMINATED:
+            msg = f"Process {pid} is terminated"
             raise ValueError(msg)
         process.program = program
 
@@ -1489,7 +1506,8 @@ class Kernel:
             case SignalAction.TERMINATE:
                 self._terminate_and_cleanup(process, force=True)
             case SignalAction.STOP:
-                process.wait()
+                if process.state is ProcessState.RUNNING:
+                    process.wait()
             case SignalAction.CONTINUE | SignalAction.IGNORE:
                 pass
 
@@ -1649,10 +1667,12 @@ class Kernel:
                 if vpn in mappings:
                     frame = mappings[vpn]
                     vm.page_table.unmap(virtual_page=vpn)
-                    self._memory.decrement_refcount(frame)  # type: ignore[union-attr]
-
+                    # Only decrement refcount for shared frames — private
+                    # frames are freed by memory.free(pid) afterwards.
                     if region.shared:
-                        cache_key = (region.inode_number, i)
+                        self._memory.decrement_refcount(frame)  # type: ignore[union-attr]
+                        page_size = vm.page_size
+                        cache_key = (region.inode_number, region.offset + i * page_size)
                         if (
                             cache_key in self._shared_file_frames
                             and self._memory.refcount(frame) == 0  # type: ignore[union-attr]
@@ -1840,6 +1860,9 @@ class Kernel:
         if pid not in segment.attachments:
             msg = f"Process {pid} not attached to '{name}'"
             raise SharedMemoryError(msg)
+        if offset < 0:
+            msg = f"Negative offset: {offset}"
+            raise ValueError(msg)
         if offset + len(data) > segment.size:
             msg = f"Write exceeds segment size ({offset + len(data)} > {segment.size})"
             raise SharedMemoryError(msg)
@@ -1879,6 +1902,9 @@ class Kernel:
         if pid not in segment.attachments:
             msg = f"Process {pid} not attached to '{name}'"
             raise SharedMemoryError(msg)
+        if offset < 0:
+            msg = f"Negative offset: {offset}"
+            raise ValueError(msg)
 
         if size is None:
             size = segment.size - offset
@@ -2632,26 +2658,31 @@ class Kernel:
 
     # -- Socket operations ---------------------------------------------------
 
-    def _require_socket(self, sock_id: int) -> "SocketManager":
-        """Return the socket manager after validating the socket ID exists.
+    def _require_socket(self, sock_id: int) -> tuple[SocketManager, Socket]:
+        """Validate kernel state, socket manager, and socket ID.
+
+        Combines ``_require_running()``, manager check, and socket
+        lookup into a single call to eliminate per-method boilerplate.
 
         Args:
             sock_id: The socket ID to validate.
 
         Returns:
-            The socket manager.
+            ``(socket_manager, socket)`` tuple.
 
         Raises:
             SocketError: If the manager is None or the socket is not found.
 
         """
+        self._require_running()
         if self._socket_manager is None:
             msg = "Socket manager not available"
             raise SocketError(msg)
-        if self._socket_manager.get_socket(sock_id) is None:
+        sock = self._socket_manager.get_socket(sock_id)
+        if sock is None:
             msg = f"Socket {sock_id} not found"
             raise SocketError(msg)
-        return self._socket_manager
+        return self._socket_manager, sock
 
     def socket_create(self) -> dict[str, int | str]:
         """Create a new socket and return its info.
@@ -2676,10 +2707,7 @@ class Kernel:
             port: The port number.
 
         """
-        self._require_running()
-        sm = self._require_socket(sock_id)
-        sock = sm.get_socket(sock_id)
-        assert sock is not None  # noqa: S101
+        _sm, sock = self._require_socket(sock_id)
         try:
             sock.bind(address=address, port=port)
         except RuntimeError as e:
@@ -2692,10 +2720,7 @@ class Kernel:
             sock_id: The bound socket to start listening.
 
         """
-        self._require_running()
-        sm = self._require_socket(sock_id)
-        sock = sm.get_socket(sock_id)
-        assert sock is not None  # noqa: S101
+        _sm, sock = self._require_socket(sock_id)
         try:
             sock.listen()
         except RuntimeError as e:
@@ -2710,10 +2735,7 @@ class Kernel:
             port: The server port.
 
         """
-        self._require_running()
-        sm = self._require_socket(sock_id)
-        sock = sm.get_socket(sock_id)
-        assert sock is not None  # noqa: S101
+        sm, sock = self._require_socket(sock_id)
         try:
             sm.connect(sock, address=address, port=port)
         except ConnectionError as e:
@@ -2729,10 +2751,7 @@ class Kernel:
             Dict with peer ``sock_id`` and ``state``, or None.
 
         """
-        self._require_running()
-        sm = self._require_socket(sock_id)
-        sock = sm.get_socket(sock_id)
-        assert sock is not None  # noqa: S101
+        sm, sock = self._require_socket(sock_id)
         peer = sm.accept(sock)
         if peer is None:
             return None
@@ -2746,10 +2765,7 @@ class Kernel:
             data: The bytes to send.
 
         """
-        self._require_running()
-        sm = self._require_socket(sock_id)
-        sock = sm.get_socket(sock_id)
-        assert sock is not None  # noqa: S101
+        sm, sock = self._require_socket(sock_id)
         try:
             sm.send(sock, data)
         except RuntimeError as e:
@@ -2765,10 +2781,7 @@ class Kernel:
             The received bytes (empty if no data available).
 
         """
-        self._require_running()
-        sm = self._require_socket(sock_id)
-        sock = sm.get_socket(sock_id)
-        assert sock is not None  # noqa: S101
+        sm, sock = self._require_socket(sock_id)
         return sm.recv(sock)
 
     def socket_close(self, sock_id: int) -> None:
@@ -2778,9 +2791,7 @@ class Kernel:
             sock_id: The socket to close.
 
         """
-        self._require_running()
-        sm = self._require_socket(sock_id)
-        sock = sm.get_socket(sock_id)
+        _sm, sock = self._require_socket(sock_id)
         assert sock is not None  # noqa: S101
         sock.close()
 

@@ -79,9 +79,6 @@ class _Inode:
         )
 
 
-# Module-level inode counter, same pattern as PID generation.
-_inode_counter = count(start=0)
-
 ROOT_INODE = 0
 
 
@@ -114,9 +111,38 @@ class FileSystem:
 
     def __init__(self) -> None:
         """Create a file system with an empty root directory."""
-        root = _Inode(inode_number=next(_inode_counter), file_type=FileType.DIRECTORY)
+        self._next_inode = count(start=0)
+        root = _Inode(inode_number=next(self._next_inode), file_type=FileType.DIRECTORY)
         self._inodes: dict[int, _Inode] = {root.inode_number: root}
         self._root_ino: int = root.inode_number
+
+    @staticmethod
+    def _resolve_symlink_target(
+        link_inode: _Inode,
+        parts: list[str],
+        index: int,
+    ) -> str:
+        """Build the full path to resolve after encountering a symlink.
+
+        Args:
+            link_inode: The symlink inode (data contains the target path).
+            parts: The path components being resolved.
+            index: Index in *parts* where the symlink was found.
+
+        Returns:
+            The combined path to resolve next.
+
+        """
+        target = link_inode.data.decode()
+        remaining = "/".join(parts[index + 1 :])
+        if target.startswith("/"):
+            return target + ("/" + remaining if remaining else "")
+        parent_parts = parts[:index]
+        parent = "/" + "/".join(parent_parts) if parent_parts else "/"
+        full = parent.rstrip("/") + "/" + target
+        if remaining:
+            full += "/" + remaining
+        return full
 
     def _resolve(self, path: str, *, _depth: int = 0) -> _Inode | None:
         """Walk the path from root, following symlinks, and return the target inode.
@@ -151,17 +177,7 @@ class FileSystem:
             child = self._inodes[child_ino]
 
             if child.file_type is FileType.SYMLINK:
-                target = child.data.decode()
-                remaining = "/".join(parts[i + 1 :])
-                if target.startswith("/"):
-                    full = target + ("/" + remaining if remaining else "")
-                else:
-                    # Resolve relative to the symlink's parent directory
-                    parent_parts = parts[:i]
-                    parent = "/" + "/".join(parent_parts) if parent_parts else "/"
-                    full = parent.rstrip("/") + "/" + target
-                    if remaining:
-                        full += "/" + remaining
+                full = self._resolve_symlink_target(child, parts, i)
                 return self._resolve(full, _depth=_depth + 1)
 
             current = child
@@ -268,7 +284,7 @@ class FileSystem:
             msg = f"Parent directory not found: {parent_path or name}"
             raise FileNotFoundError(msg)
 
-        new_inode = _Inode(inode_number=next(_inode_counter), file_type=file_type)
+        new_inode = _Inode(inode_number=next(self._next_inode), file_type=file_type)
         self._inodes[new_inode.inode_number] = new_inode
         parent.children[name] = new_inode.inode_number
 
@@ -422,7 +438,7 @@ class FileSystem:
             raise FileNotFoundError(msg)
 
         new_inode = _Inode(
-            inode_number=next(_inode_counter),
+            inode_number=next(self._next_inode),
             file_type=FileType.SYMLINK,
             data=target_path.encode(),
         )
@@ -485,16 +501,7 @@ class FileSystem:
 
             # Follow intermediate symlinks
             if child.file_type is FileType.SYMLINK:
-                target = child.data.decode()
-                remaining = "/".join(parts[i + 1 :])
-                if target.startswith("/"):
-                    full = target + ("/" + remaining if remaining else "")
-                else:
-                    parent_parts = parts[:i]
-                    parent = "/" + "/".join(parent_parts) if parent_parts else "/"
-                    full = parent.rstrip("/") + "/" + target
-                    if remaining:
-                        full += "/" + remaining
+                full = self._resolve_symlink_target(child, parts, i)
                 return self._resolve_no_follow(full, _depth=_depth + 1)
 
             current = child
@@ -570,6 +577,7 @@ class FileSystem:
         fs = object.__new__(cls)
         fs._root_ino = data["root_ino"]
         fs._inodes = {}
+        max_ino = -1
         for ino_data in data["inodes"].values():
             inode = _Inode(
                 inode_number=ino_data["inode_number"],
@@ -579,4 +587,6 @@ class FileSystem:
                 link_count=ino_data.get("link_count", 1),
             )
             fs._inodes[inode.inode_number] = inode
+            max_ino = max(max_ino, inode.inode_number)
+        fs._next_inode = count(start=max_ino + 1)
         return fs

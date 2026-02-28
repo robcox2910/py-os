@@ -299,7 +299,11 @@ class JournaledFileSystem:
                 timestamp=monotonic(),
             ),
         )
-        self._fs.create_file(path)
+        try:
+            self._fs.create_file(path)
+        except Exception:
+            self._journal.abort(txn)
+            raise
         self._journal.commit(txn)
 
     def create_dir(self, path: str) -> None:
@@ -313,7 +317,11 @@ class JournaledFileSystem:
                 timestamp=monotonic(),
             ),
         )
-        self._fs.create_dir(path)
+        try:
+            self._fs.create_dir(path)
+        except Exception:
+            self._journal.abort(txn)
+            raise
         self._journal.commit(txn)
 
     def write(self, path: str, data: bytes) -> None:
@@ -327,7 +335,11 @@ class JournaledFileSystem:
                 timestamp=monotonic(),
             ),
         )
-        self._fs.write(path, data)
+        try:
+            self._fs.write(path, data)
+        except Exception:
+            self._journal.abort(txn)
+            raise
         self._journal.commit(txn)
 
     def write_at(self, path: str, *, offset: int, data: bytes) -> None:
@@ -345,7 +357,11 @@ class JournaledFileSystem:
                 timestamp=monotonic(),
             ),
         )
-        self._fs.write_at(path, offset=offset, data=data)
+        try:
+            self._fs.write_at(path, offset=offset, data=data)
+        except Exception:
+            self._journal.abort(txn)
+            raise
         self._journal.commit(txn)
 
     def delete(self, path: str) -> None:
@@ -359,7 +375,11 @@ class JournaledFileSystem:
                 timestamp=monotonic(),
             ),
         )
-        self._fs.delete(path)
+        try:
+            self._fs.delete(path)
+        except Exception:
+            self._journal.abort(txn)
+            raise
         self._journal.commit(txn)
 
     def link(self, target_path: str, link_path: str) -> None:
@@ -373,7 +393,11 @@ class JournaledFileSystem:
                 timestamp=monotonic(),
             ),
         )
-        self._fs.link(target_path, link_path)
+        try:
+            self._fs.link(target_path, link_path)
+        except Exception:
+            self._journal.abort(txn)
+            raise
         self._journal.commit(txn)
 
     def symlink(self, target_path: str, link_path: str) -> None:
@@ -387,7 +411,11 @@ class JournaledFileSystem:
                 timestamp=monotonic(),
             ),
         )
-        self._fs.symlink(target_path, link_path)
+        try:
+            self._fs.symlink(target_path, link_path)
+        except Exception:
+            self._journal.abort(txn)
+            raise
         self._journal.commit(txn)
 
     # -- Journal control ----------------------------------------------------

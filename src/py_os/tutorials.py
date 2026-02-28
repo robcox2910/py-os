@@ -451,7 +451,7 @@ class TutorialRunner:
                 SyscallNumber.SYS_SHM_WRITE,
                 name="tutorial-shm",
                 pid=init_pid,
-                data="Hello from shared memory!",
+                data=b"Hello from shared memory!",
             )
             lines.append("  Wrote: 'Hello from shared memory!'")
         except SyscallError as e:
@@ -536,8 +536,10 @@ class TutorialRunner:
             return "\n".join(lines)
         lines.append("")
 
-        # Step 4: Connect and send a message
-        lines.append("Step 4: Connect a client and send a message")
+        # Step 4: Connect a client and exchange messages
+        lines.append("Step 4: Connect a client and exchange messages")
+        client_id: int | None = None
+        conn_id: int | None = None
         try:
             client: dict[str, object] = self._kernel.syscall(SyscallNumber.SYS_SOCKET_CREATE)
             client_id = int(str(client["sock_id"]))
@@ -547,17 +549,23 @@ class TutorialRunner:
                 address="10.0.0.1",
                 port=80,
             )
-            self._kernel.syscall(
-                SyscallNumber.SYS_SOCKET_SEND, sock_id=client_id, data=b"Hello, server!"
-            )
-            lines.append("  Client sent: 'Hello, server!'")
+            lines.append("  Client connected to 10.0.0.1:80")
 
-            # Accept and receive on server side
+            # Accept the connection before sending data
             accept_result: dict[str, object] | None = self._kernel.syscall(
                 SyscallNumber.SYS_SOCKET_ACCEPT, sock_id=server_id
             )
             if accept_result is not None:
                 conn_id = int(str(accept_result["sock_id"]))
+                lines.append(f"  Server accepted connection (conn_id={conn_id})")
+
+            # Now send and receive
+            self._kernel.syscall(
+                SyscallNumber.SYS_SOCKET_SEND, sock_id=client_id, data=b"Hello, server!"
+            )
+            lines.append("  Client sent: 'Hello, server!'")
+
+            if conn_id is not None:
                 recv_data: bytes = self._kernel.syscall(
                     SyscallNumber.SYS_SOCKET_RECV, sock_id=conn_id
                 )
@@ -565,6 +573,12 @@ class TutorialRunner:
         except SyscallError as e:
             lines.append(f"  (Error: {e})")
         lines.append("")
+
+        # Cleanup sockets
+        for sid in (conn_id, client_id, server_id):
+            if sid is not None:
+                with contextlib.suppress(SyscallError):
+                    self._kernel.syscall(SyscallNumber.SYS_SOCKET_CLOSE, sock_id=sid)
 
         lines.extend(
             [

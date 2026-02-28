@@ -103,9 +103,12 @@ class ResourceManager:
             amount: Number of instances requested.
 
         Raises:
-            ValueError: If insufficient resources are available.
+            ValueError: If *amount* is negative or exceeds available.
 
         """
+        if amount < 0:
+            msg = f"Cannot request negative amount: {amount}"
+            raise ValueError(msg)
         if amount > self.available(resource):
             msg = f"Cannot allocate {amount} {resource}: only {self.available(resource)} available"
             raise ValueError(msg)
@@ -120,9 +123,12 @@ class ResourceManager:
             amount: Number of instances to release.
 
         Raises:
-            ValueError: If *amount* exceeds the current allocation.
+            ValueError: If *amount* is negative or exceeds allocation.
 
         """
+        if amount < 0:
+            msg = f"Cannot release negative amount: {amount}"
+            raise ValueError(msg)
         current = self._allocation[pid][resource]
         if amount > current:
             msg = f"Cannot release {amount} {resource}: only {current} allocated"
@@ -150,6 +156,40 @@ class ResourceManager:
         """
         return self.find_safe_sequence() is not None
 
+    def _run_safety_algorithm(self) -> tuple[list[int], dict[int, bool]]:
+        """Run the Banker's safety algorithm on the current state.
+
+        Walk through processes, finding those whose remaining need can
+        be satisfied with currently available resources.  Pretend each
+        finishing process releases its allocation, then repeat until
+        no more progress is possible.
+
+        Returns:
+            A ``(sequence, finish)`` tuple — the ordered list of PIDs
+            that could complete, and a dict of ``{pid: finished?}``.
+
+        """
+        pids = self._get_pids()
+        work = {r: self.available(r) for r in self._total}
+        finish = dict.fromkeys(pids, False)
+        sequence: list[int] = []
+
+        changed = True
+        while changed:
+            changed = False
+            for pid in pids:
+                if finish[pid]:
+                    continue
+                can_finish = all(self.need(pid, r) <= work[r] for r in self._total)
+                if can_finish:
+                    for r in self._total:
+                        work[r] += self._allocation[pid][r]
+                    finish[pid] = True
+                    sequence.append(pid)
+                    changed = True
+
+        return sequence, finish
+
     def find_safe_sequence(self) -> list[int] | None:
         """Find a safe sequence using the Banker's safety algorithm.
 
@@ -170,27 +210,7 @@ class ResourceManager:
         if not pids:
             return []
 
-        # work = current available for each resource
-        work = {r: self.available(r) for r in self._total}
-        finish = dict.fromkeys(pids, False)
-        sequence: list[int] = []
-
-        changed = True
-        while changed:
-            changed = False
-            for pid in pids:
-                if finish[pid]:
-                    continue
-                # Check if this process's need can be satisfied
-                can_finish = all(self.need(pid, r) <= work[r] for r in self._total)
-                if can_finish:
-                    # Pretend it finishes: release its allocation
-                    for r in self._total:
-                        work[r] += self._allocation[pid][r]
-                    finish[pid] = True
-                    sequence.append(pid)
-                    changed = True
-
+        sequence, finish = self._run_safety_algorithm()
         if all(finish.values()):
             return sequence
         return None
@@ -212,6 +232,8 @@ class ResourceManager:
 
         """
         if amount > self.available(resource):
+            return False
+        if amount > self.need(pid, resource):
             return False
 
         # Tentatively grant
@@ -239,20 +261,5 @@ class ResourceManager:
         if not pids:
             return set()
 
-        work = {r: self.available(r) for r in self._total}
-        finish = dict.fromkeys(pids, False)
-
-        changed = True
-        while changed:
-            changed = False
-            for pid in pids:
-                if finish[pid]:
-                    continue
-                can_finish = all(self.need(pid, r) <= work[r] for r in self._total)
-                if can_finish:
-                    for r in self._total:
-                        work[r] += self._allocation[pid][r]
-                    finish[pid] = True
-                    changed = True
-
+        _sequence, finish = self._run_safety_algorithm()
         return {pid for pid, done in finish.items() if not done}

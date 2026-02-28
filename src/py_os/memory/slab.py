@@ -115,6 +115,12 @@ class Slab:
         self._allocated.discard(slot)
         self._free.append(slot)
 
+    def _validate_slot(self, slot: int) -> None:
+        """Raise SlabError if slot is out of range."""
+        if slot < 0 or slot >= self._capacity:
+            msg = f"Slot {slot} out of range (capacity {self._capacity})"
+            raise SlabError(msg)
+
     def read(self, slot: int) -> bytes:
         """Return the bytes stored in a slot.
 
@@ -124,7 +130,11 @@ class Slab:
         Returns:
             A bytes object of length ``obj_size``.
 
+        Raises:
+            SlabError: If slot is out of range.
+
         """
+        self._validate_slot(slot)
         start = slot * self._obj_size
         return bytes(self._storage[start : start + self._obj_size])
 
@@ -136,9 +146,10 @@ class Slab:
             data: The bytes to write (must be <= obj_size).
 
         Raises:
-            SlabError: If data exceeds obj_size bytes.
+            SlabError: If slot is out of range or data exceeds obj_size.
 
         """
+        self._validate_slot(slot)
         if len(data) > self._obj_size:
             msg = f"Data ({len(data)} bytes) exceeds slot size ({self._obj_size} bytes)"
             raise SlabError(msg)
@@ -237,6 +248,12 @@ class SlabCache:
             raise SlabError(msg)
         self._slabs[slab_index].free(slot_index)
 
+    def _validate_slab_index(self, slab_index: int) -> None:
+        """Raise SlabError if slab_index is out of range."""
+        if slab_index < 0 or slab_index >= len(self._slabs):
+            msg = f"Invalid slab index {slab_index} (cache '{self._name}' has {len(self._slabs)} slabs)"
+            raise SlabError(msg)
+
     def read(self, slab_index: int, slot_index: int) -> bytes:
         """Read data from a slot.
 
@@ -247,7 +264,11 @@ class SlabCache:
         Returns:
             The bytes stored in the slot.
 
+        Raises:
+            SlabError: If slab or slot index is out of range.
+
         """
+        self._validate_slab_index(slab_index)
         return self._slabs[slab_index].read(slot_index)
 
     def write(self, slab_index: int, slot_index: int, data: bytes) -> None:
@@ -258,7 +279,11 @@ class SlabCache:
             slot_index: Index of the slot.
             data: The bytes to write.
 
+        Raises:
+            SlabError: If slab or slot index is out of range.
+
         """
+        self._validate_slab_index(slab_index)
         self._slabs[slab_index].write(slot_index, data)
 
     def stats(self) -> dict[str, Any]:

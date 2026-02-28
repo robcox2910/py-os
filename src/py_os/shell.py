@@ -218,11 +218,17 @@ class Shell:
 
         # Expand aliases in each pipeline stage
         stages = [s.strip() for s in stripped.split("|")]
+        if len(stages) > 1 and any(stage == "" for stage in stages):
+            return "Error: empty pipe segment"
         output = ""
         for i, stage in enumerate(stages):
             self._pipe_input = output if i > 0 else ""
             expanded = self._expand_alias(stage)
-            cmd, redirects = self._parse_redirections(expanded)
+            try:
+                cmd, redirects = self._parse_redirections(expanded)
+            except ValueError as e:
+                output = f"Error: {e}"
+                break
 
             # Input redirection: load file into _pipe_input
             if redirects.stdin is not None:
@@ -455,6 +461,10 @@ class Shell:
 
         Processing order: ``2>`` before ``>>`` before ``>`` before ``<``
         to avoid ambiguity (e.g. ``2>`` must not leave a stray ``2``).
+
+        Raises:
+            ValueError: If a redirect operator has no filename.
+
         """
         redirects = _Redirections()
         remaining = command
@@ -463,6 +473,9 @@ class Shell:
         if match := re.search(r"2>\s*(\S+)", remaining):
             redirects.stderr = match.group(1)
             remaining = remaining[: match.start()] + remaining[match.end() :]
+        elif re.search(r"2>\s*$", remaining):
+            msg = "missing filename after 2>"
+            raise ValueError(msg)
 
         # >> (must check before >)
         if match := re.search(r">>\s*(\S+)", remaining):
@@ -475,10 +488,17 @@ class Shell:
             redirects.stdout = match.group(1)
             remaining = remaining[: match.start()] + remaining[match.end() :]
 
+        elif re.search(r">>?\s*$", remaining):
+            msg = "missing filename after >"
+            raise ValueError(msg)
+
         # <
         if match := re.search(r"<\s*(\S+)", remaining):
             redirects.stdin = match.group(1)
             remaining = remaining[: match.start()] + remaining[match.end() :]
+        elif re.search(r"<\s*$", remaining):
+            msg = "missing filename after <"
+            raise ValueError(msg)
 
         return remaining.strip(), redirects
 

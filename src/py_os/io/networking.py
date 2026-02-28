@@ -121,7 +121,15 @@ class Socket:
         self._state = SocketState.LISTENING
 
     def set_connected(self) -> None:
-        """Transition to CONNECTED state (used by SocketManager)."""
+        """Transition to CONNECTED state (used by SocketManager).
+
+        Raises:
+            RuntimeError: If the socket is already CLOSED or CONNECTED.
+
+        """
+        if self._state in {SocketState.CLOSED, SocketState.CONNECTED}:
+            msg = f"Cannot connect: socket {self._sock_id} is {self._state}"
+            raise RuntimeError(msg)
         self._state = SocketState.CONNECTED
 
     def close(self) -> None:
@@ -181,6 +189,9 @@ class SocketManager:
             ConnectionError: If no server is listening on that address.
 
         """
+        if client.state is not SocketState.CREATED:
+            msg = f"Cannot connect: socket {client.sock_id} is {client.state}, expected created"
+            raise ConnectionError(msg)
         server = self._find_listener(address, port)
         if server is None:
             msg = f"Connection refused: no listener on {address}:{port}"
