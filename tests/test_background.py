@@ -129,18 +129,24 @@ class TestBackgroundRun:
 # -- Cycle 4: enhanced fg with output ----------------------------------------
 
 
+_MAX_DISPATCH_ATTEMPTS = 100
+
+
 def _running_process(kernel: Kernel, name: str = "test") -> Process:
     """Create a process and dispatch it so it's RUNNING."""
     proc = kernel.create_process(name=name, num_pages=4)
     assert kernel.scheduler is not None
     # Dispatch may return init first (FCFS); skip it to get our process.
-    while True:
+    for _ in range(_MAX_DISPATCH_ATTEMPTS):
         dispatched = kernel.scheduler.dispatch()
         if dispatched is not None and dispatched.pid == proc.pid:
             break
         if dispatched is not None:
             dispatched.preempt()
             kernel.scheduler.add(dispatched)
+    else:
+        msg = f"Could not dispatch process {proc.pid} after {_MAX_DISPATCH_ATTEMPTS} attempts"
+        raise RuntimeError(msg)
     return proc
 
 
