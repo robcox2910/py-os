@@ -242,7 +242,7 @@ Every source file and what it implements.
 | 150-154 | DNS operations (register, lookup, remove, list, flush) |
 | 160-168 | Socket operations (create, bind, listen, connect, accept, send, recv, close, list) |
 | 170-171 | /proc virtual filesystem (read, list) |
-| 172-173 | Performance metrics (read, reset) |
+| 172 | Performance metrics (read) |
 | 180-183 | Strace operations (enable, disable, log, clear) |
 | 190-203 | Kernel-mode helpers (shutdown, scheduler info, lstat, sync listing, fd listing, resource listing, PI status, ordering violations, destroy mutex, dispatch, process info, strace status) |
 | 210-211 | Boot info (dmesg boot log, boot metadata) |

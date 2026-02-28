@@ -257,3 +257,9 @@ Together with [processes](processes.md), [memory management](memory.md), the [fi
 | **Mutual exclusion** | A resource can only be used by one process at a time |
 | **Banker's Algorithm** | A deadlock prevention method that checks whether granting a resource is safe |
 | **Circular wait** | A cycle of processes where each is waiting for the next one in the circle |
+
+## Where to Go Next
+
+- [Synchronization](synchronization.md) -- Mutexes, semaphores, and how threads share resources safely
+- [Processes](processes.md) -- How the OS creates, runs, and schedules programs
+- [The Kernel](kernel-and-syscalls.md) -- The core of the OS and how programs talk to it

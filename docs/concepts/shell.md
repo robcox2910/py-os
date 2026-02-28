@@ -156,9 +156,11 @@ cat /proc/42/sched      -- per-process timing (wait, CPU, response, turnaround)
 
 | Command     | What it does |
 |-------------|-------------|
-| `learn`     | Interactive tutorials (processes, memory, filesystem, scheduling, signals, ipc, networking) |
-| `benchmark` | Compare scheduling policies with timed workloads (run cpu\|io\|mixed, demo) |
-| `dashboard` | ASCII system visualization (cpu, memory, processes, fs) |
+| `learn`     | Interactive tutorials (processes, memory, filesystem, scheduling, signals, ipc, networking, interrupts, tcp) |
+| `perf`      | Show performance metrics (demo) |
+| `strace`    | Syscall tracing (on, off, show, clear, demo) |
+| `dmesg`     | Show kernel boot log |
+| `proc`      | /proc virtual filesystem (demo) |
 
 ## Pipes
 

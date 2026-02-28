@@ -105,13 +105,13 @@ class TestStatusEndpoint:
         data = response.get_json()
         assert data["running"] is True
 
-    def test_status_includes_dashboard(self) -> None:
-        """GET /api/status should include a dashboard string."""
+    def test_status_includes_status_text(self) -> None:
+        """GET /api/status should include a status string."""
         client = _create_client()
         response = client.get("/api/status")
         data = response.get_json()
-        assert "dashboard" in data
-        assert isinstance(data["dashboard"], str)
+        assert "status" in data
+        assert isinstance(data["status"], str)
 
 
 # -- Cycle 4: Exit handling -------------------------------------------------

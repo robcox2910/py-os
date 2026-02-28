@@ -35,6 +35,8 @@ are watching the real operating system in action.
 | `signals` | School bells | How processes send notifications to each other |
 | `ipc` | A shared mailbox | How processes share data through shared memory |
 | `networking` | A phone system | How DNS and sockets let programs talk over a network |
+| `interrupts` | Doorbells | How hardware devices get the CPU's attention |
+| `tcp` | Numbered postcards | How TCP guarantees reliable, ordered delivery |
 
 ## Running Tutorials
 

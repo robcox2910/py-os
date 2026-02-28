@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
 # Commands whose argument is a filesystem path.
 _PATH_COMMANDS: frozenset[str] = frozenset(
-    ["ls", "cat", "rm", "mkdir", "touch", "write", "source", "stat", "readlink", "ln", "open", "cd"]
+    ["ls", "cat", "rm", "mkdir", "touch", "write", "source", "stat", "readlink", "ln", "open"]
 )
 
 # Commands that accept subcommands as a second word.
@@ -50,6 +50,7 @@ _SUBCOMMANDS: dict[str, list[str]] = {
         "signals",
         "ipc",
         "networking",
+        "interrupts",
         "tcp",
         "all",
     ],

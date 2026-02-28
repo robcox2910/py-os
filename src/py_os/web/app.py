@@ -5,7 +5,7 @@ returns a Flask app with three endpoints:
 
 - ``GET /`` — render the terminal HTML page with the boot log.
 - ``POST /api/execute`` — execute a command and return JSON.
-- ``GET /api/status`` — return system running state and dashboard.
+- ``GET /api/status`` — return system running state and top summary.
 """
 
 from __future__ import annotations
@@ -70,15 +70,15 @@ def create_app() -> Flask:
 
     @app.route("/api/status")
     def status() -> Response:  # pyright: ignore[reportUnusedFunction]
-        """Return system status for dashboard polling.
+        """Return system status for status polling.
 
         Returns:
-            JSON with ``running`` and ``dashboard`` fields.
+            JSON with ``running`` and ``status`` fields.
 
         """
         running = kernel.state is KernelState.RUNNING
-        dashboard = shell.execute("dashboard") if running else "System halted."
-        return jsonify({"running": running, "dashboard": dashboard})
+        status_text = shell.execute("top") if running else "System halted."
+        return jsonify({"running": running, "status": status_text})
 
     return app
 
