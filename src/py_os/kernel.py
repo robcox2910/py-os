@@ -39,7 +39,7 @@ from py_os.fs.journal import JournaledFileSystem
 from py_os.fs.procfs import ProcError, ProcFilesystem
 from py_os.io.devices import ConsoleDevice, DeviceManager, NullDevice, RandomDevice
 from py_os.io.dns import DnsRecord, DnsResolver
-from py_os.io.networking import SocketError, SocketManager
+from py_os.io.networking import Socket, SocketError, SocketManager
 from py_os.io.shm import SharedMemoryError, SharedMemorySegment
 from py_os.logging import Logger, LogLevel
 from py_os.memory.manager import MemoryManager
@@ -529,6 +529,16 @@ class Kernel:
         self._shared_memory.clear()
         self._socket_manager = None
         self._dns_resolver = None
+
+        # Reset performance metrics and strace state
+        self._total_created = 0
+        self._total_completed = 0
+        self._total_wait_time = 0.0
+        self._total_turnaround_time = 0.0
+        self._total_response_time = 0.0
+        self._strace_enabled = False
+        self._strace_log.clear()
+        self._strace_sequence = 0
 
         self._init_pid = None
         self._boot_log.clear()
@@ -2648,26 +2658,31 @@ class Kernel:
 
     # -- Socket operations ---------------------------------------------------
 
-    def _require_socket(self, sock_id: int) -> "SocketManager":
-        """Return the socket manager after validating the socket ID exists.
+    def _require_socket(self, sock_id: int) -> tuple[SocketManager, Socket]:
+        """Validate kernel state, socket manager, and socket ID.
+
+        Combines ``_require_running()``, manager check, and socket
+        lookup into a single call to eliminate per-method boilerplate.
 
         Args:
             sock_id: The socket ID to validate.
 
         Returns:
-            The socket manager.
+            ``(socket_manager, socket)`` tuple.
 
         Raises:
             SocketError: If the manager is None or the socket is not found.
 
         """
+        self._require_running()
         if self._socket_manager is None:
             msg = "Socket manager not available"
             raise SocketError(msg)
-        if self._socket_manager.get_socket(sock_id) is None:
+        sock = self._socket_manager.get_socket(sock_id)
+        if sock is None:
             msg = f"Socket {sock_id} not found"
             raise SocketError(msg)
-        return self._socket_manager
+        return self._socket_manager, sock
 
     def socket_create(self) -> dict[str, int | str]:
         """Create a new socket and return its info.
@@ -2692,10 +2707,7 @@ class Kernel:
             port: The port number.
 
         """
-        self._require_running()
-        sm = self._require_socket(sock_id)
-        sock = sm.get_socket(sock_id)
-        assert sock is not None  # noqa: S101
+        _sm, sock = self._require_socket(sock_id)
         try:
             sock.bind(address=address, port=port)
         except RuntimeError as e:
@@ -2708,10 +2720,7 @@ class Kernel:
             sock_id: The bound socket to start listening.
 
         """
-        self._require_running()
-        sm = self._require_socket(sock_id)
-        sock = sm.get_socket(sock_id)
-        assert sock is not None  # noqa: S101
+        _sm, sock = self._require_socket(sock_id)
         try:
             sock.listen()
         except RuntimeError as e:
@@ -2726,10 +2735,7 @@ class Kernel:
             port: The server port.
 
         """
-        self._require_running()
-        sm = self._require_socket(sock_id)
-        sock = sm.get_socket(sock_id)
-        assert sock is not None  # noqa: S101
+        sm, sock = self._require_socket(sock_id)
         try:
             sm.connect(sock, address=address, port=port)
         except ConnectionError as e:
@@ -2745,10 +2751,7 @@ class Kernel:
             Dict with peer ``sock_id`` and ``state``, or None.
 
         """
-        self._require_running()
-        sm = self._require_socket(sock_id)
-        sock = sm.get_socket(sock_id)
-        assert sock is not None  # noqa: S101
+        sm, sock = self._require_socket(sock_id)
         peer = sm.accept(sock)
         if peer is None:
             return None
@@ -2762,10 +2765,7 @@ class Kernel:
             data: The bytes to send.
 
         """
-        self._require_running()
-        sm = self._require_socket(sock_id)
-        sock = sm.get_socket(sock_id)
-        assert sock is not None  # noqa: S101
+        sm, sock = self._require_socket(sock_id)
         try:
             sm.send(sock, data)
         except RuntimeError as e:
@@ -2781,10 +2781,7 @@ class Kernel:
             The received bytes (empty if no data available).
 
         """
-        self._require_running()
-        sm = self._require_socket(sock_id)
-        sock = sm.get_socket(sock_id)
-        assert sock is not None  # noqa: S101
+        sm, sock = self._require_socket(sock_id)
         return sm.recv(sock)
 
     def socket_close(self, sock_id: int) -> None:
@@ -2794,9 +2791,7 @@ class Kernel:
             sock_id: The socket to close.
 
         """
-        self._require_running()
-        sm = self._require_socket(sock_id)
-        sock = sm.get_socket(sock_id)
+        _sm, sock = self._require_socket(sock_id)
         assert sock is not None  # noqa: S101
         sock.close()
 
