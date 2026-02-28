@@ -90,7 +90,13 @@ class RoundRobinPolicy:
         Args:
             quantum: Number of ticks before forced preemption.
 
+        Raises:
+            ValueError: If *quantum* is less than 1.
+
         """
+        if quantum < 1:
+            msg = "quantum must be at least 1"
+            raise ValueError(msg)
         self._quantum = quantum
 
     @property
@@ -228,11 +234,14 @@ class MLFQPolicy:
             base_quantum: Time quantum for the top-level queue (default 2).
 
         Raises:
-            ValueError: If *num_levels* is less than 1.
+            ValueError: If *num_levels* or *base_quantum* is less than 1.
 
         """
         if num_levels < 1:
             msg = "num_levels must be at least 1"
+            raise ValueError(msg)
+        if base_quantum < 1:
+            msg = "base_quantum must be at least 1"
             raise ValueError(msg)
         self._num_levels = num_levels
         self._quantums = tuple(base_quantum * (2**i) for i in range(num_levels))
@@ -689,11 +698,14 @@ class MultiCPUScheduler:
             cpus: Frozenset of allowed CPU IDs.
 
         Raises:
-            ValueError: If *cpus* is empty.
+            ValueError: If *cpus* is empty or contains invalid CPU IDs.
 
         """
         if not cpus:
             msg = "Affinity set must not be empty"
+            raise ValueError(msg)
+        if any(c < 0 or c >= self._num_cpus for c in cpus):
+            msg = f"Invalid CPU IDs: must be in range 0..{self._num_cpus - 1}"
             raise ValueError(msg)
         self._affinities[pid] = cpus
 
