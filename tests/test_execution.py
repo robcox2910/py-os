@@ -136,7 +136,7 @@ class TestKernelExec:
         proc.dispatch()
         kernel.terminate_process(pid=proc.pid)
         pid = proc.pid
-        with pytest.raises(ValueError, match="not found"):
+        with pytest.raises(ValueError, match="terminated"):
             kernel.exec_process(pid=pid, program=lambda: "x")
         kernel.shutdown()
 

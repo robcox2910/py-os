@@ -1634,7 +1634,7 @@ def _sys_destroy_mutex(kernel: Any, **kwargs: Any) -> None:
         raise SyscallError(msg)
     try:
         sm.destroy_mutex(name)
-    except KeyError as e:
+    except (KeyError, ValueError) as e:
         raise SyscallError(str(e)) from e
 
 
