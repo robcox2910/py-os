@@ -1367,12 +1367,17 @@ method in <code>kernel.py</code>, you'll see something like this:</p>
                        (so everything that happens is recorded)
 1. Memory Manager   -- Set up the desks
                        (everything needs somewhere to sit)
+1b. Slab Allocator  -- Set up the supply cupboards
+                       (fixed-size object pools for fast allocation)
 2. File System      -- Unlock the filing cabinets
 3. User Manager     -- Get the attendance list ready
 4. Environment      -- Post the daily schedule on the board
 5. Device Manager   -- Turn on the printers and projectors
 5b. DNS Resolver    -- Open the phone book (hostname -&gt; IP)
 5c. Socket Manager  -- Set up the phone lines (network stack)
+5d. Interrupt Controller + Timer
+                    -- Wire up the doorbells (hardware event dispatch)
+5e. TCP Stack       -- Set up reliable mail delivery between buildings
 6. Resource Manager -- Set up the rules for sharing supplies
 7. Sync Manager     -- Hand out the shared-equipment sign-out sheets
                        (mutexes, semaphores, condition variables)
@@ -1533,8 +1538,8 @@ works.</p>
 <td>/proc virtual filesystem (read, list)</td>
 </tr>
 <tr>
-<td>172-173</td>
-<td>Performance metrics (read, reset)</td>
+<td>172</td>
+<td>Performance metrics (read)</td>
 </tr>
 <tr>
 <td>180-183</td>
@@ -1551,6 +1556,14 @@ works.</p>
 <tr>
 <td>220-224</td>
 <td>Multi-CPU operations (cpu info, set/get affinity, balance, migrate)</td>
+</tr>
+<tr>
+<td>230-235</td>
+<td>Interrupt and timer operations (tick, interrupt list/mask/unmask, timer info/set interval)</td>
+</tr>
+<tr>
+<td>240-247</td>
+<td>TCP operations (connect, send, recv, close, info, list, listen, accept)</td>
 </tr>
 </tbody>
 </table>

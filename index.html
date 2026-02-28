@@ -1010,6 +1010,14 @@ uv run pytest
 <td>Hardware, inter-process communication, disk scheduling, and sockets</td>
 </tr>
 <tr>
+<td><a href="concepts/interrupts/">Interrupts and Timers</a></td>
+<td>Interrupt controller, vectors, masking, timer, preemption</td>
+</tr>
+<tr>
+<td><a href="concepts/tcp/">TCP: Reliable Delivery</a></td>
+<td>Three-way handshake, flow control, congestion control, retransmission</td>
+</tr>
+<tr>
 <td><a href="concepts/users-and-safety/">Users and Safety</a></td>
 <td>Permissions, signals, logging, and deadlocks</td>
 </tr>
@@ -1178,6 +1186,61 @@ uv run pytest
 <td>Guided hands-on lessons using real syscalls</td>
 </tr>
 <tr>
+<td>DNS</td>
+<td><code>io/dns.py</code></td>
+<td>Name resolution, A records</td>
+</tr>
+<tr>
+<td>HTTP</td>
+<td><code>io/http.py</code></td>
+<td>Request/response protocol, status codes</td>
+</tr>
+<tr>
+<td>Shared Memory</td>
+<td><code>io/shm.py</code></td>
+<td>Zero-copy IPC between processes</td>
+</tr>
+<tr>
+<td>Interrupts</td>
+<td><code>io/interrupts.py</code></td>
+<td>Interrupt controller, vectors, masking, priority-based servicing</td>
+</tr>
+<tr>
+<td>Timer</td>
+<td><code>io/timer.py</code></td>
+<td>Programmable interval timer, tick-driven preemption</td>
+</tr>
+<tr>
+<td>TCP</td>
+<td><code>io/tcp.py</code></td>
+<td>Reliable delivery: three-way handshake, flow control, congestion control</td>
+</tr>
+<tr>
+<td>File Descriptors</td>
+<td><code>fs/fd.py</code></td>
+<td>Open files, seek, per-process fd tables</td>
+</tr>
+<tr>
+<td>Journal</td>
+<td><code>fs/journal.py</code></td>
+<td>Write-ahead log, crash recovery</td>
+</tr>
+<tr>
+<td>ProcFS</td>
+<td><code>fs/procfs.py</code></td>
+<td>Virtual /proc filesystem</td>
+</tr>
+<tr>
+<td>Slab Allocator</td>
+<td><code>memory/slab.py</code></td>
+<td>Fixed-size object pools</td>
+</tr>
+<tr>
+<td>mmap</td>
+<td><code>memory/mmap.py</code></td>
+<td>Memory-mapped file regions</td>
+</tr>
+<tr>
 <td>Web Frontend</td>
 <td><code>web/app.py</code></td>
 <td>Browser-based terminal via Flask</td>
@@ -1234,8 +1297,41 @@ source path Run a script from a file
 run prog [p] Run a built-in program with optional priority
 grep pat    Filter piped input (used with |)
 wc          Count lines in piped input
-benchmark   Compare scheduling policies (run cpu|io|mixed, demo)
-dashboard   ASCII system visualization (cpu, memory, processes, fs)
+open path   Open a file and get a file descriptor
+close fd    Close a file descriptor
+readfd fd   Read from a file descriptor
+writefd fd  Write to a file descriptor
+seek fd pos Reposition a file descriptor's offset
+lsfd        List open file descriptors
+ln          Create hard or symbolic links
+readlink p  Read a symlink target
+stat path   Show file metadata (type, size, links)
+journal     Manage journaling (status, checkpoint, recover, crash)
+rwlock      Manage reader-writer locks (create, list)
+pi          Priority inheritance (demo, status)
+ordering    Resource ordering (register, status, mode, violations, demo)
+waitjob id  Wait for a background job to complete
+shm         Shared memory (create, attach, detach, write, read, list, destroy, demo)
+dns         DNS operations (register, lookup, remove, list, flush, demo)
+socket      Socket operations (create, bind, listen, connect, accept, send, recv, close, list)
+http        HTTP demo (end-to-end request/response over sockets)
+tcp         TCP connections (listen, connect, send, recv, close, info, list, demo)
+proc        /proc virtual filesystem demo
+perf        Show performance metrics
+strace      Syscall tracing (on, off, show, clear, demo)
+dmesg       Show kernel boot log
+cpu         Show per-CPU status and scheduling info
+taskset     Show or set CPU affinity for a process
+mmap        Memory-map a file
+munmap      Unmap a memory-mapped region
+msync       Sync a shared mapping
+slabcreate  Create a slab cache
+slaballoc   Allocate from a slab cache
+slabfree    Free a slab allocation
+slabinfo    Show slab allocator statistics
+tick [N]    Advance the system clock by N ticks (default 1)
+interrupt   Manage interrupts (list, mask &lt;vector&gt;, unmask &lt;vector&gt;)
+timer       Manage the timer (info, set &lt;interval&gt;)
 learn       Interactive tutorials (processes, memory, filesystem, ...)
 exit        Shut down the kernel
 </code></pre>
