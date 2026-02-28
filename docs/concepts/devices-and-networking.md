@@ -569,14 +569,16 @@ and relies on the layer below it for the rest:
 ```
   HTTP      (application layer -- what do the bytes mean?)
     |
-  Sockets   (transport layer -- how do bytes get there?)
+  TCP       (transport layer -- reliable, ordered delivery)
+    |
+  Sockets   (network layer -- how do bytes get there?)
     |
   Buffers   (in-memory simulation of a network)
 ```
 
-In a real OS, there are even more layers (TCP, IP, Ethernet). PyOS simplifies
-this to just HTTP on sockets on in-memory buffers. But the *concept* is
-identical.
+In a real OS, there are even more layers (IP, Ethernet). PyOS implements
+HTTP on TCP on sockets on in-memory buffers. See [TCP: Reliable Delivery](tcp.md)
+for how TCP guarantees delivery with congestion control.
 
 ### The `http demo` Command
 
@@ -607,8 +609,8 @@ program, not part of the kernel.
 
 ## Putting It All Together
 
-These six systems -- devices, IPC, disk scheduling, networking, DNS, and HTTP --
-cover how the OS connects programs to the outside world and to each other.
+These seven systems -- devices, IPC, disk scheduling, networking, TCP, DNS, and
+HTTP -- cover how the OS connects programs to the outside world and to each other.
 
 - **Devices** give programs a simple, uniform way to talk to hardware. Read and
   write -- that's it. The OS handles the messy details of each specific piece
@@ -626,6 +628,11 @@ cover how the OS connects programs to the outside world and to each other.
 - **Networking** lets processes talk to each other across a connection, using
   the familiar socket lifecycle: create, bind, listen, accept, send, receive,
   close.
+
+- **[TCP](tcp.md)** sits between sockets and HTTP, turning unreliable delivery
+  into a reliable, ordered byte stream. It uses a three-way handshake to
+  connect, sliding windows for flow control, and congestion control (slow
+  start + AIMD) to avoid flooding the network.
 
 - **DNS** translates human-readable hostnames into numeric IP addresses,
   acting as the internet's phone book. Queries travel over sockets,
@@ -649,4 +656,5 @@ halfway around the world.
 - [Processes](processes.md) -- How the OS runs programs and shares the processor
 - [Memory](memory.md) -- How the OS hands out and protects memory
 - [Filesystem](filesystem.md) -- How files and folders are organized and stored
+- [TCP: Reliable Delivery](tcp.md) -- Three-way handshake, flow control, congestion control
 - [The Kernel](kernel-and-syscalls.md) -- The core of the OS and how programs talk to it

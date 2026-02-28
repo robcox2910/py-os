@@ -30,11 +30,24 @@ from py_os.io.http import (
     parse_response,
     status_reason,
 )
+from py_os.io.interrupts import (
+    VECTOR_IO_BASE,
+    VECTOR_TIMER,
+    InterruptController,
+    InterruptPriority,
+    InterruptRequest,
+    InterruptType,
+    InterruptVector,
+)
 from py_os.io.ipc import MessageQueue, Pipe
 from py_os.io.networking import Socket, SocketError, SocketManager, SocketState
 from py_os.io.shm import SharedMemoryError, SharedMemorySegment
+from py_os.io.tcp import TcpConnection, TcpFlag, TcpSegment, TcpStack, TcpState
+from py_os.io.timer import TimerDevice
 
 __all__ = [
+    "VECTOR_IO_BASE",
+    "VECTOR_TIMER",
     "ConsoleDevice",
     "Device",
     "DeviceManager",
@@ -47,6 +60,11 @@ __all__ = [
     "HttpRequest",
     "HttpResponse",
     "HttpStatus",
+    "InterruptController",
+    "InterruptPriority",
+    "InterruptRequest",
+    "InterruptType",
+    "InterruptVector",
     "MessageQueue",
     "NullDevice",
     "Pipe",
@@ -57,6 +75,12 @@ __all__ = [
     "SocketError",
     "SocketManager",
     "SocketState",
+    "TcpConnection",
+    "TcpFlag",
+    "TcpSegment",
+    "TcpStack",
+    "TcpState",
+    "TimerDevice",
     "format_request",
     "format_response",
     "parse_request",

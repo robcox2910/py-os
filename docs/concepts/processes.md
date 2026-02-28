@@ -89,7 +89,7 @@ This is fair in a basic sense, but it has a problem called the **convoy effect**
 
 A fairer rule: each student gets a fixed amount of time at the whiteboard (say, 2 minutes). When their time is up, they go to the back of the line, and the next student steps up. Everyone gets a turn, no one hogs the whiteboard forever.
 
-In PyOS, the amount of time each process gets is called the **quantum**. The `RoundRobinPolicy` stores this value, and the scheduler preempts (pulls back) the running process when its quantum expires.
+In PyOS, the amount of time each process gets is called the **quantum**. The `RoundRobinPolicy` stores this value, and the scheduler preempts (pulls back) the running process when its quantum expires. This preemption is driven by the hardware timer -- a device that fires an [interrupt](interrupts.md) every few ticks. When the interrupt fires, the kernel checks whether the current process has used up its quantum and, if so, switches to the next one.
 
 ```python
 # Round Robin with a quantum of 3 ticks

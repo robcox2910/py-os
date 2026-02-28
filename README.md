@@ -36,6 +36,8 @@ Each guide explains one part of the OS with real-world analogies and simple lang
 | [The Kernel](docs/concepts/kernel-and-syscalls.md) | The brain of the OS -- boot sequence and system calls |
 | [The Shell](docs/concepts/shell.md) | Typing commands, pipes, scripting, and environment variables |
 | [Devices and Networking](docs/concepts/devices-and-networking.md) | Hardware, inter-process communication, disk scheduling, and sockets |
+| [Interrupts and Timers](docs/concepts/interrupts.md) | Interrupt controller, vectors, masking, timer, preemption |
+| [TCP: Reliable Delivery](docs/concepts/tcp.md) | Three-way handshake, flow control, congestion control, retransmission |
 | [Users and Safety](docs/concepts/users-and-safety.md) | Permissions, signals, logging, and deadlocks |
 | [Synchronization](docs/concepts/synchronization.md) | Mutexes, semaphores, condition variables, and race conditions |
 | [The Boot Chain](docs/concepts/bootloader.md) | What happens between pressing power and seeing a prompt |
@@ -75,6 +77,9 @@ For a technical overview of every module, see [docs/architecture.md](docs/archit
 | Synchronization | `sync/primitives.py` | Mutex, semaphore, condition variable |
 | Bootloader | `bootloader.py` | Firmware POST, kernel image loading, boot chain |
 | Tutorials | `tutorials.py` | Guided hands-on lessons using real syscalls |
+| Interrupts | `io/interrupts.py` | Interrupt controller, vectors, masking, priority-based servicing |
+| Timer | `io/timer.py` | Programmable interval timer, tick-driven preemption |
+| TCP | `io/tcp.py` | Reliable delivery: three-way handshake, flow control, congestion control |
 | Web Frontend | `web/app.py` | Browser-based terminal via Flask |
 | REPL | `repl.py` | Interactive terminal |
 
@@ -127,6 +132,10 @@ grep pat    Filter piped input (used with |)
 wc          Count lines in piped input
 benchmark   Compare scheduling policies (run cpu|io|mixed, demo)
 dashboard   ASCII system visualization (cpu, memory, processes, fs)
+tick [N]    Advance the system clock by N ticks (default 1)
+interrupt   Manage interrupts (list, mask <vector>, unmask <vector>)
+timer       Manage the timer (info, set <interval>)
+tcp         TCP connections (listen, connect, send, recv, close, info, list, demo)
 learn       Interactive tutorials (processes, memory, filesystem, ...)
 exit        Shut down the kernel
 ```

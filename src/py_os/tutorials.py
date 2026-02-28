@@ -26,12 +26,14 @@ if TYPE_CHECKING:
 
 _LESSON_ORDER: list[str] = [
     "filesystem",
+    "interrupts",
     "ipc",
     "memory",
     "networking",
     "processes",
     "scheduling",
     "signals",
+    "tcp",
 ]
 
 
@@ -54,6 +56,8 @@ class TutorialRunner:
             "signals": "Signals — how processes talk with bells and whistles",
             "ipc": "IPC — how processes share data",
             "networking": "Networking — sockets, DNS, and talking to others",
+            "interrupts": "Interrupts — doorbells for hardware devices",
+            "tcp": "TCP — reliable delivery like numbered postcards",
         }
 
     def list_lessons(self) -> list[str]:
@@ -81,6 +85,8 @@ class TutorialRunner:
             "signals": self._lesson_signals,
             "ipc": self._lesson_ipc,
             "networking": self._lesson_networking,
+            "interrupts": self._lesson_interrupts,
+            "tcp": self._lesson_tcp,
         }
         runner = runners.get(name)
         if runner is None:
@@ -588,6 +594,182 @@ class TutorialRunner:
                 "and the client-server model is how networked programs talk.",
                 "",
                 "Congratulations — you've completed all the tutorials!",
+            ]
+        )
+        return "\n".join(lines)
+
+    def _lesson_interrupts(self) -> str:
+        """Teach interrupts, timers, and the tick-based preemption model."""
+        lines: list[str] = [
+            "=== Lesson: Interrupts and Timers ===",
+            "",
+            "Imagine you're reading a book, and the doorbell rings. You stop",
+            "reading, answer the door, then go back to your book. That's exactly",
+            "how a **hardware interrupt** works — a device says 'pay attention!'",
+            "and the CPU pauses to handle it.",
+            "",
+        ]
+
+        # Step 1: Show the timer device
+        lines.append("Step 1: Meet the timer device")
+        info: dict[str, int] = {"interval": 5, "fires": 0}
+        try:
+            info = self._kernel.syscall(SyscallNumber.SYS_TIMER_INFO)
+            lines.append(f"  Timer interval: every {info['interval']} ticks")
+            lines.append(f"  Total fires so far: {info['fires']}")
+        except SyscallError as e:
+            lines.append(f"  (Error: {e})")
+        lines.append("")
+
+        # Step 2: List interrupt vectors
+        lines.append("Step 2: See the interrupt vector table")
+        try:
+            vectors: list[dict[str, object]] = self._kernel.syscall(
+                SyscallNumber.SYS_INTERRUPT_LIST
+            )
+            lines.append(f"  {len(vectors)} vector(s) registered:")
+            lines.extend(
+                f"    Vector {v['vector']}: type={v['type']}, "
+                f"priority={v['priority']}, masked={'yes' if v['masked'] else 'no'}"
+                for v in vectors
+            )
+        except SyscallError as e:
+            lines.append(f"  (Error: {e})")
+        lines.append("")
+
+        # Step 3: Tick until the timer fires
+        lines.append("Step 3: Tick until the timer fires")
+        try:
+            result: dict[str, object] = self._kernel.syscall(
+                SyscallNumber.SYS_TICK, count=info["interval"]
+            )
+            lines.append(
+                f"  Ticked {result['ticks']} times — "
+                f"{result['total_interrupts_serviced']} interrupt(s) serviced"
+            )
+        except SyscallError as e:
+            lines.append(f"  (Error: {e})")
+        lines.append("")
+
+        # Step 4: Mask and unmask
+        lines.append("Step 4: Mask the timer (put the doorbell on silent)")
+        try:
+            self._kernel.syscall(SyscallNumber.SYS_INTERRUPT_MASK, vector=0)
+            lines.append("  Timer vector masked — interrupts will queue but not fire")
+
+            self._kernel.syscall(SyscallNumber.SYS_TICK, count=info["interval"])
+            lines.append(f"  Ticked {info['interval']} more times (timer queued but silent)")
+
+            self._kernel.syscall(SyscallNumber.SYS_INTERRUPT_UNMASK, vector=0)
+            lines.append("  Timer vector unmasked — queued interrupts will be serviced")
+        except SyscallError as e:
+            lines.append(f"  (Error: {e})")
+        lines.append("")
+
+        lines.extend(
+            [
+                "Summary: You learned that interrupts are hardware doorbells,",
+                "the timer fires periodically, and masking silences a vector",
+                "without losing its queued events.",
+                "",
+                "Next up: 'ipc' — learn how processes share data.",
+            ]
+        )
+        return "\n".join(lines)
+
+    def _lesson_tcp(self) -> str:
+        """Teach TCP: reliable delivery, handshake, flow and congestion control."""
+        lines: list[str] = [
+            "=== Lesson: TCP ===",
+            "",
+            "Imagine you're sending a numbered set of postcards to a friend.",
+            "You number each postcard so your friend knows the order. After",
+            "receiving each one, your friend sends back a note saying 'I got",
+            "postcard #3!' (that's an ACK). If a postcard goes missing, you",
+            "send it again. That's TCP — reliable, ordered delivery.",
+            "",
+        ]
+
+        # Step 1: Listen and connect
+        lines.append("Step 1: Start a listener and connect")
+        listener_id: int | None = None
+        client_id: int | None = None
+        server_id: int | None = None
+        try:
+            listener_id = self._kernel.syscall(SyscallNumber.SYS_TCP_LISTEN, port=9090)
+            lines.append(f"  Listener ready on port 9090 (id={listener_id})")
+
+            result: dict[str, object] = self._kernel.syscall(
+                SyscallNumber.SYS_TCP_CONNECT,
+                client_port=4000,
+                server_port=9090,
+            )
+            client_id = int(str(result["conn_id"]))
+            lines.append(f"  Client connected (id={client_id}, state: {result['state']})")
+
+            server_id = self._kernel.syscall(SyscallNumber.SYS_TCP_ACCEPT, listener_id=listener_id)
+            if server_id is not None:
+                lines.append(f"  Server accepted (id={server_id})")
+        except SyscallError as e:
+            lines.append(f"  (Error: {e})")
+            return "\n".join(lines)
+        lines.append("")
+
+        # Step 2: Send data
+        lines.append("Step 2: Send data (like posting numbered postcards)")
+        try:
+            sent: int = self._kernel.syscall(
+                SyscallNumber.SYS_TCP_SEND,
+                conn_id=client_id,
+                data=b"Hello from TCP!",
+            )
+            lines.append(f"  Client sent {sent} bytes")
+        except SyscallError as e:
+            lines.append(f"  (Error: {e})")
+        lines.append("")
+
+        # Step 3: Receive data
+        lines.append("Step 3: Receive data (friend reads the postcards in order)")
+        try:
+            if server_id is not None:
+                data: bytes = self._kernel.syscall(SyscallNumber.SYS_TCP_RECV, conn_id=server_id)
+                lines.append(f"  Server received: '{data.decode()}'")
+        except SyscallError as e:
+            lines.append(f"  (Error: {e})")
+        lines.append("")
+
+        # Step 4: Show congestion info and close
+        lines.append("Step 4: Congestion info and close")
+        try:
+            info: dict[str, object] = self._kernel.syscall(
+                SyscallNumber.SYS_TCP_INFO, conn_id=client_id
+            )
+            lines.append(
+                f"  Congestion window (cwnd): {info['cwnd']} — "
+                "how many postcards can be 'in flight' at once"
+            )
+            lines.append(
+                f"  Slow-start threshold (ssthresh): {info['ssthresh']} — "
+                "when to stop doubling and grow slowly"
+            )
+        except SyscallError as e:
+            lines.append(f"  (Error: {e})")
+
+        # Cleanup
+        for cid in (client_id, server_id, listener_id):
+            if cid is not None:
+                with contextlib.suppress(SyscallError):
+                    self._kernel.syscall(SyscallNumber.SYS_TCP_CLOSE, conn_id=cid)
+        lines.append("  Connections closed.")
+        lines.append("")
+
+        lines.extend(
+            [
+                "Summary: You learned that TCP numbers every piece of data,",
+                "the receiver ACKs what it got, and the sender adjusts its",
+                "speed using congestion control (slow start + AIMD).",
+                "",
+                "Congratulations — you've completed the TCP lesson!",
             ]
         )
         return "\n".join(lines)
