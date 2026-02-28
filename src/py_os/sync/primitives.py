@@ -532,11 +532,16 @@ class SyncManager:
 
         Raises:
             KeyError: If no mutex with the given name exists.
+            ValueError: If the mutex is locked or has waiters.
 
         """
         if name not in self._mutexes:
             msg = f"Mutex '{name}' not found"
             raise KeyError(msg)
+        mutex = self._mutexes[name]
+        if mutex.is_locked or mutex.wait_queue_size > 0:
+            msg = f"Cannot destroy mutex '{name}': still in use"
+            raise ValueError(msg)
         del self._mutexes[name]
 
     def list_mutexes(self) -> list[str]:
@@ -590,11 +595,16 @@ class SyncManager:
 
         Raises:
             KeyError: If no semaphore with the given name exists.
+            ValueError: If the semaphore has waiters.
 
         """
         if name not in self._semaphores:
             msg = f"Semaphore '{name}' not found"
             raise KeyError(msg)
+        sem = self._semaphores[name]
+        if sem.wait_queue_size > 0:
+            msg = f"Cannot destroy semaphore '{name}': still has waiters"
+            raise ValueError(msg)
         del self._semaphores[name]
 
     def list_semaphores(self) -> list[str]:
@@ -643,11 +653,16 @@ class SyncManager:
 
         Raises:
             KeyError: If no condition with the given name exists.
+            ValueError: If the condition has waiters.
 
         """
         if name not in self._conditions:
             msg = f"Condition '{name}' not found"
             raise KeyError(msg)
+        cond = self._conditions[name]
+        if cond.wait_queue_size > 0:
+            msg = f"Cannot destroy condition '{name}': still has waiters"
+            raise ValueError(msg)
         del self._conditions[name]
 
     def list_conditions(self) -> list[str]:
@@ -693,11 +708,16 @@ class SyncManager:
 
         Raises:
             KeyError: If no RWLock with the given name exists.
+            ValueError: If the lock has active readers, a writer, or waiters.
 
         """
         if name not in self._rwlocks:
             msg = f"ReadWriteLock '{name}' not found"
             raise KeyError(msg)
+        rwl = self._rwlocks[name]
+        if rwl.reader_count > 0 or rwl.is_writing or rwl.wait_queue_size > 0:
+            msg = f"Cannot destroy rwlock '{name}': still in use"
+            raise ValueError(msg)
         del self._rwlocks[name]
 
     def list_rwlocks(self) -> list[str]:
