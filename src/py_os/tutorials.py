@@ -363,10 +363,10 @@ class TutorialRunner:
 
         # Step 2: Register a handler
         lines.append("Step 2: Register a signal handler")
-        self._signal_received: list[str] = []
+        signal_received: list[str] = []
 
         def _log_handler() -> None:
-            self._signal_received.append("SIGUSR1")
+            signal_received.append("SIGUSR1")
 
         try:
             self._kernel.syscall(
@@ -385,6 +385,7 @@ class TutorialRunner:
         try:
             self._kernel.syscall(SyscallNumber.SYS_SEND_SIGNAL, pid=pid, signal=Signal.SIGUSR1)
             lines.append(f"  Sent SIGUSR1 to PID {pid} — the handler was invoked!")
+            lines.append(f"  Handler invoked {len(signal_received)} time(s)")
         except SyscallError as e:
             lines.append(f"  (Error: {e})")
         lines.append("")

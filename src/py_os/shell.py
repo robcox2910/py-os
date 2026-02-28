@@ -49,6 +49,7 @@ type _Handler = Callable[[list[str]], str]
 
 # Safety limit for while/for loops — prevents infinite loops in scripts.
 _MAX_LOOP_ITERATIONS = 1000
+_DEFAULT_PAGE_SIZE = 256
 
 
 @dataclass
@@ -1465,7 +1466,7 @@ class Shell:
             )
             # Look up region path for the output message
             regions = self._kernel.mmap_regions(pid)
-            vpn = address // 256  # default page size
+            vpn = address // _DEFAULT_PAGE_SIZE
             region = regions.get(vpn)
             path_info = f" to {region.path}" if region else ""
             return f"Synced address {address}{path_info}"

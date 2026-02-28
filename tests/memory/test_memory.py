@@ -210,6 +210,12 @@ class TestFrameRefcounts:
         expected_free = TOTAL_FRAMES - SINGLE_FRAME
         assert mm.free_frames == expected_free
 
+    def test_decrement_unallocated_frame_raises(self) -> None:
+        """Decrementing an unallocated frame should raise ValueError."""
+        mm = MemoryManager(total_frames=TOTAL_FRAMES)
+        with pytest.raises(ValueError, match="not allocated"):
+            mm.decrement_refcount(0)
+
     def test_allocate_one(self) -> None:
         """allocate_one should pop one frame, set refcount=1, and track it."""
         mm = MemoryManager(total_frames=TOTAL_FRAMES)

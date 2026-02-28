@@ -1226,6 +1226,7 @@ class Kernel:
             frame = vm.page_table.translate(vpn)
             vm.page_table.unmap(virtual_page=vpn)
             self._memory.decrement_refcount(frame)
+            self._memory.unshare_frame(pid=pid, frame=frame)
 
             # Clean up shared frame cache if no one else references it
             if region.shared:
@@ -1671,6 +1672,7 @@ class Kernel:
                     # frames are freed by memory.free(pid) afterwards.
                     if region.shared:
                         self._memory.decrement_refcount(frame)  # type: ignore[union-attr]
+                        self._memory.unshare_frame(pid=pid, frame=frame)  # type: ignore[union-attr]
                         page_size = vm.page_size
                         cache_key = (region.inode_number, region.offset + i * page_size)
                         if (

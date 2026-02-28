@@ -11,6 +11,8 @@ Our simulation mirrors this lifecycle with in-memory message passing,
 teaching the socket abstraction without actual network I/O.
 """
 
+import pytest
+
 from py_os.io.networking import Socket, SocketManager, SocketState
 
 # -- Socket basics -------------------------------------------------------------
@@ -232,6 +234,19 @@ class TestClose:
         except RuntimeError:
             raised = True
         assert raised
+
+    def test_recv_on_closed_raises(self) -> None:
+        """Receiving on a closed socket should raise."""
+        mgr = SocketManager()
+        server = mgr.create_socket()
+        server.bind(address="localhost", port=8080)
+        server.listen()
+
+        client = mgr.create_socket()
+        mgr.connect(client, address="localhost", port=8080)
+        client.close()
+        with pytest.raises(RuntimeError, match="closed"):
+            mgr.recv(client)
 
 
 # -- SocketManager -------------------------------------------------------------
