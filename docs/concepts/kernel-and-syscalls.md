@@ -86,12 +86,17 @@ method in `kernel.py`, you'll see something like this:
                        (so everything that happens is recorded)
 1. Memory Manager   -- Set up the desks
                        (everything needs somewhere to sit)
+1b. Slab Allocator  -- Set up the supply cupboards
+                       (fixed-size object pools for fast allocation)
 2. File System      -- Unlock the filing cabinets
 3. User Manager     -- Get the attendance list ready
 4. Environment      -- Post the daily schedule on the board
 5. Device Manager   -- Turn on the printers and projectors
 5b. DNS Resolver    -- Open the phone book (hostname -> IP)
 5c. Socket Manager  -- Set up the phone lines (network stack)
+5d. Interrupt Controller + Timer
+                    -- Wire up the doorbells (hardware event dispatch)
+5e. TCP Stack       -- Set up reliable mail delivery between buildings
 6. Resource Manager -- Set up the rules for sharing supplies
 7. Sync Manager     -- Hand out the shared-equipment sign-out sheets
                        (mutexes, semaphores, condition variables)
@@ -210,11 +215,13 @@ Here is every syscall number in PyOS, grouped by what they do:
 | 150-154 | DNS operations (register, lookup, remove, list, flush) |
 | 160-168 | Socket operations (create, bind, listen, connect, accept, send, recv, close, list) |
 | 170-171 | /proc virtual filesystem (read, list) |
-| 172-173   | Performance metrics (read, reset) |
+| 172     | Performance metrics (read) |
 | 180-183 | Strace operations (enable, disable, log, clear) |
 | 190-203 | Kernel-mode helpers (shutdown, scheduler info, lstat, list mutexes/semaphores/rwlocks, list fds, list resources, PI status, ordering violations, destroy mutex, dispatch, process info, strace status) |
 | 210-211 | Boot info (dmesg boot log, boot metadata) |
 | 220-224 | Multi-CPU operations (cpu info, set/get affinity, balance, migrate) |
+| 230-235 | Interrupt and timer operations (tick, interrupt list/mask/unmask, timer info/set interval) |
+| 240-247 | TCP operations (connect, send, recv, close, info, list, listen, accept) |
 
 You don't need to memorize these. The important thing is that every single
 operation a program can ask for has a number, and every single request goes

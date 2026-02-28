@@ -524,3 +524,10 @@ All of these pieces work together inside the [kernel](kernel-and-syscalls.md), w
 | **Load balancing** | Moving processes from busy CPUs to less busy ones to keep work even |
 | **Migration** | Moving a process from one CPU's ready queue to another |
 | **MultiCPUScheduler** | A wrapper that coordinates N per-CPU schedulers with load balancing and affinity |
+
+## Where to Go Next
+
+- [Memory](memory.md) -- How the OS hands out and protects memory for each process
+- [The Kernel](kernel-and-syscalls.md) -- The core of the OS and how programs talk to it
+- [Synchronization](synchronization.md) -- How threads share resources without stepping on each other
+- [Users and Safety](users-and-safety.md) -- Permissions, signals, and deadlocks

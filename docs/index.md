@@ -36,6 +36,8 @@ Each guide explains one part of the OS with real-world analogies and simple lang
 | [The Kernel](concepts/kernel-and-syscalls.md) | The brain of the OS -- boot sequence and system calls |
 | [The Shell](concepts/shell.md) | Typing commands, pipes, scripting, and environment variables |
 | [Devices and Networking](concepts/devices-and-networking.md) | Hardware, inter-process communication, disk scheduling, and sockets |
+| [Interrupts and Timers](concepts/interrupts.md) | Interrupt controller, vectors, masking, timer, preemption |
+| [TCP: Reliable Delivery](concepts/tcp.md) | Three-way handshake, flow control, congestion control, retransmission |
 | [Users and Safety](concepts/users-and-safety.md) | Permissions, signals, logging, and deadlocks |
 | [Synchronization](concepts/synchronization.md) | Mutexes, semaphores, condition variables, and race conditions |
 | [The Boot Chain](concepts/bootloader.md) | What happens between pressing power and seeing a prompt |
@@ -75,6 +77,17 @@ For a technical overview of every module, see [Architecture](architecture.md).
 | Synchronization | `sync/primitives.py` | Mutex, semaphore, condition variable |
 | Bootloader | `bootloader.py` | Firmware POST, kernel image loading, boot chain |
 | Tutorials | `tutorials.py` | Guided hands-on lessons using real syscalls |
+| DNS | `io/dns.py` | Name resolution, A records |
+| HTTP | `io/http.py` | Request/response protocol, status codes |
+| Shared Memory | `io/shm.py` | Zero-copy IPC between processes |
+| Interrupts | `io/interrupts.py` | Interrupt controller, vectors, masking, priority-based servicing |
+| Timer | `io/timer.py` | Programmable interval timer, tick-driven preemption |
+| TCP | `io/tcp.py` | Reliable delivery: three-way handshake, flow control, congestion control |
+| File Descriptors | `fs/fd.py` | Open files, seek, per-process fd tables |
+| Journal | `fs/journal.py` | Write-ahead log, crash recovery |
+| ProcFS | `fs/procfs.py` | Virtual /proc filesystem |
+| Slab Allocator | `memory/slab.py` | Fixed-size object pools |
+| mmap | `memory/mmap.py` | Memory-mapped file regions |
 | Web Frontend | `web/app.py` | Browser-based terminal via Flask |
 | REPL | `repl.py` | Interactive terminal |
 
@@ -125,8 +138,41 @@ source path Run a script from a file
 run prog [p] Run a built-in program with optional priority
 grep pat    Filter piped input (used with |)
 wc          Count lines in piped input
-benchmark   Compare scheduling policies (run cpu|io|mixed, demo)
-dashboard   ASCII system visualization (cpu, memory, processes, fs)
+open path   Open a file and get a file descriptor
+close fd    Close a file descriptor
+readfd fd   Read from a file descriptor
+writefd fd  Write to a file descriptor
+seek fd pos Reposition a file descriptor's offset
+lsfd        List open file descriptors
+ln          Create hard or symbolic links
+readlink p  Read a symlink target
+stat path   Show file metadata (type, size, links)
+journal     Manage journaling (status, checkpoint, recover, crash)
+rwlock      Manage reader-writer locks (create, list)
+pi          Priority inheritance (demo, status)
+ordering    Resource ordering (register, status, mode, violations, demo)
+waitjob id  Wait for a background job to complete
+shm         Shared memory (create, attach, detach, write, read, list, destroy, demo)
+dns         DNS operations (register, lookup, remove, list, flush, demo)
+socket      Socket operations (create, bind, listen, connect, accept, send, recv, close, list)
+http        HTTP demo (end-to-end request/response over sockets)
+tcp         TCP connections (listen, connect, send, recv, close, info, list, demo)
+proc        /proc virtual filesystem demo
+perf        Show performance metrics
+strace      Syscall tracing (on, off, show, clear, demo)
+dmesg       Show kernel boot log
+cpu         Show per-CPU status and scheduling info
+taskset     Show or set CPU affinity for a process
+mmap        Memory-map a file
+munmap      Unmap a memory-mapped region
+msync       Sync a shared mapping
+slabcreate  Create a slab cache
+slaballoc   Allocate from a slab cache
+slabfree    Free a slab allocation
+slabinfo    Show slab allocator statistics
+tick [N]    Advance the system clock by N ticks (default 1)
+interrupt   Manage interrupts (list, mask <vector>, unmask <vector>)
+timer       Manage the timer (info, set <interval>)
 learn       Interactive tutorials (processes, memory, filesystem, ...)
 exit        Shut down the kernel
 ```
