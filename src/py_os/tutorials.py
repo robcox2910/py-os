@@ -26,6 +26,7 @@ if TYPE_CHECKING:
 
 _LESSON_ORDER: list[str] = [
     "filesystem",
+    "interrupts",
     "ipc",
     "memory",
     "networking",
@@ -54,6 +55,7 @@ class TutorialRunner:
             "signals": "Signals — how processes talk with bells and whistles",
             "ipc": "IPC — how processes share data",
             "networking": "Networking — sockets, DNS, and talking to others",
+            "interrupts": "Interrupts — doorbells for hardware devices",
         }
 
     def list_lessons(self) -> list[str]:
@@ -81,6 +83,7 @@ class TutorialRunner:
             "signals": self._lesson_signals,
             "ipc": self._lesson_ipc,
             "networking": self._lesson_networking,
+            "interrupts": self._lesson_interrupts,
         }
         runner = runners.get(name)
         if runner is None:
@@ -588,6 +591,85 @@ class TutorialRunner:
                 "and the client-server model is how networked programs talk.",
                 "",
                 "Congratulations — you've completed all the tutorials!",
+            ]
+        )
+        return "\n".join(lines)
+
+    def _lesson_interrupts(self) -> str:
+        """Teach interrupts, timers, and the tick-based preemption model."""
+        lines: list[str] = [
+            "=== Lesson: Interrupts and Timers ===",
+            "",
+            "Imagine you're reading a book, and the doorbell rings. You stop",
+            "reading, answer the door, then go back to your book. That's exactly",
+            "how a **hardware interrupt** works — a device says 'pay attention!'",
+            "and the CPU pauses to handle it.",
+            "",
+        ]
+
+        # Step 1: Show the timer device
+        lines.append("Step 1: Meet the timer device")
+        info: dict[str, int] = {"interval": 5, "fires": 0}
+        try:
+            info = self._kernel.syscall(SyscallNumber.SYS_TIMER_INFO)
+            lines.append(f"  Timer interval: every {info['interval']} ticks")
+            lines.append(f"  Total fires so far: {info['fires']}")
+        except SyscallError as e:
+            lines.append(f"  (Error: {e})")
+        lines.append("")
+
+        # Step 2: List interrupt vectors
+        lines.append("Step 2: See the interrupt vector table")
+        try:
+            vectors: list[dict[str, object]] = self._kernel.syscall(
+                SyscallNumber.SYS_INTERRUPT_LIST
+            )
+            lines.append(f"  {len(vectors)} vector(s) registered:")
+            lines.extend(
+                f"    Vector {v['vector']}: type={v['type']}, "
+                f"priority={v['priority']}, masked={'yes' if v['masked'] else 'no'}"
+                for v in vectors
+            )
+        except SyscallError as e:
+            lines.append(f"  (Error: {e})")
+        lines.append("")
+
+        # Step 3: Tick until the timer fires
+        lines.append("Step 3: Tick until the timer fires")
+        try:
+            result: dict[str, object] = self._kernel.syscall(
+                SyscallNumber.SYS_TICK, count=info["interval"]
+            )
+            lines.append(
+                f"  Ticked {result['ticks']} times — "
+                f"{result['total_interrupts_serviced']} interrupt(s) serviced"
+            )
+        except SyscallError as e:
+            lines.append(f"  (Error: {e})")
+        lines.append("")
+
+        # Step 4: Mask and unmask
+        lines.append("Step 4: Mask the timer (put the doorbell on silent)")
+        try:
+            self._kernel.syscall(SyscallNumber.SYS_INTERRUPT_MASK, vector=0)
+            lines.append("  Timer vector masked — interrupts will queue but not fire")
+
+            self._kernel.syscall(SyscallNumber.SYS_TICK, count=info["interval"])
+            lines.append(f"  Ticked {info['interval']} more times (timer queued but silent)")
+
+            self._kernel.syscall(SyscallNumber.SYS_INTERRUPT_UNMASK, vector=0)
+            lines.append("  Timer vector unmasked — queued interrupts will be serviced")
+        except SyscallError as e:
+            lines.append(f"  (Error: {e})")
+        lines.append("")
+
+        lines.extend(
+            [
+                "Summary: You learned that interrupts are hardware doorbells,",
+                "the timer fires periodically, and masking silences a vector",
+                "without losing its queued events.",
+                "",
+                "Next up: 'ipc' — learn how processes share data.",
             ]
         )
         return "\n".join(lines)

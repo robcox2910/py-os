@@ -170,6 +170,9 @@ class Shell:
             "cpu": self._cmd_cpu,
             "taskset": self._cmd_taskset,
             "learn": self._cmd_learn,
+            "tick": self._cmd_tick,
+            "interrupt": self._cmd_interrupt,
+            "timer": self._cmd_timer,
         }
 
     @property
@@ -3294,3 +3297,109 @@ class Shell:
             return runner.run(args[0])
         except KeyError:
             return f"Error: unknown lesson '{args[0]}'. Run 'learn' to see available lessons."
+
+    def _cmd_tick(self, args: list[str]) -> str:
+        """Advance the system clock by N ticks (default 1)."""
+        count = 1
+        if args:
+            try:
+                count = int(args[0])
+            except ValueError:
+                return f"Error: invalid tick count '{args[0]}'"
+        try:
+            result: dict[str, object] = self._kernel.syscall(SyscallNumber.SYS_TICK, count=count)
+            lines = [f"Ticked {result['ticks']} time(s)"]
+            lines.append(f"  Current tick: {result['final_tick']}")
+            lines.append(f"  Interrupts serviced: {result['total_interrupts_serviced']}")
+            if result["preempted"]:
+                lines.append("  Preemption occurred")
+            return "\n".join(lines)
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_interrupt(self, args: list[str]) -> str:
+        """Manage interrupts: list, mask <vector>, unmask <vector>."""
+        if not args:
+            return self._interrupt_list()
+
+        match args[0]:
+            case "list":
+                return self._interrupt_list()
+            case "mask":
+                return self._interrupt_mask_unmask(args, mask=True)
+            case "unmask":
+                return self._interrupt_mask_unmask(args, mask=False)
+            case _:
+                return "Usage: interrupt [list | mask <vector> | unmask <vector>]"
+
+    def _interrupt_mask_unmask(self, args: list[str], *, mask: bool) -> str:
+        """Mask or unmask an interrupt vector."""
+        action = "mask" if mask else "unmask"
+        syscall = SyscallNumber.SYS_INTERRUPT_MASK if mask else SyscallNumber.SYS_INTERRUPT_UNMASK
+        if len(args) < 2:  # noqa: PLR2004
+            return f"Usage: interrupt {action} <vector>"
+        try:
+            vector = int(args[1])
+        except ValueError:
+            return f"Error: invalid vector '{args[1]}'"
+        try:
+            self._kernel.syscall(syscall, vector=vector)
+            return f"Vector {vector} {action}ed"
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _interrupt_list(self) -> str:
+        """Format the interrupt vector table."""
+        try:
+            vectors: list[dict[str, object]] = self._kernel.syscall(
+                SyscallNumber.SYS_INTERRUPT_LIST
+            )
+        except SyscallError as e:
+            return f"Error: {e}"
+        if not vectors:
+            return "No interrupt vectors registered"
+        lines = ["VEC  TYPE      PRI  MASKED  PENDING  HANDLER"]
+        lines.extend(
+            f"{v['vector']:>3}  {v['type']!s:<8}  {v['priority']:>3}"
+            f"  {'yes' if v['masked'] else 'no':>6}  {v['pending']:>7}"
+            f"  {'yes' if v['has_handler'] else 'no'}"
+            for v in vectors
+        )
+        return "\n".join(lines)
+
+    def _cmd_timer(self, args: list[str]) -> str:
+        """Manage the timer: info, set <interval>."""
+        if not args or args[0] == "info":
+            return self._timer_info()
+        if args[0] == "set":
+            return self._timer_set(args)
+        return "Usage: timer [info | set <interval>]"
+
+    def _timer_info(self) -> str:
+        """Format timer device status."""
+        try:
+            info: dict[str, int] = self._kernel.syscall(SyscallNumber.SYS_TIMER_INFO)
+            return "\n".join(
+                [
+                    "Timer device:",
+                    f"  Interval:     {info['interval']} ticks",
+                    f"  Current tick: {info['current_tick']}",
+                    f"  Total ticks:  {info['total_ticks']}",
+                    f"  Total fires:  {info['fires']}",
+                ]
+            )
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _timer_set(self, args: list[str]) -> str:
+        """Set the timer interval."""
+        if len(args) < 2:  # noqa: PLR2004
+            return "Usage: timer set <interval>"
+        try:
+            interval = int(args[1])
+        except ValueError:
+            return f"Error: invalid interval '{args[1]}'"
+        try:
+            return self._kernel.syscall(SyscallNumber.SYS_TIMER_SET_INTERVAL, interval=interval)
+        except SyscallError as e:
+            return f"Error: {e}"

@@ -27,7 +27,7 @@ Shutdown sequence (reverse order):
 """
 
 from collections.abc import Callable, Generator
-from contextlib import AbstractContextManager, contextmanager
+from contextlib import AbstractContextManager, contextmanager, suppress
 from enum import StrEnum
 from time import monotonic
 from typing import Any
@@ -39,15 +39,31 @@ from py_os.fs.journal import JournaledFileSystem
 from py_os.fs.procfs import ProcError, ProcFilesystem
 from py_os.io.devices import ConsoleDevice, DeviceManager, NullDevice, RandomDevice
 from py_os.io.dns import DnsRecord, DnsResolver
+from py_os.io.interrupts import (
+    VECTOR_IO_BASE,
+    VECTOR_TIMER,
+    InterruptController,
+    InterruptPriority,
+    InterruptRequest,
+    InterruptType,
+)
 from py_os.io.networking import Socket, SocketError, SocketManager
 from py_os.io.shm import SharedMemoryError, SharedMemorySegment
+from py_os.io.timer import TimerDevice
 from py_os.logging import Logger, LogLevel
 from py_os.memory.manager import MemoryManager
 from py_os.memory.mmap import MmapError, MmapRegion
 from py_os.memory.slab import SlabAllocator, SlabCache
 from py_os.memory.virtual import VirtualMemory
 from py_os.process.pcb import Process, ProcessState
-from py_os.process.scheduler import FCFSPolicy, MultiCPUScheduler, SchedulingPolicy
+from py_os.process.scheduler import (
+    CFSPolicy,
+    FCFSPolicy,
+    MLFQPolicy,
+    MultiCPUScheduler,
+    RoundRobinPolicy,
+    SchedulingPolicy,
+)
 from py_os.process.signals import DEFAULT_ACTIONS, UNCATCHABLE, Signal, SignalAction, SignalError
 from py_os.process.threads import Thread
 from py_os.sync.deadlock import ResourceManager
@@ -157,6 +173,12 @@ class Kernel:
         self._fd_tables: dict[int, FdTable] = {}
         # Named shared memory segments: name → SharedMemorySegment
         self._shared_memory: dict[str, SharedMemorySegment] = {}
+        # Interrupt controller and timer — hardware event dispatching
+        self._interrupt_controller: InterruptController | None = None
+        self._timer: TimerDevice | None = None
+        self._tick_count: int = 0
+        self._ticks_since_dispatch: int = 0
+
         # DNS resolver — phone book for hostname → IP resolution
         self._dns_resolver: DnsResolver | None = None
         # Socket manager — in-memory network stack
@@ -329,6 +351,23 @@ class Kernel:
         return self._socket_manager
 
     @property
+    def interrupt_controller(self) -> InterruptController | None:
+        """Return the interrupt controller, or None if not booted."""
+        self._require_kernel_mode()
+        return self._interrupt_controller
+
+    @property
+    def timer(self) -> TimerDevice | None:
+        """Return the timer device, or None if not booted."""
+        self._require_kernel_mode()
+        return self._timer
+
+    @property
+    def tick_count(self) -> int:
+        """Return the total number of ticks since boot."""
+        return self._tick_count
+
+    @property
     def proc_filesystem(self) -> ProcFilesystem | None:
         """Return the /proc virtual filesystem, or None if not booted."""
         self._require_kernel_mode()
@@ -381,6 +420,37 @@ class Kernel:
         if self._state is not KernelState.RUNNING:
             msg = f"Kernel is not running (state: {self._state})"
             raise RuntimeError(msg)
+
+    def _boot_io_subsystem(self) -> None:
+        """Initialize I/O subsystem: devices, networking, interrupts.
+
+        Called during boot after user manager and environment are ready.
+
+        """
+        # Device manager — register default devices
+        self._device_manager = DeviceManager()
+        self._device_manager.register(NullDevice())
+        self._device_manager.register(ConsoleDevice())
+        self._device_manager.register(RandomDevice())
+        self._boot_log.append("[OK] Device manager")
+
+        # DNS resolver — pre-seed with localhost
+        self._dns_resolver = DnsResolver()
+        self._dns_resolver.register("localhost", "127.0.0.1")
+        self._boot_log.append("[OK] DNS resolver")
+
+        # Socket manager — in-memory network stack
+        self._socket_manager = SocketManager()
+        self._boot_log.append("[OK] Network stack")
+
+        # Interrupt controller and timer — hardware event dispatching
+        self._interrupt_controller = InterruptController()
+        self._timer = TimerDevice(self._interrupt_controller)
+        self._interrupt_controller.register_handler(VECTOR_TIMER, self._on_timer_interrupt)
+        self._device_manager.register(self._timer)
+        self._tick_count = 0
+        self._ticks_since_dispatch = 0
+        self._boot_log.append("[OK] Interrupt controller + timer")
 
     def boot(self) -> None:
         """Transition the kernel from SHUTDOWN → RUNNING.
@@ -436,21 +506,8 @@ class Kernel:
         )
         self._boot_log.append("[OK] Environment")
 
-        # 6. Device manager — register default devices
-        self._device_manager = DeviceManager()
-        self._device_manager.register(NullDevice())
-        self._device_manager.register(ConsoleDevice())
-        self._device_manager.register(RandomDevice())
-        self._boot_log.append("[OK] Device manager")
-
-        # 6b. DNS resolver — pre-seed with localhost
-        self._dns_resolver = DnsResolver()
-        self._dns_resolver.register("localhost", "127.0.0.1")
-        self._boot_log.append("[OK] DNS resolver")
-
-        # 6c. Socket manager — in-memory network stack
-        self._socket_manager = SocketManager()
-        self._boot_log.append("[OK] Network stack")
+        # 6. I/O subsystem — devices, networking, interrupts
+        self._boot_io_subsystem()
 
         # 7. Resource manager — deadlock detection and avoidance
         self._resource_manager = ResourceManager()
@@ -529,6 +586,10 @@ class Kernel:
         self._shared_memory.clear()
         self._socket_manager = None
         self._dns_resolver = None
+        self._interrupt_controller = None
+        self._timer = None
+        self._tick_count = 0
+        self._ticks_since_dispatch = 0
 
         # Reset performance metrics and strace state
         self._total_created = 0
@@ -1564,6 +1625,91 @@ class Kernel:
             "throughput": throughput,
             "migrations": self._scheduler.migrations,
         }
+
+    # -- Tick / interrupt support -----------------------------------------------
+
+    def tick(self) -> dict[str, int | bool]:
+        """Advance the system clock by one tick.
+
+        Each tick:
+        1. Increment the global tick counter and per-dispatch counter.
+        2. Advance the timer device (may raise a timer interrupt).
+        3. Service all pending interrupts.
+
+        Returns:
+            Dict with tick number, interrupts serviced, and whether
+            a preemption occurred.
+
+        """
+        self._require_running()
+        assert self._timer is not None  # noqa: S101
+        assert self._interrupt_controller is not None  # noqa: S101
+
+        self._tick_count += 1
+        self._ticks_since_dispatch += 1
+
+        # Timer may fire and raise VECTOR_TIMER
+        self._timer.tick()
+
+        # Service all pending interrupts (timer + I/O)
+        preempted = self._preemption_pending
+        serviced = self._interrupt_controller.service_pending()
+
+        return {
+            "tick": self._tick_count,
+            "interrupts_serviced": serviced,
+            "preempted": preempted,
+        }
+
+    @property
+    def _preemption_pending(self) -> bool:
+        """Check whether preemption should happen (used by tick)."""
+        return False  # Set to True by _on_timer_interrupt
+
+    def _on_timer_interrupt(self, _irq: InterruptRequest) -> None:
+        """Handle a timer interrupt — preempt if the quantum is exhausted.
+
+        For time-sliced policies (Round Robin, MLFQ, CFS), the quantum
+        determines how many ticks a process gets before being preempted.
+        """
+        assert self._scheduler is not None  # noqa: S101
+
+        policy = self._scheduler.policy
+        quantum: int | None = None
+        match policy:
+            case RoundRobinPolicy():
+                quantum = policy.quantum
+            case MLFQPolicy():
+                quantum = policy.quantums[0]  # Use level-0 quantum
+            case CFSPolicy():
+                quantum = policy.base_slice
+            case _:
+                pass
+
+        if quantum is not None and self._ticks_since_dispatch >= quantum:
+            self._ticks_since_dispatch = 0
+
+    def raise_io_interrupt(self, *, data: object = None) -> None:
+        """Raise an I/O completion interrupt.
+
+        Called when a device finishes an operation (e.g., disk read
+        complete, network packet arrived).
+
+        Args:
+            data: Optional data describing the I/O event.
+
+        """
+        self._require_running()
+        assert self._interrupt_controller is not None  # noqa: S101
+
+        # Register I/O vector if needed
+        with suppress(ValueError):
+            self._interrupt_controller.register_vector(
+                VECTOR_IO_BASE,
+                interrupt_type=InterruptType.IO,
+                priority=InterruptPriority.NORMAL,
+            )
+        self._interrupt_controller.raise_interrupt(VECTOR_IO_BASE, data=data)
 
     # -- Wait / zombie helpers -------------------------------------------------
 

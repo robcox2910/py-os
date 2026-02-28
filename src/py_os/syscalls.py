@@ -222,6 +222,14 @@ class SyscallNumber(IntEnum):
     SYS_DMESG = 210
     SYS_BOOT_INFO = 211
 
+    # Interrupt / timer operations
+    SYS_TICK = 230
+    SYS_INTERRUPT_LIST = 231
+    SYS_INTERRUPT_MASK = 232
+    SYS_INTERRUPT_UNMASK = 233
+    SYS_TIMER_INFO = 234
+    SYS_TIMER_SET_INTERVAL = 235
+
     # Multi-CPU operations
     SYS_CPU_INFO = 220
     SYS_SET_AFFINITY = 221
@@ -377,6 +385,12 @@ def dispatch_syscall(
         SyscallNumber.SYS_STRACE_STATUS: _sys_strace_status,
         SyscallNumber.SYS_DMESG: _sys_dmesg,
         SyscallNumber.SYS_BOOT_INFO: _sys_boot_info,
+        SyscallNumber.SYS_TICK: _sys_tick,
+        SyscallNumber.SYS_INTERRUPT_LIST: _sys_interrupt_list,
+        SyscallNumber.SYS_INTERRUPT_MASK: _sys_interrupt_mask,
+        SyscallNumber.SYS_INTERRUPT_UNMASK: _sys_interrupt_unmask,
+        SyscallNumber.SYS_TIMER_INFO: _sys_timer_info,
+        SyscallNumber.SYS_TIMER_SET_INTERVAL: _sys_timer_set_interval,
         SyscallNumber.SYS_CPU_INFO: _sys_cpu_info,
         SyscallNumber.SYS_SET_AFFINITY: _sys_set_affinity,
         SyscallNumber.SYS_GET_AFFINITY: _sys_get_affinity,
@@ -1760,3 +1774,83 @@ def _sys_migrate(kernel: Any, **kwargs: Any) -> dict[str, bool]:
         raise SyscallError(msg)
     success = sched.migrate(pid, from_cpu, to_cpu)
     return {"success": success}
+
+
+# -- Interrupt / timer syscall handlers --------------------------------------
+
+
+def _sys_tick(kernel: Any, **kwargs: Any) -> dict[str, Any]:
+    """Advance the system clock by N ticks."""
+    count: int = kwargs.get("count", 1)
+    results: list[dict[str, int | bool]] = [kernel.tick() for _ in range(count)]
+    last = results[-1] if results else {"tick": 0, "interrupts_serviced": 0, "preempted": False}
+    total_serviced = sum(r["interrupts_serviced"] for r in results)
+    any_preempted = any(r["preempted"] for r in results)
+    return {
+        "ticks": count,
+        "final_tick": last["tick"],
+        "total_interrupts_serviced": total_serviced,
+        "preempted": any_preempted,
+    }
+
+
+def _sys_interrupt_list(kernel: Any, **_kwargs: Any) -> list[dict[str, object]]:
+    """List all interrupt vectors."""
+    ic = kernel.interrupt_controller
+    if ic is None:
+        return []
+    return ic.list_vectors()
+
+
+def _sys_interrupt_mask(kernel: Any, **kwargs: Any) -> None:
+    """Mask an interrupt vector."""
+    ic = kernel.interrupt_controller
+    if ic is None:
+        msg = "Interrupt controller not available"
+        raise SyscallError(msg)
+    vector: int = kwargs["vector"]
+    try:
+        ic.mask(vector)
+    except KeyError as e:
+        raise SyscallError(str(e)) from e
+
+
+def _sys_interrupt_unmask(kernel: Any, **kwargs: Any) -> None:
+    """Unmask an interrupt vector."""
+    ic = kernel.interrupt_controller
+    if ic is None:
+        msg = "Interrupt controller not available"
+        raise SyscallError(msg)
+    vector: int = kwargs["vector"]
+    try:
+        ic.unmask(vector)
+    except KeyError as e:
+        raise SyscallError(str(e)) from e
+
+
+def _sys_timer_info(kernel: Any, **_kwargs: Any) -> dict[str, int]:
+    """Return timer device info."""
+    timer = kernel.timer
+    if timer is None:
+        msg = "Timer not available"
+        raise SyscallError(msg)
+    return {
+        "interval": timer.interval,
+        "current_tick": timer.current_tick,
+        "total_ticks": timer.total_ticks,
+        "fires": timer.fires,
+    }
+
+
+def _sys_timer_set_interval(kernel: Any, **kwargs: Any) -> str:
+    """Set the timer interval."""
+    timer = kernel.timer
+    if timer is None:
+        msg = "Timer not available"
+        raise SyscallError(msg)
+    interval: int = kwargs["interval"]
+    try:
+        timer.interval = interval
+    except ValueError as e:
+        raise SyscallError(str(e)) from e
+    return f"Timer interval set to {interval}"

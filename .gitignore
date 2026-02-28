@@ -58,6 +58,9 @@ src/py_os/_version.py
 # Logs
 *.log
 
+# MkDocs build output
+site/
+
 # Type checking cache
 .mypy_cache/
 .ruff_cache/
