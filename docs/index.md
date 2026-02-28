@@ -1,8 +1,5 @@
 # PyOS
 
-[![CI](https://github.com/robcox2910/py-os/actions/workflows/ci.yml/badge.svg)](https://github.com/robcox2910/py-os/actions/workflows/ci.yml)
-[![Docs](https://github.com/robcox2910/py-os/actions/workflows/docs.yml/badge.svg)](https://robcox2910.github.io/py-os/)
-
 A simulated operating system built in Python for learning. If you know basic Python and are curious about how computers actually work under the hood, this project is for you.
 
 Every module mirrors a real OS subsystem -- processes, memory, filesystems, networking -- built piece by piece using test-driven development.
@@ -11,7 +8,7 @@ Every module mirrors a real OS subsystem -- processes, memory, filesystems, netw
 
 Ever wondered what happens when you open a program, save a file, or connect to the internet? An operating system makes all of that work. PyOS builds a mini version of one so you can see the pieces and how they fit together.
 
-Start here: **[What Is an Operating System?](docs/concepts/what-is-an-os.md)**
+Start here: **[What Is an Operating System?](concepts/what-is-an-os.md)**
 
 ## Quick Start
 
@@ -32,22 +29,20 @@ Each guide explains one part of the OS with real-world analogies and simple lang
 
 | Guide | What You'll Learn |
 |-------|-------------------|
-| [What Is an OS?](docs/concepts/what-is-an-os.md) | The big picture -- what an OS does and why you need one |
-| [Processes](docs/concepts/processes.md) | Programs that are running, how they take turns, forking, and threads |
-| [Memory](docs/concepts/memory.md) | How the OS manages limited memory with pages, virtual addresses, and swap |
-| [Filesystem](docs/concepts/filesystem.md) | How files and folders are organised, and how they're saved to disk |
-| [The Kernel](docs/concepts/kernel-and-syscalls.md) | The brain of the OS -- boot sequence and system calls |
-| [The Shell](docs/concepts/shell.md) | Typing commands, pipes, scripting, and environment variables |
-| [Devices and Networking](docs/concepts/devices-and-networking.md) | Hardware, inter-process communication, disk scheduling, and sockets |
-| [Interrupts and Timers](docs/concepts/interrupts.md) | Interrupt controller, vectors, masking, timer, preemption |
-| [TCP: Reliable Delivery](docs/concepts/tcp.md) | Three-way handshake, flow control, congestion control, retransmission |
-| [Users and Safety](docs/concepts/users-and-safety.md) | Permissions, signals, logging, and deadlocks |
-| [Synchronization](docs/concepts/synchronization.md) | Mutexes, semaphores, condition variables, and race conditions |
-| [The Boot Chain](docs/concepts/bootloader.md) | What happens between pressing power and seeing a prompt |
-| [Interactive Tutorials](docs/concepts/tutorials.md) | Guided lessons that teach OS concepts hands-on |
-| [Web UI](docs/concepts/web-ui.md) | Browser-based terminal interface |
+| [What Is an OS?](concepts/what-is-an-os.md) | The big picture -- what an OS does and why you need one |
+| [Processes](concepts/processes.md) | Programs that are running, how they take turns, forking, and threads |
+| [Memory](concepts/memory.md) | How the OS manages limited memory with pages, virtual addresses, and swap |
+| [Filesystem](concepts/filesystem.md) | How files and folders are organised, and how they're saved to disk |
+| [The Kernel](concepts/kernel-and-syscalls.md) | The brain of the OS -- boot sequence and system calls |
+| [The Shell](concepts/shell.md) | Typing commands, pipes, scripting, and environment variables |
+| [Devices and Networking](concepts/devices-and-networking.md) | Hardware, inter-process communication, disk scheduling, and sockets |
+| [Users and Safety](concepts/users-and-safety.md) | Permissions, signals, logging, and deadlocks |
+| [Synchronization](concepts/synchronization.md) | Mutexes, semaphores, condition variables, and race conditions |
+| [The Boot Chain](concepts/bootloader.md) | What happens between pressing power and seeing a prompt |
+| [Interactive Tutorials](concepts/tutorials.md) | Guided lessons that teach OS concepts hands-on |
+| [Web UI](concepts/web-ui.md) | Browser-based terminal interface |
 
-For a technical overview of every module, see [docs/architecture.md](docs/architecture.md).
+For a technical overview of every module, see [Architecture](architecture.md).
 
 ## Modules
 
@@ -80,9 +75,6 @@ For a technical overview of every module, see [docs/architecture.md](docs/archit
 | Synchronization | `sync/primitives.py` | Mutex, semaphore, condition variable |
 | Bootloader | `bootloader.py` | Firmware POST, kernel image loading, boot chain |
 | Tutorials | `tutorials.py` | Guided hands-on lessons using real syscalls |
-| Interrupts | `io/interrupts.py` | Interrupt controller, vectors, masking, priority-based servicing |
-| Timer | `io/timer.py` | Programmable interval timer, tick-driven preemption |
-| TCP | `io/tcp.py` | Reliable delivery: three-way handshake, flow control, congestion control |
 | Web Frontend | `web/app.py` | Browser-based terminal via Flask |
 | REPL | `repl.py` | Interactive terminal |
 
@@ -135,10 +127,6 @@ grep pat    Filter piped input (used with |)
 wc          Count lines in piped input
 benchmark   Compare scheduling policies (run cpu|io|mixed, demo)
 dashboard   ASCII system visualization (cpu, memory, processes, fs)
-tick [N]    Advance the system clock by N ticks (default 1)
-interrupt   Manage interrupts (list, mask <vector>, unmask <vector>)
-timer       Manage the timer (info, set <interval>)
-tcp         TCP connections (listen, connect, send, recv, close, info, list, demo)
 learn       Interactive tutorials (processes, memory, filesystem, ...)
 exit        Shut down the kernel
 ```
@@ -171,7 +159,7 @@ pip install py-os[web]
 py-os-web
 ```
 
-Then open `http://localhost:8080` in your browser. See [docs/concepts/web-ui.md](docs/concepts/web-ui.md) for details.
+Then open `http://localhost:8080` in your browser. See [Web UI](concepts/web-ui.md) for details.
 
 ## Development
 

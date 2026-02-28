@@ -25,7 +25,7 @@ In fact, the kernel **enforces** this. The shell runs in **user mode**, where
 accessing kernel subsystems directly raises an error. The only way to get
 anything done is through `kernel.syscall(...)`, which temporarily switches to
 **kernel mode** for the duration of the request. See
-[User Mode vs Kernel Mode](kernel-and-syscalls.md#7-user-mode-vs-kernel-mode)
+[User Mode vs Kernel Mode](kernel-and-syscalls.md#8-user-mode-vs-kernel-mode)
 for the full story.
 
 One more thing to know: everything the shell gives back to you is a **string**
