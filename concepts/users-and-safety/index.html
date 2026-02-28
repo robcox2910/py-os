@@ -1,0 +1,1695 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A simulated operating system built in Python for learning OS concepts">
+      
+      
+      
+        <link rel="canonical" href="https://robcox2910.github.io/py-os/concepts/users-and-safety/">
+      
+      
+        <link rel="prev" href="../devices-and-networking/">
+      
+      
+        <link rel="next" href="../synchronization/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.3">
+    
+    
+      
+        <title>Users and Safety - PyOS</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#users-and-safety" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="PyOS" class="md-header__button md-logo" aria-label="PyOS" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            PyOS
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Users and Safety
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/robcox2910/py-os" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    robcox2910/py-os
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="PyOS" class="md-nav__button md-logo" aria-label="PyOS" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    PyOS
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/robcox2910/py-os" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    robcox2910/py-os
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../what-is-an-os/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What Is an OS?
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../processes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Processes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../memory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memory
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../filesystem/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Filesystem
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kernel-and-syscalls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Kernel
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../shell/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Shell
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devices-and-networking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Devices and Networking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Users and Safety
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Users and Safety
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#users-and-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Users and Permissions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Users and Permissions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#uids-and-usernames" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        UIDs and Usernames
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#file-ownership" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File Ownership
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-root-user" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The root User
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#try-it-in-the-pyos-shell" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Try it in the PyOS shell
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#signals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Signals
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Signals">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-six-signals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Six Signals
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#user-defined-signals-sigusr1-and-sigusr2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        User-Defined Signals: SIGUSR1 and SIGUSR2
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#signal-handlers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Signal Handlers
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#logging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logging
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Logging">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#log-levels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Log Levels
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#try-it-in-the-pyos-shell_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Try it in the PyOS shell
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deadlock" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deadlock
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Deadlock">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-four-conditions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Four Conditions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prevention-the-bankers-algorithm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prevention: The Banker's Algorithm
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#detection-find-and-fix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Detection: Find and Fix
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#two-philosophies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two Philosophies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#try-it-in-the-pyos-shell_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Try it in the PyOS shell
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#putting-it-all-together" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Putting It All Together
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#key-terms" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Terms
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../synchronization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Synchronization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bootloader/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Boot Chain
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interactive Tutorials
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../web-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Web UI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#users-and-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Users and Permissions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Users and Permissions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#uids-and-usernames" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        UIDs and Usernames
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#file-ownership" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File Ownership
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-root-user" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The root User
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#try-it-in-the-pyos-shell" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Try it in the PyOS shell
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#signals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Signals
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Signals">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-six-signals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Six Signals
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#user-defined-signals-sigusr1-and-sigusr2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        User-Defined Signals: SIGUSR1 and SIGUSR2
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#signal-handlers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Signal Handlers
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#logging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logging
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Logging">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#log-levels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Log Levels
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#try-it-in-the-pyos-shell_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Try it in the PyOS shell
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deadlock" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deadlock
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Deadlock">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-four-conditions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Four Conditions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prevention-the-bankers-algorithm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prevention: The Banker's Algorithm
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#detection-find-and-fix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Detection: Find and Fix
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#two-philosophies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two Philosophies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#try-it-in-the-pyos-shell_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Try it in the PyOS shell
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#putting-it-all-together" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Putting It All Together
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#key-terms" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Terms
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="users-and-safety">Users and Safety</h1>
+<p>Your computer is not just for you. Even if you are the only person sitting at the keyboard, there are dozens of programs running at the same time -- a web browser, a music player, background updaters. The operating system needs to keep track of <em>who</em> is allowed to do <em>what</em>, handle emergencies when things go wrong, keep a record of everything that happened, and prevent programs from getting stuck in traffic jams. This page covers all four of those jobs.</p>
+<hr />
+<h2 id="users-and-permissions">Users and Permissions</h2>
+<p>Think of a school library. Every student has a library card with a unique number printed on it. When you check out a book, the librarian stamps your card number on the back cover. Now anyone who picks up that book can see who checked it out.</p>
+<p>An operating system works the same way.</p>
+<h3 id="uids-and-usernames">UIDs and Usernames</h3>
+<p>Every user gets two things when their account is created:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>What it is</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>UID</strong></td>
+<td>A unique ID number (like your library card number)</td>
+<td><code>0</code>, <code>1</code>, <code>1000</code></td>
+</tr>
+<tr>
+<td><strong>Username</strong></td>
+<td>A human-friendly name</td>
+<td><code>"alice"</code>, <code>"bob"</code>, <code>"root"</code></td>
+</tr>
+</tbody>
+</table>
+<p>The UID is what the system actually uses behind the scenes. The username is just a label so humans do not have to memorize numbers.</p>
+<h3 id="file-ownership">File Ownership</h3>
+<p>When you create a <a href="../filesystem/">file</a>, your UID gets stamped on it. You are now the <strong>owner</strong> of that file. This is exactly like the librarian stamping your card number on a book -- the file knows who made it.</p>
+<h3 id="permissions">Permissions</h3>
+<p>Owning a file is not enough on its own. The system also tracks what you are <em>allowed to do</em> with each file. Permissions answer two questions for two groups of people:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Can they read it?</th>
+<th>Can they write to it?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Owner</strong> (the person who made the file)</td>
+<td>Maybe</td>
+<td>Maybe</td>
+</tr>
+<tr>
+<td><strong>Everyone else</strong></td>
+<td>Maybe</td>
+<td>Maybe</td>
+</tr>
+</tbody>
+</table>
+<p>Each of those four slots is either "yes" or "no." When you create a file, you decide the initial permissions. For example, you might say "I can read and write this file, but everyone else can only read it." That way, other users can look at your homework but they cannot change your answers.</p>
+<h3 id="the-root-user">The root User</h3>
+<p>There is one special user that exists on every system: <strong>root</strong>, who always has UID 0.</p>
+<p>Root is like the school principal. The principal can walk into any classroom, open any locker, and read any file in the school office. There are no locked doors for the principal. In the same way, root can read and write <em>any</em> file on the system, regardless of what the permissions say. Root is sometimes called the <strong>superuser</strong> because they have super-powered access to everything.</p>
+<p>On a real Unix system, root can do absolutely anything -- install programs, delete other users, change system settings, even break the operating system. That is why you should only use root when you truly need it. Running as root all the time is like leaving every door in the school unlocked. It works, but it is asking for trouble.</p>
+<h3 id="try-it-in-the-pyos-shell">Try it in the PyOS shell</h3>
+<pre><code>pyos&gt; whoami
+alice (uid=1000)
+
+pyos&gt; adduser bob
+User 'bob' created with uid=1001
+
+pyos&gt; su bob
+Switched to user 'bob'
+
+pyos&gt; whoami
+bob (uid=1001)
+</code></pre>
+<ul>
+<li><code>whoami</code> -- tells you which user you are right now.</li>
+<li><code>adduser</code> -- creates a new user account.</li>
+<li><code>su</code> -- short for "switch user." It lets you become a different user, kind of like handing your library card to someone else (except you get it back later).</li>
+</ul>
+<hr />
+<h2 id="signals">Signals</h2>
+<p>Imagine you are sitting in class, focused on your work. Someone taps you on the shoulder. You look up. That tap is a <strong>signal</strong> -- a small message sent from one <a href="../processes/">process</a> to another (or from the operating system to a process) that says "hey, pay attention."</p>
+<p>Different taps mean different things.</p>
+<h3 id="the-six-signals">The Six Signals</h3>
+<table>
+<thead>
+<tr>
+<th>Signal</th>
+<th>What it means</th>
+<th>Real-life version</th>
+<th>Can you catch it?</th>
+<th>Default action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>SIGKILL</strong> (9)</td>
+<td>"STOP RIGHT NOW."</td>
+<td>Being physically picked up and removed from the room</td>
+<td>No</td>
+<td>Terminate</td>
+</tr>
+<tr>
+<td><strong>SIGUSR1</strong> (10)</td>
+<td>"Custom tap #1"</td>
+<td>A secret handshake only your friend understands</td>
+<td>Yes</td>
+<td>Ignore</td>
+</tr>
+<tr>
+<td><strong>SIGUSR2</strong> (12)</td>
+<td>"Custom tap #2"</td>
+<td>A different secret handshake</td>
+<td>Yes</td>
+<td>Ignore</td>
+</tr>
+<tr>
+<td><strong>SIGTERM</strong> (15)</td>
+<td>"Please stop what you're doing."</td>
+<td>A polite tap on the shoulder</td>
+<td>Yes</td>
+<td>Terminate</td>
+</tr>
+<tr>
+<td><strong>SIGCONT</strong> (18)</td>
+<td>"Ok, you can move again."</td>
+<td>Someone unfreezes you in freeze tag</td>
+<td>Yes</td>
+<td>Continue</td>
+</tr>
+<tr>
+<td><strong>SIGSTOP</strong> (19)</td>
+<td>"Freeze! Don't move."</td>
+<td>A game of freeze tag -- you are frozen in place</td>
+<td>No</td>
+<td>Stop</td>
+</tr>
+</tbody>
+</table>
+<p>SIGTERM is the polite way to ask a process to stop. The process receives the signal and gets a chance to wrap up what it is doing -- save files, close connections, say goodbye. Most of the time, this is what you want.</p>
+<p>SIGKILL is the emergency stop. It can <em>never</em> be caught, blocked, or ignored. The operating system itself handles SIGKILL by immediately yanking the process off the CPU and marking it as <a href="../processes/">TERMINATED</a>. The process does not get a chance to clean up. This sounds harsh, but it is necessary. If a program goes haywire and stops responding to polite requests, you need a guaranteed way to shut it down. That is why <code>kill -9</code> (SIGKILL's number is 9) always works on a real Unix system.</p>
+<p>SIGSTOP and SIGCONT work together like a pause and play button. SIGSTOP freezes a process in place -- it is still alive, but it is not doing anything. SIGCONT unfreezes it and lets it pick up where it left off. These are useful for debugging or for temporarily suspending a process that is using too many resources. Like SIGKILL, SIGSTOP is <strong>uncatchable</strong> -- you cannot register a handler for it. This guarantees that you can always pause a process, no matter what.</p>
+<h3 id="user-defined-signals-sigusr1-and-sigusr2">User-Defined Signals: SIGUSR1 and SIGUSR2</h3>
+<p>SIGUSR1 and SIGUSR2 are like <strong>custom shoulder taps</strong>. They have no built-in meaning -- the operating system does not do anything special when they arrive. By default, they are simply ignored.</p>
+<p>But a process can register a handler for them, and then they become a private communication channel. Imagine you and your friend agree: "If I tap you twice on the left shoulder, it means 'check your phone.'" That tap only means something because you both agreed on it.</p>
+<p>In real Unix, programs use SIGUSR1 and SIGUSR2 for things like telling a server to reload its configuration file or triggering a status dump. They are completely up to the programmer.</p>
+<h3 id="signal-handlers">Signal Handlers</h3>
+<p>Here is where it gets interesting. A process can set up a <strong>signal handler</strong> -- a function that runs automatically when a specific signal arrives. Think of it like telling a friend: "If someone taps me on the left shoulder, remind me to save my work before I turn around."</p>
+<pre><code class="language-python"># &quot;When I receive SIGTERM, run my cleanup function first&quot;
+kernel.register_signal_handler(pid, SIGTERM, my_cleanup_function)
+</code></pre>
+<p>When SIGTERM arrives, instead of the default action (terminating the process), the handler runs <em>instead</em>. The process stays alive. Maybe the handler saves a file. Maybe it sends a goodbye message. Maybe it decides to keep running. The handler <strong>replaces</strong> the default action -- this is exactly how real Unix works.</p>
+<p>This is <em>why</em> SIGKILL exists. If a process could catch SIGTERM and just... not stop, you would need an uncatchable signal as a last resort. SIGKILL is that last resort.</p>
+<p>SIGCONT is special: even if you register a handler for it, the process always resumes. The handler fires <em>in addition to</em> the default resume, not instead of it. This prevents a bug where registering a SIGCONT handler accidentally makes a frozen process unresumable.</p>
+<p>But here is the critical part: you cannot set a handler for SIGKILL or SIGSTOP. There is no negotiating with them. They do not knock -- they kick the door down. That is by design. If programs could ignore SIGKILL, a broken program could become truly unstoppable, and you would have to restart your entire computer to get rid of it.</p>
+<hr />
+<h2 id="logging">Logging</h2>
+<p>Every school has security cameras. They record what happens throughout the day -- who entered the building in the morning, who went to which classroom, whether anyone tripped the fire alarm. If something goes wrong, you can rewind the footage and figure out what happened.</p>
+<p>The <a href="../kernel-and-syscalls/">kernel</a> has its own version of security cameras: the <strong>logger</strong>. It records events as they happen inside the operating system. When something breaks, the log is the first place you look.</p>
+<h3 id="log-levels">Log Levels</h3>
+<p>Not every event is equally important. The logger uses <strong>levels</strong> to mark how serious each message is, from least to most important:</p>
+<table>
+<thead>
+<tr>
+<th>Level</th>
+<th>What it means</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>DEBUG</strong></td>
+<td>Tiny details, useful for digging into problems</td>
+<td>"System call SYS_READ executed by pid=3"</td>
+</tr>
+<tr>
+<td><strong>INFO</strong></td>
+<td>Normal events, things working as expected</td>
+<td>"System booted successfully"</td>
+</tr>
+<tr>
+<td><strong>WARNING</strong></td>
+<td>Something unusual that might become a problem</td>
+<td>"Memory usage at 85%"</td>
+</tr>
+<tr>
+<td><strong>ERROR</strong></td>
+<td>Something actually went wrong</td>
+<td>"Process 7 crashed with exit code 1"</td>
+</tr>
+</tbody>
+</table>
+<p>Think of it this way. DEBUG is like the security camera footage of a student walking through the hallway -- nothing interesting, but useful if you need to retrace someone's steps. INFO is the morning announcement that school is open. WARNING is a note that the library is almost full and might need to start turning people away. ERROR is the fire alarm going off.</p>
+<p>Every <a href="../kernel-and-syscalls/">system call</a> gets logged at the DEBUG level. Boot events get logged at INFO. This means the log can get very long very quickly, which is why the levels exist -- you can filter for just WARNINGs and ERRORs when you do not need all the tiny details.</p>
+<h3 id="try-it-in-the-pyos-shell_1">Try it in the PyOS shell</h3>
+<pre><code>pyos&gt; log
+[INFO] System booted at tick 0
+[INFO] User 'root' logged in
+[DEBUG] SYS_CREATE_PROCESS: pid=1 name='init'
+[DEBUG] SYS_EXEC: pid=1 program='hello'
+[WARNING] Memory usage at 85%
+</code></pre>
+<p>The <code>log</code> command shows you the kernel's log. It is like pulling up the security footage and scrolling through it. When something goes wrong and you are not sure why, the log is your best friend.</p>
+<hr />
+<h2 id="deadlock">Deadlock</h2>
+<p>Imagine two people walking toward each other in a narrow hallway. Each one is carrying a big cardboard box. They meet in the middle. Person A cannot move forward because Person B is in the way. Person B cannot move forward because Person A is in the way. Neither person can back up because, well, they are both stubborn. They are stuck. Forever.</p>
+<p>That is a <strong>deadlock</strong>.</p>
+<p>In operating system terms, a deadlock happens when two or more <a href="../processes/">processes</a> are each waiting for something that only the other one can provide. Nobody can make progress, so everything freezes.</p>
+<h3 id="the-four-conditions">The Four Conditions</h3>
+<p>A deadlock can only happen when ALL four of these conditions are true at the same time. If even one is missing, you are safe.</p>
+<p><strong>1. Mutual exclusion</strong> -- Only one process can use a resource at a time. Think of the narrow hallway: only one person fits through at once. If the hallway were wide enough for both, there would be no problem.</p>
+<p><strong>2. Hold and wait</strong> -- Each process is holding onto one resource AND waiting for another. Each person is holding their box AND waiting for the other person to move. If one of them put their box down, they could squeeze past.</p>
+<p><strong>3. No preemption</strong> -- You cannot force a process to give up its resource. Nobody can force either person to drop their box. In some systems, the OS <em>can</em> forcibly take resources away, which breaks this condition.</p>
+<p><strong>4. Circular wait</strong> -- The waiting forms a circle. A waits for B, and B waits for A. If A was waiting for B but B was not waiting for A (maybe B was waiting for C, who was free), then B could eventually finish and free things up for A.</p>
+<p>Break any ONE of these four conditions and deadlocks become impossible.</p>
+<h3 id="prevention-the-bankers-algorithm">Prevention: The Banker's Algorithm</h3>
+<p>One approach to dealing with deadlocks is to prevent them from ever happening. The most famous prevention method is called the <strong>Banker's Algorithm</strong>, and the analogy is right there in the name.</p>
+<p>Imagine a small-town banker who gives out loans. The banker has a limited amount of money in the vault. Several customers want loans, and the banker knows the maximum each customer might eventually need. Before approving any new loan, the banker asks: "If I give this loan, will I still have enough money left to make sure <em>everyone</em> can eventually pay me back?"</p>
+<p>If the answer is yes, the loan is <strong>safe</strong> -- go ahead and approve it. If the answer is no, the loan is <strong>unsafe</strong> -- deny it, even if the customer is upset. Better to say "not right now" than to run out of money and leave everyone stuck.</p>
+<p>The OS does the same thing with resources (like <a href="../memory/">memory</a> or access to devices). Before granting a resource to a process, it checks: "If I give this out, is there still a sequence where every process can finish?" If yes, grant it. If no, make the process wait.</p>
+<p>The downside of prevention is that it is <em>conservative</em>. Sometimes the banker says "no" even when things would have been fine. But the upside is powerful: deadlocks literally cannot happen.</p>
+<h3 id="detection-find-and-fix">Detection: Find and Fix</h3>
+<p>The other approach is the opposite philosophy: let processes grab whatever resources they want, but periodically check whether a deadlock has actually occurred.</p>
+<p>Detection works by looking for circular waits in the system. If Process A is waiting for Process B, and Process B is waiting for Process A, the detector spots that circle and reports it.</p>
+<p>This approach is more permissive -- processes are never told "no" just in case. But you need a plan for what to do when a deadlock is found. Usually, the OS picks one of the stuck processes and terminates it (using <a href="#the-six-signals">SIGKILL</a>) to break the circle. Tough luck for that process, but it frees everyone else.</p>
+<h3 id="two-philosophies">Two Philosophies</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Prevention (Banker's)</th>
+<th>Detection</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>When it checks</strong></td>
+<td>Before granting a resource</td>
+<td>After the fact, periodically</td>
+</tr>
+<tr>
+<td><strong>Can deadlocks happen?</strong></td>
+<td>No, never</td>
+<td>Yes, but they get caught</td>
+</tr>
+<tr>
+<td><strong>Downside</strong></td>
+<td>Sometimes says "no" unnecessarily</td>
+<td>A process might get killed to break the deadlock</td>
+</tr>
+<tr>
+<td><strong>Best for</strong></td>
+<td>Systems where deadlocks are unacceptable (medical, aviation)</td>
+<td>Systems where occasional recovery is fine</td>
+</tr>
+</tbody>
+</table>
+<h3 id="try-it-in-the-pyos-shell_2">Try it in the PyOS shell</h3>
+<pre><code>pyos&gt; resources
+Resource Allocation Table:
+  Process 1 holds: [Printer]  waiting for: [Scanner]
+  Process 2 holds: [Scanner]  waiting for: [Printer]
+
+pyos&gt; deadlock
+Deadlock detected! Processes 1 and 2 are in a circular wait.
+</code></pre>
+<ul>
+<li><code>resources</code> -- shows you which processes are holding which resources and what they are waiting for.</li>
+<li><code>deadlock</code> -- checks the current state for circular waits and tells you if any processes are stuck.</li>
+</ul>
+<hr />
+<h2 id="putting-it-all-together">Putting It All Together</h2>
+<p>These four systems work together to keep the operating system running safely and smoothly.</p>
+<p><strong>Users and permissions</strong> make sure that one person cannot mess with another person's files. The <a href="../filesystem/">filesystem</a> stamps every file with an owner, and the <a href="../kernel-and-syscalls/">kernel</a> checks permissions before allowing any read or write.</p>
+<p><strong>Signals</strong> give the OS a way to communicate with <a href="../processes/">processes</a> -- politely asking them to stop, forcibly killing them if they refuse, or pausing and resuming them as needed.</p>
+<p><strong>Logging</strong> records everything that happens so you can figure out what went wrong after the fact. Every system call, every boot event, every error gets written down.</p>
+<p><strong>Deadlock handling</strong> prevents or detects situations where processes get permanently stuck waiting for each other, keeping the system from freezing up.</p>
+<p>Together with <a href="../processes/">processes</a>, <a href="../memory/">memory management</a>, the <a href="../filesystem/">filesystem</a>, and the <a href="../kernel-and-syscalls/">kernel</a>, these pieces form the safety net that lets dozens of programs run at the same time without stepping on each other's toes.</p>
+<hr />
+<h2 id="key-terms">Key Terms</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Definition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>UID</strong></td>
+<td>User Identifier -- a unique number assigned to each user account</td>
+</tr>
+<tr>
+<td><strong>root</strong></td>
+<td>The superuser (UID 0) who can read and write any file on the system</td>
+</tr>
+<tr>
+<td><strong>Permissions</strong></td>
+<td>Rules that control who can read and write each file</td>
+</tr>
+<tr>
+<td><strong>Signal</strong></td>
+<td>A small message sent to a process to notify it of an event</td>
+</tr>
+<tr>
+<td><strong>SIGTERM</strong></td>
+<td>A polite request for a process to stop (can be caught and handled)</td>
+</tr>
+<tr>
+<td><strong>SIGKILL</strong></td>
+<td>A forced termination that cannot be caught or ignored</td>
+</tr>
+<tr>
+<td><strong>SIGSTOP</strong></td>
+<td>A forced pause that cannot be caught or ignored</td>
+</tr>
+<tr>
+<td><strong>SIGUSR1 / SIGUSR2</strong></td>
+<td>User-defined signals with no built-in meaning (ignored by default)</td>
+</tr>
+<tr>
+<td><strong>Uncatchable</strong></td>
+<td>A signal (SIGKILL, SIGSTOP) for which no handler can be registered</td>
+</tr>
+<tr>
+<td><strong>Signal handler</strong></td>
+<td>A function that runs automatically when a specific signal is received, replacing the default action</td>
+</tr>
+<tr>
+<td><strong>Default action</strong></td>
+<td>What the kernel does when a signal arrives and no handler is registered (terminate, stop, continue, or ignore)</td>
+</tr>
+<tr>
+<td><strong>Logger</strong></td>
+<td>The kernel subsystem that records events as they happen</td>
+</tr>
+<tr>
+<td><strong>Log level</strong></td>
+<td>A label (DEBUG, INFO, WARNING, ERROR) indicating how serious a log entry is</td>
+</tr>
+<tr>
+<td><strong>Deadlock</strong></td>
+<td>A situation where two or more processes are stuck waiting for each other forever</td>
+</tr>
+<tr>
+<td><strong>Mutual exclusion</strong></td>
+<td>A resource can only be used by one process at a time</td>
+</tr>
+<tr>
+<td><strong>Banker's Algorithm</strong></td>
+<td>A deadlock prevention method that checks whether granting a resource is safe</td>
+</tr>
+<tr>
+<td><strong>Circular wait</strong></td>
+<td>A cycle of processes where each is waiting for the next one in the circle</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "search.highlight"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

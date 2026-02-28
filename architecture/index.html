@@ -1,0 +1,2197 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A simulated operating system built in Python for learning OS concepts">
+      
+      
+      
+        <link rel="canonical" href="https://robcox2910.github.io/py-os/architecture/">
+      
+      
+        <link rel="prev" href="..">
+      
+      
+        <link rel="next" href="../concepts/what-is-an-os/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.3">
+    
+    
+      
+        <title>Architecture - PyOS</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#pyos-architecture" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="PyOS" class="md-header__button md-logo" aria-label="PyOS" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            PyOS
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Architecture
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/robcox2910/py-os" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    robcox2910/py-os
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="PyOS" class="md-nav__button md-logo" aria-label="PyOS" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    PyOS
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/robcox2910/py-os" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    robcox2910/py-os
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#design-principles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Design Principles
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#concept-guides" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Concept Guides
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#module-map" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Module Map
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Module Map">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#boot-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Boot Layer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kernel-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Kernel Layer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#process-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Process Management
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#memory-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Memory Management
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filesystem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Filesystem
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#user-space" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        User Space
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#io-and-networking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        I/O and Networking
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#synchronization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Synchronization
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#observability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Observability
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tutorials" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tutorials
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#web-frontend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Web Frontend
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#syscall-number-ranges" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Syscall Number Ranges
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#strategy-pattern-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Strategy Pattern Usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/what-is-an-os/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What Is an OS?
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/processes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Processes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/memory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memory
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/filesystem/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Filesystem
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/kernel-and-syscalls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Kernel
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/shell/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Shell
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/devices-and-networking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Devices and Networking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/users-and-safety/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Users and Safety
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/synchronization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Synchronization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/bootloader/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Boot Chain
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/tutorials/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interactive Tutorials
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/web-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Web UI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#design-principles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Design Principles
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#concept-guides" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Concept Guides
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#module-map" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Module Map
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Module Map">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#boot-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Boot Layer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kernel-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Kernel Layer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#process-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Process Management
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#memory-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Memory Management
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filesystem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Filesystem
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#user-space" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        User Space
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#io-and-networking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        I/O and Networking
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#synchronization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Synchronization
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#observability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Observability
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tutorials" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tutorials
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#web-frontend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Web Frontend
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#syscall-number-ranges" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Syscall Number Ranges
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#strategy-pattern-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Strategy Pattern Usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="pyos-architecture">PyOS Architecture</h1>
+<p>Technical reference for every module in the system. For beginner-friendly explanations with analogies, see the <strong><a href="../concepts/what-is-an-os/">concept guides</a></strong>.</p>
+<h2 id="design-principles">Design Principles</h2>
+<ol>
+<li><strong>Mirror real OS architecture</strong> -- every module corresponds to a real OS subsystem.</li>
+<li><strong>TDD</strong> -- tests written first, then implementation, then refactoring.</li>
+<li><strong>Syscalls as the boundary</strong> -- the shell never touches kernel internals directly.</li>
+<li><strong>Returns strings, not prints</strong> -- everything is testable, no side effects.</li>
+<li><strong>Simplicity over performance</strong> -- clarity wins in a learning simulator.</li>
+</ol>
+<h2 id="concept-guides">Concept Guides</h2>
+<table>
+<thead>
+<tr>
+<th>Guide</th>
+<th>Topics</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../concepts/what-is-an-os/">What Is an OS?</a></td>
+<td>Big picture, layered architecture, how PyOS works</td>
+</tr>
+<tr>
+<td><a href="../concepts/processes/">Processes</a></td>
+<td>PCB, five-state model, scheduler, multi-CPU, fork (COW), threads, execution, zombies, wait/waitpid</td>
+</tr>
+<tr>
+<td><a href="../concepts/memory/">Memory</a></td>
+<td>Frames/pages, virtual memory, page replacement, swap, copy-on-write, mmap, slab allocator</td>
+</tr>
+<tr>
+<td><a href="../concepts/filesystem/">Filesystem</a></td>
+<td>Inodes, path resolution, hard/symbolic links, persistence, journaling, /proc virtual filesystem</td>
+</tr>
+<tr>
+<td><a href="../concepts/bootloader/">The Boot Chain</a></td>
+<td>Firmware POST, bootloader, kernel image, init process, dmesg</td>
+</tr>
+<tr>
+<td><a href="../concepts/kernel-and-syscalls/">Kernel and System Calls</a></td>
+<td>Boot sequence, lifecycle, syscall dispatch, number ranges</td>
+</tr>
+<tr>
+<td><a href="../concepts/shell/">The Shell</a></td>
+<td>Commands, pipes, redirection, loops, scripting, jobs, history, aliases, tab completion, env</td>
+</tr>
+<tr>
+<td><a href="../concepts/devices-and-networking/">Devices and Networking</a></td>
+<td>Device protocol, IPC, disk scheduling, sockets, DNS, HTTP</td>
+</tr>
+<tr>
+<td><a href="../concepts/interrupts/">Interrupts and Timers</a></td>
+<td>Interrupt controller, vectors, masking, timer, preemption</td>
+</tr>
+<tr>
+<td><a href="../concepts/tcp/">TCP: Reliable Delivery</a></td>
+<td>Three-way handshake, flow control, congestion control, retransmission</td>
+</tr>
+<tr>
+<td><a href="../concepts/users-and-safety/">Users and Safety</a></td>
+<td>Permissions, signals, logging, deadlock</td>
+</tr>
+<tr>
+<td><a href="../concepts/synchronization/">Synchronization</a></td>
+<td>Mutex, semaphore, condition variable, reader-writer lock, race conditions, deadlock prevention</td>
+</tr>
+<tr>
+<td><a href="../concepts/tutorials/">Interactive Tutorials</a></td>
+<td>Guided hands-on lessons using real syscalls</td>
+</tr>
+<tr>
+<td><a href="../concepts/web-ui/">Web UI</a></td>
+<td>Browser-based terminal via Flask</td>
+</tr>
+</tbody>
+</table>
+<h2 id="module-map">Module Map</h2>
+<p>Every source file and what it implements.</p>
+<h3 id="boot-layer">Boot Layer</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Class/Function</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>bootloader.py</code></td>
+<td><code>Bootloader</code></td>
+<td>Simulated firmware + bootloader: POST, load kernel image, boot kernel</td>
+</tr>
+<tr>
+<td><code>bootloader.py</code></td>
+<td><code>BootStage</code></td>
+<td>FIRMWARE / BOOTLOADER / KERNEL / USERSPACE stage enum</td>
+</tr>
+<tr>
+<td><code>bootloader.py</code></td>
+<td><code>PostResult</code></td>
+<td>Frozen dataclass capturing POST check outcomes</td>
+</tr>
+<tr>
+<td><code>bootloader.py</code></td>
+<td><code>KernelImage</code></td>
+<td>Frozen dataclass representing the kernel binary on disk</td>
+</tr>
+<tr>
+<td><code>bootloader.py</code></td>
+<td><code>BootError</code></td>
+<td>Raised when the boot chain cannot continue</td>
+</tr>
+</tbody>
+</table>
+<h3 id="kernel-layer">Kernel Layer</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Class/Function</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>kernel.py</code></td>
+<td><code>Kernel</code></td>
+<td>Central coordinator, boot/shutdown lifecycle, subsystem ownership</td>
+</tr>
+<tr>
+<td><code>kernel.py</code></td>
+<td><code>KernelState</code></td>
+<td>SHUTDOWN / BOOTING / RUNNING / SHUTTING_DOWN state machine</td>
+</tr>
+<tr>
+<td><code>kernel.py</code></td>
+<td><code>ExecutionMode</code></td>
+<td>USER / KERNEL privilege level (enforced at property access)</td>
+</tr>
+<tr>
+<td><code>kernel.py</code></td>
+<td><code>KernelModeError</code></td>
+<td>Raised when user-mode code accesses a kernel-only resource</td>
+</tr>
+<tr>
+<td><code>kernel.py</code></td>
+<td><code>kernel_mode()</code></td>
+<td>Context manager that switches to kernel mode and restores on exit</td>
+</tr>
+<tr>
+<td><code>kernel.py</code></td>
+<td><code>strace_enable()</code> / <code>strace_disable()</code></td>
+<td>Enable/disable syscall tracing</td>
+</tr>
+<tr>
+<td><code>kernel.py</code></td>
+<td><code>strace_log()</code> / <code>strace_clear()</code></td>
+<td>Read/clear the strace trace log</td>
+</tr>
+<tr>
+<td><code>kernel.py</code></td>
+<td><code>_sanitize_value()</code></td>
+<td>Format values for strace display (truncation, callable/bytes placeholders)</td>
+</tr>
+<tr>
+<td><code>syscalls.py</code></td>
+<td><code>dispatch_syscall()</code></td>
+<td>Trap handler -- routes syscall numbers to kernel subsystem handlers</td>
+</tr>
+<tr>
+<td><code>kernel.py</code></td>
+<td><code>dmesg()</code></td>
+<td>Return the kernel boot log (like Linux dmesg)</td>
+</tr>
+<tr>
+<td><code>kernel.py</code></td>
+<td><code>init_pid</code></td>
+<td>PID of the init process (root of process tree)</td>
+</tr>
+<tr>
+<td><code>syscalls.py</code></td>
+<td><code>SyscallNumber</code></td>
+<td>IntEnum of all syscall numbers (1-247)</td>
+</tr>
+<tr>
+<td><code>syscalls.py</code></td>
+<td><code>SyscallError</code></td>
+<td>User-facing exception wrapping internal errors</td>
+</tr>
+</tbody>
+</table>
+<h3 id="process-management">Process Management</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Class/Function</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>process/pcb.py</code></td>
+<td><code>Process</code></td>
+<td>PCB with five-state model, program/output/exit_code, thread management, effective_priority for PI, performance timing (wait_time, cpu_time, response_time, turnaround_time)</td>
+</tr>
+<tr>
+<td><code>process/pcb.py</code></td>
+<td><code>ProcessState</code></td>
+<td>NEW / READY / RUNNING / WAITING / TERMINATED</td>
+</tr>
+<tr>
+<td><code>process/scheduler.py</code></td>
+<td><code>Scheduler</code></td>
+<td>Per-CPU ready queue management, dispatch using pluggable policy, context_switches counter</td>
+</tr>
+<tr>
+<td><code>process/scheduler.py</code></td>
+<td><code>MultiCPUScheduler</code></td>
+<td>Wraps N per-CPU Schedulers with load balancing, CPU affinity, migration</td>
+</tr>
+<tr>
+<td><code>process/scheduler.py</code></td>
+<td><code>FCFSPolicy</code></td>
+<td>First Come, First Served scheduling</td>
+</tr>
+<tr>
+<td><code>process/scheduler.py</code></td>
+<td><code>RoundRobinPolicy</code></td>
+<td>Time-sliced scheduling with configurable quantum</td>
+</tr>
+<tr>
+<td><code>process/scheduler.py</code></td>
+<td><code>PriorityPolicy</code></td>
+<td>Highest-priority-first scheduling with FIFO tiebreaker</td>
+</tr>
+<tr>
+<td><code>process/scheduler.py</code></td>
+<td><code>AgingPriorityPolicy</code></td>
+<td>Priority scheduling with aging to prevent starvation</td>
+</tr>
+<tr>
+<td><code>process/scheduler.py</code></td>
+<td><code>MLFQPolicy</code></td>
+<td>Multilevel Feedback Queue with demotion and boost</td>
+</tr>
+<tr>
+<td><code>process/scheduler.py</code></td>
+<td><code>CFSPolicy</code></td>
+<td>Completely Fair Scheduler with weighted virtual runtime</td>
+</tr>
+<tr>
+<td><code>process/threads.py</code></td>
+<td><code>Thread</code></td>
+<td>Lightweight execution unit within a process</td>
+</tr>
+<tr>
+<td><code>process/signals.py</code></td>
+<td><code>Signal</code></td>
+<td>SIGKILL / SIGUSR1 / SIGUSR2 / SIGTERM / SIGCONT / SIGSTOP</td>
+</tr>
+<tr>
+<td><code>process/signals.py</code></td>
+<td><code>SignalAction</code></td>
+<td>TERMINATE / STOP / CONTINUE / IGNORE default actions</td>
+</tr>
+<tr>
+<td><code>process/signals.py</code></td>
+<td><code>DEFAULT_ACTIONS</code></td>
+<td>Maps every signal to its default action</td>
+</tr>
+<tr>
+<td><code>process/signals.py</code></td>
+<td><code>UNCATCHABLE</code></td>
+<td>frozenset of signals that cannot have handlers (SIGKILL, SIGSTOP)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="memory-management">Memory Management</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Class/Function</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>memory/manager.py</code></td>
+<td><code>MemoryManager</code></td>
+<td>Frame-based allocation with free set, page tables, and refcounting for COW</td>
+</tr>
+<tr>
+<td><code>memory/virtual.py</code></td>
+<td><code>VirtualMemory</code></td>
+<td>Per-process address space with page table translation and COW fault handling</td>
+</tr>
+<tr>
+<td><code>memory/mmap.py</code></td>
+<td><code>MmapRegion</code></td>
+<td>Frozen dataclass describing a memory-mapped file region</td>
+</tr>
+<tr>
+<td><code>memory/mmap.py</code></td>
+<td><code>MmapError</code></td>
+<td>Exception for mmap operation failures</td>
+</tr>
+<tr>
+<td><code>memory/slab.py</code></td>
+<td><code>SlabAllocator</code></td>
+<td>Registry of named slab caches backed by physical frames</td>
+</tr>
+<tr>
+<td><code>memory/slab.py</code></td>
+<td><code>SlabCache</code></td>
+<td>Pool of slabs for one fixed object size, auto-grows</td>
+</tr>
+<tr>
+<td><code>memory/slab.py</code></td>
+<td><code>Slab</code></td>
+<td>One physical frame divided into equal-sized object slots</td>
+</tr>
+<tr>
+<td><code>memory/slab.py</code></td>
+<td><code>SlabError</code></td>
+<td>Exception for slab operation failures</td>
+</tr>
+<tr>
+<td><code>memory/swap.py</code></td>
+<td><code>SwapSpace</code></td>
+<td>Key-value backing store for evicted pages</td>
+</tr>
+<tr>
+<td><code>memory/swap.py</code></td>
+<td><code>FIFOPolicy</code> / <code>LRUPolicy</code> / <code>ClockPolicy</code></td>
+<td>Page replacement strategies</td>
+</tr>
+<tr>
+<td><code>memory/swap.py</code></td>
+<td><code>Pager</code></td>
+<td>Demand paging orchestrator (page faults, eviction, swap I/O)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="filesystem">Filesystem</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Class/Function</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>fs/filesystem.py</code></td>
+<td><code>FileSystem</code></td>
+<td>Inode-based filesystem with path resolution, links, CRUD, and offset-based I/O</td>
+</tr>
+<tr>
+<td><code>fs/filesystem.py</code></td>
+<td><code>_Inode</code></td>
+<td>Internal metadata record (type, size, data, children, link_count)</td>
+</tr>
+<tr>
+<td><code>fs/filesystem.py</code></td>
+<td><code>FileType</code></td>
+<td>FILE / DIRECTORY / SYMLINK</td>
+</tr>
+<tr>
+<td><code>fs/filesystem.py</code></td>
+<td><code>MAX_SYMLINK_DEPTH</code></td>
+<td>Loop detection limit (40, matching Linux SYMLOOP_MAX)</td>
+</tr>
+<tr>
+<td><code>fs/fd.py</code></td>
+<td><code>FdTable</code></td>
+<td>Per-process table mapping fd numbers (&gt;= 3) to open file descriptions</td>
+</tr>
+<tr>
+<td><code>fs/fd.py</code></td>
+<td><code>OpenFileDescription</code></td>
+<td>Track an open file's path, mode, and current byte offset</td>
+</tr>
+<tr>
+<td><code>fs/fd.py</code></td>
+<td><code>FileMode</code></td>
+<td>READ / WRITE / READ_WRITE access modes</td>
+</tr>
+<tr>
+<td><code>fs/fd.py</code></td>
+<td><code>SeekWhence</code></td>
+<td>SET / CUR / END seek directions</td>
+</tr>
+<tr>
+<td><code>fs/fd.py</code></td>
+<td><code>FdError</code></td>
+<td>Exception for file descriptor operation failures</td>
+</tr>
+<tr>
+<td><code>fs/journal.py</code></td>
+<td><code>JournaledFileSystem</code></td>
+<td>Composition wrapper adding WAL logging to every filesystem mutation</td>
+</tr>
+<tr>
+<td><code>fs/journal.py</code></td>
+<td><code>Journal</code></td>
+<td>Write-ahead log managing transactions (begin/append/commit/abort)</td>
+</tr>
+<tr>
+<td><code>fs/journal.py</code></td>
+<td><code>JournalOp</code></td>
+<td>CREATE_FILE / CREATE_DIR / WRITE / WRITE_AT / DELETE / LINK / SYMLINK</td>
+</tr>
+<tr>
+<td><code>fs/journal.py</code></td>
+<td><code>TransactionState</code></td>
+<td>ACTIVE / COMMITTED / ABORTED</td>
+</tr>
+<tr>
+<td><code>fs/journal.py</code></td>
+<td><code>JournalEntry</code></td>
+<td>Single logged operation within a transaction</td>
+</tr>
+<tr>
+<td><code>fs/journal.py</code></td>
+<td><code>Transaction</code></td>
+<td>Atomic unit grouping journal entries</td>
+</tr>
+<tr>
+<td><code>fs/persistence.py</code></td>
+<td><code>dump_filesystem()</code></td>
+<td>Serialize filesystem to JSON</td>
+</tr>
+<tr>
+<td><code>fs/persistence.py</code></td>
+<td><code>load_filesystem()</code></td>
+<td>Deserialize filesystem from JSON</td>
+</tr>
+<tr>
+<td><code>fs/persistence.py</code></td>
+<td><code>dump_journaled_filesystem()</code></td>
+<td>Serialize journaled filesystem (fs + journal + checkpoint) to JSON</td>
+</tr>
+<tr>
+<td><code>fs/persistence.py</code></td>
+<td><code>load_journaled_filesystem()</code></td>
+<td>Deserialize journaled filesystem from JSON</td>
+</tr>
+<tr>
+<td><code>fs/procfs.py</code></td>
+<td><code>ProcFilesystem</code></td>
+<td>Virtual /proc filesystem generating content from live kernel state</td>
+</tr>
+<tr>
+<td><code>fs/procfs.py</code></td>
+<td><code>ProcError</code></td>
+<td>Exception for /proc operation failures</td>
+</tr>
+</tbody>
+</table>
+<h3 id="user-space">User Space</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Class/Function</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>shell.py</code></td>
+<td><code>Shell</code></td>
+<td>Command interpreter with pipes, redirection (<code>&gt;</code>, <code>&gt;&gt;</code>, <code>&lt;</code>, <code>2&gt;</code>), scripting (if/else, while/for loops), job control, background execution (<code>&amp;</code>)</td>
+</tr>
+<tr>
+<td><code>shell.py</code></td>
+<td><code>_Redirections</code></td>
+<td>Parsed I/O redirection operators from a command string</td>
+</tr>
+<tr>
+<td><code>completer.py</code></td>
+<td><code>Completer</code></td>
+<td>Context-aware tab completion for commands, subcommands, paths, programs, env vars, signals</td>
+</tr>
+<tr>
+<td><code>users.py</code></td>
+<td><code>UserManager</code></td>
+<td>User registry with auto-incrementing UIDs</td>
+</tr>
+<tr>
+<td><code>users.py</code></td>
+<td><code>FilePermissions</code></td>
+<td>Per-file owner/other read/write permission bits</td>
+</tr>
+<tr>
+<td><code>env.py</code></td>
+<td><code>Environment</code></td>
+<td>KEY=VALUE store with copy semantics</td>
+</tr>
+<tr>
+<td><code>jobs.py</code></td>
+<td><code>JobManager</code></td>
+<td>Background/foreground job tracking with output capture</td>
+</tr>
+</tbody>
+</table>
+<h3 id="io-and-networking">I/O and Networking</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Class/Function</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>io/devices.py</code></td>
+<td><code>DeviceManager</code></td>
+<td>Device registry with uniform read/write protocol</td>
+</tr>
+<tr>
+<td><code>io/devices.py</code></td>
+<td><code>NullDevice</code> / <code>ConsoleDevice</code> / <code>RandomDevice</code></td>
+<td>Built-in devices</td>
+</tr>
+<tr>
+<td><code>io/ipc.py</code></td>
+<td><code>Pipe</code></td>
+<td>Byte-stream channel (FIFO)</td>
+</tr>
+<tr>
+<td><code>io/ipc.py</code></td>
+<td><code>MessageQueue</code></td>
+<td>Typed generic message queue</td>
+</tr>
+<tr>
+<td><code>io/disk.py</code></td>
+<td><code>DiskScheduler</code></td>
+<td>Request queue with pluggable scheduling policy</td>
+</tr>
+<tr>
+<td><code>io/disk.py</code></td>
+<td><code>FCFSPolicy</code> / <code>SSTFPolicy</code> / <code>SCANPolicy</code> / <code>CSCANPolicy</code></td>
+<td>Disk I/O scheduling strategies</td>
+</tr>
+<tr>
+<td><code>io/shm.py</code></td>
+<td><code>SharedMemorySegment</code></td>
+<td>Named shared memory region (dataclass with frames, storage, attachments)</td>
+</tr>
+<tr>
+<td><code>io/shm.py</code></td>
+<td><code>SharedMemoryError</code></td>
+<td>Exception for shared memory operation failures</td>
+</tr>
+<tr>
+<td><code>io/dns.py</code></td>
+<td><code>DnsResolver</code></td>
+<td>Local phone book — register, look up, remove, list, flush hostname records</td>
+</tr>
+<tr>
+<td><code>io/dns.py</code></td>
+<td><code>DnsRecord</code></td>
+<td>Frozen dataclass — one hostname-to-IP (A record) mapping</td>
+</tr>
+<tr>
+<td><code>io/dns.py</code></td>
+<td><code>DnsError</code></td>
+<td>Exception for DNS operation failures</td>
+</tr>
+<tr>
+<td><code>io/networking.py</code></td>
+<td><code>SocketManager</code></td>
+<td>Socket lifecycle, connection routing, data buffers</td>
+</tr>
+<tr>
+<td><code>io/networking.py</code></td>
+<td><code>Socket</code> / <code>SocketState</code></td>
+<td>Endpoint with CREATED/BOUND/LISTENING/CONNECTED/CLOSED states</td>
+</tr>
+<tr>
+<td><code>io/networking.py</code></td>
+<td><code>SocketError</code></td>
+<td>Exception for socket operation failures</td>
+</tr>
+<tr>
+<td><code>io/http.py</code></td>
+<td><code>HttpMethod</code></td>
+<td>GET / POST request methods (StrEnum)</td>
+</tr>
+<tr>
+<td><code>io/http.py</code></td>
+<td><code>HttpStatus</code></td>
+<td>200 OK / 400 / 404 / 500 status codes (IntEnum)</td>
+</tr>
+<tr>
+<td><code>io/http.py</code></td>
+<td><code>HttpRequest</code> / <code>HttpResponse</code></td>
+<td>Frozen dataclasses for HTTP messages</td>
+</tr>
+<tr>
+<td><code>io/http.py</code></td>
+<td><code>HttpError</code></td>
+<td>Exception for HTTP operation failures</td>
+</tr>
+<tr>
+<td><code>io/http.py</code></td>
+<td><code>format_request()</code> / <code>parse_request()</code></td>
+<td>Serialize/deserialize HTTP requests</td>
+</tr>
+<tr>
+<td><code>io/http.py</code></td>
+<td><code>format_response()</code> / <code>parse_response()</code></td>
+<td>Serialize/deserialize HTTP responses</td>
+</tr>
+<tr>
+<td><code>io/interrupts.py</code></td>
+<td><code>InterruptController</code></td>
+<td>Manage interrupt vectors, handlers, and pending IRQs with priority-based servicing</td>
+</tr>
+<tr>
+<td><code>io/interrupts.py</code></td>
+<td><code>InterruptType</code></td>
+<td>TIMER / IO / SOFTWARE interrupt categories (StrEnum)</td>
+</tr>
+<tr>
+<td><code>io/interrupts.py</code></td>
+<td><code>InterruptPriority</code></td>
+<td>LOW / NORMAL / HIGH / CRITICAL priority levels (IntEnum)</td>
+</tr>
+<tr>
+<td><code>io/interrupts.py</code></td>
+<td><code>InterruptVector</code></td>
+<td>Frozen dataclass describing a registered vector (number, type, priority)</td>
+</tr>
+<tr>
+<td><code>io/interrupts.py</code></td>
+<td><code>InterruptRequest</code></td>
+<td>Frozen dataclass for a queued IRQ (vector, type, priority, data, timestamp)</td>
+</tr>
+<tr>
+<td><code>io/interrupts.py</code></td>
+<td><code>VECTOR_TIMER</code> / <code>VECTOR_IO_BASE</code></td>
+<td>Well-known vector numbers (0 and 16)</td>
+</tr>
+<tr>
+<td><code>io/timer.py</code></td>
+<td><code>TimerDevice</code></td>
+<td>Programmable interval timer — fires VECTOR_TIMER interrupt every N ticks</td>
+</tr>
+<tr>
+<td><code>io/tcp.py</code></td>
+<td><code>TcpState</code></td>
+<td>11-state TCP connection state machine (StrEnum)</td>
+</tr>
+<tr>
+<td><code>io/tcp.py</code></td>
+<td><code>TcpFlag</code></td>
+<td>SYN / ACK / FIN / RST segment flags (StrEnum)</td>
+</tr>
+<tr>
+<td><code>io/tcp.py</code></td>
+<td><code>TcpSegment</code></td>
+<td>Frozen dataclass for a TCP segment (ports, seq/ack numbers, flags, window, payload)</td>
+</tr>
+<tr>
+<td><code>io/tcp.py</code></td>
+<td><code>TcpConnection</code></td>
+<td>One endpoint: state machine, seq tracking, flow control, congestion control (slow start + AIMD), retransmission</td>
+</tr>
+<tr>
+<td><code>io/tcp.py</code></td>
+<td><code>TcpStack</code></td>
+<td>Manage multiple TCP connections, listener queues, segment routing, retransmission ticks</td>
+</tr>
+</tbody>
+</table>
+<h3 id="synchronization">Synchronization</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Class/Function</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>sync/inheritance.py</code></td>
+<td><code>PriorityInheritanceManager</code></td>
+<td>Coordinate priority inheritance across mutexes, prevent priority inversion</td>
+</tr>
+<tr>
+<td><code>sync/primitives.py</code></td>
+<td><code>Mutex</code></td>
+<td>Mutual exclusion lock with owner tracking, FIFO wait queue, and <code>waiters</code> property</td>
+</tr>
+<tr>
+<td><code>sync/primitives.py</code></td>
+<td><code>Semaphore</code></td>
+<td>Counting semaphore with optional max bound</td>
+</tr>
+<tr>
+<td><code>sync/primitives.py</code></td>
+<td><code>Condition</code></td>
+<td>Condition variable (wait/notify) paired with a mutex</td>
+</tr>
+<tr>
+<td><code>sync/primitives.py</code></td>
+<td><code>ReadWriteLock</code></td>
+<td>Reader-writer lock with writer-preference and batch reader wake</td>
+</tr>
+<tr>
+<td><code>sync/primitives.py</code></td>
+<td><code>SyncManager</code></td>
+<td>Registry for all sync primitives (mutexes, semaphores, conditions, rwlocks)</td>
+</tr>
+<tr>
+<td><code>sync/ordering.py</code></td>
+<td><code>OrderingMode</code></td>
+<td>STRICT / WARN / OFF enforcement modes for resource ordering</td>
+</tr>
+<tr>
+<td><code>sync/ordering.py</code></td>
+<td><code>OrderingViolation</code></td>
+<td>Frozen dataclass recording a single ordering violation</td>
+</tr>
+<tr>
+<td><code>sync/ordering.py</code></td>
+<td><code>ResourceOrderingManager</code></td>
+<td>Enforce resource acquisition ordering to prevent circular wait (deadlock prevention)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="observability">Observability</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Class/Function</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>logging.py</code></td>
+<td><code>Logger</code></td>
+<td>Ring buffer of structured log entries</td>
+</tr>
+<tr>
+<td><code>logging.py</code></td>
+<td><code>LogLevel</code></td>
+<td>DEBUG / INFO / WARNING / ERROR (IntEnum)</td>
+</tr>
+<tr>
+<td><code>sync/deadlock.py</code></td>
+<td><code>ResourceManager</code></td>
+<td>Banker's algorithm matrices, deadlock detection</td>
+</tr>
+<tr>
+<td><code>repl.py</code></td>
+<td><code>run()</code></td>
+<td>Interactive terminal with bootloader chain and dynamic boot banner</td>
+</tr>
+<tr>
+<td><code>repl.py</code></td>
+<td><code>format_boot_log()</code></td>
+<td>Format boot log messages into a displayable banner</td>
+</tr>
+</tbody>
+</table>
+<h3 id="tutorials">Tutorials</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Class/Function</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>tutorials.py</code></td>
+<td><code>TutorialRunner</code></td>
+<td>Guided, hands-on lessons that use real syscalls with educational commentary</td>
+</tr>
+<tr>
+<td><code>tutorials.py</code></td>
+<td><code>list_lessons()</code></td>
+<td>Return sorted list of available lesson names</td>
+</tr>
+<tr>
+<td><code>tutorials.py</code></td>
+<td><code>run(name)</code></td>
+<td>Execute a single lesson by name</td>
+</tr>
+<tr>
+<td><code>tutorials.py</code></td>
+<td><code>run_all()</code></td>
+<td>Execute every lesson in recommended order</td>
+</tr>
+</tbody>
+</table>
+<h3 id="web-frontend">Web Frontend</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Class/Function</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>web/app.py</code></td>
+<td><code>create_app()</code></td>
+<td>Flask application factory — boots kernel, creates shell, wires routes</td>
+</tr>
+<tr>
+<td><code>web/app.py</code></td>
+<td><code>main()</code></td>
+<td>Console entry point for <code>py-os-web</code> development server</td>
+</tr>
+<tr>
+<td><code>web/templates/index.html</code></td>
+<td>—</td>
+<td>Single-page terminal UI with dark theme</td>
+</tr>
+<tr>
+<td><code>web/static/style.css</code></td>
+<td>—</td>
+<td>Dark terminal aesthetic (green on dark blue)</td>
+</tr>
+<tr>
+<td><code>web/static/terminal.js</code></td>
+<td>—</td>
+<td>Command input, history (Up/Down), fetch API calls</td>
+</tr>
+</tbody>
+</table>
+<h2 id="syscall-number-ranges">Syscall Number Ranges</h2>
+<table>
+<thead>
+<tr>
+<th>Range</th>
+<th>Category</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1-8</td>
+<td>Process operations (create, terminate, list, fork, threads, wait, waitpid)</td>
+</tr>
+<tr>
+<td>10-19</td>
+<td>Filesystem operations (create, read, write, delete, list, open, close, read_fd, write_fd)</td>
+</tr>
+<tr>
+<td>20</td>
+<td>Memory info</td>
+</tr>
+<tr>
+<td>21-23</td>
+<td>Memory-mapped files (mmap, munmap, msync)</td>
+</tr>
+<tr>
+<td>24-27</td>
+<td>Slab allocator (create cache, alloc, free, info)</td>
+</tr>
+<tr>
+<td>28</td>
+<td>File descriptor seek</td>
+</tr>
+<tr>
+<td>34-36</td>
+<td>Link operations (link, symlink, readlink)</td>
+</tr>
+<tr>
+<td>30-33</td>
+<td>User operations (whoami, create, list, switch)</td>
+</tr>
+<tr>
+<td>40-42</td>
+<td>Device operations (read, write, list)</td>
+</tr>
+<tr>
+<td>50</td>
+<td>Logging</td>
+</tr>
+<tr>
+<td>60-61</td>
+<td>Signal operations (send, register handler)</td>
+</tr>
+<tr>
+<td>70-73</td>
+<td>Environment variables</td>
+</tr>
+<tr>
+<td>80</td>
+<td>System info</td>
+</tr>
+<tr>
+<td>90</td>
+<td>Deadlock detection</td>
+</tr>
+<tr>
+<td>91-93</td>
+<td>Deadlock prevention (resource ordering)</td>
+</tr>
+<tr>
+<td>100-101</td>
+<td>Process execution (exec, run)</td>
+</tr>
+<tr>
+<td>110-119, 122-125</td>
+<td>Synchronization (mutex, semaphore, condition, reader-writer lock)</td>
+</tr>
+<tr>
+<td>120-121</td>
+<td>Scheduler operations (policy switching, MLFQ boost)</td>
+</tr>
+<tr>
+<td>130-133</td>
+<td>Journal operations (status, checkpoint, recover, crash)</td>
+</tr>
+<tr>
+<td>140-146</td>
+<td>Shared memory IPC (create, attach, detach, destroy, write, read, list)</td>
+</tr>
+<tr>
+<td>150-154</td>
+<td>DNS operations (register, lookup, remove, list, flush)</td>
+</tr>
+<tr>
+<td>160-168</td>
+<td>Socket operations (create, bind, listen, connect, accept, send, recv, close, list)</td>
+</tr>
+<tr>
+<td>170-171</td>
+<td>/proc virtual filesystem (read, list)</td>
+</tr>
+<tr>
+<td>172-173</td>
+<td>Performance metrics (read, reset)</td>
+</tr>
+<tr>
+<td>180-183</td>
+<td>Strace operations (enable, disable, log, clear)</td>
+</tr>
+<tr>
+<td>190-203</td>
+<td>Kernel-mode helpers (shutdown, scheduler info, lstat, sync listing, fd listing, resource listing, PI status, ordering violations, destroy mutex, dispatch, process info, strace status)</td>
+</tr>
+<tr>
+<td>210-211</td>
+<td>Boot info (dmesg boot log, boot metadata)</td>
+</tr>
+<tr>
+<td>220-224</td>
+<td>Multi-CPU operations (cpu info, set/get affinity, balance, migrate)</td>
+</tr>
+<tr>
+<td>230-235</td>
+<td>Interrupt and timer operations (tick, interrupt list/mask/unmask, timer info/set interval)</td>
+</tr>
+<tr>
+<td>240-247</td>
+<td>TCP operations (connect, send, recv, close, info, list, listen, accept)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="strategy-pattern-usage">Strategy Pattern Usage</h2>
+<p>The Strategy pattern appears in three subsystems, always with the same structure: a <strong>mechanism</strong> (the manager class) delegates to a <strong>policy</strong> (a swappable protocol implementation).</p>
+<table>
+<thead>
+<tr>
+<th>Subsystem</th>
+<th>Mechanism</th>
+<th>Policies</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CPU Scheduling</td>
+<td><code>Scheduler</code></td>
+<td><code>FCFSPolicy</code>, <code>RoundRobinPolicy</code>, <code>PriorityPolicy</code>, <code>AgingPriorityPolicy</code>, <code>MLFQPolicy</code>, <code>CFSPolicy</code></td>
+</tr>
+<tr>
+<td>Page Replacement</td>
+<td><code>Pager</code></td>
+<td><code>FIFOPolicy</code>, <code>LRUPolicy</code>, <code>ClockPolicy</code></td>
+</tr>
+<tr>
+<td>Disk Scheduling</td>
+<td><code>DiskScheduler</code></td>
+<td><code>FCFSPolicy</code>, <code>SSTFPolicy</code>, <code>SCANPolicy</code>, <code>CSCANPolicy</code></td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.expand", "search.highlight"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

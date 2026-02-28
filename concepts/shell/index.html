@@ -1,0 +1,2403 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A simulated operating system built in Python for learning OS concepts">
+      
+      
+      
+        <link rel="canonical" href="https://robcox2910.github.io/py-os/concepts/shell/">
+      
+      
+        <link rel="prev" href="../kernel-and-syscalls/">
+      
+      
+        <link rel="next" href="../devices-and-networking/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.3">
+    
+    
+      
+        <title>The Shell - PyOS</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#the-shell" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="PyOS" class="md-header__button md-logo" aria-label="PyOS" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            PyOS
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              The Shell
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/robcox2910/py-os" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    robcox2910/py-os
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="PyOS" class="md-nav__button md-logo" aria-label="PyOS" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    PyOS
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/robcox2910/py-os" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    robcox2910/py-os
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../what-is-an-os/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What Is an OS?
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../processes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Processes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../memory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memory
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../filesystem/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Filesystem
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kernel-and-syscalls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Kernel
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Shell
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Shell
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Commands
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pipes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pipes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#redirection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Redirection
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Redirection">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#output-redirection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Output redirection (&gt;)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#append-redirection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Append redirection (&gt;&gt;)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input-redirection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Input redirection (&lt;)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#error-redirection-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error redirection (2&gt;)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#redirection-and-pipes-together" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Redirection and pipes together
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#all-redirection-operators" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        All redirection operators
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vocabulary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Vocabulary
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#loops" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Loops
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Loops">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#while-loops" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        While loops
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#for-loops" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        For loops
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nesting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Nesting
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#safety-net" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Safety net
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#all-loop-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        All loop commands
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vocabulary_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Vocabulary
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scripting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scripting
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#job-control" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Job Control
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Job Control">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-operator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The &amp; operator
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#retrieving-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Retrieving output
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#all-job-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        All job commands
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vocabulary_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Vocabulary
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#history-and-aliases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        History and Aliases
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="History and Aliases">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#history" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        History
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#aliases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Aliases
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tab-completion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tab Completion
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tab Completion">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#vocabulary_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Vocabulary
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#environment-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Environment Variables
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#putting-it-all-together" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Putting It All Together
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devices-and-networking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Devices and Networking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../users-and-safety/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Users and Safety
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../synchronization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Synchronization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bootloader/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Boot Chain
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interactive Tutorials
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../web-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Web UI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Commands
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pipes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pipes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#redirection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Redirection
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Redirection">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#output-redirection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Output redirection (&gt;)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#append-redirection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Append redirection (&gt;&gt;)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input-redirection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Input redirection (&lt;)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#error-redirection-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error redirection (2&gt;)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#redirection-and-pipes-together" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Redirection and pipes together
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#all-redirection-operators" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        All redirection operators
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vocabulary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Vocabulary
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#loops" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Loops
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Loops">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#while-loops" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        While loops
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#for-loops" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        For loops
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nesting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Nesting
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#safety-net" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Safety net
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#all-loop-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        All loop commands
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vocabulary_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Vocabulary
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scripting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scripting
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#job-control" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Job Control
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Job Control">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-operator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The &amp; operator
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#retrieving-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Retrieving output
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#all-job-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        All job commands
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vocabulary_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Vocabulary
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#history-and-aliases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        History and Aliases
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="History and Aliases">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#history" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        History
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#aliases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Aliases
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tab-completion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tab Completion
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tab Completion">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#vocabulary_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Vocabulary
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#environment-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Environment Variables
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#putting-it-all-together" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Putting It All Together
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="the-shell">The Shell</h1>
+<p>You know how when you walk into a hotel, you don't just wander into the back
+office, open filing cabinets, and flip light switches yourself? You go to the
+front desk and tell the receptionist what you need. "I'd like to check in."
+"Can I get extra towels?" The receptionist listens, translates your request
+into whatever the hotel's internal system requires, and comes back with an
+answer.</p>
+<p>The <strong>shell</strong> is the receptionist of your operating system.</p>
+<p>You type commands. The shell reads what you typed, figures out what you're
+asking for, and passes the request to the <a href="../kernel-and-syscalls/">kernel</a>
+through system calls. The kernel does the real work, and the shell hands the
+result back to you as text.</p>
+<p>Here's the important rule: the shell <em>never</em> touches the kernel's internals
+directly. It doesn't reach into the filesystem, it doesn't poke the scheduler,
+it doesn't fiddle with memory. It always goes through the official front door
+-- system calls. This keeps things clean and safe, just like how the
+receptionist uses the hotel's booking system instead of personally moving
+furniture between rooms.</p>
+<p>In fact, the kernel <strong>enforces</strong> this. The shell runs in <strong>user mode</strong>, where
+accessing kernel subsystems directly raises an error. The only way to get
+anything done is through <code>kernel.syscall(...)</code>, which temporarily switches to
+<strong>kernel mode</strong> for the duration of the request. See
+<a href="../kernel-and-syscalls/#8-user-mode-vs-kernel-mode">User Mode vs Kernel Mode</a>
+for the full story.</p>
+<p>One more thing to know: everything the shell gives back to you is a <strong>string</strong>
+(text). Even a list of processes or a count of files comes back as plain text.
+That turns out to be really powerful, as you'll see when we get to pipes.</p>
+<h2 id="commands">Commands</h2>
+<p>So how does the shell know what <code>ls</code> or <code>mkdir</code> means? It uses something
+called a <strong>dispatch table</strong>. That's a fancy name for a Python dictionary that
+maps command names to functions.</p>
+<p>It looks something like this:</p>
+<pre><code class="language-python">commands = {
+    &quot;ls&quot;:    self._cmd_ls,
+    &quot;mkdir&quot;: self._cmd_mkdir,
+    &quot;cat&quot;:   self._cmd_cat,
+    # ... and so on
+}
+</code></pre>
+<p>When you type <code>ls /</code>, the shell splits that into the command name (<code>ls</code>) and
+the arguments (<code>/</code>). It looks up <code>"ls"</code> in the dictionary, finds the matching
+function, and calls it with the arguments. Done.</p>
+<p>Want to add a brand new command to PyOS? Write a function that does the thing,
+then add one line to the dictionary. That's it. No long chain of
+<code>if</code>/<code>elif</code>/<code>else</code> -- just a clean dictionary lookup.</p>
+<p>Here are the commands grouped by what they do. You don't need to memorize them
+-- just know they exist so you can come back and look them up.</p>
+<p><strong>Files</strong> -- working with files and directories:</p>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ls</code></td>
+<td>List the contents of a directory</td>
+</tr>
+<tr>
+<td><code>mkdir</code></td>
+<td>Create a new directory</td>
+</tr>
+<tr>
+<td><code>touch</code></td>
+<td>Create an empty file</td>
+</tr>
+<tr>
+<td><code>cat</code></td>
+<td>Read and display a file's contents</td>
+</tr>
+<tr>
+<td><code>write</code></td>
+<td>Write text into a file</td>
+</tr>
+<tr>
+<td><code>rm</code></td>
+<td>Remove (delete) a file or directory</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Processes</strong> -- managing running programs:</p>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ps</code></td>
+<td>List all running processes</td>
+</tr>
+<tr>
+<td><code>kill</code></td>
+<td>Terminate a process by its PID</td>
+</tr>
+<tr>
+<td><code>fork</code></td>
+<td>Create a copy of an existing process</td>
+</tr>
+<tr>
+<td><code>pstree</code></td>
+<td>Show the parent-child process tree</td>
+</tr>
+<tr>
+<td><code>threads</code></td>
+<td>List the threads inside a process</td>
+</tr>
+<tr>
+<td><code>run</code></td>
+<td>Create a process and run a built-in program</td>
+</tr>
+<tr>
+<td><code>wait</code></td>
+<td>Wait for any child process to finish and collect its exit code</td>
+</tr>
+<tr>
+<td><code>waitpid</code></td>
+<td>Wait for a specific child process to finish</td>
+</tr>
+<tr>
+<td><code>signal</code></td>
+<td>Send a signal (like SIGTERM or SIGKILL) to a process</td>
+</tr>
+<tr>
+<td><code>handle</code></td>
+<td>Register a custom signal handler for a process</td>
+</tr>
+<tr>
+<td><code>taskset</code></td>
+<td>Show or set a process's CPU affinity (which CPUs it can run on)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Users</strong> -- who's using the system:</p>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>whoami</code></td>
+<td>Show the current user</td>
+</tr>
+<tr>
+<td><code>adduser</code></td>
+<td>Create a new user</td>
+</tr>
+<tr>
+<td><code>su</code></td>
+<td>Switch to a different user</td>
+</tr>
+</tbody>
+</table>
+<p><strong>System</strong> -- checking on the OS itself:</p>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>top</code></td>
+<td>Show a system status dashboard (memory, processes, uptime)</td>
+</tr>
+<tr>
+<td><code>log</code></td>
+<td>Display recent log entries</td>
+</tr>
+<tr>
+<td><code>env</code></td>
+<td>List all environment variables</td>
+</tr>
+<tr>
+<td><code>export</code></td>
+<td>Set an environment variable</td>
+</tr>
+<tr>
+<td><code>history</code></td>
+<td>Show every command you've typed this session</td>
+</tr>
+<tr>
+<td><code>perf</code></td>
+<td>Show performance metrics (context switches, wait time, throughput)</td>
+</tr>
+<tr>
+<td><code>strace</code></td>
+<td>Syscall tracing: on, off, show, clear, demo</td>
+</tr>
+<tr>
+<td><code>dmesg</code></td>
+<td>Display the kernel boot log</td>
+</tr>
+<tr>
+<td><code>exit</code></td>
+<td>Shut down the kernel and leave the shell</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Synchronization</strong> -- managing shared resources:</p>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>mutex</code></td>
+<td>Create, acquire, release, or list mutexes</td>
+</tr>
+<tr>
+<td><code>semaphore</code></td>
+<td>Create, acquire, release, or list semaphores</td>
+</tr>
+<tr>
+<td><code>rwlock</code></td>
+<td>Create, acquire, release, or list reader-writer locks</td>
+</tr>
+<tr>
+<td><code>pi</code></td>
+<td>Priority inheritance demo and status</td>
+</tr>
+<tr>
+<td><code>ordering</code></td>
+<td>Deadlock prevention: register ranks, set mode, view violations, demo</td>
+</tr>
+<tr>
+<td><code>shm</code></td>
+<td>Shared memory: create, attach, detach, write, read, list, destroy, demo</td>
+</tr>
+<tr>
+<td><code>dns</code></td>
+<td>DNS: register, lookup, remove, list, flush, demo</td>
+</tr>
+<tr>
+<td><code>socket</code></td>
+<td>Raw sockets: create, bind, listen, connect, accept, send, recv, close, list</td>
+</tr>
+<tr>
+<td><code>http</code></td>
+<td>HTTP protocol demo (request/response over sockets)</td>
+</tr>
+<tr>
+<td><code>proc</code></td>
+<td>/proc virtual filesystem demo (live kernel state as files)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Virtual filesystem</strong> -- inspecting the system through /proc:</p>
+<p><code>cat</code> and <code>ls</code> automatically detect <code>/proc</code> paths and read from the
+virtual filesystem instead of the real one. For example:</p>
+<pre><code>cat /proc/meminfo       -- memory statistics
+cat /proc/uptime        -- system uptime
+cat /proc/stat          -- performance metrics (context switches, throughput)
+ls /proc                -- list all /proc entries
+ls /proc/42             -- list files for process 42
+cat /proc/42/status     -- process 42's details
+cat /proc/42/sched      -- per-process timing (wait, CPU, response, turnaround)
+</code></pre>
+<p><strong>Scheduling</strong> -- controlling how processes share the CPU:</p>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>scheduler</code></td>
+<td>Switch scheduling policies, view settings, or trigger load balancing</td>
+</tr>
+<tr>
+<td><code>cpu</code></td>
+<td>Show per-CPU status (policy, queue size, current process)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Storage</strong> -- crash recovery and disk management:</p>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>journal</code></td>
+<td>Show the write-ahead log status for crash recovery</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Learning and monitoring</strong> -- explore the OS in action:</p>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>learn</code></td>
+<td>Interactive tutorials (processes, memory, filesystem, scheduling, signals, ipc, networking)</td>
+</tr>
+<tr>
+<td><code>benchmark</code></td>
+<td>Compare scheduling policies with timed workloads (run cpu|io|mixed, demo)</td>
+</tr>
+<tr>
+<td><code>dashboard</code></td>
+<td>ASCII system visualization (cpu, memory, processes, fs)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="pipes">Pipes</h2>
+<p>Imagine an assembly line in a factory. The first worker makes a part, then
+slides it down the conveyor belt to the second worker, who modifies it, who
+slides it to the third worker, who counts the results. Each worker does one
+small job, and together they produce the final product.</p>
+<p>Pipes work exactly like that. The <code>|</code> character connects commands so that the
+output of one becomes the input of the next.</p>
+<pre><code>ls / | grep txt | wc
+</code></pre>
+<p>Here's what happens step by step:</p>
+<ol>
+<li><code>ls /</code> lists all the files in the root directory. Its output is a bunch of
+   lines of text.</li>
+<li>That text slides down the pipe to <code>grep txt</code>, which reads every line and
+   keeps only the ones containing "txt". Everything else gets thrown away.</li>
+<li>The filtered lines slide down another pipe to <code>wc</code>, which counts how many
+   lines it received and prints the total.</li>
+</ol>
+<p>Three tiny tools, each doing one thing well, connected together to answer the
+question "how many files in <code>/</code> have 'txt' in their name?"</p>
+<p>This idea has a name: the <strong>Unix philosophy</strong>. Build small, focused tools that
+each do one thing, then connect them with pipes to solve bigger problems. It's
+like building with LEGO bricks -- each brick is simple, but you can combine
+them into anything.</p>
+<p>Remember how the shell returns everything as strings? That's why pipes work so
+smoothly. Since every command produces text, any command's output can become
+any other command's input.</p>
+<h2 id="redirection">Redirection</h2>
+<p>Pipes connect commands to each other. But what if you want to send a command's
+output to a <strong>file</strong> instead? Or read a command's input from a file instead of
+typing it? That's what <strong>redirection</strong> does.</p>
+<p>Think of it like mail. Normally, when a command finishes, it hands you the
+result directly -- like someone handing you a letter. Redirection says "don't
+hand it to me, put it in that mailbox over there instead."</p>
+<h3 id="output-redirection">Output redirection (<code>&gt;</code>)</h3>
+<p>The <code>&gt;</code> operator takes a command's output and writes it into a file:</p>
+<pre><code>echo hello &gt; /greeting.txt
+cat /greeting.txt
+</code></pre>
+<p>The first command writes "hello" into <code>/greeting.txt</code>. The second reads it
+back. Notice that <code>echo hello &gt;</code> showed nothing on screen -- the output went
+to the file instead of being displayed.</p>
+<p>If the file doesn't exist, <code>&gt;</code> creates it. If it already exists, <code>&gt;</code> <strong>erases
+everything in it</strong> and writes the new content. It's like ripping out all the
+pages of a notebook and starting fresh.</p>
+<h3 id="append-redirection">Append redirection (<code>&gt;&gt;</code>)</h3>
+<p>What if you don't want to erase the file? Use <code>&gt;&gt;</code> to <strong>add</strong> to the end:</p>
+<pre><code>echo dear diary &gt;&gt; /diary.txt
+echo today was great &gt;&gt; /diary.txt
+</code></pre>
+<p>Think of <code>&gt;&gt;</code> as "keep writing where I left off" and <code>&gt;</code> as "start a brand new
+page." If you're building a log file where you want to add entries over time,
+<code>&gt;&gt;</code> is what you want.</p>
+<h3 id="input-redirection">Input redirection (<code>&lt;</code>)</h3>
+<p>The <code>&lt;</code> operator goes the other direction. Instead of redirecting output, it
+redirects <strong>input</strong> -- it feeds the contents of a file into a command:</p>
+<pre><code>grep apple &lt; /fruits.txt
+</code></pre>
+<p>This is like saying "open that file and read it out loud to <code>grep</code>." The
+<code>grep</code> command then filters the lines just like it would with piped input. It
+works with any pipe-aware command like <code>grep</code> or <code>wc</code>:</p>
+<pre><code>wc &lt; /fruits.txt
+</code></pre>
+<p>You can even combine input and output redirection:</p>
+<pre><code>grep apple &lt; /fruits.txt &gt; /results.txt
+</code></pre>
+<p>That reads from <code>/fruits.txt</code>, filters for lines containing "apple", and writes
+the matching lines into <code>/results.txt</code>.</p>
+<h3 id="error-redirection-2">Error redirection (<code>2&gt;</code>)</h3>
+<p>Sometimes a command fails. When that happens, the shell produces an <strong>error
+message</strong> instead of normal output. The <code>2&gt;</code> operator captures those error
+messages and sends them to a file:</p>
+<pre><code>cat /nonexistent 2&gt; /errors.txt
+</code></pre>
+<p>If <code>/nonexistent</code> doesn't exist, the error message goes into <code>/errors.txt</code>
+instead of being displayed. Normal (successful) output is unaffected -- <code>2&gt;</code>
+only catches errors.</p>
+<p>Think of it like sorting mail. You have two piles: one for regular letters
+(normal output) and one for bills and complaints (errors). The <code>&gt;</code> operator
+redirects the regular pile, and <code>2&gt;</code> redirects the complaints pile. You can
+even use both at once:</p>
+<pre><code>ls / &gt; /output.txt 2&gt; /errors.txt
+</code></pre>
+<p><strong>Why the <code>2</code>?</strong> In real Unix systems, every program has numbered channels
+called <strong>file descriptors</strong>. Channel 1 is "standard output" (stdout) and
+channel 2 is "standard error" (stderr). So <code>2&gt;</code> literally means "redirect
+channel 2." PyOS simulates this by looking at whether the output string starts
+with "Error:" -- if it does, it's treated as stderr.</p>
+<h3 id="redirection-and-pipes-together">Redirection and pipes together</h3>
+<p>You can combine redirection with pipes. Redirection applies to whatever stage
+it appears in:</p>
+<pre><code>ls / | grep txt &gt; /matches.txt
+</code></pre>
+<p>Here, <code>ls /</code> produces a listing, the pipe feeds it to <code>grep txt</code>, and then <code>&gt;</code>
+sends grep's filtered output to a file.</p>
+<p><strong>Limitation:</strong> You can't combine redirection with background execution (<code>&amp;</code>).
+If you try <code>echo hello &gt; /out.txt &amp;</code>, you'll get an error. This keeps things
+simple -- the interaction between backgrounding and file I/O adds complexity
+that belongs in a later feature.</p>
+<h3 id="all-redirection-operators">All redirection operators</h3>
+<table>
+<thead>
+<tr>
+<th>Operator</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>&gt;</code></td>
+<td>Write output to a file (create or overwrite)</td>
+</tr>
+<tr>
+<td><code>&gt;&gt;</code></td>
+<td>Append output to a file (create if needed)</td>
+</tr>
+<tr>
+<td><code>&lt;</code></td>
+<td>Read input from a file</td>
+</tr>
+<tr>
+<td><code>2&gt;</code></td>
+<td>Write error output to a file</td>
+</tr>
+</tbody>
+</table>
+<h3 id="vocabulary">Vocabulary</h3>
+<ul>
+<li><strong>Redirection</strong> -- routing a command's input or output to/from a file instead
+  of the screen</li>
+<li><strong>Standard output (stdout)</strong> -- the normal output channel (file descriptor 1)</li>
+<li><strong>Standard error (stderr)</strong> -- the error output channel (file descriptor 2)</li>
+<li><strong>Overwrite</strong> -- <code>&gt;</code> replaces the file's contents completely</li>
+<li><strong>Append</strong> -- <code>&gt;&gt;</code> adds to the end of the file without erasing</li>
+</ul>
+<h2 id="loops">Loops</h2>
+<p>Imagine you have a big stack of trading cards and you need to sort them. You
+wouldn't write a separate instruction for each card -- you'd say "keep doing
+this until the stack is empty" or "do this for every card in the pile." That's
+what loops do in a script: they repeat a block of commands automatically.</p>
+<h3 id="while-loops">While loops</h3>
+<p>A while loop is like a traffic light. Keep going as long as the light is green.
+The moment it turns red, stop.</p>
+<pre><code class="language-bash">while cat /flag
+do
+  echo &quot;still going&quot;
+  rm /flag
+done
+</code></pre>
+<p>Here's what happens:</p>
+<ol>
+<li>The shell runs <code>cat /flag</code>. If it succeeds (the file exists), the light is
+   "green" -- enter the loop body.</li>
+<li>Inside the body, we echo a message and delete the flag file.</li>
+<li>Back to the top: try <code>cat /flag</code> again. This time it fails (file is gone),
+   so the light turns "red" and the loop stops.</li>
+</ol>
+<p>The condition is checked <strong>every time</strong> before entering the body. If the
+condition fails on the very first check, the body never runs at all -- just like
+a red light stopping you before you even start.</p>
+<p><strong>Important:</strong> The condition is re-expanded each iteration. If you use <code>$VAR</code>
+in the condition, it picks up the latest value of that variable every time
+around the loop. This is how you can change a variable inside the body and have
+the condition notice.</p>
+<h3 id="for-loops">For loops</h3>
+<p>A for loop is like taking attendance at school. The teacher has a list of names,
+and for each name on the list, they call it out and mark it down.</p>
+<pre><code class="language-bash">for FRUIT in apple banana cherry
+do
+  echo $FRUIT
+done
+</code></pre>
+<p>This outputs:</p>
+<pre><code>apple
+banana
+cherry
+</code></pre>
+<p>The shell takes each item after <code>in</code>, assigns it to the variable <code>FRUIT</code>, and
+runs the body once. Then it assigns the next item and runs the body again, until
+the list is exhausted.</p>
+<p>You can use a variable for the list, too:</p>
+<pre><code class="language-bash">export COLORS=&quot;red green blue&quot;
+for C in $COLORS
+do
+  echo $C
+done
+</code></pre>
+<p>The <code>$COLORS</code> variable gets expanded to <code>red green blue</code>, and the loop iterates
+over those three words.</p>
+<h3 id="nesting">Nesting</h3>
+<p>Loops can go inside other loops, and loops can go inside <code>if</code> blocks (and vice
+versa). Think of Russian nesting dolls -- each doll can contain another doll
+inside.</p>
+<pre><code class="language-bash">for DIR in /data /logs
+do
+  mkdir $DIR
+  for FILE in a.txt b.txt
+  do
+    touch $DIR/$FILE
+  done
+done
+</code></pre>
+<p>This creates two directories and puts two files in each one. The outer loop runs
+twice (once for <code>/data</code>, once for <code>/logs</code>), and for each outer iteration, the
+inner loop runs twice (once for <code>a.txt</code>, once for <code>b.txt</code>). Total: four files
+created.</p>
+<p>You can also put a while loop inside a for loop, an if inside a while, or any
+combination. The shell handles nesting by running each inner block as its own
+mini-script -- the same technique that makes the whole scripting engine work.</p>
+<h3 id="safety-net">Safety net</h3>
+<p>What if you accidentally write a while loop whose condition never fails?</p>
+<pre><code class="language-bash">while cat /always-exists
+do
+  echo &quot;forever!&quot;
+done
+</code></pre>
+<p>In a real OS, this would run until you kill the process (Ctrl+C). In PyOS, we
+have a built-in safety limit: <strong>1,000 iterations</strong>. If a loop hits this limit,
+it stops and reports an error. This prevents your scripts from running away and
+freezing the system.</p>
+<h3 id="all-loop-commands">All loop commands</h3>
+<table>
+<thead>
+<tr>
+<th>Syntax</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>while &lt;cmd&gt;</code> / <code>do</code> / <code>done</code></td>
+<td>Repeat while <code>&lt;cmd&gt;</code> succeeds</td>
+</tr>
+<tr>
+<td><code>for VAR in items...</code> / <code>do</code> / <code>done</code></td>
+<td>Iterate over a list of items</td>
+</tr>
+</tbody>
+</table>
+<h3 id="vocabulary_1">Vocabulary</h3>
+<ul>
+<li><strong>While loop</strong> -- repeat a block as long as a condition is true</li>
+<li><strong>For loop</strong> -- repeat a block once for each item in a list</li>
+<li><strong>Iteration</strong> -- one pass through the loop body</li>
+<li><strong>Nesting</strong> -- putting one loop (or conditional) inside another</li>
+<li><strong>Infinite loop</strong> -- a loop that never stops (PyOS limits these to 1,000
+  iterations)</li>
+</ul>
+<h2 id="scripting">Scripting</h2>
+<p>So far you've been giving the receptionist one request at a time. But what if
+you had a whole checklist of things to do? You could hand them the entire list
+and say "do all of these, in order."</p>
+<p>That's a <strong>script</strong> -- a text file with commands, one per line. Instead of
+typing commands one by one, you write them all down and tell the shell to run
+the file.</p>
+<pre><code class="language-bash"># Set up a data directory and create a file in it
+mkdir /data
+export NAME=hello
+echo $NAME
+if ls /data
+then
+  touch /data/$NAME.txt
+fi
+</code></pre>
+<p>Let's break down the special features you see here.</p>
+<p><strong>Comments</strong> start with <code>#</code>. They're notes for humans. The shell completely
+ignores them. Use comments to explain <em>why</em> you're doing something so that
+future-you (or someone else) can understand the script.</p>
+<p><strong>Variables</strong> use the <code>$</code> sign. When the shell sees <code>$NAME</code>, it replaces it
+with whatever value <code>NAME</code> holds before running the command. So if <code>NAME</code> is
+<code>hello</code>, then <code>touch /data/$NAME.txt</code> actually runs <code>touch /data/hello.txt</code>.
+Think of <code>$NAME</code> as a placeholder that gets filled in.</p>
+<p><strong>Conditionals</strong> let you make decisions. The <code>if</code>/<code>then</code>/<code>else</code>/<code>fi</code> block
+works like this:</p>
+<pre><code class="language-bash">if some_command
+then
+  # This runs if some_command succeeded
+else
+  # This runs if some_command failed
+fi
+</code></pre>
+<p>The shell runs <code>some_command</code>. If it works (no error), it runs the <code>then</code>
+block. If it fails, it runs the <code>else</code> block. The <code>else</code> part is optional --
+you can leave it out. <code>fi</code> marks the end (it's <code>if</code> spelled backwards, which
+is a real thing that actual Unix shells do).</p>
+<p><strong>source</strong> runs a script from a file. If you saved the script above to
+<code>/scripts/setup.sh</code>, you could run it with:</p>
+<pre><code>source /scripts/setup.sh
+</code></pre>
+<p>The shell reads the file, and executes each line as if you had typed it
+yourself.</p>
+<h2 id="job-control">Job Control</h2>
+<p>Imagine you're at a restaurant. You order your food, and while the kitchen is
+working on it, you don't just sit there staring at the kitchen door. You talk
+to your friends, check your phone, maybe order a drink. When the food is
+ready, the waiter brings it over.</p>
+<p><strong>Job control</strong> works the same way. You can send a process to the background
+so it runs on its own, and you keep typing other commands. Meanwhile, the
+background process keeps doing its thing.</p>
+<p>Here's the important bit: jobs are a <strong>shell</strong> concept, not a kernel concept.
+The <a href="../kernel-and-syscalls/">kernel</a> knows about processes, but it doesn't
+know or care which ones you consider "background jobs." The shell keeps its own
+list.</p>
+<h3 id="the-operator">The <code>&amp;</code> operator</h3>
+<p>Adding <code>&amp;</code> to the end of a <code>run</code> command is like telling the kitchen "bring it
+when it's ready, I don't need to watch you cook." The program runs, but instead
+of showing its output right away, the shell captures it silently and gives you
+a job notification:</p>
+<pre><code>&gt; run hello &amp;
+[1] 42
+</code></pre>
+<p>That <code>[1]</code> is the <strong>job number</strong> and <code>42</code> is the process ID. The program has
+already finished -- its output is waiting for you whenever you're ready to look
+at it.</p>
+<p><strong>Important:</strong> In a real operating system, <code>&amp;</code> makes a process run <em>at the
+same time</em> as your other commands (true concurrency). PyOS is a simulator
+without threads, so the process actually runs to completion immediately -- the
+only difference is that the output gets stored in the job instead of being
+printed. Think of it like a restaurant that cooks your food instantly but keeps
+it warm on a shelf instead of bringing it to your table right away.</p>
+<p>The <code>&amp;</code> operator is only meaningful for <code>run</code> commands (which create and
+execute processes). Other commands like <code>touch</code> or <code>ls</code> are so fast that
+backgrounding them doesn't make sense -- they just run normally.</p>
+<p>One limitation: you can't combine pipes with <code>&amp;</code> (like <code>ls / | grep txt &amp;</code>).
+Real shells can do this, but it adds complexity that we'll save for later.</p>
+<h3 id="retrieving-output">Retrieving output</h3>
+<p>Once a job is running in the background, you have two ways to get its output:</p>
+<p><strong><code>fg &lt;job_id&gt;</code></strong> -- brings the job to the foreground and shows its captured
+output. This also removes the job from the list.</p>
+<pre><code>&gt; run hello &amp;
+[1] 42
+&gt; fg 1
+Hello from PyOS!
+[exit code: 0]
+</code></pre>
+<p><strong><code>waitjob</code></strong> -- collects output from background jobs without "bringing them
+forward." Use <code>waitjob</code> to see all jobs, or <code>waitjob &lt;job_id&gt;</code> for a specific
+one. Either way, the jobs are removed after you collect them.</p>
+<pre><code>&gt; run hello &amp;
+[1] 42
+&gt; run counter &amp;
+[2] 43
+&gt; waitjob
+[1] hello:
+Hello from PyOS!
+[exit code: 0]
+[2] counter:
+1
+2
+3
+4
+5
+[exit code: 0]
+</code></pre>
+<p>Why is <code>waitjob</code> a separate command from <code>wait</code>? Because they're different
+concepts. <code>wait</code> is a <strong>kernel-level</strong> command -- it tells a parent process to
+wait for a child process to finish (like a parent waiting for their kid to come
+home). <code>waitjob</code> is a <strong>shell-level</strong> command -- it retrieves output from a
+background job you started with <code>&amp;</code>. Keeping them separate helps reinforce
+where each concept lives in the OS layers.</p>
+<h3 id="all-job-commands">All job commands</h3>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>run &lt;program&gt; &amp;</code></td>
+<td>Run a program in the background</td>
+</tr>
+<tr>
+<td><code>bg &lt;pid&gt;</code></td>
+<td>Add an existing process as a background job</td>
+</tr>
+<tr>
+<td><code>fg &lt;job_id&gt;</code></td>
+<td>Bring a job to the foreground (shows output, removes job)</td>
+</tr>
+<tr>
+<td><code>jobs</code></td>
+<td>List all background jobs</td>
+</tr>
+<tr>
+<td><code>waitjob</code></td>
+<td>Collect output from all jobs and remove them</td>
+</tr>
+<tr>
+<td><code>waitjob &lt;job_id&gt;</code></td>
+<td>Collect output from a specific job and remove it</td>
+</tr>
+</tbody>
+</table>
+<h3 id="vocabulary_2">Vocabulary</h3>
+<ul>
+<li><strong>Background job</strong> -- a process whose output is captured silently instead of
+  shown immediately</li>
+<li><strong>Foreground</strong> -- the normal mode where a command's output is shown right away</li>
+<li><strong><code>&amp;</code> operator</strong> -- the ampersand at the end of a command that triggers
+  background execution</li>
+<li><strong>Job number</strong> -- a small number like <code>[1]</code> or <code>[2]</code> that the shell assigns
+  for your convenience (much easier to remember than a PID)</li>
+</ul>
+<h2 id="history-and-aliases">History and Aliases</h2>
+<h3 id="history">History</h3>
+<p>The shell remembers every command you type. It's like a diary of your entire
+session. Type <code>history</code> and you'll see a numbered list of everything you've
+run:</p>
+<pre><code>  1  ls /
+  2  mkdir /data
+  3  touch /data/notes.txt
+  4  cat /data/notes.txt
+</code></pre>
+<p>This is useful when you want to remember what you did, or when you want to
+double-check the exact command you ran earlier.</p>
+<h3 id="aliases">Aliases</h3>
+<p>An alias is a shortcut you create. Let's say you're tired of typing <code>ls /</code>
+over and over. You can make a shortcut:</p>
+<pre><code>alias ll=ls /
+</code></pre>
+<p>Now typing <code>ll</code> does the exact same thing as typing <code>ls /</code>. The shell sees
+<code>ll</code>, checks its alias list, and quietly replaces it with <code>ls /</code> before
+running anything.</p>
+<p>Think of aliases like speed dial on a phone. Instead of dialing a full number
+every time, you press one button and the phone fills in the rest.</p>
+<p>Use <code>alias</code> with no arguments to see all your current aliases, and
+<code>unalias &lt;name&gt;</code> to remove one.</p>
+<h2 id="tab-completion">Tab Completion</h2>
+<p>You know how your phone suggests the rest of a word while you're typing? Tab
+completion works the same way. Start typing a command, press the <strong>Tab</strong> key,
+and the shell fills in the rest for you. If there's more than one possibility,
+press Tab twice to see all the options.</p>
+<p>For example, type <code>he</code> and press Tab -- the shell completes it to <code>help</code>
+because that's the only command starting with "he". Type <code>ls /</code> and press Tab
+-- you'll see every file and directory in the root folder.</p>
+<p>Tab completion isn't just for commands. It works in several contexts depending
+on what you're typing:</p>
+<table>
+<thead>
+<tr>
+<th>Where you are</th>
+<th>What completes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>First word on the line</td>
+<td>Command names (<code>ls</code>, <code>cat</code>, <code>mkdir</code>, ...)</td>
+</tr>
+<tr>
+<td>After <code>scheduler</code>, <code>mutex</code>, <code>semaphore</code>, <code>rwlock</code>, <code>journal</code>, <code>pi</code>, <code>ordering</code>, <code>shm</code>, <code>dns</code>, <code>socket</code>, <code>http</code>, <code>proc</code></td>
+<td>Subcommands (<code>fcfs</code>, <code>create</code>, <code>list</code>, <code>status</code>, <code>demo</code>, <code>register</code>, <code>mode</code>, <code>violations</code>, ...)</td>
+</tr>
+<tr>
+<td>After a file command (<code>ls</code>, <code>cat</code>, <code>rm</code>, ...)</td>
+<td>Filesystem paths</td>
+</tr>
+<tr>
+<td>After <code>run</code></td>
+<td>Built-in program names</td>
+</tr>
+<tr>
+<td>After <code>unset</code></td>
+<td>Environment variable names</td>
+</tr>
+<tr>
+<td>After <code>signal &lt;pid&gt;</code> or <code>handle &lt;pid&gt;</code></td>
+<td>Signal names (<code>SIGTERM</code>, <code>SIGKILL</code>, ...)</td>
+</tr>
+<tr>
+<td><code>$</code> prefix anywhere</td>
+<td>Environment variable names with <code>$</code> prefix</td>
+</tr>
+</tbody>
+</table>
+<p>Under the hood, this works by importing Python's <code>readline</code> module and giving
+it a <strong>completer function</strong>. Every time you press Tab, readline calls that
+function with whatever partial text you've typed so far. The completer looks at
+the context -- which command you're typing, where in the line you are -- and
+returns a list of suggestions. All the logic lives in a separate <code>Completer</code>
+class so it can be tested without any I/O.</p>
+<h3 id="vocabulary_3">Vocabulary</h3>
+<ul>
+<li><strong>Tab completion</strong> -- pressing Tab to auto-fill a partial command, path, or
+  name</li>
+<li><strong>Completer</strong> -- the code that decides what suggestions to offer based on
+  context</li>
+<li><strong>readline</strong> -- a library that adds line-editing features (Tab completion,
+  arrow keys, history) to terminal input</li>
+</ul>
+<h2 id="environment-variables">Environment Variables</h2>
+<p>Environment variables are like sticky notes on your desk. Each one has a name
+and a value, and they store settings that any program can read:</p>
+<pre><code>USER=rob
+HOME=/root
+PATH=/bin
+</code></pre>
+<p>To set one:</p>
+<pre><code>export GREETING=hello
+</code></pre>
+<p>To see all of them:</p>
+<pre><code>env
+</code></pre>
+<p>To use one in a command, put a <code>$</code> in front of the name:</p>
+<pre><code>echo $GREETING
+</code></pre>
+<p>That prints <code>hello</code>.</p>
+<p>Here's something neat: when you <code>fork</code> a process (create a copy of it), the
+child process gets its own <strong>copy</strong> of all the environment variables. If the
+child changes a variable, the parent's copy stays the same. It's like
+photocopying all your sticky notes for a coworker -- they can scribble on
+their copies all they want, and your originals are untouched.</p>
+<p>This is actually an important concept in real operating systems. It's how
+parent processes pass configuration to their children without worrying about
+the children messing up the parent's settings. The
+<a href="../kernel-and-syscalls/">kernel</a> handles the copying when a fork happens.</p>
+<h2 id="putting-it-all-together">Putting It All Together</h2>
+<p>The shell is your window into the operating system. It takes your plain-English
+(well, plain-command) requests, translates them into system calls, and gives
+you back the results. It adds convenience features on top -- pipes, scripts,
+job control, history, aliases, tab completion, variables -- that make the raw
+power of the kernel accessible and pleasant to use.</p>
+<p>If the kernel is the engine of a car, the shell is the steering wheel, the
+pedals, and the dashboard. You don't need to understand every piston and valve
+to drive somewhere, but it sure helps to know what all those controls do.</p>
+<p>Next up, you might want to read about <a href="../kernel-and-syscalls/">the kernel</a> to
+see what happens on the other side of those system calls.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "search.highlight"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

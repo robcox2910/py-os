@@ -1,0 +1,2550 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A simulated operating system built in Python for learning OS concepts">
+      
+      
+      
+        <link rel="canonical" href="https://robcox2910.github.io/py-os/concepts/filesystem/">
+      
+      
+        <link rel="prev" href="../memory/">
+      
+      
+        <link rel="next" href="../kernel-and-syscalls/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.3">
+    
+    
+      
+        <title>Filesystem - PyOS</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#the-filesystem" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="PyOS" class="md-header__button md-logo" aria-label="PyOS" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            PyOS
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Filesystem
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/robcox2910/py-os" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    robcox2910/py-os
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="PyOS" class="md-nav__button md-logo" aria-label="PyOS" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    PyOS
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/robcox2910/py-os" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    robcox2910/py-os
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../what-is-an-os/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What Is an OS?
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../processes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Processes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../memory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memory
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Filesystem
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Filesystem
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-is-a-filesystem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Is a Filesystem?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inodes-the-index-cards" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inodes: The Index Cards
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#path-resolution-finding-your-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Path Resolution: Finding Your File
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#links-multiple-names-for-one-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Links: Multiple Names for One File
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Links: Multiple Names for One File">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-phone-contacts-analogy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Phone Contacts Analogy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hard-links" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hard Links
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#link-count" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Link Count
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#symbolic-links-symlinks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Symbolic Links (Symlinks)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#loop-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Loop Detection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stat-vs-lstat" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        stat vs. lstat
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deleting-links" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deleting Links
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#saving-to-disk-persistence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Saving to Disk: Persistence
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Saving to Disk: Persistence">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-photograph-analogy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Photograph Analogy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#json-our-photograph-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        JSON: Our "Photograph" Format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#base64-translating-pictures-into-words" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Base64: Translating Pictures Into Words
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-real-filesystems-do-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How Real Filesystems Do It
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#journaling-the-undo-history-safety-net" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Journaling: The Undo-History Safety Net
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Journaling: The Undo-History Safety Net">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-is-a-crash" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Is a Crash?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#write-ahead-logging-log-before-you-do" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Write-Ahead Logging: Log Before You Do
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#transactions-begin-commit-abort" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Transactions: Begin, Commit, Abort
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#checkpoints-the-known-good-snapshot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checkpoints: The Known-Good Snapshot
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recovery-restore-replay" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recovery: Restore + Replay
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-redo-logging-not-undo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why "Redo" Logging (Not Undo)?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trying-it-in-pyos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trying It in PyOS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-real-filesystems-do-it_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How Real Filesystems Do It
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#file-descriptors-bookmarks-in-a-library-book" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File Descriptors: Bookmarks in a Library Book
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="File Descriptors: Bookmarks in a Library Book">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-library-analogy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Library Analogy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-it-works-in-pyos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Works in PyOS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#access-modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Access Modes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reading-past-the-end" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reading Past the End
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#writing-past-the-end" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Writing Past the End
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fork-and-file-descriptors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fork and File Descriptors
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cleanup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cleanup
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#putting-it-all-together" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Putting It All Together
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#key-vocabulary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Vocabulary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#virtual-filesystems-proc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Virtual Filesystems -- /proc
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Virtual Filesystems -- /proc">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#whats-inside-proc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What's inside /proc?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-to-use-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How to use it
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-does-this-exist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why does this exist?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#virtual-vs-real-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Virtual vs real files
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#where-to-go-next" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where to Go Next
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kernel-and-syscalls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Kernel
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../shell/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Shell
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devices-and-networking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Devices and Networking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../users-and-safety/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Users and Safety
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../synchronization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Synchronization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bootloader/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Boot Chain
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interactive Tutorials
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../web-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Web UI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-is-a-filesystem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Is a Filesystem?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inodes-the-index-cards" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inodes: The Index Cards
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#path-resolution-finding-your-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Path Resolution: Finding Your File
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#links-multiple-names-for-one-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Links: Multiple Names for One File
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Links: Multiple Names for One File">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-phone-contacts-analogy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Phone Contacts Analogy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hard-links" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hard Links
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#link-count" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Link Count
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#symbolic-links-symlinks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Symbolic Links (Symlinks)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#loop-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Loop Detection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stat-vs-lstat" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        stat vs. lstat
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deleting-links" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deleting Links
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#saving-to-disk-persistence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Saving to Disk: Persistence
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Saving to Disk: Persistence">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-photograph-analogy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Photograph Analogy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#json-our-photograph-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        JSON: Our "Photograph" Format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#base64-translating-pictures-into-words" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Base64: Translating Pictures Into Words
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-real-filesystems-do-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How Real Filesystems Do It
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#journaling-the-undo-history-safety-net" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Journaling: The Undo-History Safety Net
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Journaling: The Undo-History Safety Net">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-is-a-crash" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Is a Crash?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#write-ahead-logging-log-before-you-do" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Write-Ahead Logging: Log Before You Do
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#transactions-begin-commit-abort" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Transactions: Begin, Commit, Abort
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#checkpoints-the-known-good-snapshot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checkpoints: The Known-Good Snapshot
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recovery-restore-replay" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recovery: Restore + Replay
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-redo-logging-not-undo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why "Redo" Logging (Not Undo)?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trying-it-in-pyos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trying It in PyOS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-real-filesystems-do-it_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How Real Filesystems Do It
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#file-descriptors-bookmarks-in-a-library-book" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File Descriptors: Bookmarks in a Library Book
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="File Descriptors: Bookmarks in a Library Book">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-library-analogy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Library Analogy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-it-works-in-pyos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Works in PyOS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#access-modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Access Modes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reading-past-the-end" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reading Past the End
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#writing-past-the-end" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Writing Past the End
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fork-and-file-descriptors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fork and File Descriptors
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cleanup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cleanup
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#putting-it-all-together" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Putting It All Together
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#key-vocabulary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Vocabulary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#virtual-filesystems-proc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Virtual Filesystems -- /proc
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Virtual Filesystems -- /proc">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#whats-inside-proc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What's inside /proc?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-to-use-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How to use it
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-does-this-exist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why does this exist?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#virtual-vs-real-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Virtual vs real files
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#where-to-go-next" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where to Go Next
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="the-filesystem">The Filesystem</h1>
+<p>You use files every day. Your homework, your photos, your game saves -- they all
+live somewhere on your computer. But have you ever wondered <em>how</em> the computer
+keeps track of all of them? That is the job of the <strong>filesystem</strong>.</p>
+<h2 id="what-is-a-filesystem">What Is a Filesystem?</h2>
+<p>Think of a filesystem like a giant <strong>filing cabinet</strong>.</p>
+<p>The cabinet has drawers, and those drawers are <strong>directories</strong> (also called
+folders). Inside the drawers you'll find papers, and those papers are <strong>files</strong>.
+Drawers can contain other drawers too -- a folder inside a folder inside a
+folder, as deep as you want.</p>
+<p>Now here is the interesting part. Every paper and every drawer has a little
+<strong>index card</strong> stapled to it. That index card records important facts: is this a
+file or a folder? How big is it? What's actually inside? In operating system
+terms, that index card is called an <strong>inode</strong> (short for "index node"). We'll
+dig into inodes in a moment.</p>
+<p>But first, there is one more surprising detail. The <em>name</em> of a file doesn't
+live on the file itself. It lives in the drawer (directory) that the file sits
+inside. It's like how a teacher's attendance sheet has your name on it, but the
+actual essay you turned in doesn't have your name written on the pages -- the
+folder it's in tells the teacher whose work it is.</p>
+<p>In our code (<code>fs/filesystem.py</code>), the <code>FileSystem</code> class manages all of this. When
+you create a file or folder, the filesystem creates a new inode and then adds
+the name to the parent directory's list. The name and the data live in different
+places, connected by a number.</p>
+<h2 id="inodes-the-index-cards">Inodes: The Index Cards</h2>
+<p>Every file and every directory in the filesystem gets its own numbered index
+card -- an <strong>inode</strong>. You can think of the inode number as a student ID. The
+school (filesystem) uses the ID to look up everything it needs to know about
+you.</p>
+<p>Here is what an inode keeps track of:</p>
+<ul>
+<li><strong>Type</strong> -- Is this a file or a directory?</li>
+<li><strong>Size</strong> -- How many bytes of data does it hold?</li>
+<li><strong>Data</strong> -- For a file, this is the actual contents (the text, the image, the
+  bytes). For a directory, this is a list of "name to inode number" mappings --
+  basically the table of contents for that drawer.</li>
+</ul>
+<p>In our Python code, the <code>_Inode</code> class looks like this (simplified):</p>
+<pre><code class="language-python">@dataclass
+class _Inode:
+    inode_number: int
+    file_type: FileType      # FILE, DIRECTORY, or SYMLINK
+    data: bytes = b&quot;&quot;        # file contents (or symlink target path)
+    children: dict[str, int] # name -&gt; inode number (for directories)
+    link_count: int = 1      # how many names point to this inode
+</code></pre>
+<p>Notice the <code>children</code> dictionary. If this inode is a directory, <code>children</code> maps
+each child's name to its inode number. That is the "attendance sheet" we talked
+about -- the names live here, not on the files themselves.</p>
+<p>Why does this matter? In real Unix systems, this separation is what makes
+<strong>hard links</strong> possible. Two different names in two different folders can point
+to the same inode number -- the same underlying file. It's like two teachers
+both having your student ID on their attendance sheets, but there's only one
+you.</p>
+<h2 id="path-resolution-finding-your-file">Path Resolution: Finding Your File</h2>
+<p>When you ask the computer for a file like <code>/home/rob/homework.txt</code>, it doesn't
+magically jump straight to it. It has to <strong>walk the path</strong>, one step at a time,
+like following directions on a treasure map.</p>
+<p>Here's how it works:</p>
+<ol>
+<li><strong>Start at the root</strong> (<code>/</code>) -- this is the main filing cabinet, the top-level
+   directory. Every path starts here.</li>
+<li><strong>Look up "home"</strong> in the root directory's children -- the root inode has a
+   mapping that says "home" is at inode 2 (or whatever number). Follow that.</li>
+<li><strong>Look up "rob"</strong> in the "home" directory's children -- another mapping,
+   another inode number. Follow that too.</li>
+<li><strong>Look up "homework.txt"</strong> in the "rob" directory's children -- this time
+   it points to a file inode. You've found it.</li>
+</ol>
+<p>Each step is a lookup: "does this directory have something called X?" If the
+answer is yes, you follow the inode number and keep going. If the answer is no,
+you get a <code>FileNotFoundError</code> -- the path is broken somewhere along the way.</p>
+<p>In <code>fs/filesystem.py</code>, the <code>_resolve</code> method does exactly this:</p>
+<pre><code class="language-python">def _resolve(self, path: str) -&gt; _Inode | None:
+    parts = path.strip(&quot;/&quot;).split(&quot;/&quot;)
+    current = self._inodes[self._root_ino]
+
+    for part in parts:
+        child_ino = current.children.get(part)
+        if child_ino is None:
+            return None
+        current = self._inodes[child_ino]
+
+    return current
+</code></pre>
+<p>It splits the path into parts (<code>["home", "rob", "homework.txt"]</code>), then loops
+through them one by one, hopping from directory to directory. Simple and clean.</p>
+<p>When <a href="../kernel-and-syscalls/">The Kernel</a> receives a filesystem syscall (like
+"read this file" or "list this directory"), the kernel hands the path to the
+filesystem, and this resolution process kicks in before anything else happens.</p>
+<h2 id="links-multiple-names-for-one-file">Links: Multiple Names for One File</h2>
+<p>Remember how names live in the parent directory, not on the file itself? That
+separation makes something really cool possible: one file can have <strong>more than
+one name</strong>. There are two kinds of links in Unix, and they work very
+differently.</p>
+<h3 id="the-phone-contacts-analogy">The Phone Contacts Analogy</h3>
+<p><strong>Hard link</strong> = Two entries in your phone's contacts that both reach the same
+person. "Mom" and "Emergency Contact" both dial the same number. If you delete
+"Mom", the person is still reachable through "Emergency Contact". The person
+only truly disappears from your phone when you delete <em>every</em> contact entry for
+that number.</p>
+<p><strong>Symbolic link</strong> = A sticky note on your desk that says "Call Mom's number". It
+doesn't store the number itself -- it points to the contact entry. If someone
+deletes "Mom" from your contacts, the sticky note is useless (a <em>dangling</em>
+link). But if someone later adds "Mom" back, the sticky note works again.</p>
+<h3 id="hard-links">Hard Links</h3>
+<p>A hard link is a second name that points to the <strong>same inode</strong>. Since both
+names point to the same inode number, they share everything: the same data, the
+same size, the same type. Writing through one name changes the data for the
+other name too, because there is only one copy of the data.</p>
+<pre><code>Directory /         Directory /docs
+name → inode        name → inode
+─────────────       ─────────────
+hello.txt → 5      ref.txt → 5      ← same inode!
+</code></pre>
+<p>In PyOS:</p>
+<pre><code class="language-python">fs.create_file(&quot;/hello.txt&quot;)
+fs.write(&quot;/hello.txt&quot;, b&quot;Hi!&quot;)
+fs.link(&quot;/hello.txt&quot;, &quot;/docs/ref.txt&quot;)
+
+# Both names read the same data:
+fs.read(&quot;/docs/ref.txt&quot;)   # b&quot;Hi!&quot;
+</code></pre>
+<p><strong>Rules for hard links:</strong></p>
+<ul>
+<li>You cannot hard-link directories. If you could, the directory tree would have
+  loops, and path resolution would never finish.</li>
+<li>The target file must already exist.</li>
+<li>The new name must not already exist.</li>
+</ul>
+<h3 id="link-count">Link Count</h3>
+<p>How does the OS know when to actually delete a file's data? It uses a <strong>link
+count</strong> -- a counter on the inode that tracks how many names point to it. Every
+time you create a hard link, the count goes up. Every time you delete a name,
+the count goes down. The inode (and its data) is only freed when the count hits
+zero.</p>
+<pre><code>fs.stat(&quot;/hello.txt&quot;).link_count   # 1  (just created)
+fs.link(&quot;/hello.txt&quot;, &quot;/alias.txt&quot;)
+fs.stat(&quot;/hello.txt&quot;).link_count   # 2  (two names now)
+fs.delete(&quot;/hello.txt&quot;)
+fs.stat(&quot;/alias.txt&quot;).link_count   # 1  (one name left, data still alive)
+fs.delete(&quot;/alias.txt&quot;)            # link_count → 0, inode freed
+</code></pre>
+<h3 id="symbolic-links-symlinks">Symbolic Links (Symlinks)</h3>
+<p>A symbolic link is a completely different kind of inode. Instead of pointing to
+the same inode number, it creates a <strong>new inode</strong> whose data is the <em>path</em> to
+the target. It is like a shortcut file that says "go look over there".</p>
+<pre><code class="language-python">fs.create_file(&quot;/target.txt&quot;)
+fs.symlink(&quot;/target.txt&quot;, &quot;/shortcut.txt&quot;)
+
+fs.readlink(&quot;/shortcut.txt&quot;)   # &quot;/target.txt&quot;
+fs.read(&quot;/shortcut.txt&quot;)       # reads /target.txt's data (followed the link)
+</code></pre>
+<p>The filesystem follows symlinks <strong>automatically</strong> during path resolution. When
+<code>_resolve()</code> encounters a symlink, it reads the stored target path and
+continues resolving from there.</p>
+<p><strong>What makes symlinks special:</strong></p>
+<ul>
+<li>The target <strong>doesn't have to exist</strong>. You can create a symlink pointing to
+  <code>/nonexistent</code>, and the symlink itself is valid. It just can't be followed
+  until the target exists. This is called a <strong>dangling symlink</strong>.</li>
+<li>You <strong>can</strong> symlink directories. This is safe because symlinks have depth
+  protection (see below).</li>
+<li>Symlinks can be <strong>relative</strong> (<code>real.txt</code>) or <strong>absolute</strong> (<code>/data/real.txt</code>).
+  Relative targets resolve from the symlink's parent directory.</li>
+</ul>
+<h3 id="loop-detection">Loop Detection</h3>
+<p>What if symlink A points to B, and B points back to A? The filesystem would
+follow links forever. To prevent this, <code>_resolve()</code> counts how many symlinks
+it has followed. If the count exceeds <code>MAX_SYMLINK_DEPTH</code> (40, matching Linux),
+it raises an error: "Too many levels of symbolic links".</p>
+<pre><code class="language-python">fs.symlink(&quot;/b&quot;, &quot;/a&quot;)   # /a → /b
+fs.symlink(&quot;/a&quot;, &quot;/b&quot;)   # /b → /a (circular!)
+fs.stat(&quot;/a&quot;)             # OSError: Too many levels of symbolic links
+</code></pre>
+<h3 id="stat-vs-lstat">stat vs. lstat</h3>
+<p>The <code>stat()</code> function follows symlinks -- if you stat a symlink, you get the
+target's metadata. But sometimes you want to see the symlink itself. That is
+what <code>lstat()</code> does: it returns the symlink's own inode info (type=SYMLINK,
+size=length of the target path) without following it.</p>
+<pre><code class="language-python">fs.stat(&quot;/shortcut.txt&quot;).file_type    # FileType.FILE (the target)
+fs.lstat(&quot;/shortcut.txt&quot;).file_type   # FileType.SYMLINK (the link itself)
+</code></pre>
+<h3 id="deleting-links">Deleting Links</h3>
+<ul>
+<li><strong>Deleting a hard link</strong> removes one name and decrements the link count. The
+  data survives as long as at least one name remains.</li>
+<li><strong>Deleting a symlink</strong> removes the symlink inode. The target is untouched.</li>
+<li><strong>Deleting the target of a symlink</strong> leaves the symlink dangling -- the
+  symlink still exists, but following it produces a "not found" error.</li>
+</ul>
+<h2 id="saving-to-disk-persistence">Saving to Disk: Persistence</h2>
+<p>Here is a problem. Our filesystem lives entirely in Python's memory. That means
+when you turn off the computer (or stop the program), everything vanishes. Gone.
+It is like building a beautiful filing cabinet out of ice -- when the power goes
+out, the whole thing melts.</p>
+<p>To solve this, we need <strong>persistence</strong> -- a way to save the filing cabinet so we
+can rebuild it later. That's what <code>fs/persistence.py</code> does.</p>
+<h3 id="the-photograph-analogy">The Photograph Analogy</h3>
+<p>Imagine taking a photograph of every single drawer and every single paper in
+your filing cabinet. You write down what's in each drawer, what each paper
+says, and how everything is organized. Then you save all those photographs in a
+safe place.</p>
+<p>When the power comes back on, you look at the photographs and carefully rebuild
+the entire cabinet from scratch. That process of taking the photograph is called
+<strong>serialization</strong> (turning the live data into a storable format). Rebuilding the
+cabinet from the photograph is called <strong>deserialization</strong> (turning the stored
+format back into live data).</p>
+<h3 id="json-our-photograph-format">JSON: Our "Photograph" Format</h3>
+<p>Our "photographs" are saved as <strong>JSON</strong> -- a simple text format that looks like
+this:</p>
+<pre><code class="language-json">{
+  &quot;root_ino&quot;: 0,
+  &quot;inodes&quot;: {
+    &quot;0&quot;: {
+      &quot;inode_number&quot;: 0,
+      &quot;file_type&quot;: &quot;directory&quot;,
+      &quot;data&quot;: &quot;&quot;,
+      &quot;children&quot;: {&quot;homework.txt&quot;: 1}
+    },
+    &quot;1&quot;: {
+      &quot;inode_number&quot;: 1,
+      &quot;file_type&quot;: &quot;file&quot;,
+      &quot;data&quot;: &quot;SGVsbG8gd29ybGQ=&quot;,
+      &quot;children&quot;: {}
+    }
+  }
+}
+</code></pre>
+<p>You can read it with your eyes -- it's just text. That is the whole point. JSON
+is human-readable, which makes it great for learning. You can open the saved
+file and see exactly what your filesystem looked like.</p>
+<h3 id="base64-translating-pictures-into-words">Base64: Translating Pictures Into Words</h3>
+<p>Wait -- there's a catch. JSON is a <em>text</em> format, but files can contain <em>binary</em>
+data (raw bytes, like images or compiled programs). You can't just shove random
+bytes into a text file. It would break.</p>
+<p>The solution is <strong>Base64 encoding</strong>. Think of it as translating a picture into
+words so it can be written in a text file. Base64 takes any sequence of bytes
+and converts it into safe text characters (letters, numbers, <code>+</code>, <code>/</code>, and <code>=</code>).
+The text is about 33% bigger than the original bytes, but it fits perfectly in
+JSON.</p>
+<p>In our code, <code>to_dict()</code> encodes file data with <code>base64.b64encode()</code>, and
+<code>from_dict()</code> decodes it back with <code>base64.b64decode()</code>. The data makes a round
+trip without losing a single byte.</p>
+<h3 id="how-real-filesystems-do-it">How Real Filesystems Do It</h3>
+<p>Real operating systems (Linux, Windows, macOS) don't use JSON. Their filesystems
+-- ext4, NTFS, APFS -- write directly to the hard drive in a special <strong>binary
+format</strong>. This is much faster and more compact, but much harder to read with
+human eyes. The tradeoff is speed versus understandability, and for a learning
+project, understandability wins.</p>
+<p>Here is a quick comparison:</p>
+<table>
+<thead>
+<tr>
+<th>PyOS (our version)</th>
+<th>Real Filesystem</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>JSON text file</td>
+<td>Binary data on disk</td>
+</tr>
+<tr>
+<td><code>dump_filesystem()</code></td>
+<td><code>sync</code> / unmount</td>
+</tr>
+<tr>
+<td><code>load_filesystem()</code></td>
+<td><code>mount</code></td>
+</tr>
+<tr>
+<td>Saves everything</td>
+<td>Only saves what changed</td>
+</tr>
+<tr>
+<td>No crash recovery</td>
+<td>Journaling (see below)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="journaling-the-undo-history-safety-net">Journaling: The Undo-History Safety Net</h2>
+<p>Imagine you're writing an essay in a text editor. Your editor saves a backup
+every 10 minutes (that's a <strong>checkpoint</strong>). Every keystroke you type is recorded
+in the undo history (that's the <strong>journal</strong>).</p>
+<p>If your computer suddenly loses power, you'd lose everything since the last
+save, right? But with a journal, you can do better:</p>
+<ol>
+<li>Open the last saved backup (restore from checkpoint).</li>
+<li>Look at the undo history and replay every keystroke that was "finished"
+   (committed transactions).</li>
+<li>Throw away any half-typed words that weren't finished (active/aborted
+   transactions).</li>
+</ol>
+<p>That's exactly how filesystem journaling works! The journal is a safety net
+that lets us recover from crashes without losing completed work.</p>
+<h3 id="what-is-a-crash">What Is a Crash?</h3>
+<p>A "crash" is anything that stops the computer without warning -- a power
+outage, a frozen program, or pulling the plug. The danger is that you might be
+in the middle of changing a file. If the power dies after writing half the data,
+the file is <em>corrupted</em> -- not the old version, not the new version, but a
+broken mix of both.</p>
+<h3 id="write-ahead-logging-log-before-you-do">Write-Ahead Logging: Log Before You Do</h3>
+<p>The key idea is simple: <strong>write down what you're about to do before you
+actually do it</strong>. This is called <strong>write-ahead logging</strong> (WAL). Here's the
+pattern every journaled operation follows:</p>
+<pre><code class="language-python"># 1. Begin a transaction
+txn = journal.begin()
+
+# 2. Log what we're about to do
+journal.append(txn, entry)
+
+# 3. Actually do it
+filesystem.create_file(path)
+
+# 4. Mark the transaction as done
+journal.commit(txn)
+</code></pre>
+<p>If a crash happens between steps 2 and 4, the transaction stays "active"
+(uncommitted). On recovery, we know it didn't finish, so we can safely ignore
+it.</p>
+<h3 id="transactions-begin-commit-abort">Transactions: Begin, Commit, Abort</h3>
+<p>A <strong>transaction</strong> is a bundle of work that either <em>fully succeeds</em> or <em>fully
+fails</em> -- there's no in-between. Each transaction goes through these states:</p>
+<table>
+<thead>
+<tr>
+<th>State</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>active</strong></td>
+<td>Work is in progress</td>
+</tr>
+<tr>
+<td><strong>committed</strong></td>
+<td>All done -- this work should be kept</td>
+</tr>
+<tr>
+<td><strong>aborted</strong></td>
+<td>Something went wrong -- throw this away</td>
+</tr>
+</tbody>
+</table>
+<p>In our PyOS code, every filesystem mutation (create, write, delete, link) is
+wrapped in its own transaction. This keeps things simple: one operation = one
+transaction.</p>
+<h3 id="checkpoints-the-known-good-snapshot">Checkpoints: The Known-Good Snapshot</h3>
+<p>A <strong>checkpoint</strong> is like hitting "Save" in your text editor. It takes a
+photograph of the entire filesystem at that moment. We call this the
+"known-good state" because we know it's consistent and correct.</p>
+<p>After a checkpoint, we can also clean up the journal -- we don't need to keep
+records of work that's already been safely saved.</p>
+<pre><code>journal checkpoint    →  &quot;Checkpoint created&quot;
+</code></pre>
+<h3 id="recovery-restore-replay">Recovery: Restore + Replay</h3>
+<p>When you recover from a crash, three things happen:</p>
+<ol>
+<li><strong>Restore</strong> the filesystem to the last checkpoint (the last known-good
+   state).</li>
+<li><strong>Replay</strong> all committed transactions that happened after the checkpoint.
+   These were finished work, so we redo them.</li>
+<li><strong>Discard</strong> any active or aborted transactions. These were unfinished, so
+   we throw them away.</li>
+</ol>
+<pre><code>journal recover    →  &quot;Recovery complete: replayed 3 transactions&quot;
+</code></pre>
+<p>The result? Your filesystem is back to a consistent state, with all completed
+work preserved. Only truly unfinished operations are lost.</p>
+<h3 id="why-redo-logging-not-undo">Why "Redo" Logging (Not Undo)?</h3>
+<p>There are two approaches to crash recovery:</p>
+<ul>
+<li><strong>Redo logging</strong> (what we use): Save the checkpoint, then replay committed
+  work forward. Simple and clean.</li>
+<li><strong>Undo logging</strong>: Record how to reverse each operation. Much more complex
+  because you need to figure out the "opposite" of every action.</li>
+</ul>
+<p>Real filesystems like ext3 and ext4 use redo logging in "ordered" mode. It's
+the simpler approach, and it works great.</p>
+<h3 id="trying-it-in-pyos">Trying It in PyOS</h3>
+<p>You can experiment with crash recovery in the PyOS shell:</p>
+<pre><code>touch /important.txt              # create a file
+write /important.txt secret data  # write to it
+journal checkpoint                # save a known-good state
+touch /experiment.txt             # create another file
+write /experiment.txt testing     # write some data
+journal crash                     # simulate a power failure!
+cat /important.txt                # still here (was checkpointed)
+cat /experiment.txt               # Error! (but was committed...)
+journal recover                   # replay committed transactions
+cat /experiment.txt               # back! recovered from the journal
+</code></pre>
+<h3 id="how-real-filesystems-do-it_1">How Real Filesystems Do It</h3>
+<p>Real filesystems like ext4 journal their metadata by default. More advanced
+systems like ZFS and Btrfs use a technique called <strong>copy-on-write</strong> with
+checksums, which gives even stronger protection against corruption.</p>
+<p>Our PyOS journal keeps things simple for learning, but the core ideas --
+write-ahead logging, transactions, checkpoints, and recovery -- are exactly
+what real operating systems use every day to keep your files safe.</p>
+<h2 id="file-descriptors-bookmarks-in-a-library-book">File Descriptors: Bookmarks in a Library Book</h2>
+<p>So far, every time we wanted to read or write a file, we gave the full path and
+got back the <em>entire</em> contents. That works fine for small operations, but real
+programs need something more flexible. They need to:</p>
+<ul>
+<li>Open a file once, then read a little bit at a time.</li>
+<li>Write a few bytes here, a few bytes there, without replacing the whole file.</li>
+<li>Jump to a specific position in the file (like flipping to page 50).</li>
+<li>Close the file when they're done, so the OS can clean up.</li>
+</ul>
+<p>This is where <strong>file descriptors</strong> come in.</p>
+<h3 id="the-library-analogy">The Library Analogy</h3>
+<p>Imagine you go to the library and want to read a book. You can't just grab the
+book off the shelf -- you have to check it out at the front desk. The librarian
+gives you a numbered ticket (your <strong>file descriptor</strong>). You put a <strong>bookmark</strong>
+in the book to remember where you stopped reading (the <strong>offset</strong>).</p>
+<ul>
+<li><code>open</code> = check out a book from the library, get your ticket number</li>
+<li><code>read</code> = read from where your bookmark is, then move it forward</li>
+<li><code>write</code> = scribble on the page at your bookmark, then move it forward</li>
+<li><code>seek</code> = move your bookmark to a different page</li>
+<li><code>close</code> = return the book to the library</li>
+</ul>
+<p>Why numbered tickets instead of holding the book directly? Because the librarian
+(the OS) needs to keep track of who has what checked out. If you leave the
+library without returning your books, the librarian can clean up automatically.</p>
+<h3 id="how-it-works-in-pyos">How It Works in PyOS</h3>
+<p>When you call <code>open</code>, the kernel:</p>
+<ol>
+<li>Checks that the file exists and is not a directory.</li>
+<li>Creates an <strong>open file description</strong> -- a little record that tracks the file
+   path, access mode (read, write, or both), and the current <strong>offset</strong> (starts
+   at 0, meaning the beginning of the file).</li>
+<li>Assigns the lowest available <strong>fd number</strong> (starting at 3) and stores it in
+   the process's <strong>fd table</strong>.</li>
+<li>Returns the fd number to you.</li>
+</ol>
+<p>Why does numbering start at 3? In Unix, fds 0, 1, and 2 are reserved:</p>
+<table>
+<thead>
+<tr>
+<th>FD</th>
+<th>Name</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>stdin</td>
+<td>Standard input (keyboard)</td>
+</tr>
+<tr>
+<td>1</td>
+<td>stdout</td>
+<td>Standard output (screen)</td>
+</tr>
+<tr>
+<td>2</td>
+<td>stderr</td>
+<td>Standard error (error messages)</td>
+</tr>
+</tbody>
+</table>
+<p>We reserve these slots even though PyOS doesn't implement them yet -- it teaches
+the convention that every Unix programmer needs to know.</p>
+<h3 id="access-modes">Access Modes</h3>
+<p>When you open a file, you choose what you're allowed to do with it:</p>
+<table>
+<thead>
+<tr>
+<th>Mode</th>
+<th>Meaning</th>
+<th>Read?</th>
+<th>Write?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>r</code></td>
+<td>Read-only</td>
+<td>Yes</td>
+<td>No</td>
+</tr>
+<tr>
+<td><code>w</code></td>
+<td>Write-only</td>
+<td>No</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><code>rw</code></td>
+<td>Read-write</td>
+<td>Yes</td>
+<td>Yes</td>
+</tr>
+</tbody>
+</table>
+<p>If you try to read from a write-only fd, or write to a read-only fd, you get an
+error. This is <strong>mode enforcement</strong> -- the OS protects you from accidentally
+doing something you didn't intend.</p>
+<h3 id="reading-past-the-end">Reading Past the End</h3>
+<p>What happens if you try to read 100 bytes from a file that only has 10 bytes
+left? You just get the 10 bytes that exist. No error, no crash. And if you try
+to read when you're already at the very end of the file, you get zero bytes
+back (empty). This matches how real Unix works -- programs use "got zero bytes"
+as the signal that they've reached the end.</p>
+<h3 id="writing-past-the-end">Writing Past the End</h3>
+<p>What if you seek past the end of a file and then write? The gap gets filled with
+<strong>null bytes</strong> (<code>\x00</code>). It's like having a notebook where you skip ahead to
+page 50 and start writing -- pages 1 through 49 are just blank.</p>
+<h3 id="fork-and-file-descriptors">Fork and File Descriptors</h3>
+<p>When a process forks (creates a child copy), the child gets a copy of the
+parent's fd table. Both parent and child have the same fd numbers pointing to
+the same files. But their offsets are <strong>independent</strong> -- reading in the parent
+doesn't move the child's bookmark.</p>
+<p>(In real Unix, parent and child actually <em>share</em> the same offset. PyOS
+simplifies this to independent copies, which is easier to understand.)</p>
+<h3 id="cleanup">Cleanup</h3>
+<p>When a process terminates (normally or by signal), the kernel automatically
+closes all its open fds. You don't have to worry about leaked file descriptors
+-- the OS cleans up after you, just like the librarian knows which books you
+checked out and can return them when you leave.</p>
+<h2 id="putting-it-all-together">Putting It All Together</h2>
+<p>Let's trace what happens when you type <code>cat /home/rob/homework.txt</code> in the PyOS
+shell:</p>
+<ol>
+<li>The shell parses your command and sees you want to read a file.</li>
+<li>The shell sends a <strong>syscall</strong> (system call) to
+   <a href="../kernel-and-syscalls/">The Kernel</a>, asking to read <code>/home/rob/homework.txt</code>.</li>
+<li>The kernel passes the request to the filesystem.</li>
+<li>The filesystem <strong>resolves the path</strong>: root -&gt; "home" -&gt; "rob" -&gt;
+   "homework.txt", following inode numbers at each step.</li>
+<li>It finds the file's inode and reads its <code>data</code> field.</li>
+<li>The data travels back up: filesystem -&gt; kernel -&gt; shell -&gt; your screen.</li>
+</ol>
+<p>And when you shut down PyOS and save your work:</p>
+<ol>
+<li><code>dump_filesystem()</code> serializes every inode into JSON (with Base64 for binary
+   data) and writes it to a file on your real hard drive.</li>
+<li>Next time you boot PyOS, <code>load_filesystem()</code> reads that JSON file and
+   reconstructs the entire filing cabinet in memory.</li>
+</ol>
+<p>That is the full lifecycle of a file, from creation to storage to survival
+across reboots.</p>
+<h2 id="key-vocabulary">Key Vocabulary</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Plain English</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Filesystem</strong></td>
+<td>The system that organizes and manages files and folders</td>
+</tr>
+<tr>
+<td><strong>Inode</strong></td>
+<td>An index card with metadata about a file or directory</td>
+</tr>
+<tr>
+<td><strong>Directory</strong></td>
+<td>A folder -- an inode whose "data" is a list of names and inode numbers</td>
+</tr>
+<tr>
+<td><strong>Path resolution</strong></td>
+<td>Walking a path like <code>/a/b/c</code> step by step to find the target</td>
+</tr>
+<tr>
+<td><strong>File descriptor</strong></td>
+<td>A small number (like a library ticket) that identifies an open file</td>
+</tr>
+<tr>
+<td><strong>Offset</strong></td>
+<td>Your current position in the file (like a bookmark)</td>
+</tr>
+<tr>
+<td><strong>Fd table</strong></td>
+<td>Per-process table that maps fd numbers to open file descriptions</td>
+</tr>
+<tr>
+<td><strong>Hard link</strong></td>
+<td>A second name pointing to the same inode (same data, same file)</td>
+</tr>
+<tr>
+<td><strong>Symbolic link</strong></td>
+<td>A special inode that stores a path to another file (a shortcut)</td>
+</tr>
+<tr>
+<td><strong>Link count</strong></td>
+<td>How many names point to an inode; file is freed when it hits zero</td>
+</tr>
+<tr>
+<td><strong>Dangling symlink</strong></td>
+<td>A symlink whose target doesn't exist (yet)</td>
+</tr>
+<tr>
+<td><strong>Symlink loop</strong></td>
+<td>Circular symlinks (A→B→A); caught by MAX_SYMLINK_DEPTH</td>
+</tr>
+<tr>
+<td><strong>Serialization</strong></td>
+<td>Converting live data into a storable format (like taking a photo)</td>
+</tr>
+<tr>
+<td><strong>Deserialization</strong></td>
+<td>Rebuilding live data from a stored format (like rebuilding from a photo)</td>
+</tr>
+<tr>
+<td><strong>Base64</strong></td>
+<td>A way to encode binary data as safe text characters</td>
+</tr>
+<tr>
+<td><strong>JSON</strong></td>
+<td>A human-readable text format for structured data</td>
+</tr>
+<tr>
+<td><strong>Journaling</strong></td>
+<td>Writing a plan before doing work, so crashes don't cause corruption</td>
+</tr>
+<tr>
+<td><strong>Write-ahead log</strong></td>
+<td>The journal itself -- a record of planned operations</td>
+</tr>
+<tr>
+<td><strong>Transaction</strong></td>
+<td>A unit of work that fully succeeds or fully fails</td>
+</tr>
+<tr>
+<td><strong>Commit</strong></td>
+<td>Mark a transaction as successfully completed</td>
+</tr>
+<tr>
+<td><strong>Abort</strong></td>
+<td>Mark a transaction as failed or incomplete</td>
+</tr>
+<tr>
+<td><strong>Checkpoint</strong></td>
+<td>A snapshot of the filesystem at a known-good point</td>
+</tr>
+<tr>
+<td><strong>Recovery</strong></td>
+<td>Restoring from checkpoint and replaying committed transactions</td>
+</tr>
+<tr>
+<td><strong>Crash consistency</strong></td>
+<td>The guarantee that the filesystem is valid after a crash</td>
+</tr>
+</tbody>
+</table>
+<h2 id="virtual-filesystems-proc">Virtual Filesystems -- /proc</h2>
+<p>So far, every file we've talked about lives on "disk" (in memory, for our
+simulator). But what if you could have a directory that doesn't store
+anything at all -- and yet, every time you open a file inside it, you get
+fresh, live information?</p>
+<p>That's exactly what <code>/proc</code> is. Think of it as a <strong>magic bulletin board</strong>
+in the school hallway. Nobody writes real papers and pins them there.
+When you walk up and look at a section, the information appears
+automatically from the school's current records. A new student arrives?
+Their name instantly appears on the board. A student leaves? Their entry
+vanishes.</p>
+<h3 id="whats-inside-proc">What's inside /proc?</h3>
+<pre><code>/proc/
+├── meminfo          -- Memory statistics (total, free, used, shared)
+├── uptime           -- How long the system has been running
+├── cpuinfo          -- Scheduler policy, ready queue size (per-CPU on multi-CPU systems)
+├── stat             -- Performance metrics (context switches, throughput)
+├── [pid]/           -- One directory per process
+│   ├── status       -- Name, PID, parent, state, priority, threads
+│   ├── maps         -- Which memory pages the process uses
+│   ├── cmdline      -- The process name
+│   └── sched        -- Timing info (wait time, CPU time, response time)
+└── self/            -- Alias for whatever process is running right now
+    ├── status
+    ├── maps
+    ├── cmdline
+    └── sched
+</code></pre>
+<h3 id="how-to-use-it">How to use it</h3>
+<p>You use the same commands you already know! <code>cat</code> and <code>ls</code> automatically
+detect <code>/proc</code> paths and route to the virtual filesystem instead of the
+real one.</p>
+<pre><code>ls /proc            -- see what's on the bulletin board
+cat /proc/meminfo   -- check memory usage
+cat /proc/uptime    -- see how long the system has been up
+cat /proc/stat      -- see performance metrics (context switches, throughput)
+ls /proc/42         -- list files for process 42
+cat /proc/42/status -- see process 42's details
+cat /proc/42/sched  -- see process 42's timing (wait, CPU, response time)
+</code></pre>
+<h3 id="why-does-this-exist">Why does this exist?</h3>
+<p>In real Linux, tools like <code>ps</code>, <code>top</code>, and <code>free</code> don't have special
+access to the kernel. They're just ordinary programs that read files from
+<code>/proc</code>. This is a beautiful design: instead of needing a special API for
+every kind of system information, the kernel just makes it look like files.
+If you know how to read a file, you know how to inspect the entire system.</p>
+<h3 id="virtual-vs-real-files">Virtual vs real files</h3>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Real files (<code>/data/report.txt</code>)</th>
+<th>Virtual files (<code>/proc/meminfo</code>)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Stored on disk?</td>
+<td>Yes</td>
+<td>No -- generated on every read</td>
+</tr>
+<tr>
+<td>Content changes?</td>
+<td>Only when someone writes</td>
+<td>Every read may be different</td>
+</tr>
+<tr>
+<td>Can you write?</td>
+<td>Yes (<code>write</code> command)</td>
+<td>No -- read-only</td>
+</tr>
+<tr>
+<td>Uses inodes?</td>
+<td>Yes</td>
+<td>No -- separate ProcFilesystem class</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Virtual filesystem</strong></td>
+<td>A filesystem where files don't exist on disk -- content is generated live</td>
+</tr>
+<tr>
+<td><strong>/proc</strong></td>
+<td>The virtual filesystem that exposes kernel state as readable files</td>
+</tr>
+<tr>
+<td><strong>/proc/self</strong></td>
+<td>A shortcut that always points to whatever process is currently running</td>
+</tr>
+</tbody>
+</table>
+<h2 id="where-to-go-next">Where to Go Next</h2>
+<ul>
+<li><a href="../kernel-and-syscalls/">The Kernel</a> -- How the kernel routes your filesystem
+  requests through syscalls</li>
+<li><a href="../processes/">Processes</a> -- How the OS runs programs that read and write files</li>
+<li><a href="../memory/">Memory</a> -- How the OS gives programs space to work with file data</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "search.highlight"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

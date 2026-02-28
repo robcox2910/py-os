@@ -1,0 +1,2147 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A simulated operating system built in Python for learning OS concepts">
+      
+      
+      
+        <link rel="canonical" href="https://robcox2910.github.io/py-os/concepts/memory/">
+      
+      
+        <link rel="prev" href="../processes/">
+      
+      
+        <link rel="next" href="../filesystem/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.3">
+    
+    
+      
+        <title>Memory - PyOS</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#memory-how-the-os-hands-out-and-protects-memory" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="PyOS" class="md-header__button md-logo" aria-label="PyOS" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            PyOS
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Memory
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/robcox2910/py-os" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    robcox2910/py-os
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="PyOS" class="md-nav__button md-logo" aria-label="PyOS" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    PyOS
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/robcox2910/py-os" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    robcox2910/py-os
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../what-is-an-os/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What Is an OS?
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../processes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Processes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memory
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memory
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-physical-memory-memorymanagerpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Physical Memory (memory/manager.py)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Physical Memory (memory/manager.py)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-locker-analogy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Locker Analogy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-fixed-sizes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why Fixed Sizes?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-happens-when-a-process-finishes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Happens When a Process Finishes?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-if-all-the-lockers-are-full" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What If All the Lockers Are Full?
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-virtual-memory-memoryvirtualpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Virtual Memory (memory/virtual.py)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Virtual Memory (memory/virtual.py)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-personal-map-analogy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Personal Map Analogy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#address-translation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Address Translation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#isolation-keeping-students-apart" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Isolation: Keeping Students Apart
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#page-faults" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Page Faults
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-page-replacement-and-swap-memoryswappy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Page Replacement and Swap (memory/swap.py)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Page Replacement and Swap (memory/swap.py)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-basement-storage-room" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Basement Storage Room
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#three-strategies-for-picking-a-locker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Three Strategies for Picking a Locker
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Three Strategies for Picking a Locker">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fifo-first-in-first-out" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FIFO -- First In, First Out
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lru-least-recently-used" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LRU -- Least Recently Used
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clock-second-chance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Clock -- Second Chance
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#demand-paging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Demand Paging
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-copy-on-write-cow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Copy-on-Write (COW)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Copy-on-Write (COW)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-shared-notebook-analogy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Shared Notebook Analogy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-does-this-matter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why Does This Matter?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-it-works-under-the-hood" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Works Under the Hood
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reference-counting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reference Counting
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-memory-mapped-files-mmap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Memory-Mapped Files (mmap)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Memory-Mapped Files (mmap)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-open-textbook-analogy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Open Textbook Analogy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#two-modes-private-vs-shared" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two Modes: Private vs Shared
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Two Modes: Private vs Shared">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#map_private-your-own-photocopy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MAP_PRIVATE -- Your own photocopy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#map_shared-everyone-reads-the-same-book" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MAP_SHARED -- Everyone reads the same book
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#msync-saving-your-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        msync -- Saving Your Work
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-it-works-under-the-hood_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Works Under the Hood
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-slab-allocator-memoryslabpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Slab Allocator (memory/slab.py)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Slab Allocator (memory/slab.py)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-supply-closet-analogy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Supply Closet Analogy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-not-just-use-frames" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why Not Just Use Frames?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-three-level-hierarchy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Three-Level Hierarchy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-allocation-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How Allocation Works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#auto-growing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Auto-Growing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-it-works-under-the-hood_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Works Under the Hood
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#putting-it-all-together" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Putting It All Together
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#where-to-go-next" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where to Go Next
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../filesystem/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Filesystem
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kernel-and-syscalls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Kernel
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../shell/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Shell
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devices-and-networking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Devices and Networking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../users-and-safety/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Users and Safety
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../synchronization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Synchronization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bootloader/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Boot Chain
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interactive Tutorials
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../web-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Web UI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-physical-memory-memorymanagerpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Physical Memory (memory/manager.py)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Physical Memory (memory/manager.py)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-locker-analogy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Locker Analogy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-fixed-sizes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why Fixed Sizes?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-happens-when-a-process-finishes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Happens When a Process Finishes?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-if-all-the-lockers-are-full" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What If All the Lockers Are Full?
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-virtual-memory-memoryvirtualpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Virtual Memory (memory/virtual.py)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Virtual Memory (memory/virtual.py)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-personal-map-analogy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Personal Map Analogy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#address-translation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Address Translation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#isolation-keeping-students-apart" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Isolation: Keeping Students Apart
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#page-faults" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Page Faults
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-page-replacement-and-swap-memoryswappy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Page Replacement and Swap (memory/swap.py)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Page Replacement and Swap (memory/swap.py)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-basement-storage-room" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Basement Storage Room
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#three-strategies-for-picking-a-locker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Three Strategies for Picking a Locker
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Three Strategies for Picking a Locker">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fifo-first-in-first-out" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FIFO -- First In, First Out
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lru-least-recently-used" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LRU -- Least Recently Used
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clock-second-chance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Clock -- Second Chance
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#demand-paging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Demand Paging
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-copy-on-write-cow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Copy-on-Write (COW)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Copy-on-Write (COW)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-shared-notebook-analogy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Shared Notebook Analogy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-does-this-matter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why Does This Matter?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-it-works-under-the-hood" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Works Under the Hood
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reference-counting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reference Counting
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-memory-mapped-files-mmap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Memory-Mapped Files (mmap)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Memory-Mapped Files (mmap)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-open-textbook-analogy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Open Textbook Analogy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#two-modes-private-vs-shared" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two Modes: Private vs Shared
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Two Modes: Private vs Shared">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#map_private-your-own-photocopy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MAP_PRIVATE -- Your own photocopy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#map_shared-everyone-reads-the-same-book" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MAP_SHARED -- Everyone reads the same book
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#msync-saving-your-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        msync -- Saving Your Work
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-it-works-under-the-hood_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Works Under the Hood
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-slab-allocator-memoryslabpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Slab Allocator (memory/slab.py)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Slab Allocator (memory/slab.py)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-supply-closet-analogy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Supply Closet Analogy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-not-just-use-frames" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why Not Just Use Frames?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-three-level-hierarchy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Three-Level Hierarchy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-allocation-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How Allocation Works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#auto-growing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Auto-Growing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-it-works-under-the-hood_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Works Under the Hood
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#putting-it-all-together" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Putting It All Together
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#where-to-go-next" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where to Go Next
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="memory-how-the-os-hands-out-and-protects-memory">Memory: How the OS Hands Out and Protects Memory</h1>
+<p>When a <a href="../processes/">process</a> runs, it needs somewhere to keep its stuff -- the
+variables it's working with, the instructions it's executing, the data it loaded
+from a file. That "somewhere" is <strong>memory</strong> (specifically, RAM -- the fast,
+temporary storage your computer uses while it's on).</p>
+<p>But here's the problem: lots of processes are running at the same time, and they
+all need memory. Somebody has to hand it out fairly, keep everyone's stuff
+separate, and deal with the situation when there's not enough to go around.</p>
+<p>That somebody is the OS.</p>
+<p>In PyOS, memory management is split into three files, each handling a different
+piece of the puzzle. Let's walk through them one at a time.</p>
+<hr />
+<h2 id="1-physical-memory-memorymanagerpy">1. Physical Memory (<code>memory/manager.py</code>)</h2>
+<h3 id="the-locker-analogy">The Locker Analogy</h3>
+<p>Imagine a long hallway of school lockers. Every locker is exactly the same size,
+and they're numbered 0, 1, 2, 3, and so on. When a new student (a
+<a href="../processes/">process</a>) shows up at school, the principal (the OS) assigns them
+some lockers to store their stuff in.</p>
+<p>In OS terms, each locker is called a <strong>frame</strong>, and the chunk of data that fits
+inside one frame is called a <strong>page</strong>. Pages and frames are the same size --
+think of a page as the stuff, and a frame as the locker it goes into.</p>
+<h3 id="why-fixed-sizes">Why Fixed Sizes?</h3>
+<p>You might wonder: why make every locker the same size? Why not have some big
+lockers and some small ones?</p>
+<p>Here's why. Imagine a hallway where lockers come in all different sizes. Over
+time, as students come and go, you end up with a bunch of tiny gaps scattered
+all over the hallway. You might have 10 small gaps, but none of them is big
+enough for a new student who needs a medium locker. This problem is called
+<strong>fragmentation</strong> -- you technically have free space, but it's chopped up into
+useless little pieces.</p>
+<p>Fixed-size lockers avoid this entirely. A free locker is a free locker. Any page
+fits in any frame. Simple.</p>
+<h3 id="what-happens-when-a-process-finishes">What Happens When a Process Finishes?</h3>
+<p>When a <a href="../processes/">process</a> is done running, the OS takes back all of its
+lockers and marks them as free. Now those frames are available for the next
+process that needs them. Nothing is wasted.</p>
+<h3 id="what-if-all-the-lockers-are-full">What If All the Lockers Are Full?</h3>
+<p>If every single frame is in use and a new process asks for memory, the OS has
+a choice: it can either refuse (raising an <strong>OutOfMemoryError</strong>, which crashes
+that process) or it can try to make room using swap space, which we'll get to
+in a moment.</p>
+<hr />
+<h2 id="2-virtual-memory-memoryvirtualpy">2. Virtual Memory (<code>memory/virtual.py</code>)</h2>
+<h3 id="the-personal-map-analogy">The Personal Map Analogy</h3>
+<p>Here's where things get clever.</p>
+<p>Every student gets their own personal map of the locker hallway. On this map, it
+says things like:</p>
+<ul>
+<li>"My locker 0 is actually real locker #47"</li>
+<li>"My locker 1 is actually real locker #12"</li>
+<li>"My locker 2 is actually real locker #83"</li>
+</ul>
+<p>The student only ever sees their own simple numbering -- 0, 1, 2, 3 -- even
+though their actual lockers are scattered all over the hallway. The student
+doesn't need to know or care where the real lockers are. They just say "open my
+locker 2," and the OS quietly translates that into "go to real locker #83."</p>
+<p>This personal map is called a <strong>page table</strong>, and the simple numbering the
+student sees is called a <strong>virtual address</strong>. The real, physical locker number
+is the <strong>physical address</strong>.</p>
+<h3 id="address-translation">Address Translation</h3>
+<p>When a process says "I want the data at my page 3, position 5," the OS does
+this:</p>
+<ol>
+<li>Look up page 3 in that process's page table.</li>
+<li>The page table says: "Page 3 maps to frame #20."</li>
+<li>Go to frame #20 in physical memory and find position 5.</li>
+</ol>
+<p>That's it. The process said "page 3, position 5" and the OS translated it to
+"frame 20, position 5." This translation happens every single time a process
+touches memory, and it's fast because the hardware helps out.</p>
+<h3 id="isolation-keeping-students-apart">Isolation: Keeping Students Apart</h3>
+<p>Here's the really important part. Student A and Student B both think they have a
+"locker 0." But Student A's locker 0 points to real locker #47, while Student
+B's locker 0 points to real locker #91. They're completely different physical
+lockers.</p>
+<p>This means Student A can never accidentally (or intentionally) read or overwrite
+Student B's data. Each <a href="../processes/">process</a> lives in its own little world,
+with its own private numbering, completely unaware of what other processes are
+doing. This separation is called <strong>isolation</strong>, and it's one of the most
+important jobs of the OS.</p>
+<h3 id="page-faults">Page Faults</h3>
+<p>What happens if a student tries to open a locker that isn't on their map at all?
+Maybe they ask for "my locker 99" but their map only goes up to locker 5.</p>
+<p>That's called a <strong>page fault</strong>. The OS catches it and says, "Hey, you don't have
+a locker 99." Depending on the situation, the OS might load the missing page
+from disk (more on that below), or it might just stop the process with an error
+because it tried to access memory it doesn't own.</p>
+<hr />
+<h2 id="3-page-replacement-and-swap-memoryswappy">3. Page Replacement and Swap (<code>memory/swap.py</code>)</h2>
+<h3 id="the-basement-storage-room">The Basement Storage Room</h3>
+<p>OK, so what happens when <em>all</em> the lockers in the hallway are full, but a new
+student still needs one?</p>
+<p>The OS has a trick: there's a storage room in the basement. In real computers,
+this "basement" is your hard drive or SSD -- it's much slower than RAM, but
+there's a lot more of it. This system is called <strong>swap space</strong>.</p>
+<p>Here's how it works:</p>
+<ol>
+<li>The OS picks a locker that's currently in use.</li>
+<li>It moves everything from that locker down to the basement storage room.</li>
+<li>Now that locker is empty, so the OS gives it to the new student.</li>
+<li>Later, when the original owner needs their stuff back, the OS finds another
+   locker to free up, brings the stuff back from the basement, and the process
+   continues like nothing happened.</li>
+</ol>
+<p>The tricky part is step 1: <strong>which locker do you pick?</strong> You want to pick one
+that won't be needed again soon, so you don't have to keep shuffling things back
+and forth between the hallway and the basement. That shuffling is slow, and too
+much of it (called <strong>thrashing</strong>) makes the whole computer grind to a halt.</p>
+<h3 id="three-strategies-for-picking-a-locker">Three Strategies for Picking a Locker</h3>
+<h4 id="fifo-first-in-first-out">FIFO -- First In, First Out</h4>
+<p>The simplest idea: empty whichever locker has had the same stuff in it the
+longest. If locker #12 was filled first, it gets emptied first.</p>
+<p>This is easy to implement -- you just keep a list in order. But it's not always
+smart. Sometimes the oldest stuff is actually the stuff you use the <em>most</em>.
+Imagine emptying the locker of the student who visits it every single period just
+because they got it a long time ago. Not great.</p>
+<h4 id="lru-least-recently-used">LRU -- Least Recently Used</h4>
+<p>A smarter idea: empty the locker that nobody has opened in the longest time. If
+locker #7 hasn't been touched in three hours but locker #12 was opened five
+minutes ago, empty locker #7.</p>
+<p>This usually makes better choices than FIFO, because stuff that hasn't been used
+in a while probably won't be used again soon. The downside? You have to keep
+track of <em>every single time</em> someone opens a locker, which takes extra work and
+extra bookkeeping.</p>
+<h4 id="clock-second-chance">Clock -- Second Chance</h4>
+<p>This is the clever compromise that most real operating systems actually use.</p>
+<p>Picture a clock hand sweeping around a circle of lockers. Each locker has a tiny
+flag -- a single bit that means "I was used recently."</p>
+<p>When the OS needs to free a locker, the clock hand starts sweeping:</p>
+<ol>
+<li>It looks at the locker it's pointing to.</li>
+<li>If the flag is <strong>up</strong> ("I was used recently!"), the OS puts the flag <strong>down</strong>
+   and moves the hand to the next locker. That locker gets a second chance.</li>
+<li>If the flag is <strong>down</strong> ("I haven't been used in a while"), the OS empties
+   that locker and uses it.</li>
+</ol>
+<p>The clock hand keeps going around and around, like the hand of an actual clock.
+Any locker that gets used has its flag set back up. So the only lockers that get
+emptied are the ones that haven't been used since the last time the hand came
+around.</p>
+<p>This is nearly as smart as LRU -- it avoids emptying recently-used lockers --
+but it's <em>much</em> simpler because you only need one flag per locker instead of a
+full history of every access.</p>
+<h3 id="demand-paging">Demand Paging</h3>
+<p>There's one more idea worth knowing about: <strong>demand paging</strong>.</p>
+<p>When a <a href="../processes/">process</a> starts up, the OS doesn't immediately load all of
+its pages into memory. That would be wasteful -- maybe the process has a ton of
+data but only uses a small piece of it right away. Instead, the OS waits.</p>
+<p>When the process actually tries to read a page that isn't in memory yet, a
+<strong>page fault</strong> happens. But this time it's not an error -- it's expected. The OS
+says, "Oh, you need that page? Hold on." It pauses the process, loads the page
+from disk into a free frame (evicting another page if necessary), updates the
+page table, and then lets the process continue. The process doesn't even know it
+was paused.</p>
+<p>This "load it only when you need it" approach is called demand paging, and it
+means programs can start faster and use less memory overall, because they only
+occupy frames for the pages they're actually using right now.</p>
+<hr />
+<h2 id="4-copy-on-write-cow">4. Copy-on-Write (COW)</h2>
+<h3 id="the-shared-notebook-analogy">The Shared Notebook Analogy</h3>
+<p>Imagine two students, Alice and Bob, are both studying from the same textbook.
+Instead of photocopying the whole book for Bob (slow and wasteful), the teacher
+says: "Just share. You're both reading the same pages anyway."</p>
+<p>But there's a catch -- if Bob wants to scribble notes in the margin, he can't
+do it on the shared copy or he'd mess up Alice's book too. So the rule is:
+<strong>the first person to write on a page gets a photocopy of just that one page</strong>.
+Now Bob has his own copy to scribble on, and Alice's page is untouched. If
+neither of them ever writes, no copies are ever needed. Free sharing!</p>
+<p>This is <strong>copy-on-write</strong> (COW), and it's one of the cleverest tricks in
+operating systems.</p>
+<h3 id="why-does-this-matter">Why Does This Matter?</h3>
+<p>When a <a href="../processes/">process</a> forks (creates a child), the child needs its own
+copy of the parent's memory. The naive approach is to copy every single page
+immediately -- but that's wasteful. Many forked processes immediately call
+<code>exec()</code> to load a completely different program, throwing away all those copies
+before they're even read.</p>
+<p>With COW:
+1. <strong>Fork is nearly free</strong> -- parent and child point to the same physical
+   frames. No copying happens.
+2. <strong>Reads are shared</strong> -- both processes read from the same frames. No extra
+   memory used.
+3. <strong>Writes trigger a copy</strong> -- only the page being written gets duplicated.
+   The writer gets a private copy; the other process keeps the original.</p>
+<h3 id="how-it-works-under-the-hood">How It Works Under the Hood</h3>
+<ol>
+<li><strong>At fork time</strong>, the kernel marks all shared pages as COW-protected and
+   bumps a <strong>reference count</strong> on each physical frame (from 1 to 2).</li>
+<li><strong>On read</strong>, nothing special happens. Both processes read the same data from
+   the same frame.</li>
+<li><strong>On write</strong>, the virtual memory system detects the COW flag and triggers a
+   <strong>fault handler</strong>. The handler:</li>
+<li>Allocates a brand-new frame.</li>
+<li>Copies the data from the shared frame to the new one.</li>
+<li>Updates the writer's page table to point to the new frame.</li>
+<li>Decrements the old frame's reference count.</li>
+<li>Clears the COW flag on that page (it's now private).</li>
+<li><strong>When refcount hits 0</strong>, the frame goes back to the free pool.</li>
+</ol>
+<h3 id="reference-counting">Reference Counting</h3>
+<p>The memory manager keeps a counter for each frame: "how many processes are
+using this frame right now?" When a frame is first allocated, the count is 1.
+When fork shares it, the count goes to 2. If three processes share it (A forks
+B, then B forks C), the count is 3. Each termination or COW copy decrements
+the count. The frame is only truly freed when the count reaches 0.</p>
+<hr />
+<h2 id="5-memory-mapped-files-mmap">5. Memory-Mapped Files (mmap)</h2>
+<h3 id="the-open-textbook-analogy">The Open Textbook Analogy</h3>
+<p>Imagine you're doing homework and need to look something up in a textbook. The
+normal way is to grab the book, photocopy the pages you need, put the copies on
+your desk, read and scribble on them, and later copy your changes back into the
+book. That's a lot of steps!</p>
+<p><strong>Memory-mapped files</strong> are like opening the textbook and laying it flat on your
+desk. Instead of photocopying pages, you read and write <em>directly on the open
+book</em>. No copying back and forth -- the book is right there.</p>
+<p>In OS terms, <code>mmap</code> takes a file and makes it appear as if it's part of a
+process's memory. The process can read and write those memory addresses, and the
+OS handles moving data between the file and RAM automatically.</p>
+<h3 id="two-modes-private-vs-shared">Two Modes: Private vs Shared</h3>
+<h4 id="map_private-your-own-photocopy">MAP_PRIVATE -- Your own photocopy</h4>
+<p>With MAP_PRIVATE, the OS hands you <strong>your own copy</strong> of the pages. You can
+scribble all over them, but your changes stay with you -- the original book is
+untouched. This is useful when a process needs to read file data into memory but
+doesn't want to modify the actual file.</p>
+<p>When a process <a href="../processes/">forks</a>, private mmap pages get the same
+copy-on-write treatment as regular memory pages -- parent and child share until
+one of them writes.</p>
+<h4 id="map_shared-everyone-reads-the-same-book">MAP_SHARED -- Everyone reads the same book</h4>
+<p>With MAP_SHARED, multiple processes all look at the <strong>same physical pages</strong>.
+If one process writes "HELLO" at the top of page 3, every other process mapping
+that same file immediately sees "HELLO" there too -- because they're all looking
+at the same underlying memory.</p>
+<p>This is powerful for communication between processes. Instead of sending messages
+back and forth, they can just read and write the same shared memory.</p>
+<p>When a process forks, shared mmap pages are <strong>not</strong> marked copy-on-write.
+Writes by the parent or child should be visible to the other -- that's the
+whole point of "shared."</p>
+<h3 id="msync-saving-your-work">msync -- Saving Your Work</h3>
+<p>Shared mappings live in memory, but the actual file on disk doesn't update
+automatically. When you want to make sure your changes are saved to the file,
+you call <code>msync</code> -- think of it as pressing "Save." The OS takes whatever is in
+the shared memory pages and writes it back to the file.</p>
+<p>When a process unmaps a shared region (or terminates), the OS does an automatic
+msync to make sure nothing is lost.</p>
+<h3 id="how-it-works-under-the-hood_1">How It Works Under the Hood</h3>
+<ol>
+<li>
+<p><strong>mmap</strong> -- The kernel reads the file data, allocates physical frames, copies
+   the data into those frames, and maps them into the process's virtual address
+   space. For shared mappings, a second process mapping the same file reuses the
+   same frames (zero extra allocation).</p>
+</li>
+<li>
+<p><strong>Read/write</strong> -- The process just reads and writes memory addresses like
+   normal. For private mappings, changes stay local. For shared mappings,
+   changes are visible to all sharers.</p>
+</li>
+<li>
+<p><strong>munmap</strong> -- Removes the mapping. For shared regions, data is written back
+   to the file first. Frames are released and reference counts updated.</p>
+</li>
+<li>
+<p><strong>msync</strong> -- Writes shared data back to the file without removing the
+   mapping. Like saving a document without closing it.</p>
+</li>
+</ol>
+<hr />
+<h2 id="6-slab-allocator-memoryslabpy">6. Slab Allocator (<code>memory/slab.py</code>)</h2>
+<h3 id="the-supply-closet-analogy">The Supply Closet Analogy</h3>
+<p>Imagine the school warehouse full of big storage crates (frames). Every time a
+teacher needs a single pencil, they get an entire crate. That's a huge waste of
+space!</p>
+<p>A <strong>slab allocator</strong> is like setting up a supply closet. You take one crate from
+the warehouse and divide it into little compartments -- one pencil per
+compartment. Now when a teacher needs a pencil, they grab one from the supply
+closet in a split second. When they're done, they put it back. No waste, no
+waiting.</p>
+<p>Each supply closet handles one type of item. The "pencil closet" has
+pencil-sized compartments, the "eraser closet" has eraser-sized ones. In OS
+terms, each closet is a <strong>slab cache</strong>, each compartment is a <strong>slot</strong>, and
+the crate backing it is a <strong>slab</strong> (one physical frame).</p>
+<h3 id="why-not-just-use-frames">Why Not Just Use Frames?</h3>
+<p>The memory manager allocates in whole frames (256 bytes each). But kernel
+objects like process control blocks (PCBs, ~64 bytes) and inodes (~48 bytes)
+are <em>much</em> smaller. If you use a whole frame for each one, you waste 75-80%
+of the space. Multiply that by hundreds of objects and the waste adds up fast.</p>
+<p>A slab allocator solves this by packing many small objects into a single frame.
+A 256-byte frame with 64-byte slots holds 4 PCBs. Same space, four times the
+capacity.</p>
+<h3 id="the-three-level-hierarchy">The Three-Level Hierarchy</h3>
+<p>The slab allocator has three levels, from bottom to top:</p>
+<ol>
+<li>
+<p><strong>Slab</strong> -- one physical frame divided into equal-sized slots. A slab for
+   64-byte objects has 4 slots (256 / 64). It tracks which slots are free using
+   a simple stack: pop to allocate, push to free. Both operations are O(1) --
+   constant time, no matter how many slots there are.</p>
+</li>
+<li>
+<p><strong>Slab Cache</strong> -- a pool of slabs, all for the same object size. The "pcb"
+   cache might have three slabs (three frames), giving 12 total slots for PCBs.
+   When all slabs are full, the cache auto-grows by requesting another frame
+   from the memory manager.</p>
+</li>
+<li>
+<p><strong>Slab Allocator</strong> -- a registry of named caches. The kernel creates caches
+   for each type of object it needs: "pcb" for process control blocks, "inode"
+   for filesystem metadata, and so on. User code talks to the allocator by
+   cache name.</p>
+</li>
+</ol>
+<h3 id="how-allocation-works">How Allocation Works</h3>
+<p>When the kernel needs a new PCB:</p>
+<ol>
+<li>It asks the <strong>slab allocator</strong> for an object from the "pcb" cache.</li>
+<li>The allocator finds the "pcb" <strong>slab cache</strong>.</li>
+<li>The cache scans its slabs for one with free space.</li>
+<li>If a <strong>slab</strong> has a free slot, it pops the slot index from its free stack.
+   Done!</li>
+<li>If all slabs are full, the cache asks the memory manager for a new frame,
+   creates a new slab, and allocates from that.</li>
+</ol>
+<p>The result is a handle: <code>(slab_index, slot_index)</code> -- exactly which frame and
+which slot your object lives in. It's transparent and inspectable, which makes
+it great for learning.</p>
+<h3 id="auto-growing">Auto-Growing</h3>
+<p>When all slabs in a cache are full and a new allocation comes in, the cache
+automatically requests another frame from the memory manager. This is like the
+supply closet running out of pencils -- you grab another crate from the
+warehouse and add more compartments.</p>
+<p>In real operating systems, slab allocators can also <em>shrink</em> by returning empty
+slabs back to the page allocator. Our simulator keeps things simple and doesn't
+reclaim empty slabs.</p>
+<h3 id="how-it-works-under-the-hood_2">How It Works Under the Hood</h3>
+<ol>
+<li>
+<p><strong>At boot</strong>, the kernel creates a <code>SlabAllocator</code> backed by the memory
+   manager. It pre-registers caches for common objects ("pcb" at 64 bytes,
+   "inode" at 48 bytes).</p>
+</li>
+<li>
+<p><strong>On allocate</strong>, the cache pops a free slot index from one of its slabs.
+   If no slab has space, it requests a new frame and creates a new slab.</p>
+</li>
+<li>
+<p><strong>On free</strong>, the slot index is pushed back onto the slab's free stack.
+   The slot is immediately available for the next allocation.</p>
+</li>
+<li>
+<p><strong>On destroy</strong>, all backing frames are returned to the memory manager.</p>
+</li>
+</ol>
+<hr />
+<h2 id="putting-it-all-together">Putting It All Together</h2>
+<p>Here's how these pieces work as a team:</p>
+<ol>
+<li>
+<p><strong>Physical memory</strong> (<code>memory/manager.py</code>) manages the actual frames -- the real
+   lockers in the hallway. It tracks which ones are free and which ones are
+   taken.</p>
+</li>
+<li>
+<p><strong>Virtual memory</strong> (<code>memory/virtual.py</code>) gives each process its own private
+   map (page table) so that processes see clean, simple addresses and can't
+   interfere with each other.</p>
+</li>
+<li>
+<p><strong>Swap</strong> (<code>memory/swap.py</code>) handles the overflow. When memory is full, it moves
+   pages to disk and brings them back when needed, using a replacement strategy
+   (FIFO, LRU, or Clock) to decide what to move.</p>
+</li>
+<li>
+<p><strong>Slab allocator</strong> (<code>memory/slab.py</code>) sits on top of the frame allocator and
+   subdivides frames into small, fixed-size slots for kernel objects. It
+   eliminates waste when many tiny objects need their own space.</p>
+</li>
+</ol>
+<p>Together, they create the illusion that every <a href="../processes/">process</a> has its own
+big, private chunk of memory -- even if the physical RAM is small and shared
+among many processes. That illusion is one of the most powerful tricks in all of
+computing.</p>
+<hr />
+<h2 id="where-to-go-next">Where to Go Next</h2>
+<ul>
+<li><a href="../processes/">Processes</a> -- How the OS runs programs and shares the processor</li>
+<li><a href="../what-is-an-os/">What Is an OS?</a> -- The big picture of how an OS works</li>
+<li><a href="../filesystem/">Filesystem</a> -- How files and folders are organized and stored</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "search.highlight"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

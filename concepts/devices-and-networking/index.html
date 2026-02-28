@@ -1,0 +1,2382 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A simulated operating system built in Python for learning OS concepts">
+      
+      
+      
+        <link rel="canonical" href="https://robcox2910.github.io/py-os/concepts/devices-and-networking/">
+      
+      
+        <link rel="prev" href="../shell/">
+      
+      
+        <link rel="next" href="../users-and-safety/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.3">
+    
+    
+      
+        <title>Devices and Networking - PyOS</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#devices-and-networking-how-the-os-talks-to-hardware-and-the-world" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="PyOS" class="md-header__button md-logo" aria-label="PyOS" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            PyOS
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Devices and Networking
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/robcox2910/py-os" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    robcox2910/py-os
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="PyOS" class="md-nav__button md-logo" aria-label="PyOS" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    PyOS
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/robcox2910/py-os" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    robcox2910/py-os
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../what-is-an-os/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What Is an OS?
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../processes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Processes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../memory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memory
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../filesystem/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Filesystem
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kernel-and-syscalls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Kernel
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../shell/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Shell
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Devices and Networking
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Devices and Networking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-devices-iodevicespy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Devices (io/devices.py)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Devices (io/devices.py)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-school-supplies-analogy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The School Supplies Analogy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#three-built-in-devices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Three Built-In Devices
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Three Built-In Devices">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nulldevice-devnull-the-trash-can" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        NullDevice (/dev/null) -- The Trash Can
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#consoledevice-the-whiteboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ConsoleDevice -- The Whiteboard
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#randomdevice-devrandom-the-magic-8-ball" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RandomDevice (/dev/random) -- The Magic 8-Ball
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-device-manager" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Device Manager
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-ipc-inter-process-communication-ioipcpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. IPC -- Inter-Process Communication (io/ipc.py)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. IPC -- Inter-Process Communication (io/ipc.py)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pipes-the-tin-can-telephone" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pipes -- The Tin-Can Telephone
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#message-queues-the-mailbox" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Message Queues -- The Mailbox
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#shared-memory-the-shared-whiteboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shared Memory -- The Shared Whiteboard
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Shared Memory -- The Shared Whiteboard">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-synchronization-problem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Synchronization Problem
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pipes-vs-message-queues-vs-shared-memory-when-to-use-which" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pipes vs. Message Queues vs. Shared Memory -- When to Use Which?
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-disk-scheduling-iodiskpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Disk Scheduling (io/disk.py)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Disk Scheduling (io/disk.py)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-elevator-analogy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Elevator Analogy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fcfs-first-come-first-served" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FCFS -- First Come, First Served
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sstf-shortest-seek-time-first" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SSTF -- Shortest Seek Time First
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scan-the-elevator-algorithm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SCAN -- The Elevator Algorithm
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c-scan-circular-scan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C-SCAN -- Circular SCAN
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-classic-textbook-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Classic Textbook Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-diskscheduler" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The DiskScheduler
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-networking-ionetworkingpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Networking (io/networking.py)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Networking (io/networking.py)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-phone-call-analogy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Phone Call Analogy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#socket-states" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Socket States
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#handling-multiple-clients" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Handling Multiple Clients
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-buffers-the-in-memory-network" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Buffers -- The In-Memory Network
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-socket-manager" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Socket Manager
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-dns-name-resolution-iodnspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. DNS -- Name Resolution (io/dns.py)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. DNS -- Name Resolution (io/dns.py)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-phone-book-analogy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Phone Book Analogy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-it-works-in-pyos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Works in PyOS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dns-over-sockets-how-queries-really-travel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DNS Over Sockets -- How Queries Really Travel
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-records-keeping-it-simple" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A Records -- Keeping It Simple
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-http-talking-on-the-web-iohttppy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. HTTP -- Talking on the Web (io/http.py)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. HTTP -- Talking on the Web (io/http.py)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-restaurant-analogy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Restaurant Analogy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#requests-the-order-form" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Requests -- The Order Form
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#responses-the-receipt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Responses -- The Receipt
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#protocol-layering-http-on-top-of-sockets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Protocol Layering -- HTTP on Top of Sockets
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-http-demo-command" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The http demo Command
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#http-is-user-space" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HTTP Is User-Space
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#putting-it-all-together" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Putting It All Together
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#where-to-go-next" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where to Go Next
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../users-and-safety/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Users and Safety
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../synchronization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Synchronization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bootloader/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Boot Chain
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interactive Tutorials
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../web-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Web UI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-devices-iodevicespy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Devices (io/devices.py)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Devices (io/devices.py)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-school-supplies-analogy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The School Supplies Analogy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#three-built-in-devices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Three Built-In Devices
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Three Built-In Devices">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nulldevice-devnull-the-trash-can" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        NullDevice (/dev/null) -- The Trash Can
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#consoledevice-the-whiteboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ConsoleDevice -- The Whiteboard
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#randomdevice-devrandom-the-magic-8-ball" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RandomDevice (/dev/random) -- The Magic 8-Ball
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-device-manager" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Device Manager
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-ipc-inter-process-communication-ioipcpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. IPC -- Inter-Process Communication (io/ipc.py)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. IPC -- Inter-Process Communication (io/ipc.py)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pipes-the-tin-can-telephone" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pipes -- The Tin-Can Telephone
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#message-queues-the-mailbox" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Message Queues -- The Mailbox
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#shared-memory-the-shared-whiteboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shared Memory -- The Shared Whiteboard
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Shared Memory -- The Shared Whiteboard">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-synchronization-problem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Synchronization Problem
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pipes-vs-message-queues-vs-shared-memory-when-to-use-which" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pipes vs. Message Queues vs. Shared Memory -- When to Use Which?
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-disk-scheduling-iodiskpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Disk Scheduling (io/disk.py)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Disk Scheduling (io/disk.py)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-elevator-analogy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Elevator Analogy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fcfs-first-come-first-served" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FCFS -- First Come, First Served
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sstf-shortest-seek-time-first" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SSTF -- Shortest Seek Time First
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scan-the-elevator-algorithm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SCAN -- The Elevator Algorithm
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c-scan-circular-scan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C-SCAN -- Circular SCAN
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-classic-textbook-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Classic Textbook Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-diskscheduler" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The DiskScheduler
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-networking-ionetworkingpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Networking (io/networking.py)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Networking (io/networking.py)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-phone-call-analogy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Phone Call Analogy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#socket-states" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Socket States
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#handling-multiple-clients" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Handling Multiple Clients
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-buffers-the-in-memory-network" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Buffers -- The In-Memory Network
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-socket-manager" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Socket Manager
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-dns-name-resolution-iodnspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. DNS -- Name Resolution (io/dns.py)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. DNS -- Name Resolution (io/dns.py)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-phone-book-analogy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Phone Book Analogy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-it-works-in-pyos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Works in PyOS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dns-over-sockets-how-queries-really-travel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DNS Over Sockets -- How Queries Really Travel
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-records-keeping-it-simple" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A Records -- Keeping It Simple
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-http-talking-on-the-web-iohttppy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. HTTP -- Talking on the Web (io/http.py)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. HTTP -- Talking on the Web (io/http.py)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-restaurant-analogy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Restaurant Analogy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#requests-the-order-form" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Requests -- The Order Form
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#responses-the-receipt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Responses -- The Receipt
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#protocol-layering-http-on-top-of-sockets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Protocol Layering -- HTTP on Top of Sockets
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-http-demo-command" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The http demo Command
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#http-is-user-space" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HTTP Is User-Space
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#putting-it-all-together" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Putting It All Together
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#where-to-go-next" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where to Go Next
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="devices-and-networking-how-the-os-talks-to-hardware-and-the-world">Devices and Networking: How the OS Talks to Hardware and the World</h1>
+<p>Your computer is surrounded by stuff -- a screen, a keyboard, a printer, a
+Wi-Fi card. And your programs constantly want to talk to these things: "print
+this document," "show this pixel," "send this message across the internet."</p>
+<p>But every device is different on the inside. A printer doesn't work anything
+like a keyboard, and neither of them works like a Wi-Fi card. Somebody has to
+translate between your programs and all this varied hardware.</p>
+<p>That somebody is the OS.</p>
+<p>In PyOS, this area is split across four files. Let's walk through each one.</p>
+<hr />
+<h2 id="1-devices-iodevicespy">1. Devices (<code>io/devices.py</code>)</h2>
+<h3 id="the-school-supplies-analogy">The School Supplies Analogy</h3>
+<p>Imagine a school that provides tools for students: printers, projectors,
+whiteboards. They all work completely differently on the inside. A printer has
+ink cartridges and rollers. A projector has a lamp and a lens. A whiteboard is
+just... a board.</p>
+<p>But the school doesn't make you learn how each tool works internally. Instead,
+it gives you the same simple instructions for every tool: "read from it" or
+"write to it." Want the projector to show something? Write to it. Want to see
+what's on the whiteboard? Read from it. Same instructions, every time.</p>
+<p>In computing, this idea is called a <strong>uniform interface</strong> (or a <strong>protocol</strong>).
+Every device supports the same basic operations -- <code>name</code>, <code>status</code>, <code>read()</code>,
+and <code>write()</code> -- even though the devices themselves do wildly different things.
+Your program doesn't need to know <em>how</em> a printer works to use it. It just
+calls <code>write()</code> and the device handles the rest.</p>
+<p>In PyOS, the <code>Device</code> protocol defines these four operations. Any Python class
+that has a <code>name</code>, a <code>status</code>, a <code>read()</code> method, and a <code>write()</code> method counts
+as a valid device. This is Python's <strong>duck typing</strong> at work -- if it walks like
+a device and quacks like a device, it <em>is</em> a device.</p>
+<h3 id="three-built-in-devices">Three Built-In Devices</h3>
+<h4 id="nulldevice-devnull-the-trash-can">NullDevice (<code>/dev/null</code>) -- The Trash Can</h4>
+<p>Think of a trash can. You can throw anything in it -- paper, wrappers, old
+homework. It all disappears. If you try to pull something <em>out</em> of the trash
+can, you get nothing.</p>
+<p>That's exactly what <code>NullDevice</code> does. You can write any data to it, and the
+data is silently discarded. If you try to read from it, you get back empty
+bytes. It's always ready and it never fails.</p>
+<p>Why would you want a device that throws everything away? It's surprisingly
+useful. Sometimes a program produces output you don't care about -- log
+messages, status updates, debug information. Instead of building a special
+"ignore this output" feature into every program, you just point the output at
+<code>/dev/null</code> and it vanishes. Simple.</p>
+<h4 id="consoledevice-the-whiteboard">ConsoleDevice -- The Whiteboard</h4>
+<p>Think of a classroom whiteboard. A teacher writes a message on it, and later
+a student reads it. If the teacher writes three messages, the student reads
+them in the same order they were written. First message in, first message out.</p>
+<p>This ordering is called <strong>FIFO</strong> -- "first in, first out." It's the same idea
+as a queue at a lunch counter. Whoever gets in line first gets served first.</p>
+<p>The <code>ConsoleDevice</code> works the same way. You write data to it, and the data
+goes into a buffer (a waiting area). When someone reads from it, they get the
+oldest piece of data first. In a real OS, the console device would be backed
+by actual screen hardware, but in PyOS we simulate it with a Python <code>deque</code> (a
+double-ended queue).</p>
+<h4 id="randomdevice-devrandom-the-magic-8-ball">RandomDevice (<code>/dev/random</code>) -- The Magic 8-Ball</h4>
+<p>You know those Magic 8-Balls where you shake it and get a random answer every
+time? That's <code>/dev/random</code>. Every time you read from it, you get back random
+bytes -- a different answer each time.</p>
+<p>Unlike the other devices, this one is <strong>read-only</strong>. You can't write to it. If
+you try, it raises an <code>OSError</code>. This makes sense -- you don't tell a random
+number generator what to produce. You just ask it for bytes and it gives you
+whatever it comes up with. Under the hood, PyOS uses Python's <code>os.urandom()</code>
+to generate cryptographically random bytes.</p>
+<h3 id="the-device-manager">The Device Manager</h3>
+<p>In a real OS, there's a directory called <code>/dev</code> that lists all the devices
+available on the system. PyOS has something similar: the <code>DeviceManager</code>. It's
+a registry -- a lookup table -- where devices are registered by name. You can
+add a new device, look one up by name, or list all the devices that are
+currently registered.</p>
+<p>If you try to register two devices with the same name, the manager raises a
+<code>ValueError</code>. Just like you can't have two files with the same name in the same
+folder.</p>
+<hr />
+<h2 id="2-ipc-inter-process-communication-ioipcpy">2. IPC -- Inter-Process Communication (<code>io/ipc.py</code>)</h2>
+<p><a href="../processes/">Processes</a> are isolated by design -- each one lives in its own
+little world with its own <a href="../memory/">memory</a>, and it can't peek at what other
+processes are doing. That's great for safety, but it creates a problem: what if
+two processes <em>need</em> to share information?</p>
+<p>That's where <strong>IPC</strong> comes in. IPC stands for "inter-process communication,"
+which is a fancy way of saying "how processes talk to each other."</p>
+<p>PyOS provides three IPC mechanisms. Think of them as three different ways
+students in a school can pass information without talking out loud.</p>
+<h3 id="pipes-the-tin-can-telephone">Pipes -- The Tin-Can Telephone</h3>
+<p>Remember those toy telephones made from two tin cans connected by a string? One
+kid talks into one can, and the other kid listens at the other end. The sound
+travels in one direction through the string.</p>
+<p>A <strong>pipe</strong> works just like that. One process writes bytes into one end of the
+pipe, and another process reads bytes out of the other end. The data flows in
+one direction, and it comes out in the same order it went in (FIFO again).</p>
+<p>Here's what you can do with a pipe:</p>
+<ul>
+<li><strong>Write</strong> -- push bytes into the pipe. If the pipe has been closed, you get a
+  <code>BrokenPipeError</code> (like trying to talk into a tin can when someone has cut the
+  string).</li>
+<li><strong>Read</strong> -- pull the next chunk of bytes out. If the pipe is empty, you get
+  <code>None</code>.</li>
+<li><strong>Close</strong> -- shut the pipe for writing. Data already inside can still be read
+  (drained), but no new data goes in.</li>
+</ul>
+<p>Pipes are great for simple, streaming communication. If you've ever used the
+<code>|</code> symbol in a command line (like <code>ls | grep ".py"</code>), you've used a pipe. The
+output of one command flows directly into the input of the next.</p>
+<h3 id="message-queues-the-mailbox">Message Queues -- The Mailbox</h3>
+<p>Now imagine a mailbox mounted on the wall. Anyone can walk up and drop a message
+in. Anyone else can open the mailbox and take the next message out. Messages
+come out in the order they were put in (FIFO, once again).</p>
+<p>A <strong>message queue</strong> is exactly that. But it has two advantages over a pipe:</p>
+<ol>
+<li>
+<p><strong>Messages stay whole.</strong> With a pipe, you're sending raw bytes -- just a
+   stream of data with no boundaries. With a message queue, each message is a
+   separate, complete unit. You put in "meeting at 3pm" and you get back
+   "meeting at 3pm" -- not "meet" and then "ing at 3pm."</p>
+</li>
+<li>
+<p><strong>Type safety.</strong> In PyOS, message queues are <strong>generic</strong> -- you can create
+   a <code>MessageQueue[str]</code> that only accepts and returns strings, or a
+   <code>MessageQueue[int]</code> that only works with integers. Python checks the types
+   for you so you don't accidentally put the wrong kind of data into the queue.</p>
+</li>
+</ol>
+<p>Message queues are also <strong>named</strong>. You give the queue a name when you create it
+(like "print_jobs" or "notifications"), and any process that knows the name can
+find it and send or receive messages. This is great for many-to-many
+communication -- multiple processes can all send to the same queue, and multiple
+processes can all read from it.</p>
+<h3 id="shared-memory-the-shared-whiteboard">Shared Memory -- The Shared Whiteboard</h3>
+<p>Pipes and message queues are great, but they both involve <strong>copying</strong> data. The
+sender writes data into the pipe or queue, and the receiver reads its own copy
+out. For small messages that's fine, but what if two processes need to share a
+huge chunk of data -- like a big spreadsheet or a video frame? Copying all that
+data back and forth would be slow.</p>
+<p><strong>Shared memory</strong> solves this by giving multiple processes access to the <em>same</em>
+chunk of memory. No copying at all.</p>
+<p>Think of a whiteboard in the school hallway. Any student can walk up and write
+on it, and every other student can see what's there instantly. Nobody has to
+copy anything -- they're all looking at the same board. That's shared memory.</p>
+<p>Here's how it works in PyOS:</p>
+<ol>
+<li>
+<p><strong>Create</strong> -- a process asks the kernel to set up a named whiteboard (a
+   shared memory segment) of a certain size. The kernel allocates physical
+   memory frames to back it, just like it does for <a href="../memory/">virtual memory</a>.
+   The name is like a label on the whiteboard ("project-data" or "scoreboard").</p>
+</li>
+<li>
+<p><strong>Attach</strong> -- any process that knows the name can attach to the segment.
+   The kernel maps the segment's frames into that process's virtual address
+   space so it can read and write directly. Multiple processes can attach at
+   the same time.</p>
+</li>
+<li>
+<p><strong>Read / Write</strong> -- attached processes read and write bytes directly.
+   Because everyone is looking at the same underlying memory, a write by one
+   process is instantly visible to all others. Zero copying.</p>
+</li>
+<li>
+<p><strong>Detach</strong> -- when a process is done, it detaches. The kernel unmaps the
+   frames from that process's address space, but the whiteboard stays up for
+   anyone else still using it.</p>
+</li>
+<li>
+<p><strong>Destroy</strong> -- when nobody needs the whiteboard anymore, any process can
+   ask the kernel to destroy it. If processes are still attached, the kernel
+   marks it "for deletion" and waits. Once the last process detaches, the
+   memory is freed.</p>
+</li>
+</ol>
+<h4 id="the-synchronization-problem">The Synchronization Problem</h4>
+<p>Here's the catch. Shared memory is the fastest IPC mechanism -- but it's also
+the most dangerous if you're not careful.</p>
+<p>Imagine two students try to write on the whiteboard at the exact same time.
+One writes "Meeting at 3" and the other writes "Pizza party." You might end
+up with "MePizzting party at 3" -- a garbled mess. This is called a <strong>race
+condition</strong>.</p>
+<p>To prevent this, processes need a way to take turns. That's where
+<a href="../synchronization/">synchronization primitives</a> come in -- mutexes,
+semaphores, and reader-writer locks can all coordinate access to shared
+memory. Think of it like a "WRITING -- DO NOT ERASE" sign that a student
+puts on the whiteboard while they're using it.</p>
+<p>Real operating systems face this exact same challenge. Shared memory gives you
+speed, but you have to be disciplined about synchronization. That's the
+trade-off.</p>
+<h3 id="pipes-vs-message-queues-vs-shared-memory-when-to-use-which">Pipes vs. Message Queues vs. Shared Memory -- When to Use Which?</h3>
+<ul>
+<li>Use a <strong>pipe</strong> when you have a simple producer-consumer setup: one process
+  generates a stream of bytes, and another consumes it. Think "command output."</li>
+<li>Use a <strong>message queue</strong> when you need structured, discrete messages and
+  possibly many senders or receivers. Think "task assignments" or "event
+  notifications."</li>
+<li>Use <strong>shared memory</strong> when you need fast, random-access, bidirectional data
+  sharing between processes. Think "shared spreadsheet" or "game state." Just
+  remember to add synchronization.</li>
+</ul>
+<hr />
+<h2 id="3-disk-scheduling-iodiskpy">3. Disk Scheduling (<code>io/disk.py</code>)</h2>
+<h3 id="the-elevator-analogy">The Elevator Analogy</h3>
+<p>Picture a really tall building with 200 floors. There's one elevator, and it
+moves up and down to pick people up. Lots of people are pressing buttons on
+different floors at the same time, and the elevator has to decide: which floor
+do I go to next?</p>
+<p>A hard drive works the same way. It has a <strong>read head</strong> (the elevator) that
+moves across the surface of the disk to different positions called
+<strong>cylinders</strong> (the floors). When several <a href="../processes/">processes</a> want to read
+or write data at the same time, the OS has to decide which order to visit those
+positions. The time it takes the head to move from one position to another is
+called <strong>seek time</strong>, and it's the slowest part of the whole operation. So
+choosing a good order really matters.</p>
+<p>PyOS implements four strategies, and they're all named after how the elevator
+could behave.</p>
+<h3 id="fcfs-first-come-first-served">FCFS -- First Come, First Served</h3>
+<p>The simplest rule: visit floors in the order people pressed the button.</p>
+<p>If someone on floor 98 pressed first, then floor 3, then floor 175, then floor
+14, the elevator goes: 98, 3, 175, 14. It zigzags all over the building like
+crazy.</p>
+<p>This is perfectly fair -- nobody gets skipped. But the total distance the
+elevator travels is huge because it never plans ahead. It just blindly follows
+the order of the requests.</p>
+<h3 id="sstf-shortest-seek-time-first">SSTF -- Shortest Seek Time First</h3>
+<p>A greedier rule: always go to the <em>nearest</em> floor.</p>
+<p>If the elevator is on floor 53 and the requests are at floors 98, 3, 175, and
+14, it would go to 14 first (closest), then 3, then 98, then 175. Much less
+zigzagging.</p>
+<p>The problem? <strong>Starvation.</strong> Imagine the elevator is near floor 50, and people
+keep pressing buttons near floor 50. Someone on floor 199 might wait <em>forever</em>
+because there's always a closer request. It's fast in the short term but
+potentially unfair.</p>
+<h3 id="scan-the-elevator-algorithm">SCAN -- The Elevator Algorithm</h3>
+<p>This is actually how most real elevators work. The elevator picks a direction --
+say, up -- and goes all the way up, picking up everyone along the way. When it
+reaches the top, it reverses and goes all the way down, picking up everyone on
+the way down.</p>
+<p>Nobody waits more than two full trips (one up, one down). There's no
+starvation -- everyone gets served eventually. The total distance traveled is
+much better than FCFS because the elevator moves in a predictable sweep
+instead of zigzagging randomly.</p>
+<h3 id="c-scan-circular-scan">C-SCAN -- Circular SCAN</h3>
+<p>C-SCAN is a variation of SCAN with one twist: the elevator only picks people up
+in one direction. It goes all the way up, and when it hits the top, instead of
+turning around, it jumps straight back to the bottom and goes up again. It
+never services requests on the way down.</p>
+<p>Why? With regular SCAN, floors near the middle of the building get visited
+twice per cycle (once going up, once going down), while floors at the very top
+or bottom only get visited once. C-SCAN fixes this unfairness by treating the
+disk like a circle -- after the top, wrap around to the bottom. Everyone gets
+roughly the same wait time.</p>
+<h3 id="the-classic-textbook-example">The Classic Textbook Example</h3>
+<p>OS textbooks love this example. Imagine 8 requests at positions 98, 183, 37,
+122, 14, 124, 65, and 67, with the read head starting at position 53.</p>
+<p>Using FCFS, the head visits them in arrival order and travels a total of <strong>640
+positions</strong> -- zigzagging wildly back and forth. Using SCAN, the head sweeps in
+one direction and then the other, covering far fewer positions overall. The
+difference is dramatic, and it shows why disk scheduling matters.</p>
+<h3 id="the-diskscheduler">The DiskScheduler</h3>
+<p>PyOS wraps these policies in a <code>DiskScheduler</code> object. You give it a policy
+(FCFS, SSTF, SCAN, or C-SCAN) and a starting head position, then add requests
+to its queue. When you call <code>run()</code>, it uses the policy to determine the
+service order, moves the head to the last position serviced, and clears the
+queue. You can even swap policies at runtime -- this is an example of the
+<strong>Strategy pattern</strong>, where you can change an object's behaviour by plugging
+in a different strategy.</p>
+<hr />
+<h2 id="4-networking-ionetworkingpy">4. Networking (<code>io/networking.py</code>)</h2>
+<h3 id="the-phone-call-analogy">The Phone Call Analogy</h3>
+<p>Think of sockets as phone calls between two buildings.</p>
+<p>Building A is a pizza shop (the <strong>server</strong>). Building B is a hungry customer
+(the <strong>client</strong>). Here's how the call works:</p>
+<p><strong>The server (pizza shop) side:</strong></p>
+<ol>
+<li><strong>Get a phone</strong> -- create a socket. At this point you have a phone, but it
+   doesn't have a number yet.</li>
+<li><strong>Assign a phone number</strong> -- bind the socket to an address and a port. The
+   address is like the area code ("localhost"), and the port is the specific
+   phone number (like 8080). Now people can reach you.</li>
+<li><strong>Start answering calls</strong> -- call <code>listen()</code>. You're sitting by the phone,
+   ready for customers to call.</li>
+<li><strong>Pick up when someone calls</strong> -- call <code>accept()</code>. This gives you a direct
+   line to that specific customer.</li>
+<li><strong>Talk</strong> -- use <code>send()</code> and <code>recv()</code> to exchange data back and forth.</li>
+</ol>
+<p><strong>The client (customer) side:</strong></p>
+<ol>
+<li><strong>Get a phone</strong> -- create a socket.</li>
+<li><strong>Dial the pizza shop's number</strong> -- call <code>connect()</code> with the server's
+   address and port. If nobody's listening at that number, you get a
+   <code>ConnectionError</code> ("connection refused" -- nobody picked up).</li>
+<li><strong>Talk</strong> -- use <code>send()</code> and <code>recv()</code> to place your order and hear back.</li>
+</ol>
+<h3 id="socket-states">Socket States</h3>
+<p>A socket goes through a series of states during its life, like chapters in a
+phone call:</p>
+<ul>
+<li><strong>CREATED</strong> -- you have a phone, but no number assigned. You can't call
+  anyone yet and nobody can call you.</li>
+<li><strong>BOUND</strong> -- you've been assigned a phone number (address + port). You exist
+  in the phone book now.</li>
+<li><strong>LISTENING</strong> -- you're sitting by the phone, waiting for incoming calls.
+  Only servers do this.</li>
+<li><strong>CONNECTED</strong> -- you're on an active call with someone. Data can flow back
+  and forth.</li>
+<li><strong>CLOSED</strong> -- you hung up. The call is over and the socket can't be used
+  anymore.</li>
+</ul>
+<p>These states always move in one direction. You can't go from CLOSED back to
+LISTENING, just like you can't un-hang-up a phone. If you want to accept more
+calls, you need a new socket.</p>
+<h3 id="handling-multiple-clients">Handling Multiple Clients</h3>
+<p>Here's a neat detail: the server's original socket stays in the LISTENING state
+even after it accepts a connection. Each call to <code>accept()</code> creates a brand-new
+<strong>peer socket</strong> that handles that one conversation. The listening socket keeps
+waiting for more calls.</p>
+<p>Think of it like a call centre. The main phone number rings at the front desk.
+When a customer calls, the receptionist picks up and transfers them to an
+available operator (a new peer socket). The main line stays open for the next
+caller. The server can handle as many clients as it wants this way.</p>
+<h3 id="data-buffers-the-in-memory-network">Data Buffers -- The In-Memory Network</h3>
+<p>Our sockets don't use a real network. There are no cables, no Wi-Fi signals,
+no TCP packets flying around. Instead, when two sockets are connected, PyOS
+creates two <strong>in-memory buffers</strong> between them -- one for each direction. When
+socket A sends data, it goes into a buffer. When socket B calls <code>recv()</code>, it
+pulls data from that buffer.</p>
+<p>This is a simplification, but it teaches the real concept perfectly. Real
+sockets work the same way from the programmer's perspective -- you call
+<code>send()</code> and <code>recv()</code> and data flows back and forth. The only difference is
+that real sockets push data through network hardware instead of a Python
+<code>deque</code>.</p>
+<h3 id="the-socket-manager">The Socket Manager</h3>
+<p>Just like the <code>DeviceManager</code> keeps track of all devices, the <code>SocketManager</code>
+keeps track of all sockets. It handles the behind-the-scenes work that a real
+OS kernel would do:</p>
+<ul>
+<li>Creating sockets and assigning them unique IDs.</li>
+<li>Matching <code>connect()</code> calls to the right listening socket.</li>
+<li>Creating peer sockets when a server calls <code>accept()</code>.</li>
+<li>Setting up the bidirectional data buffers for each connection.</li>
+<li>Routing <code>send()</code> and <code>recv()</code> calls to the correct buffers.</li>
+</ul>
+<p>In a real OS, this logic lives deep in the <strong>network stack</strong> -- a complex set
+of layers that handle everything from raw electrical signals to high-level
+protocols like HTTP. PyOS strips all that away and gives you just the socket
+layer, which is the part your programs actually interact with.</p>
+<hr />
+<h2 id="5-dns-name-resolution-iodnspy">5. DNS -- Name Resolution (<code>io/dns.py</code>)</h2>
+<h3 id="the-phone-book-analogy">The Phone Book Analogy</h3>
+<p>Imagine you want to call your friend Sarah. You know her name, but you don't
+know her phone number. So you open the phone book, find "Sarah," and read
+the number next to her name. Now you can dial it.</p>
+<p><strong>DNS</strong> (Domain Name System) does exactly the same thing, but for the internet.
+When you type <code>www.example.com</code> into a browser, your computer doesn't know
+where that website lives -- it only understands numeric <strong>IP addresses</strong> like
+<code>93.184.216.34</code>. So it asks a DNS server: "What's the phone number for
+www.example.com?" The DNS server looks it up and says "93.184.216.34." Now
+your computer knows where to connect.</p>
+<h3 id="how-it-works-in-pyos">How It Works in PyOS</h3>
+<p>PyOS simulates DNS with a <code>DnsResolver</code> -- a local phone book that the kernel
+owns. Each entry is called an <strong>A record</strong> (the "A" stands for "Address").
+An A record maps a hostname to an IP address, just like a phone book maps
+a name to a phone number.</p>
+<p>You can:</p>
+<ul>
+<li><strong>Register</strong> -- add a new entry: <code>dns register example.com 93.184.216.34</code></li>
+<li><strong>Lookup</strong> -- find the IP for a name: <code>dns lookup example.com</code></li>
+<li><strong>Remove</strong> -- delete an entry: <code>dns remove example.com</code></li>
+<li><strong>List</strong> -- see all entries: <code>dns list</code></li>
+<li><strong>Flush</strong> -- erase everything: <code>dns flush</code></li>
+</ul>
+<p>When the kernel boots, it automatically registers <code>localhost -&gt; 127.0.0.1</code>.
+That's the computer talking to itself -- like finding your own number in the
+phone book.</p>
+<h3 id="dns-over-sockets-how-queries-really-travel">DNS Over Sockets -- How Queries Really Travel</h3>
+<p>Here's something cool: DNS queries don't just magically appear at the server.
+They travel over <strong>sockets</strong>, just like any other network communication. In the
+real world, DNS uses port 53.</p>
+<p>The <code>dns demo</code> command shows this in action:</p>
+<ol>
+<li>A client socket connects to a DNS server socket on port 53.</li>
+<li>The client sends a text query: <code>QUERY A example.com</code></li>
+<li>The server receives the query, looks up the hostname in the phone book,
+   and sends back: <code>ANSWER example.com 93.184.216.34</code></li>
+<li>The client reads the answer.</li>
+</ol>
+<p>This is called <strong>protocol layering</strong> -- DNS is a protocol that runs <em>on top of</em>
+sockets. The socket handles the "how do I send bytes from here to there" part,
+and DNS handles the "what do those bytes mean" part. It's like how a phone call
+(the socket) carries a conversation (the protocol) -- the phone doesn't care
+what language you speak, and the language doesn't care what kind of phone
+you're using.</p>
+<h3 id="a-records-keeping-it-simple">A Records -- Keeping It Simple</h3>
+<p>Real DNS has many record types: A records (IPv4 addresses), AAAA records (IPv6),
+MX records (email servers), CNAME records (aliases), and more. PyOS only
+implements A records because they're the most fundamental and the easiest to
+understand. Once you get the concept of "name -&gt; number," all the other record
+types are just variations on the same theme.</p>
+<hr />
+<h2 id="6-http-talking-on-the-web-iohttppy">6. HTTP -- Talking on the Web (<code>io/http.py</code>)</h2>
+<h3 id="the-restaurant-analogy">The Restaurant Analogy</h3>
+<p>Imagine a restaurant. You (the <strong>client</strong>) sit down and read the menu. When
+you're ready, you fill out an order form and hand it to the waiter. The waiter
+(the <strong>socket</strong>) carries the order form to the kitchen (the <strong>server</strong>). The
+kitchen prepares your food, writes a receipt, and the waiter carries the receipt
+back to your table.</p>
+<p><strong>HTTP</strong> (Hypertext Transfer Protocol) works exactly like this. When you visit
+a website, your browser (the client) writes an <strong>HTTP request</strong> -- an order
+form -- and sends it to a web server. The server reads the request, figures out
+what you're asking for, and sends back an <strong>HTTP response</strong> -- the receipt,
+which includes the actual web page (or an error message).</p>
+<p>The important thing is that the order form has a <strong>specific format</strong> that
+everyone agrees on. That agreed-upon format is the <strong>protocol</strong>. Without it,
+the kitchen wouldn't know how to read your order, and you wouldn't know how to
+read the receipt.</p>
+<h3 id="requests-the-order-form">Requests -- The Order Form</h3>
+<p>An HTTP request has three parts:</p>
+<ol>
+<li><strong>Method</strong> -- what you're asking for:</li>
+<li><code>GET</code> means "give me this resource" (like asking for a menu item)</li>
+<li>
+<p><code>POST</code> means "here's some data for you" (like submitting a form)</p>
+</li>
+<li>
+<p><strong>Path</strong> -- which resource you want (like <code>/index.html</code> or <code>/images/logo.png</code>)</p>
+</li>
+<li>
+<p><strong>Headers</strong> -- extra information, like metadata. For example, <code>Host: example.com</code>
+   tells the server which website you're trying to reach (important because one
+   server can host many websites).</p>
+</li>
+</ol>
+<p>Here's what a real HTTP request looks like "on the wire" -- the raw bytes that
+travel over the socket:</p>
+<pre><code>GET /index.html HTTP/1.0
+Host: localhost
+
+</code></pre>
+<p>That's it. A method, a path, a version, some headers, and a blank line at the
+end. Simple.</p>
+<h3 id="responses-the-receipt">Responses -- The Receipt</h3>
+<p>An HTTP response also has a specific format:</p>
+<ol>
+<li><strong>Status code</strong> -- a number that tells you what happened:</li>
+<li><code>200 OK</code> -- success! Here's what you asked for.</li>
+<li><code>404 Not Found</code> -- that resource doesn't exist.</li>
+<li><code>400 Bad Request</code> -- your order form was filled out wrong.</li>
+<li>
+<p><code>500 Internal Server Error</code> -- the kitchen caught fire (something went
+     wrong on the server's end).</p>
+</li>
+<li>
+<p><strong>Headers</strong> -- metadata like <code>Content-Length: 42</code> (how many bytes are in the
+   body) or <code>Content-Type: text/html</code> (what kind of data this is).</p>
+</li>
+<li>
+<p><strong>Body</strong> -- the actual content (the web page, the image, the data).</p>
+</li>
+</ol>
+<p>Here's what a real response looks like:</p>
+<pre><code>HTTP/1.0 200 OK
+Content-Type: text/html
+Content-Length: 25
+
+&lt;h1&gt;Welcome to PyOS!&lt;/h1&gt;
+</code></pre>
+<h3 id="protocol-layering-http-on-top-of-sockets">Protocol Layering -- HTTP on Top of Sockets</h3>
+<p>Here's the key insight: HTTP doesn't know or care <em>how</em> bytes get from point A
+to point B. That's the socket's job. And sockets don't know or care <em>what</em> the
+bytes mean. That's HTTP's job.</p>
+<p>This separation is called <strong>protocol layering</strong>. Each layer does one thing well
+and relies on the layer below it for the rest:</p>
+<pre><code>  HTTP      (application layer -- what do the bytes mean?)
+    |
+  TCP       (transport layer -- reliable, ordered delivery)
+    |
+  Sockets   (network layer -- how do bytes get there?)
+    |
+  Buffers   (in-memory simulation of a network)
+</code></pre>
+<p>In a real OS, there are even more layers (IP, Ethernet). PyOS implements
+HTTP on TCP on sockets on in-memory buffers. See <a href="../tcp/">TCP: Reliable Delivery</a>
+for how TCP guarantees delivery with congestion control.</p>
+<h3 id="the-http-demo-command">The <code>http demo</code> Command</h3>
+<p>The <code>http demo</code> command walks through an end-to-end HTTP exchange:</p>
+<ol>
+<li>Creates a file in the filesystem (<code>/www/index.html</code>)</li>
+<li>Registers a DNS name for the web server</li>
+<li>Sets up a server socket (bind, listen) and a client socket (connect)</li>
+<li>Client builds an HTTP GET request, formats it, and sends it over the socket</li>
+<li>Server receives the raw bytes, parses the request, reads the file from the
+   filesystem, builds an HTTP 200 OK response, and sends it back</li>
+<li>Client receives and parses the response, displaying the file contents</li>
+<li>Then repeats with a file that doesn't exist, showing a 404 Not Found</li>
+</ol>
+<p>Every socket operation goes through <strong>syscalls</strong> -- demonstrating full kernel
+integration. This is real protocol layering in action: DNS resolves the name,
+sockets carry the bytes, and HTTP gives those bytes meaning.</p>
+<h3 id="http-is-user-space">HTTP Is User-Space</h3>
+<p>One important design decision: HTTP is <strong>not</strong> a kernel subsystem. In PyOS (and
+in real operating systems), the kernel owns sockets, but HTTP is just a library
+of functions that any program can use. The kernel doesn't know or care about
+HTTP -- it just moves bytes. This mirrors reality: your web browser is a regular
+program, not part of the kernel.</p>
+<hr />
+<h2 id="putting-it-all-together">Putting It All Together</h2>
+<p>These seven systems -- devices, IPC, disk scheduling, networking, TCP, DNS, and
+HTTP -- cover how the OS connects programs to the outside world and to each other.</p>
+<ul>
+<li>
+<p><strong>Devices</strong> give programs a simple, uniform way to talk to hardware. Read and
+  write -- that's it. The OS handles the messy details of each specific piece
+  of hardware behind the scenes.</p>
+</li>
+<li>
+<p><strong>IPC</strong> lets <a href="../processes/">processes</a> share data even though they live in
+  isolated <a href="../memory/">memory</a> spaces. Pipes handle byte streams, message
+  queues handle structured messages, and shared memory lets processes read
+  and write the same underlying bytes with zero copying.</p>
+</li>
+<li>
+<p><strong>Disk scheduling</strong> decides the smartest order to serve disk requests, so
+  the read head doesn't waste time zigzagging. The choice of algorithm is a
+  trade-off between fairness and efficiency.</p>
+</li>
+<li>
+<p><strong>Networking</strong> lets processes talk to each other across a connection, using
+  the familiar socket lifecycle: create, bind, listen, accept, send, receive,
+  close.</p>
+</li>
+<li>
+<p><strong><a href="../tcp/">TCP</a></strong> sits between sockets and HTTP, turning unreliable delivery
+  into a reliable, ordered byte stream. It uses a three-way handshake to
+  connect, sliding windows for flow control, and congestion control (slow
+  start + AIMD) to avoid flooding the network.</p>
+</li>
+<li>
+<p><strong>DNS</strong> translates human-readable hostnames into numeric IP addresses,
+  acting as the internet's phone book. Queries travel over sockets,
+  demonstrating how protocols layer on top of each other.</p>
+</li>
+<li>
+<p><strong>HTTP</strong> adds meaning to the raw bytes that sockets carry. Clients send
+  structured requests (GET /page) and servers send structured responses
+  (200 OK with a body). It's the top layer in our protocol stack.</p>
+</li>
+</ul>
+<p>All of these follow a common pattern in OS design: give programs a <strong>simple
+interface</strong> (read, write, send, receive) and let the OS handle the complicated
+stuff underneath. Your program says "send this data," and it doesn't need to
+know whether it's going to a printer, a pipe, a disk, or another computer
+halfway around the world.</p>
+<hr />
+<h2 id="where-to-go-next">Where to Go Next</h2>
+<ul>
+<li><a href="../what-is-an-os/">What Is an OS?</a> -- The big picture of how an OS works</li>
+<li><a href="../processes/">Processes</a> -- How the OS runs programs and shares the processor</li>
+<li><a href="../memory/">Memory</a> -- How the OS hands out and protects memory</li>
+<li><a href="../filesystem/">Filesystem</a> -- How files and folders are organized and stored</li>
+<li><a href="../tcp/">TCP: Reliable Delivery</a> -- Three-way handshake, flow control, congestion control</li>
+<li><a href="../kernel-and-syscalls/">The Kernel</a> -- The core of the OS and how programs talk to it</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "search.highlight"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

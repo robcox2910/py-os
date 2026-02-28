@@ -1,0 +1,1745 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A simulated operating system built in Python for learning OS concepts">
+      
+      
+      
+        <link rel="canonical" href="https://robcox2910.github.io/py-os/concepts/synchronization/">
+      
+      
+        <link rel="prev" href="../users-and-safety/">
+      
+      
+        <link rel="next" href="../bootloader/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.3">
+    
+    
+      
+        <title>Synchronization - PyOS</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#synchronization" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="PyOS" class="md-header__button md-logo" aria-label="PyOS" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            PyOS
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Synchronization
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/robcox2910/py-os" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    robcox2910/py-os
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="PyOS" class="md-nav__button md-logo" aria-label="PyOS" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    PyOS
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/robcox2910/py-os" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    robcox2910/py-os
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../what-is-an-os/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What Is an OS?
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../processes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Processes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../memory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memory
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../filesystem/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Filesystem
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kernel-and-syscalls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Kernel
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../shell/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Shell
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devices-and-networking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Devices and Networking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../users-and-safety/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Users and Safety
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Synchronization
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Synchronization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-problem-race-conditions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Problem: Race Conditions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mutex-mutual-exclusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mutex (Mutual Exclusion)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#semaphore-counting-lock" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Semaphore (Counting Lock)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#condition-variable-waitnotify" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Condition Variable (Wait/Notify)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reader-writer-lock-rwlock" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reader-Writer Lock (RWLock)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Reader-Writer Lock (RWLock)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#writer-preference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Writer-Preference
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#priority-inversion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Priority Inversion
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Priority Inversion">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-mars-pathfinder-bug" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Mars Pathfinder Bug
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#priority-inheritance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Priority Inheritance
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Priority Inheritance">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#transitive-inheritance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Transitive Inheritance
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Works
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deadlock" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deadlock
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Deadlock">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-four-coffman-conditions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Four Coffman Conditions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deadlock-prevention-resource-ordering" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deadlock Prevention: Resource Ordering
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#three-modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Three Modes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prevention-vs-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prevention vs. Detection
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-it-works-in-pyos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Works in PyOS
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#syscall-interface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Syscall Interface
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#real-world-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Real-World Examples
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#where-to-go-next" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where to Go Next
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bootloader/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Boot Chain
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interactive Tutorials
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../web-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Web UI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-problem-race-conditions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Problem: Race Conditions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mutex-mutual-exclusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mutex (Mutual Exclusion)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#semaphore-counting-lock" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Semaphore (Counting Lock)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#condition-variable-waitnotify" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Condition Variable (Wait/Notify)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reader-writer-lock-rwlock" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reader-Writer Lock (RWLock)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Reader-Writer Lock (RWLock)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#writer-preference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Writer-Preference
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#priority-inversion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Priority Inversion
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Priority Inversion">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-mars-pathfinder-bug" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Mars Pathfinder Bug
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#priority-inheritance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Priority Inheritance
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Priority Inheritance">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#transitive-inheritance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Transitive Inheritance
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Works
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deadlock" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deadlock
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Deadlock">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-four-coffman-conditions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Four Coffman Conditions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deadlock-prevention-resource-ordering" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deadlock Prevention: Resource Ordering
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#three-modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Three Modes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prevention-vs-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prevention vs. Detection
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-it-works-in-pyos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Works in PyOS
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#syscall-interface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Syscall Interface
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#real-world-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Real-World Examples
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#where-to-go-next" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where to Go Next
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="synchronization">Synchronization</h1>
+<p>When multiple threads share data, things can go wrong fast. Without coordination, two threads might update the same variable at the same time, creating a <strong>race condition</strong> -- the result depends on which thread happens to run first.</p>
+<p>Synchronization primitives solve this. They are the traffic lights and turnstiles of concurrent programming.</p>
+<h2 id="the-problem-race-conditions">The Problem: Race Conditions</h2>
+<p>Imagine two threads both trying to increment a counter:</p>
+<pre><code>Thread A reads counter (value: 5)
+Thread B reads counter (value: 5)
+Thread A writes counter = 6
+Thread B writes counter = 6    &lt;-- should be 7!
+</code></pre>
+<p>One increment was lost. This is a <strong>data race</strong>: both threads read the old value before either wrote the new one.</p>
+<h2 id="mutex-mutual-exclusion">Mutex (Mutual Exclusion)</h2>
+<p><strong>Analogy: A bathroom lock.</strong></p>
+<p>A mutex is the simplest synchronization tool. Only one thread can hold it at a time. If another thread tries to acquire it, they wait in a queue until the holder releases it.</p>
+<pre><code>Thread A: acquire lock  -&gt; success, enters critical section
+Thread B: acquire lock  -&gt; blocked, added to wait queue
+Thread A: release lock  -&gt; Thread B wakes up and acquires
+Thread B: release lock  -&gt; lock is free
+</code></pre>
+<p><strong>Key rules:</strong>
+- Only the thread that locked it can unlock it (owner tracking)
+- Waiters are served in FIFO order (no starvation)
+- Forgetting to release causes deadlock</p>
+<p><strong>Shell usage:</strong></p>
+<pre><code>mutex create mylock
+mutex list
+</code></pre>
+<h2 id="semaphore-counting-lock">Semaphore (Counting Lock)</h2>
+<p><strong>Analogy: A parking lot with limited spaces.</strong></p>
+<p>A semaphore is like a mutex, but instead of allowing only 1 holder, it allows up to N concurrent holders. Each <code>acquire</code> decrements the count; each <code>release</code> increments it. When the count reaches zero, new arrivals wait.</p>
+<pre><code>Semaphore &quot;parking&quot; (count=3)
+
+Car A enters  -&gt; count=2
+Car B enters  -&gt; count=1
+Car C enters  -&gt; count=0
+Car D arrives -&gt; blocked (lot is full)
+Car A leaves  -&gt; count stays 0, Car D enters
+</code></pre>
+<p><strong>Special cases:</strong>
+- <strong>Binary semaphore</strong> (count=1): behaves like a mutex
+- <strong>Bounded semaphore</strong>: enforces a maximum count to prevent accidental over-releasing</p>
+<p><strong>Shell usage:</strong></p>
+<pre><code>semaphore create parking 3
+semaphore list
+</code></pre>
+<h2 id="condition-variable-waitnotify">Condition Variable (Wait/Notify)</h2>
+<p><strong>Analogy: A waiting room where you sit until your name is called.</strong></p>
+<p>A condition variable lets threads wait for some condition to become true. It is always paired with a mutex:</p>
+<ol>
+<li>Thread acquires mutex</li>
+<li>Checks the condition -- if not met, calls <code>wait</code></li>
+<li><code>wait</code> atomically releases the mutex and puts the thread to sleep</li>
+<li>Another thread changes the data, then calls <code>notify</code> or <code>notify_all</code></li>
+<li>The waiting thread wakes up and re-acquires the mutex</li>
+</ol>
+<p>This is the standard <strong>producer-consumer</strong> pattern: the producer adds items and notifies; the consumer waits until items are available.</p>
+<h2 id="reader-writer-lock-rwlock">Reader-Writer Lock (RWLock)</h2>
+<p><strong>Analogy: A museum exhibit.</strong></p>
+<p>Imagine a famous painting in a museum. Any number of visitors (readers) can look at the painting at the same time -- they don't interfere with each other. But when a restorer (writer) needs to work on the painting, they close the room. Visitors already inside can finish looking, but no new visitors are let in until the restorer is done.</p>
+<p>A reader-writer lock works the same way:
+- <strong>Multiple readers</strong> can hold the lock at the same time
+- <strong>Only one writer</strong> can hold the lock, and nobody else (no readers, no other writers)
+- This is perfect for data that gets read much more often than it gets written (config files, caches, lookup tables)</p>
+<pre><code>Thread A: acquire_read   -&gt; success (1 reader)
+Thread B: acquire_read   -&gt; success (2 readers)
+Thread C: acquire_write  -&gt; blocked, added to wait queue
+Thread D: acquire_read   -&gt; blocked behind writer (writer-preference!)
+Thread A: release_read   -&gt; nothing happens (B still reading)
+Thread B: release_read   -&gt; 0 readers, C wakes up (writer goes next)
+Thread C: release_write  -&gt; D wakes up (reader gets in)
+</code></pre>
+<h3 id="writer-preference">Writer-Preference</h3>
+<p>Notice that Thread D was blocked even though it was a reader. This is <strong>writer-preference</strong>: when a writer is waiting in line, new readers queue behind it rather than jumping ahead. Without this rule, a steady stream of readers could starve the writer forever -- the writer would never get a turn.</p>
+<p><strong>Shell usage:</strong></p>
+<pre><code>rwlock create db_lock
+rwlock list
+</code></pre>
+<h2 id="priority-inversion">Priority Inversion</h2>
+<p><strong>Analogy: Three students and one textbook.</strong></p>
+<p>Imagine a classroom with three students who all need the same textbook:</p>
+<ul>
+<li><strong>Slow Student</strong> (low priority) -- currently has the textbook and is reading</li>
+<li><strong>Fast Student</strong> (high priority) -- needs the textbook urgently</li>
+<li><strong>Normal Student</strong> (medium priority) -- doesn't need the textbook at all</li>
+</ul>
+<p>The teacher (scheduler) always calls on the highest-priority student who is ready to work. Here's the problem:</p>
+<ol>
+<li>Slow Student has the textbook and is reading chapter 3</li>
+<li>Fast Student raises their hand -- "I need that textbook!" But Slow Student still has it</li>
+<li>Normal Student doesn't need the textbook, so they're ready to work</li>
+<li>The teacher keeps calling on Normal Student (priority 5) instead of Slow Student (priority 1)</li>
+<li>Slow Student never gets a turn, so they can never finish and return the textbook</li>
+<li>Fast Student is stuck forever!</li>
+</ol>
+<p>This is <strong>priority inversion</strong>: the high-priority task is effectively running at the <em>lowest</em> priority because it's blocked behind the low-priority holder, and medium-priority tasks keep jumping ahead.</p>
+<h3 id="the-mars-pathfinder-bug">The Mars Pathfinder Bug</h3>
+<p>This exact problem happened on Mars in 1997. NASA's Pathfinder rover had three tasks:</p>
+<ul>
+<li>A <strong>low-priority</strong> task that collected weather data (and held a shared mutex)</li>
+<li>A <strong>high-priority</strong> task that managed the communication bus</li>
+<li><strong>Medium-priority</strong> tasks that ran science experiments</li>
+</ul>
+<p>The high-priority bus manager kept getting starved. A watchdog timer detected the failure and rebooted the rover -- over and over. Engineers on Earth diagnosed the problem and uploaded a fix: <strong>priority inheritance</strong>.</p>
+<p><strong>Shell usage:</strong></p>
+<pre><code>pi demo     # Walk through the Mars Pathfinder scenario step by step
+pi status   # See which processes are currently boosted
+</code></pre>
+<h2 id="priority-inheritance">Priority Inheritance</h2>
+<p><strong>The fix: temporarily boost the slow student.</strong></p>
+<p>Priority inheritance is the kernel's solution to priority inversion. When a high-priority thread blocks on a mutex held by a lower-priority thread, the kernel temporarily <strong>boosts</strong> the holder's priority to match the waiter's.</p>
+<p>Back to our classroom:</p>
+<ol>
+<li>Fast Student says "I need the textbook"</li>
+<li>The teacher sees Fast Student is blocked waiting for Slow Student</li>
+<li>The teacher says "Slow Student, you're temporarily promoted to priority 10!"</li>
+<li>Now the teacher calls on Slow Student (priority 10) instead of Normal Student (priority 5)</li>
+<li>Slow Student finishes quickly, returns the textbook</li>
+<li>Slow Student drops back to priority 1</li>
+<li>Fast Student gets the textbook and proceeds</li>
+</ol>
+<h3 id="transitive-inheritance">Transitive Inheritance</h3>
+<p>What if Slow Student is <em>also</em> waiting for something? The boost propagates through the chain:</p>
+<pre><code>Fast Student (priority=10) blocked on Textbook, held by Normal Student (priority=5)
+Normal Student also blocked on Calculator, held by Slow Student (priority=1)
+
+Result: Slow Student boosted to 10, Normal Student boosted to 10
+When Slow Student returns Calculator -&gt; Normal Student gets it, Slow Student drops to 1
+When Normal Student returns Textbook -&gt; Fast Student gets it, Normal Student drops to 5
+</code></pre>
+<p>The kernel walks the chain of "who is blocked on what" and boosts everyone in the path. Loop detection (via a visited set) prevents infinite chains.</p>
+<h3 id="how-it-works">How It Works</h3>
+<p>Each process has two priority values:</p>
+<ul>
+<li><strong>Base priority</strong> -- the original, immutable priority set at creation</li>
+<li><strong>Effective priority</strong> -- what the scheduler actually uses (may be boosted)</li>
+</ul>
+<p>When no inheritance is active, <code>effective_priority == base_priority</code>. When a boost happens, only the effective priority changes. When the mutex is released, the kernel recalculates: it looks at all mutexes the process still holds, finds the highest-priority waiter across all of them, and sets <code>effective_priority = max(base_priority, max_waiter_priority)</code>.</p>
+<h2 id="deadlock">Deadlock</h2>
+<p>Deadlock is the nightmare scenario: two or more processes are stuck forever,
+each holding a resource the other needs. Nobody can move. It's like two people
+in a narrow hallway, each refusing to step aside.</p>
+<h3 id="the-four-coffman-conditions">The Four Coffman Conditions</h3>
+<p>In 1971, computer scientists Coffman, Elphick, and Shoshani proved that
+deadlock can only happen when <em>all four</em> of these conditions hold at the same
+time:</p>
+<ol>
+<li><strong>Mutual exclusion</strong> -- a resource can only be used by one process at a time
+   (like a bathroom with a lock).</li>
+<li><strong>Hold and wait</strong> -- a process can hold resources while waiting for more
+   (like a student holding one textbook while asking for another).</li>
+<li><strong>No preemption</strong> -- you can't forcibly take a resource from someone
+   (no grabbing the textbook out of their hands).</li>
+<li><strong>Circular wait</strong> -- A waits for B, B waits for A, forming a circle
+   (like two people at a revolving door, each waiting for the other to go first).</li>
+</ol>
+<p>Break <em>any one</em> of these and deadlock becomes impossible.</p>
+<h3 id="deadlock-prevention-resource-ordering">Deadlock Prevention: Resource Ordering</h3>
+<p>PyOS prevents deadlock by attacking the <strong>circular wait</strong> condition using
+<strong>resource ordering</strong>.</p>
+<p><strong>Analogy: Numbered lockers in a school hallway.</strong> The rule: you can only walk
+forward. If you need locker 3 and locker 7, open 3 first, then walk forward
+to 7. You can never go backwards. Nobody ever gets stuck in a circle.</p>
+<p>Here's why this works: imagine you need lockers 3 and 7, and your friend needs
+lockers 7 and 3. With the "always go forward" rule:</p>
+<ul>
+<li>You open locker 3 first, then walk to 7.</li>
+<li>Your friend also opens locker 3 first (they can't start at 7!), then walks to 7.</li>
+<li>No circle is possible because everyone walks the same direction.</li>
+</ul>
+<p>In PyOS, every resource (mutex, semaphore, reader-writer lock) gets a numeric
+<strong>rank</strong>. Before a process acquires a resource, the kernel checks: "Is this
+rank higher than everything I already hold?" If yes, allowed. If no, it's a
+violation.</p>
+<h3 id="three-modes">Three Modes</h3>
+<table>
+<thead>
+<tr>
+<th>Mode</th>
+<th>What happens on violation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>strict</strong></td>
+<td>Reject the acquire -- the process can't get the resource</td>
+</tr>
+<tr>
+<td><strong>warn</strong></td>
+<td>Allow it, but record the violation for debugging</td>
+</tr>
+<tr>
+<td><strong>off</strong></td>
+<td>No checking at all (maximum performance)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Shell usage:</strong></p>
+<pre><code>ordering mode strict
+ordering register mutex:lock_a 1
+ordering register mutex:lock_b 2
+ordering status
+ordering violations
+ordering demo
+</code></pre>
+<h3 id="prevention-vs-detection">Prevention vs. Detection</h3>
+<p>PyOS has <em>two</em> complementary approaches to deadlock:</p>
+<table>
+<thead>
+<tr>
+<th>Aspect</th>
+<th>Prevention (ordering)</th>
+<th>Detection (Banker's algorithm)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>When</strong></td>
+<td><em>Before</em> deadlock happens</td>
+<td><em>After</em> deadlock happens</td>
+</tr>
+<tr>
+<td><strong>How</strong></td>
+<td>Structural rule (rank ordering)</td>
+<td>Periodic scan (safety check)</td>
+</tr>
+<tr>
+<td><strong>Overhead</strong></td>
+<td>One comparison per acquire</td>
+<td>Full matrix computation</td>
+</tr>
+<tr>
+<td><strong>Guarantee</strong></td>
+<td>Deadlock impossible</td>
+<td>Deadlock found and reported</td>
+</tr>
+<tr>
+<td><strong>Trade-off</strong></td>
+<td>May reject valid acquires</td>
+<td>Doesn't prevent deadlock</td>
+</tr>
+<tr>
+<td><strong>Module</strong></td>
+<td><code>sync/ordering.py</code></td>
+<td><code>sync/deadlock.py</code></td>
+</tr>
+</tbody>
+</table>
+<p>Think of it this way: ordering is like a one-way street (prevents collisions),
+while detection is like a traffic camera (catches collisions after they happen).
+Best practice is to use both: ordering prevents most deadlocks cheaply, and
+detection catches any that slip through.</p>
+<h2 id="how-it-works-in-pyos">How It Works in PyOS</h2>
+<p>PyOS implements all four primitives in <code>sync/primitives.py</code>, plus priority
+inheritance in <code>sync/inheritance.py</code> and deadlock prevention in
+<code>sync/ordering.py</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Class</th>
+<th>Purpose</th>
+<th>Key Methods</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Mutex</code></td>
+<td>Mutual exclusion</td>
+<td><code>acquire(tid)</code>, <code>release(tid)</code>, <code>waiters</code></td>
+</tr>
+<tr>
+<td><code>Semaphore</code></td>
+<td>Counting lock</td>
+<td><code>acquire(tid)</code>, <code>release()</code></td>
+</tr>
+<tr>
+<td><code>Condition</code></td>
+<td>Wait/notify</td>
+<td><code>wait(tid)</code>, <code>notify()</code>, <code>notify_all()</code></td>
+</tr>
+<tr>
+<td><code>ReadWriteLock</code></td>
+<td>Multiple readers / one writer</td>
+<td><code>acquire_read(tid)</code>, <code>acquire_write(tid)</code>, <code>release_read(tid)</code>, <code>release_write(tid)</code></td>
+</tr>
+<tr>
+<td><code>SyncManager</code></td>
+<td>Registry</td>
+<td><code>create_mutex()</code>, <code>create_semaphore()</code>, <code>create_condition()</code>, <code>create_rwlock()</code></td>
+</tr>
+<tr>
+<td><code>PriorityInheritanceManager</code></td>
+<td>Prevent priority inversion</td>
+<td><code>on_acquire()</code>, <code>on_block()</code>, <code>on_release()</code></td>
+</tr>
+<tr>
+<td><code>ResourceOrderingManager</code></td>
+<td>Prevent deadlock (resource ordering)</td>
+<td><code>register()</code>, <code>check_acquire()</code>, <code>on_acquire()</code>, <code>on_release()</code></td>
+</tr>
+</tbody>
+</table>
+<p>The kernel owns a <code>SyncManager</code>, a <code>PriorityInheritanceManager</code>, and a <code>ResourceOrderingManager</code>, all created during boot and torn down during shutdown. All user-space access goes through system calls (91-93, 110-125), and the shell provides <code>mutex</code>, <code>semaphore</code>, <code>rwlock</code>, <code>pi</code>, and <code>ordering</code> commands.</p>
+<p>The <code>PriorityInheritanceManager</code> tracks which process holds each mutex, which processes are blocked waiting, and coordinates priority boosts. The Mutex itself stays simple -- all coordination logic lives in the PI manager.</p>
+<h2 id="syscall-interface">Syscall Interface</h2>
+<table>
+<thead>
+<tr>
+<th>Number</th>
+<th>Name</th>
+<th>What It Does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>110</td>
+<td>SYS_CREATE_MUTEX</td>
+<td>Create a named mutex</td>
+</tr>
+<tr>
+<td>111</td>
+<td>SYS_ACQUIRE_MUTEX</td>
+<td>Lock a mutex (or queue if held); optional <code>pid</code> enables PI tracking</td>
+</tr>
+<tr>
+<td>112</td>
+<td>SYS_RELEASE_MUTEX</td>
+<td>Unlock a mutex; optional <code>pid</code> triggers priority recalculation</td>
+</tr>
+<tr>
+<td>113</td>
+<td>SYS_CREATE_SEMAPHORE</td>
+<td>Create a counting semaphore</td>
+</tr>
+<tr>
+<td>114</td>
+<td>SYS_ACQUIRE_SEMAPHORE</td>
+<td>Decrement semaphore (or queue if zero)</td>
+</tr>
+<tr>
+<td>115</td>
+<td>SYS_RELEASE_SEMAPHORE</td>
+<td>Increment semaphore</td>
+</tr>
+<tr>
+<td>116</td>
+<td>SYS_CREATE_CONDITION</td>
+<td>Create a condition variable</td>
+</tr>
+<tr>
+<td>117</td>
+<td>SYS_CONDITION_WAIT</td>
+<td>Wait on a condition</td>
+</tr>
+<tr>
+<td>118</td>
+<td>SYS_CONDITION_NOTIFY</td>
+<td>Wake waiters on a condition</td>
+</tr>
+<tr>
+<td>119</td>
+<td>SYS_CREATE_RWLOCK</td>
+<td>Create a reader-writer lock</td>
+</tr>
+<tr>
+<td>122</td>
+<td>SYS_ACQUIRE_READ_LOCK</td>
+<td>Acquire read access (or queue)</td>
+</tr>
+<tr>
+<td>123</td>
+<td>SYS_ACQUIRE_WRITE_LOCK</td>
+<td>Acquire write access (or queue)</td>
+</tr>
+<tr>
+<td>124</td>
+<td>SYS_RELEASE_READ_LOCK</td>
+<td>Release read access</td>
+</tr>
+<tr>
+<td>125</td>
+<td>SYS_RELEASE_WRITE_LOCK</td>
+<td>Release write access</td>
+</tr>
+</tbody>
+</table>
+<p>No new syscall numbers were added for priority inheritance -- the existing <code>SYS_ACQUIRE_MUTEX</code> (111) and <code>SYS_RELEASE_MUTEX</code> (112) accept an optional <code>pid</code> parameter that activates PI tracking.</p>
+<p><strong>Deadlock prevention syscalls:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Number</th>
+<th>Name</th>
+<th>What It Does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>91</td>
+<td>SYS_CHECK_ORDERING</td>
+<td>Return ordering status (mode, ranks, violations)</td>
+</tr>
+<tr>
+<td>92</td>
+<td>SYS_SET_ORDERING_MODE</td>
+<td>Set enforcement mode (strict/warn/off)</td>
+</tr>
+<tr>
+<td>93</td>
+<td>SYS_REGISTER_RANK</td>
+<td>Register a resource with an explicit rank</td>
+</tr>
+</tbody>
+</table>
+<h2 id="real-world-examples">Real-World Examples</h2>
+<ul>
+<li><strong>Mutex</strong>: Protecting a shared log file so lines don't interleave</li>
+<li><strong>Semaphore</strong>: Limiting database connections to a pool of 10</li>
+<li><strong>Condition</strong>: A print queue where the printer waits for jobs to arrive</li>
+<li><strong>Reader-writer lock</strong>: A configuration file that many threads read but only one thread updates</li>
+<li><strong>Priority inheritance</strong>: The Mars Pathfinder rover fix -- preventing high-priority tasks from starving when they need a mutex held by a low-priority task</li>
+</ul>
+<h2 id="where-to-go-next">Where to Go Next</h2>
+<p>With synchronization in place, you have the tools to build higher-level patterns like thread-safe queues and barriers. These primitives are the building blocks of every concurrent system, from web servers to operating systems.</p>
+<ul>
+<li><a href="../processes/">Processes</a> -- How threads live inside processes, plus fork, signals, and wait/waitpid</li>
+<li><a href="../users-and-safety/">Users and Safety</a> -- Deadlock detection and how the OS keeps things safe</li>
+<li><a href="../devices-and-networking/">Devices and Networking</a> -- IPC pipes and message queues that use these primitives under the hood</li>
+<li><a href="../shell/">The Shell</a> -- The <code>mutex</code>, <code>semaphore</code>, and <code>rwlock</code> shell commands</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "search.highlight"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
