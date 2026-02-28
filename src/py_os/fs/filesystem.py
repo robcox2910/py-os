@@ -259,8 +259,7 @@ class FileSystem:
     def _create(self, path: str, file_type: FileType) -> None:
         """Create an inode and link it into its parent directory."""
         if self.exists(path):
-            _, name = _split_path(path)
-            msg = f"Already exists: {name}"
+            msg = f"Already exists: {path}"
             raise FileExistsError(msg)
 
         parent_path, name = _split_path(path)
@@ -273,6 +272,17 @@ class FileSystem:
         self._inodes[new_inode.inode_number] = new_inode
         parent.children[name] = new_inode.inode_number
 
+    def _require_file(self, path: str) -> _Inode:
+        """Resolve path and verify it is a file, not a directory."""
+        inode = self._resolve(path)
+        if inode is None:
+            msg = f"Path not found: {path}"
+            raise FileNotFoundError(msg)
+        if inode.file_type is FileType.DIRECTORY:
+            msg = f"Is a directory: {path}"
+            raise IsADirectoryError(msg)
+        return inode
+
     def read(self, path: str) -> bytes:
         """Read the contents of a file.
 
@@ -284,14 +294,7 @@ class FileSystem:
             IsADirectoryError: If the path is a directory.
 
         """
-        inode = self._resolve(path)
-        if inode is None:
-            msg = f"Path not found: {path}"
-            raise FileNotFoundError(msg)
-        if inode.file_type is FileType.DIRECTORY:
-            msg = f"Is a directory: {path}"
-            raise IsADirectoryError(msg)
-        return inode.data
+        return self._require_file(path).data
 
     def write(self, path: str, data: bytes) -> None:
         """Write data to a file (replaces existing content).
@@ -305,14 +308,7 @@ class FileSystem:
             IsADirectoryError: If the path is a directory.
 
         """
-        inode = self._resolve(path)
-        if inode is None:
-            msg = f"Path not found: {path}"
-            raise FileNotFoundError(msg)
-        if inode.file_type is FileType.DIRECTORY:
-            msg = f"Is a directory: {path}"
-            raise IsADirectoryError(msg)
-        inode.data = data
+        self._require_file(path).data = data
 
     def read_at(self, path: str, *, offset: int, count: int) -> bytes:
         """Read *count* bytes from a file starting at *offset*.
@@ -331,14 +327,7 @@ class FileSystem:
             IsADirectoryError: If the path is a directory.
 
         """
-        inode = self._resolve(path)
-        if inode is None:
-            msg = f"Path not found: {path}"
-            raise FileNotFoundError(msg)
-        if inode.file_type is FileType.DIRECTORY:
-            msg = f"Is a directory: {path}"
-            raise IsADirectoryError(msg)
-        return inode.data[offset : offset + count]
+        return self._require_file(path).data[offset : offset + count]
 
     def write_at(self, path: str, *, offset: int, data: bytes) -> None:
         r"""Write *data* into a file at *offset*, splicing into existing content.
@@ -357,13 +346,7 @@ class FileSystem:
             IsADirectoryError: If the path is a directory.
 
         """
-        inode = self._resolve(path)
-        if inode is None:
-            msg = f"Path not found: {path}"
-            raise FileNotFoundError(msg)
-        if inode.file_type is FileType.DIRECTORY:
-            msg = f"Is a directory: {path}"
-            raise IsADirectoryError(msg)
+        inode = self._require_file(path)
         existing = inode.data
         # Pad with nulls if offset is past current EOF
         if offset > len(existing):
@@ -516,7 +499,7 @@ class FileSystem:
 
             current = child
 
-        return current  # pragma: no cover — loop always returns on last
+        return None  # pragma: no cover — loop always returns on is_last
 
     def delete(self, path: str) -> None:
         """Delete a file or empty directory.

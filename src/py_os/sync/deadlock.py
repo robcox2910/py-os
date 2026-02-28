@@ -119,7 +119,14 @@ class ResourceManager:
             resource: The resource name.
             amount: Number of instances to release.
 
+        Raises:
+            ValueError: If *amount* exceeds the current allocation.
+
         """
+        current = self._allocation[pid][resource]
+        if amount > current:
+            msg = f"Cannot release {amount} {resource}: only {current} allocated"
+            raise ValueError(msg)
         self._allocation[pid][resource] -= amount
 
     def remove_process(self, pid: int) -> None:

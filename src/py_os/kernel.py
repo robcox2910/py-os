@@ -925,6 +925,9 @@ class Kernel:
                 new_offset = ofd.offset + offset
             case SeekWhence.END:
                 new_offset = file_size + offset
+            case _:
+                msg = f"Invalid whence: {whence}"
+                raise FdError(msg)
 
         if new_offset < 0:
             msg = f"Negative seek offset: {new_offset}"
@@ -1064,6 +1067,9 @@ class Kernel:
 
         # Read file data
         data = self._filesystem.read(path)
+        if offset > len(data):
+            msg = f"Offset {offset} beyond file size {len(data)}"
+            raise MmapError(msg)
         if length is None:
             length = len(data) - offset
         mapped_data = data[offset : offset + length]
@@ -1356,7 +1362,6 @@ class Kernel:
 
         """
         self._require_running()
-        assert self._memory is not None  # noqa: S101
 
         process = self._processes.get(pid)
         if process is None:
@@ -1371,18 +1376,7 @@ class Kernel:
         output = process.output
         exit_code = process.exit_code
 
-        process.terminate()
-        self._cleanup_fd_table(pid)
-        self._cleanup_shm(pid)
-        self._cleanup_mmap_regions(pid)
-        self._memory.free(pid)
-        if self._resource_manager is not None:
-            self._resource_manager.remove_process(pid)
-        if self._ordering_manager is not None:
-            self._ordering_manager.remove_process(pid)
-
-        self._record_completion(process)
-        self._zombie_or_delete(process)
+        self._terminate_and_cleanup(process)
 
         return {"output": output, "exit_code": exit_code}
 
@@ -1402,21 +1396,10 @@ class Kernel:
 
         """
         self._require_running()
-        assert self._memory is not None  # noqa: S101
 
         process = self._processes.get(pid)
         if process is not None:
-            process.terminate()
-            self._cleanup_fd_table(pid)
-            self._cleanup_shm(pid)
-            self._cleanup_mmap_regions(pid)
-            self._memory.free(pid)
-            if self._resource_manager is not None:
-                self._resource_manager.remove_process(pid)
-            if self._ordering_manager is not None:
-                self._ordering_manager.remove_process(pid)
-            self._record_completion(process)
-            self._zombie_or_delete(process)
+            self._terminate_and_cleanup(process)
 
     def register_signal_handler(
         self,
@@ -1504,22 +1487,30 @@ class Kernel:
         action = DEFAULT_ACTIONS[signal]
         match action:
             case SignalAction.TERMINATE:
-                process.force_terminate()
-                assert self._memory is not None  # noqa: S101
-                self._cleanup_fd_table(pid)
-                self._cleanup_shm(pid)
-                self._cleanup_mmap_regions(pid)
-                self._memory.free(pid)
-                if self._resource_manager is not None:
-                    self._resource_manager.remove_process(pid)
-                if self._ordering_manager is not None:
-                    self._ordering_manager.remove_process(pid)
-                self._record_completion(process)
-                self._zombie_or_delete(process)
+                self._terminate_and_cleanup(process, force=True)
             case SignalAction.STOP:
                 process.wait()
             case SignalAction.CONTINUE | SignalAction.IGNORE:
                 pass
+
+    def _terminate_and_cleanup(self, process: Process, *, force: bool = False) -> None:
+        """Terminate a process and clean up all associated resources."""
+        assert self._memory is not None  # noqa: S101
+        if force:
+            process.force_terminate()
+        else:
+            process.terminate()
+        pid = process.pid
+        self._cleanup_fd_table(pid)
+        self._cleanup_shm(pid)
+        self._cleanup_mmap_regions(pid)
+        self._memory.free(pid)
+        if self._resource_manager is not None:
+            self._resource_manager.remove_process(pid)
+        if self._ordering_manager is not None:
+            self._ordering_manager.remove_process(pid)
+        self._record_completion(process)
+        self._zombie_or_delete(process)
 
     # -- Performance metrics ---------------------------------------------------
 

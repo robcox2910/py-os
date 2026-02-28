@@ -444,7 +444,10 @@ class Shell:
         """Expand an alias if the first word matches."""
         parts = command.strip().split()
         if parts and parts[0] in self._aliases:
-            return self._aliases[parts[0]]
+            expanded = self._aliases[parts[0]]
+            if len(parts) > 1:
+                expanded += " " + " ".join(parts[1:])
+            return expanded
         return command
 
     def _parse_redirections(self, command: str) -> tuple[str, _Redirections]:
@@ -1011,43 +1014,12 @@ class Shell:
             "counter": lambda: "\n".join(str(i) for i in range(1, 6)),
         }
 
-    def _cmd_run(self, args: list[str]) -> str:
-        """Create a process, load a built-in program, and run it."""
-        if not args:
-            return "Usage: run <program> [priority]"
-        program_name = args[0]
-        priority = 0
-        if len(args) >= 2:  # noqa: PLR2004
-            try:
-                priority = int(args[1])
-            except ValueError:
-                return f"Error: invalid priority '{args[1]}'"
-        program = self._builtin_programs().get(program_name)
-        if program is None:
-            return f"Unknown program: {program_name}"
-        try:
-            result = self._kernel.syscall(
-                SyscallNumber.SYS_CREATE_PROCESS,
-                name=program_name,
-                num_pages=1,
-                priority=priority,
-            )
-            pid = result["pid"]
-            self._kernel.syscall(SyscallNumber.SYS_EXEC, pid=pid, program=program)
-            run_result = self._kernel.syscall(SyscallNumber.SYS_RUN, pid=pid)
-            output = run_result["output"]
-            exit_code = run_result["exit_code"]
-            return f"{output}\n[exit code: {exit_code}]"
-        except SyscallError as e:
-            return f"Error: {e}"
+    def _create_and_run_program(self, args: list[str]) -> tuple[int, str, int] | str:
+        """Parse args, look up built-in program, create/exec/run via syscalls.
 
-    def _run_background(self, args: list[str]) -> str:
-        """Run a program in the background, capturing output into a job.
+        Returns:
+            ``(pid, output, exit_code)`` on success, or an error string.
 
-        Same create/exec/run flow as ``_cmd_run``, but output is stored
-        in a job instead of returned directly.  The user gets a
-        ``[job_id] pid`` notification and retrieves output via ``fg``
-        or ``waitjob``.
         """
         if not args:
             return "Usage: run <program> [priority]"
@@ -1068,14 +1040,36 @@ class Shell:
                 num_pages=1,
                 priority=priority,
             )
-            pid = result["pid"]
+            pid: int = result["pid"]
             self._kernel.syscall(SyscallNumber.SYS_EXEC, pid=pid, program=program)
             run_result = self._kernel.syscall(SyscallNumber.SYS_RUN, pid=pid)
-            output = run_result["output"]
-            exit_code = run_result["exit_code"]
+            output: str = run_result["output"]
+            exit_code: int = run_result["exit_code"]
+            return (pid, output, exit_code)
         except SyscallError as e:
             return f"Error: {e}"
-        job = self._jobs.add(pid=pid, name=program_name)
+
+    def _cmd_run(self, args: list[str]) -> str:
+        """Create a process, load a built-in program, and run it."""
+        result = self._create_and_run_program(args)
+        if isinstance(result, str):
+            return result
+        _pid, output, exit_code = result
+        return f"{output}\n[exit code: {exit_code}]"
+
+    def _run_background(self, args: list[str]) -> str:
+        """Run a program in the background, capturing output into a job.
+
+        Same create/exec/run flow as ``_cmd_run``, but output is stored
+        in a job instead of returned directly.  The user gets a
+        ``[job_id] pid`` notification and retrieves output via ``fg``
+        or ``waitjob``.
+        """
+        result = self._create_and_run_program(args)
+        if isinstance(result, str):
+            return result
+        pid, output, exit_code = result
+        job = self._jobs.add(pid=pid, name=args[0])
         job.status = JobStatus.DONE
         job.output = f"{output}\n[exit code: {exit_code}]"
         job.exit_code = exit_code

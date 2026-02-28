@@ -370,6 +370,9 @@ class Process:
         if self._state is ProcessState.RUNNING and self._last_dispatched_at is not None:
             self._total_cpu_time += now - self._last_dispatched_at
             self._last_dispatched_at = None
+        if self._state is ProcessState.READY and self._last_ready_at is not None:
+            self._total_ready_time += now - self._last_ready_at
+            self._last_ready_at = None
         self._terminated_at = now
         self._state = ProcessState.TERMINATED
         self._cpu_id = None
