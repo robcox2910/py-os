@@ -23,7 +23,7 @@ from py_os.bootloader import Bootloader
 from py_os.completer import Completer
 from py_os.kernel import Kernel, KernelState
 from py_os.shell import Shell
-from py_os.syscalls import SyscallNumber
+from py_os.syscalls import SyscallError, SyscallNumber
 
 _BANNER_WIDTH = 38
 
@@ -60,8 +60,11 @@ def build_prompt(kernel: Kernel) -> str:
     if kernel.state is not KernelState.RUNNING:
         return "pyos $ "
 
-    info: dict[str, object] = kernel.syscall(SyscallNumber.SYS_WHOAMI)
-    return f"{info['username']}@pyos $ "
+    try:
+        info: dict[str, object] = kernel.syscall(SyscallNumber.SYS_WHOAMI)
+        return f"{info['username']}@pyos $ "
+    except (SyscallError, KeyError):
+        return "pyos $ "
 
 
 def run() -> None:

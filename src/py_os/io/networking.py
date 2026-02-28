@@ -266,7 +266,13 @@ class SocketManager:
         Returns:
             The next chunk of data, or empty bytes.
 
+        Raises:
+            RuntimeError: If the socket is closed.
+
         """
+        if receiver.state is SocketState.CLOSED:
+            msg = f"Cannot recv: socket {receiver.sock_id} is closed"
+            raise RuntimeError(msg)
         # Find the buffer where data is written *to* this receiver
         for (_src, dst), buf in self._buffers.items():
             if dst == receiver.sock_id and buf:

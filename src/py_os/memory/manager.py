@@ -108,8 +108,14 @@ class MemoryManager:
         Args:
             frame: The physical frame number.
 
+        Raises:
+            ValueError: If the frame is not currently allocated.
+
         """
-        count = self._refcounts.get(frame, 0)
+        if frame not in self._refcounts:
+            msg = f"Frame {frame} is not allocated"
+            raise ValueError(msg)
+        count = self._refcounts[frame]
         if count <= 1:
             self._refcounts.pop(frame, None)
             self._free.add(frame)

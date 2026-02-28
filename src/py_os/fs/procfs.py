@@ -134,7 +134,9 @@ class ProcFilesystem:
     def _generate_meminfo(self) -> str:
         """Generate /proc/meminfo from the memory manager."""
         mem = self._kernel.memory
-        assert mem is not None  # noqa: S101
+        if mem is None:
+            msg = "Memory manager is not initialised"
+            raise RuntimeError(msg)
         total = mem.total_frames
         free = mem.free_frames
         used = total - free
@@ -153,7 +155,9 @@ class ProcFilesystem:
     def _generate_cpuinfo(self) -> str:
         """Generate /proc/cpuinfo from the scheduler."""
         sched = self._kernel.scheduler
-        assert sched is not None  # noqa: S101
+        if sched is None:
+            msg = "Scheduler is not initialised"
+            raise RuntimeError(msg)
 
         if sched.num_cpus > 1:
             lines = [f"NumCPUs:        {sched.num_cpus}"]
@@ -227,7 +231,9 @@ class ProcFilesystem:
         """Generate /proc/{pid}/maps from memory and mmap state."""
         self._get_process(pid)
         mem = self._kernel.memory
-        assert mem is not None  # noqa: S101
+        if mem is None:
+            msg = "Memory manager is not initialised"
+            raise RuntimeError(msg)
 
         pages = mem.pages_for(pid)
         lines: list[str] = [f"Pages:          {' '.join(str(p) for p in pages)}"]
@@ -272,7 +278,9 @@ class ProcFilesystem:
 
         """
         sched = self._kernel.scheduler
-        assert sched is not None  # noqa: S101
+        if sched is None:
+            msg = "Scheduler is not initialised"
+            raise RuntimeError(msg)
         current = sched.current
         if current is None:
             msg = "No currently running process for /proc/self"
