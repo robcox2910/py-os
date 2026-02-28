@@ -163,6 +163,7 @@ class Shell:
             "dns": self._cmd_dns,
             "socket": self._cmd_socket,
             "http": self._cmd_http,
+            "tcp": self._cmd_tcp,
             "proc": self._cmd_proc,
             "perf": self._cmd_perf,
             "strace": self._cmd_strace,
@@ -2883,6 +2884,215 @@ class Shell:
                 self._kernel.syscall(SyscallNumber.SYS_DELETE_FILE, path=demo_path)
             with contextlib.suppress(SyscallError):
                 self._kernel.syscall(SyscallNumber.SYS_DELETE_FILE, path="/www")
+
+        return "\n".join(lines)
+
+    # -- TCP commands -------------------------------------------------------
+
+    def _cmd_tcp(self, args: list[str]) -> str:
+        """Manage TCP connections — listen, connect, send, recv, close, info, list, demo."""
+        dispatch: dict[str, Callable[[list[str]], str]] = {
+            "listen": self._cmd_tcp_listen,
+            "connect": self._cmd_tcp_connect,
+            "send": self._cmd_tcp_send,
+            "recv": self._cmd_tcp_recv,
+            "close": self._cmd_tcp_close,
+            "info": self._cmd_tcp_info,
+            "list": lambda _a: self._cmd_tcp_list(),
+            "demo": lambda _a: self._cmd_tcp_demo(),
+        }
+        if not args or args[0] not in dispatch:
+            return "Usage: tcp <listen|connect|send|recv|close|info|list|demo>"
+        return dispatch[args[0]](args[1:])
+
+    def _cmd_tcp_listen(self, args: list[str]) -> str:
+        """Start listening on a TCP port."""
+        if not args:
+            return "Usage: tcp listen <port>"
+        try:
+            port = int(args[0])
+        except ValueError:
+            return "Error: port must be an integer"
+        try:
+            listener_id: int = self._kernel.syscall(SyscallNumber.SYS_TCP_LISTEN, port=port)
+            return f"Listening on port {port} (listener_id={listener_id})"
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_tcp_connect(self, args: list[str]) -> str:
+        """Open a TCP connection."""
+        min_args = 2
+        if len(args) < min_args:
+            return "Usage: tcp connect <client_port> <server_port>"
+        try:
+            client_port = int(args[0])
+            server_port = int(args[1])
+        except ValueError:
+            return "Error: ports must be integers"
+        try:
+            result: dict[str, object] = self._kernel.syscall(
+                SyscallNumber.SYS_TCP_CONNECT,
+                client_port=client_port,
+                server_port=server_port,
+            )
+            return f"Connection {result['conn_id']} opened (state: {result['state']})"
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_tcp_send(self, args: list[str]) -> str:
+        """Send data over a TCP connection."""
+        min_args = 2
+        if len(args) < min_args:
+            return "Usage: tcp send <conn_id> <data>"
+        try:
+            conn_id = int(args[0])
+        except ValueError:
+            return "Error: conn_id must be an integer"
+        data = " ".join(args[1:])
+        try:
+            sent: int = self._kernel.syscall(
+                SyscallNumber.SYS_TCP_SEND, conn_id=conn_id, data=data.encode()
+            )
+            return f"Sent {sent} bytes on connection {conn_id}"
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_tcp_recv(self, args: list[str]) -> str:
+        """Receive data from a TCP connection."""
+        if not args:
+            return "Usage: tcp recv <conn_id>"
+        try:
+            conn_id = int(args[0])
+        except ValueError:
+            return "Error: conn_id must be an integer"
+        try:
+            data: bytes = self._kernel.syscall(SyscallNumber.SYS_TCP_RECV, conn_id=conn_id)
+            if not data:
+                return "(no data)"
+            return data.decode(errors="replace")
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_tcp_close(self, args: list[str]) -> str:
+        """Close a TCP connection."""
+        if not args:
+            return "Usage: tcp close <conn_id>"
+        try:
+            conn_id = int(args[0])
+        except ValueError:
+            return "Error: conn_id must be an integer"
+        try:
+            self._kernel.syscall(SyscallNumber.SYS_TCP_CLOSE, conn_id=conn_id)
+            return f"Connection {conn_id} closed"
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_tcp_info(self, args: list[str]) -> str:
+        """Show TCP connection info."""
+        if not args:
+            return "Usage: tcp info <conn_id>"
+        try:
+            conn_id = int(args[0])
+        except ValueError:
+            return "Error: conn_id must be an integer"
+        try:
+            info: dict[str, object] = self._kernel.syscall(
+                SyscallNumber.SYS_TCP_INFO, conn_id=conn_id
+            )
+            lines = [f"TCP Connection {conn_id}:"]
+            for key, val in info.items():
+                lines.append(f"  {key}: {val}")
+            return "\n".join(lines)
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_tcp_list(self) -> str:
+        """List all TCP connections."""
+        try:
+            conns: list[dict[str, object]] = self._kernel.syscall(SyscallNumber.SYS_TCP_LIST)
+        except SyscallError as e:
+            return f"Error: {e}"
+        if not conns:
+            return "No TCP connections."
+        lines = ["ID     STATE            LOCAL    REMOTE"]
+        for c in conns:
+            cid = c.get("conn_id", "?")
+            state = c.get("state", "?")
+            local = c.get("local_port", "-")
+            remote = c.get("remote_port", "-")
+            lines.append(f"{cid:<6} {state!s:<16} {local!s:<8} {remote}")
+        return "\n".join(lines)
+
+    def _cmd_tcp_demo(self) -> str:
+        """Run a complete TCP demo: listen, connect, handshake, send/recv, close."""
+        lines: list[str] = ["=== TCP Demo ===", ""]
+
+        # Step 1: Listen
+        lines.append("1. Start a listener on port 8080")
+        try:
+            listener_id: int = self._kernel.syscall(SyscallNumber.SYS_TCP_LISTEN, port=8080)
+            lines.append(f"   Listener ready (id={listener_id})")
+        except SyscallError as e:
+            return "\n".join([*lines, f"   Error: {e}"])
+        lines.append("")
+
+        # Step 2: Connect (triggers three-way handshake)
+        lines.append("2. Client connects from port 5000 to port 8080")
+        try:
+            result: dict[str, object] = self._kernel.syscall(
+                SyscallNumber.SYS_TCP_CONNECT,
+                client_port=5000,
+                server_port=8080,
+            )
+            client_id = int(str(result["conn_id"]))
+            lines.append(f"   Client connection {client_id} (state: {result['state']})")
+        except SyscallError as e:
+            return "\n".join([*lines, f"   Error: {e}"])
+
+        # Accept the server side
+        try:
+            server_id: int | None = self._kernel.syscall(
+                SyscallNumber.SYS_TCP_ACCEPT, listener_id=listener_id
+            )
+            lines.append(f"   Server accepted (conn_id={server_id})")
+        except SyscallError as e:
+            return "\n".join([*lines, f"   Error: {e}"])
+        lines.append("")
+
+        # Step 3: Send and receive data
+        lines.append("3. Send data: 'Hello, TCP!'")
+        try:
+            sent: int = self._kernel.syscall(
+                SyscallNumber.SYS_TCP_SEND,
+                conn_id=client_id,
+                data=b"Hello, TCP!",
+            )
+            lines.append(f"   Sent {sent} bytes")
+            if server_id is not None:
+                data: bytes = self._kernel.syscall(SyscallNumber.SYS_TCP_RECV, conn_id=server_id)
+                lines.append(f"   Server received: '{data.decode()}'")
+        except SyscallError as e:
+            lines.append(f"   Error: {e}")
+        lines.append("")
+
+        # Step 4: Show congestion info
+        lines.append("4. Connection info (congestion window, etc.)")
+        try:
+            info: dict[str, object] = self._kernel.syscall(
+                SyscallNumber.SYS_TCP_INFO, conn_id=client_id
+            )
+            lines.append(f"   cwnd={info['cwnd']}, ssthresh={info['ssthresh']}")
+        except SyscallError as e:
+            lines.append(f"   Error: {e}")
+        lines.append("")
+
+        # Step 5: Close
+        lines.append("5. Close both connections")
+        for cid in (client_id, server_id, listener_id):
+            if cid is not None:
+                with contextlib.suppress(SyscallError):
+                    self._kernel.syscall(SyscallNumber.SYS_TCP_CLOSE, conn_id=cid)
+        lines.append("   Connections closed.")
 
         return "\n".join(lines)
 

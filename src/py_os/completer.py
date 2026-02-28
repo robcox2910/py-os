@@ -38,6 +38,7 @@ _SUBCOMMANDS: dict[str, list[str]] = {
     "dns": ["register", "lookup", "remove", "list", "flush", "demo"],
     "socket": ["create", "bind", "listen", "connect", "accept", "send", "recv", "close", "list"],
     "http": ["demo"],
+    "tcp": ["listen", "connect", "send", "recv", "close", "info", "list", "demo"],
     "proc": ["demo"],
     "perf": ["demo"],
     "strace": ["on", "off", "show", "clear", "demo"],
@@ -49,6 +50,7 @@ _SUBCOMMANDS: dict[str, list[str]] = {
         "signals",
         "ipc",
         "networking",
+        "tcp",
         "all",
     ],
 }

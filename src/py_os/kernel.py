@@ -49,6 +49,7 @@ from py_os.io.interrupts import (
 )
 from py_os.io.networking import Socket, SocketError, SocketManager
 from py_os.io.shm import SharedMemoryError, SharedMemorySegment
+from py_os.io.tcp import TcpSegment, TcpStack
 from py_os.io.timer import TimerDevice
 from py_os.logging import Logger, LogLevel
 from py_os.memory.manager import MemoryManager
@@ -183,6 +184,8 @@ class Kernel:
         self._dns_resolver: DnsResolver | None = None
         # Socket manager — in-memory network stack
         self._socket_manager: SocketManager | None = None
+        # TCP stack — reliable transport layer
+        self._tcp_stack: TcpStack | None = None
         # Virtual /proc filesystem — generates content from live kernel state
         self._proc_fs: ProcFilesystem | None = None
 
@@ -351,6 +354,12 @@ class Kernel:
         return self._socket_manager
 
     @property
+    def tcp_stack(self) -> TcpStack | None:
+        """Return the TCP stack, or None if not booted."""
+        self._require_kernel_mode()
+        return self._tcp_stack
+
+    @property
     def interrupt_controller(self) -> InterruptController | None:
         """Return the interrupt controller, or None if not booted."""
         self._require_kernel_mode()
@@ -451,6 +460,10 @@ class Kernel:
         self._tick_count = 0
         self._ticks_since_dispatch = 0
         self._boot_log.append("[OK] Interrupt controller + timer")
+
+        # TCP stack — reliable transport layer
+        self._tcp_stack = TcpStack()
+        self._boot_log.append("[OK] TCP stack")
 
     def boot(self) -> None:
         """Transition the kernel from SHUTDOWN → RUNNING.
@@ -585,6 +598,7 @@ class Kernel:
         self._shared_file_frames.clear()
         self._shared_memory.clear()
         self._socket_manager = None
+        self._tcp_stack = None
         self._dns_resolver = None
         self._interrupt_controller = None
         self._timer = None
@@ -1654,6 +1668,9 @@ class Kernel:
         # Service all pending interrupts (timer + I/O)
         preempted = self._preemption_pending
         serviced = self._interrupt_controller.service_pending()
+
+        if self._tcp_stack is not None:
+            self._tcp_stack.tick()
 
         return {
             "tick": self._tick_count,
@@ -3014,3 +3031,145 @@ class Kernel:
             return self._proc_fs.list_dir(path)
         except ProcError as e:
             raise ValueError(str(e)) from e
+
+    # -- TCP stack ------------------------------------------------------------
+
+    def _require_tcp(self) -> TcpStack:
+        """Validate kernel state and return the TCP stack.
+
+        Returns:
+            The active TcpStack.
+
+        Raises:
+            RuntimeError: If the TCP stack is not available.
+
+        """
+        self._require_running()
+        if self._tcp_stack is None:
+            msg = "TCP stack not available"
+            raise RuntimeError(msg)
+        return self._tcp_stack
+
+    def _deliver_segments(self, segments: list[TcpSegment]) -> None:
+        """Deliver outgoing TCP segments within the local stack.
+
+        In a real OS, segments would be sent over the network. In our
+        simulation, we deliver them directly to the local stack so that
+        both endpoints within the same kernel can communicate.
+
+        Args:
+            segments: List of TcpSegment objects to deliver.
+
+        """
+        stack = self._require_tcp()
+        for seg in segments:
+            responses = stack.deliver_segment(seg)
+            # Recursively deliver response segments
+            if responses:
+                self._deliver_segments(responses)
+
+    def tcp_listen(self, *, port: int) -> int:
+        """Start listening for TCP connections on a port.
+
+        Args:
+            port: The port number to listen on.
+
+        Returns:
+            The listener connection ID.
+
+        """
+        stack = self._require_tcp()
+        return stack.listen(port=port)
+
+    def tcp_accept(self, *, listener_id: int) -> int | None:
+        """Accept a pending TCP connection on a listener.
+
+        Args:
+            listener_id: The listener's connection ID.
+
+        Returns:
+            The new connection ID, or None if no pending connections.
+
+        """
+        stack = self._require_tcp()
+        return stack.accept(listener_id=listener_id)
+
+    def tcp_connect(self, *, client_port: int, server_port: int) -> dict[str, object]:
+        """Open a TCP connection and perform the three-way handshake.
+
+        Args:
+            client_port: The client's port number.
+            server_port: The server's port number.
+
+        Returns:
+            Dict with ``conn_id`` and ``state``.
+
+        """
+        stack = self._require_tcp()
+        conn_id, segments = stack.open_connection(client_port=client_port, server_port=server_port)
+        self._deliver_segments(segments)
+        conn_info = stack.get_connection_info(conn_id)
+        return {"conn_id": conn_id, "state": conn_info["state"]}
+
+    def tcp_send(self, *, conn_id: int, data: bytes) -> int:
+        """Send data over a TCP connection.
+
+        Args:
+            conn_id: The connection ID.
+            data: The data to send.
+
+        Returns:
+            Number of bytes queued for sending.
+
+        """
+        stack = self._require_tcp()
+        segments = stack.send(conn_id=conn_id, data=data)
+        self._deliver_segments(segments)
+        return len(data)
+
+    def tcp_recv(self, *, conn_id: int) -> bytes:
+        """Receive data from a TCP connection.
+
+        Args:
+            conn_id: The connection ID.
+
+        Returns:
+            Buffered data, or empty bytes.
+
+        """
+        stack = self._require_tcp()
+        return stack.recv(conn_id=conn_id)
+
+    def tcp_close(self, *, conn_id: int) -> None:
+        """Close a TCP connection gracefully.
+
+        Args:
+            conn_id: The connection ID to close.
+
+        """
+        stack = self._require_tcp()
+        segments = stack.close_connection(conn_id=conn_id)
+        self._deliver_segments(segments)
+
+    def tcp_info(self, *, conn_id: int) -> dict[str, object]:
+        """Return info about a TCP connection.
+
+        Args:
+            conn_id: The connection ID.
+
+        Returns:
+            Dict with connection details.
+
+        """
+        stack = self._require_tcp()
+        return stack.get_connection_info(conn_id)
+
+    def tcp_list(self) -> list[dict[str, object]]:
+        """List all TCP connections and listeners.
+
+        Returns:
+            List of dicts with connection info.
+
+        """
+        stack = self._require_tcp()
+        return stack.list_connections()

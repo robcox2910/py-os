@@ -42,6 +42,7 @@ from py_os.io.interrupts import (
 from py_os.io.ipc import MessageQueue, Pipe
 from py_os.io.networking import Socket, SocketError, SocketManager, SocketState
 from py_os.io.shm import SharedMemoryError, SharedMemorySegment
+from py_os.io.tcp import TcpConnection, TcpFlag, TcpSegment, TcpStack, TcpState
 from py_os.io.timer import TimerDevice
 
 __all__ = [
@@ -74,6 +75,11 @@ __all__ = [
     "SocketError",
     "SocketManager",
     "SocketState",
+    "TcpConnection",
+    "TcpFlag",
+    "TcpSegment",
+    "TcpStack",
+    "TcpState",
     "TimerDevice",
     "format_request",
     "format_response",

@@ -11,7 +11,7 @@ from py_os.kernel import ExecutionMode, Kernel
 from py_os.shell import Shell
 from py_os.tutorials import TutorialRunner
 
-EXPECTED_LESSON_COUNT = 8
+EXPECTED_LESSON_COUNT = 9
 
 
 def _booted_kernel() -> Kernel:

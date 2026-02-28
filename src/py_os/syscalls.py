@@ -230,6 +230,16 @@ class SyscallNumber(IntEnum):
     SYS_TIMER_INFO = 234
     SYS_TIMER_SET_INTERVAL = 235
 
+    # TCP operations
+    SYS_TCP_CONNECT = 240
+    SYS_TCP_SEND = 241
+    SYS_TCP_RECV = 242
+    SYS_TCP_CLOSE = 243
+    SYS_TCP_INFO = 244
+    SYS_TCP_LIST = 245
+    SYS_TCP_LISTEN = 246
+    SYS_TCP_ACCEPT = 247
+
     # Multi-CPU operations
     SYS_CPU_INFO = 220
     SYS_SET_AFFINITY = 221
@@ -396,6 +406,14 @@ def dispatch_syscall(
         SyscallNumber.SYS_GET_AFFINITY: _sys_get_affinity,
         SyscallNumber.SYS_BALANCE: _sys_balance,
         SyscallNumber.SYS_MIGRATE: _sys_migrate,
+        SyscallNumber.SYS_TCP_CONNECT: _sys_tcp_connect,
+        SyscallNumber.SYS_TCP_SEND: _sys_tcp_send,
+        SyscallNumber.SYS_TCP_RECV: _sys_tcp_recv,
+        SyscallNumber.SYS_TCP_CLOSE: _sys_tcp_close,
+        SyscallNumber.SYS_TCP_INFO: _sys_tcp_info,
+        SyscallNumber.SYS_TCP_LIST: _sys_tcp_list,
+        SyscallNumber.SYS_TCP_LISTEN: _sys_tcp_listen,
+        SyscallNumber.SYS_TCP_ACCEPT: _sys_tcp_accept,
     }
 
     handler = handlers.get(number)
@@ -1854,3 +1872,73 @@ def _sys_timer_set_interval(kernel: Any, **kwargs: Any) -> str:
     except ValueError as e:
         raise SyscallError(str(e)) from e
     return f"Timer interval set to {interval}"
+
+
+# -- TCP syscall handlers ---------------------------------------------------
+
+
+def _sys_tcp_listen(kernel: Any, **kwargs: Any) -> int:
+    """Start listening on a TCP port."""
+    try:
+        return kernel.tcp_listen(port=kwargs["port"])
+    except (ValueError, RuntimeError) as e:
+        raise SyscallError(str(e)) from e
+
+
+def _sys_tcp_accept(kernel: Any, **kwargs: Any) -> int | None:
+    """Accept a pending TCP connection."""
+    try:
+        return kernel.tcp_accept(listener_id=kwargs["listener_id"])
+    except (KeyError, RuntimeError) as e:
+        raise SyscallError(str(e)) from e
+
+
+def _sys_tcp_connect(kernel: Any, **kwargs: Any) -> dict[str, object]:
+    """Open a TCP connection."""
+    try:
+        return kernel.tcp_connect(
+            client_port=kwargs["client_port"],
+            server_port=kwargs["server_port"],
+        )
+    except (ValueError, RuntimeError) as e:
+        raise SyscallError(str(e)) from e
+
+
+def _sys_tcp_send(kernel: Any, **kwargs: Any) -> int:
+    """Send data over a TCP connection."""
+    try:
+        return kernel.tcp_send(conn_id=kwargs["conn_id"], data=kwargs["data"])
+    except (KeyError, RuntimeError) as e:
+        raise SyscallError(str(e)) from e
+
+
+def _sys_tcp_recv(kernel: Any, **kwargs: Any) -> bytes:
+    """Receive data from a TCP connection."""
+    try:
+        return kernel.tcp_recv(conn_id=kwargs["conn_id"])
+    except (KeyError, RuntimeError) as e:
+        raise SyscallError(str(e)) from e
+
+
+def _sys_tcp_close(kernel: Any, **kwargs: Any) -> None:
+    """Close a TCP connection."""
+    try:
+        kernel.tcp_close(conn_id=kwargs["conn_id"])
+    except (KeyError, RuntimeError) as e:
+        raise SyscallError(str(e)) from e
+
+
+def _sys_tcp_info(kernel: Any, **kwargs: Any) -> dict[str, object]:
+    """Return TCP connection info."""
+    try:
+        return kernel.tcp_info(conn_id=kwargs["conn_id"])
+    except (KeyError, RuntimeError) as e:
+        raise SyscallError(str(e)) from e
+
+
+def _sys_tcp_list(kernel: Any, **_kwargs: Any) -> list[dict[str, object]]:
+    """List all TCP connections."""
+    try:
+        return kernel.tcp_list()
+    except RuntimeError as e:
+        raise SyscallError(str(e)) from e

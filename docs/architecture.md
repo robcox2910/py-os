@@ -23,6 +23,7 @@ Technical reference for every module in the system. For beginner-friendly explan
 | [The Shell](concepts/shell.md) | Commands, pipes, redirection, loops, scripting, jobs, history, aliases, tab completion, env |
 | [Devices and Networking](concepts/devices-and-networking.md) | Device protocol, IPC, disk scheduling, sockets, DNS, HTTP |
 | [Interrupts and Timers](concepts/interrupts.md) | Interrupt controller, vectors, masking, timer, preemption |
+| [TCP: Reliable Delivery](concepts/tcp.md) | Three-way handshake, flow control, congestion control, retransmission |
 | [Users and Safety](concepts/users-and-safety.md) | Permissions, signals, logging, deadlock |
 | [Synchronization](concepts/synchronization.md) | Mutex, semaphore, condition variable, reader-writer lock, race conditions, deadlock prevention |
 | [Interactive Tutorials](concepts/tutorials.md) | Guided hands-on lessons using real syscalls |
@@ -57,7 +58,7 @@ Every source file and what it implements.
 | `syscalls.py` | `dispatch_syscall()` | Trap handler -- routes syscall numbers to kernel subsystem handlers |
 | `kernel.py` | `dmesg()` | Return the kernel boot log (like Linux dmesg) |
 | `kernel.py` | `init_pid` | PID of the init process (root of process tree) |
-| `syscalls.py` | `SyscallNumber` | IntEnum of all syscall numbers (1-235) |
+| `syscalls.py` | `SyscallNumber` | IntEnum of all syscall numbers (1-247) |
 | `syscalls.py` | `SyscallError` | User-facing exception wrapping internal errors |
 
 ### Process Management
@@ -165,6 +166,11 @@ Every source file and what it implements.
 | `io/interrupts.py` | `InterruptRequest` | Frozen dataclass for a queued IRQ (vector, type, priority, data, timestamp) |
 | `io/interrupts.py` | `VECTOR_TIMER` / `VECTOR_IO_BASE` | Well-known vector numbers (0 and 16) |
 | `io/timer.py` | `TimerDevice` | Programmable interval timer — fires VECTOR_TIMER interrupt every N ticks |
+| `io/tcp.py` | `TcpState` | 11-state TCP connection state machine (StrEnum) |
+| `io/tcp.py` | `TcpFlag` | SYN / ACK / FIN / RST segment flags (StrEnum) |
+| `io/tcp.py` | `TcpSegment` | Frozen dataclass for a TCP segment (ports, seq/ack numbers, flags, window, payload) |
+| `io/tcp.py` | `TcpConnection` | One endpoint: state machine, seq tracking, flow control, congestion control (slow start + AIMD), retransmission |
+| `io/tcp.py` | `TcpStack` | Manage multiple TCP connections, listener queues, segment routing, retransmission ticks |
 
 ### Synchronization
 
@@ -242,6 +248,7 @@ Every source file and what it implements.
 | 210-211 | Boot info (dmesg boot log, boot metadata) |
 | 220-224 | Multi-CPU operations (cpu info, set/get affinity, balance, migrate) |
 | 230-235 | Interrupt and timer operations (tick, interrupt list/mask/unmask, timer info/set interval) |
+| 240-247 | TCP operations (connect, send, recv, close, info, list, listen, accept) |
 
 ## Strategy Pattern Usage
 
