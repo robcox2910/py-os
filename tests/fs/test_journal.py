@@ -439,14 +439,15 @@ class TestJournaledFileSystemMutations:
         jfs.create_file("/b")
         assert jfs.journal_status()["total"] == EXPECTED_COMMITTED_TWO
 
-    def test_failed_mutation_leaves_active_transaction(self) -> None:
-        """A mutation that fails leaves an uncommitted transaction."""
+    def test_failed_mutation_aborts_transaction(self) -> None:
+        """A mutation that fails aborts the transaction instead of leaving it active."""
         jfs = JournaledFileSystem()
         with pytest.raises(FileNotFoundError):
             jfs.create_file("/no/parent/file.txt")
-        # The txn was begun but the fs op failed, so commit didn't happen
+        # The txn was begun but the fs op failed, so it was aborted
         status = jfs.journal_status()
-        assert status["active"] == 1
+        assert status["active"] == 0
+        assert status["aborted"] == 1
         assert status["committed"] == 0
 
     def test_journal_entry_stores_correct_op(self) -> None:
