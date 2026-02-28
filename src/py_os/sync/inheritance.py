@@ -53,15 +53,6 @@ class PriorityInheritanceManager:
         """Return the PID of the process holding *mutex_name*, or None."""
         return self._holder.get(mutex_name)
 
-    def is_boosted(self, pid: int, base_priority: int) -> bool:
-        """Return True if *pid*'s effective priority exceeds its base."""
-        # External callers pass the base; we just compare.
-        return (
-            pid in self._held_mutexes
-            and any(self._holder.get(m) == pid for m in self._held_mutexes.get(pid, set()))
-            and base_priority < self._max_waiter_priority(pid, {})
-        )
-
     def on_acquire(self, mutex_name: str, pid: int) -> None:
         """Record that *pid* now holds *mutex_name*."""
         self._holder[mutex_name] = pid

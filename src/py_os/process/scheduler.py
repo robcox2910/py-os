@@ -227,7 +227,13 @@ class MLFQPolicy:
             num_levels: Number of priority queues (default 3).
             base_quantum: Time quantum for the top-level queue (default 2).
 
+        Raises:
+            ValueError: If *num_levels* is less than 1.
+
         """
+        if num_levels < 1:
+            msg = "num_levels must be at least 1"
+            raise ValueError(msg)
         self._num_levels = num_levels
         self._quantums = tuple(base_quantum * (2**i) for i in range(num_levels))
         self._levels: dict[int, int] = {}
@@ -682,7 +688,13 @@ class MultiCPUScheduler:
             pid: The process ID.
             cpus: Frozenset of allowed CPU IDs.
 
+        Raises:
+            ValueError: If *cpus* is empty.
+
         """
+        if not cpus:
+            msg = "Affinity set must not be empty"
+            raise ValueError(msg)
         self._affinities[pid] = cpus
 
     def get_affinity(self, pid: int) -> frozenset[int]:
