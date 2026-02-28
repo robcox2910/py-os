@@ -76,6 +76,11 @@ class InterruptRequest:
     data: object = None
 
 
+def _empty_irq_queue() -> deque[InterruptRequest]:
+    """Create an empty IRQ queue (typed factory for dataclass field)."""
+    return deque()
+
+
 @dataclass
 class _VectorEntry:
     """Internal bookkeeping for a registered vector."""
@@ -83,9 +88,7 @@ class _VectorEntry:
     vector: InterruptVector
     handler: Callable[[InterruptRequest], None] | None = None
     masked: bool = False
-    pending: deque[InterruptRequest] = field(
-        default_factory=lambda: deque[InterruptRequest](),
-    )
+    pending: deque[InterruptRequest] = field(default_factory=_empty_irq_queue)
 
 
 class InterruptController:
