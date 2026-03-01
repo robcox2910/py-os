@@ -86,7 +86,7 @@ def create_app() -> Flask:
 def main() -> None:
     """Run the web UI development server.
 
-    This is the ``py-os-web`` console entry point.
+    This is the ``pyos-web`` console entry point.
     """
     app = create_app()
     app.run(debug=True, port=8080)
