@@ -67,7 +67,7 @@
             <a id="nextFileLink" class="nav" href="z_e6b660388905a465___init___py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.13.4">coverage.py v7.13.4</a>,
-            created at 2026-03-01 10:23 +0000
+            created at 2026-03-01 10:27 +0000
         </p>
         <aside class="hidden">
             <button type="button" class="button_next_chunk" data-shortcut="j"></button>
@@ -3262,7 +3262,7 @@
     <p class="run"><span class="n"><a id="t3178" href="#t3178">3178</a></span><span class="t">                <span class="nam">dispatched</span> <span class="op">=</span> <span class="nam">self</span><span class="op">.</span><span class="nam">_kernel</span><span class="op">.</span><span class="nam">syscall</span><span class="op">(</span><span class="nam">SyscallNumber</span><span class="op">.</span><span class="nam">SYS_DISPATCH</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="par run show_par"><span class="n"><a id="t3179" href="#t3179">3179</a></span><span class="t">                <span class="key">if</span> <span class="nam">dispatched</span> <span class="key">is</span> <span class="key">not</span> <span class="key">None</span><span class="op">:</span>&nbsp;</span><span class="r"><span class="annotate short">3179&#x202F;&#x219B;&#x202F;3184</span><span class="annotate long">line 3179 didn't jump to line 3184 because the condition on line 3179 was always true</span></span></p>
     <p class="run"><span class="n"><a id="t3180" href="#t3180">3180</a></span><span class="t">                    <span class="nam">self</span><span class="op">.</span><span class="nam">_kernel</span><span class="op">.</span><span class="nam">syscall</span><span class="op">(</span><span class="nam">SyscallNumber</span><span class="op">.</span><span class="nam">SYS_TERMINATE_PROCESS</span><span class="op">,</span> <span class="nam">pid</span><span class="op">=</span><span class="nam">demo_pid</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run"><span class="n"><a id="t3181" href="#t3181">3181</a></span><span class="t">            <span class="key">except</span> <span class="op">(</span><span class="nam">SyscallError</span><span class="op">,</span> <span class="nam">RuntimeError</span><span class="op">)</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t3181" href="#t3181">3181</a></span><span class="t">            <span class="key">except</span> <span class="nam">SyscallError</span><span class="op">,</span> <span class="nam">RuntimeError</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t3182" href="#t3182">3182</a></span><span class="t">                <span class="key">pass</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t3183" href="#t3183">3183</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t3184" href="#t3184">3184</a></span><span class="t">        <span class="nam">lines</span><span class="op">.</span><span class="nam">append</span><span class="op">(</span><span class="str">"Virtual files are generated live &#8212; no disk storage needed!"</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
@@ -3973,7 +3973,7 @@
     <p class="pln"><span class="n"><a id="t3889" href="#t3889">3889</a></span><span class="t">            <span class="com"># Try listing as directory; if it fails, it's a file</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t3890" href="#t3890">3890</a></span><span class="t">            <span class="key">try</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t3891" href="#t3891">3891</a></span><span class="t">                <span class="nam">self</span><span class="op">.</span><span class="nam">_kernel</span><span class="op">.</span><span class="nam">syscall</span><span class="op">(</span><span class="nam">SyscallNumber</span><span class="op">.</span><span class="nam">SYS_LIST_DIR</span><span class="op">,</span> <span class="nam">path</span><span class="op">=</span><span class="nam">child_path</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t3892" href="#t3892">3892</a></span><span class="t">            <span class="key">except</span> <span class="op">(</span><span class="nam">SyscallError</span><span class="op">,</span> <span class="nam">NotADirectoryError</span><span class="op">)</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
+    <p class="mis show_mis"><span class="n"><a id="t3892" href="#t3892">3892</a></span><span class="t">            <span class="key">except</span> <span class="nam">SyscallError</span><span class="op">,</span> <span class="nam">NotADirectoryError</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
     <p class="mis show_mis"><span class="n"><a id="t3893" href="#t3893">3893</a></span><span class="t">                <span class="nam">lines</span><span class="op">.</span><span class="nam">append</span><span class="op">(</span><span class="fst">f"</span><span class="op">{</span><span class="nam">indent</span><span class="op">}</span><span class="fst">  </span><span class="op">{</span><span class="nam">entry</span><span class="op">}</span><span class="fst">"</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="mis show_mis"><span class="n"><a id="t3894" href="#t3894">3894</a></span><span class="t">                <span class="key">continue</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t3895" href="#t3895">3895</a></span><span class="t">            <span class="nam">self</span><span class="op">.</span><span class="nam">_dashboard_fs_tree</span><span class="op">(</span><span class="nam">lines</span><span class="op">,</span> <span class="nam">child_path</span><span class="op">,</span> <span class="nam">depth</span><span class="op">=</span><span class="nam">depth</span> <span class="op">+</span> <span class="num">1</span><span class="op">,</span> <span class="nam">max_depth</span><span class="op">=</span><span class="nam">max_depth</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
@@ -3986,7 +3986,7 @@
             <a class="nav" href="z_e6b660388905a465___init___py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.13.4">coverage.py v7.13.4</a>,
-            created at 2026-03-01 10:23 +0000
+            created at 2026-03-01 10:27 +0000
         </p>
     </div>
 </footer>
