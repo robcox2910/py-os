@@ -202,7 +202,7 @@ class Completer:
         )
         try:
             self._kernel.syscall(syscall, path=path)
-        except (SyscallError, NotADirectoryError):
+        except SyscallError, NotADirectoryError:
             return False
         return True
 
