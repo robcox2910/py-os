@@ -4,11 +4,14 @@ The tutorial system teaches OS concepts through guided, hands-on
 lessons that use real syscalls with educational commentary.
 """
 
+from unittest.mock import patch
+
 import pytest
 
 from py_os.completer import Completer
 from py_os.kernel import ExecutionMode, Kernel
 from py_os.shell import Shell
+from py_os.syscalls import SyscallError
 from py_os.tutorials import TutorialRunner
 
 EXPECTED_LESSON_COUNT = 9
@@ -274,3 +277,270 @@ class TestLearnCommand:
         completer = Completer(shell)
         matches = completer.completions("p", "learn p")
         assert "processes" in matches
+
+
+# -- Cycle 10: Error path coverage -------------------------------------------
+
+
+def _failing_kernel() -> Kernel:
+    """Create a kernel whose syscall always raises SyscallError."""
+    return _booted_kernel()
+
+
+class TestProcessesLessonErrors:
+    """Verify processes lesson error paths."""
+
+    def test_list_processes_error(self) -> None:
+        """Error listing processes should be caught gracefully."""
+        kernel = _failing_kernel()
+        runner = TutorialRunner(kernel)
+        with patch.object(kernel, "syscall", side_effect=SyscallError("fail")):
+            output = runner.run("processes")
+        assert "Could not list processes" in output
+
+    def test_create_process_error(self) -> None:
+        """Error creating a process should be caught gracefully."""
+        kernel = _failing_kernel()
+        runner = TutorialRunner(kernel)
+        call_count = 0
+        original = kernel.syscall
+
+        def _fail_on_second(*args: object, **kwargs: object) -> object:
+            nonlocal call_count
+            call_count += 1
+            if call_count >= 2:  # noqa: PLR2004
+                raise SyscallError("fail")
+            return original(*args, **kwargs)  # type: ignore[arg-type]
+
+        with patch.object(kernel, "syscall", side_effect=_fail_on_second):
+            output = runner.run("processes")
+        assert "(Error: fail)" in output
+
+
+class TestMemoryLessonErrors:
+    """Verify memory lesson error paths."""
+
+    def test_memory_info_error(self) -> None:
+        """Error getting memory info should be caught gracefully."""
+        kernel = _failing_kernel()
+        runner = TutorialRunner(kernel)
+        with patch.object(kernel, "syscall", side_effect=SyscallError("fail")):
+            output = runner.run("memory")
+        assert "(Error: fail)" in output
+
+    def test_slab_error(self) -> None:
+        """Error in slab operations should be caught gracefully."""
+        kernel = _failing_kernel()
+        runner = TutorialRunner(kernel)
+        call_count = 0
+        original = kernel.syscall
+
+        def _fail_on_second(*args: object, **kwargs: object) -> object:
+            nonlocal call_count
+            call_count += 1
+            if call_count >= 2:  # noqa: PLR2004
+                raise SyscallError("slab fail")
+            return original(*args, **kwargs)  # type: ignore[arg-type]
+
+        with patch.object(kernel, "syscall", side_effect=_fail_on_second):
+            output = runner.run("memory")
+        assert "(Error: slab fail)" in output
+
+
+class TestFilesystemLessonErrors:
+    """Verify filesystem lesson error paths."""
+
+    def test_all_fs_errors(self) -> None:
+        """All filesystem operations failing should be caught gracefully."""
+        kernel = _failing_kernel()
+        runner = TutorialRunner(kernel)
+        with patch.object(kernel, "syscall", side_effect=SyscallError("fs fail")):
+            output = runner.run("filesystem")
+        error_count = output.count("(Error: fs fail)")
+        min_errors = 4
+        assert error_count >= min_errors
+
+
+class TestSchedulingLessonErrors:
+    """Verify scheduling lesson error paths."""
+
+    def test_scheduler_info_error(self) -> None:
+        """Error getting scheduler info should be caught gracefully."""
+        kernel = _failing_kernel()
+        runner = TutorialRunner(kernel)
+        with patch.object(kernel, "syscall", side_effect=SyscallError("sched fail")):
+            output = runner.run("scheduling")
+        error_count = output.count("(Error: sched fail)")
+        min_errors = 2
+        assert error_count >= min_errors
+
+
+class TestSignalsLessonErrors:
+    """Verify signals lesson error paths."""
+
+    def test_create_process_error_returns_early(self) -> None:
+        """Error creating the signal target should return early."""
+        kernel = _failing_kernel()
+        runner = TutorialRunner(kernel)
+        with patch.object(kernel, "syscall", side_effect=SyscallError("sig fail")):
+            output = runner.run("signals")
+        assert "(Error: sig fail)" in output
+        assert "Step 2" not in output
+
+    def test_handler_and_send_errors(self) -> None:
+        """Error in handler registration and signal sending should be caught."""
+        kernel = _failing_kernel()
+        runner = TutorialRunner(kernel)
+        call_count = 0
+        original = kernel.syscall
+
+        def _fail_after_first(*args: object, **kwargs: object) -> object:
+            nonlocal call_count
+            call_count += 1
+            if call_count >= 2:  # noqa: PLR2004
+                raise SyscallError("sig op fail")
+            return original(*args, **kwargs)  # type: ignore[arg-type]
+
+        with patch.object(kernel, "syscall", side_effect=_fail_after_first):
+            output = runner.run("signals")
+        assert "(Error: sig op fail)" in output
+
+
+class TestIPCLessonErrors:
+    """Verify IPC lesson error paths."""
+
+    def test_shm_create_error_returns_early(self) -> None:
+        """Error creating shared memory should return early."""
+        kernel = _failing_kernel()
+        runner = TutorialRunner(kernel)
+        with patch.object(kernel, "syscall", side_effect=SyscallError("ipc fail")):
+            output = runner.run("ipc")
+        assert "(Error: ipc fail)" in output
+        assert "Step 2" not in output
+
+
+class TestNetworkingLessonErrors:
+    """Verify networking lesson error paths."""
+
+    def test_dns_errors(self) -> None:
+        """Error in DNS operations should be caught gracefully."""
+        kernel = _failing_kernel()
+        runner = TutorialRunner(kernel)
+        call_count = 0
+
+        def _fail_first_two(*_args: object, **_kwargs: object) -> object:
+            nonlocal call_count
+            call_count += 1
+            raise SyscallError("dns fail")
+
+        with patch.object(kernel, "syscall", side_effect=_fail_first_two):
+            output = runner.run("networking")
+        assert "(Error: dns fail)" in output
+
+    def test_socket_error_returns_early(self) -> None:
+        """Error creating server socket should return early."""
+        kernel = _failing_kernel()
+        runner = TutorialRunner(kernel)
+        with patch.object(kernel, "syscall", side_effect=SyscallError("sock fail")):
+            output = runner.run("networking")
+        assert "(Error: sock fail)" in output
+        assert "Step 4" not in output
+
+    def test_client_connect_error(self) -> None:
+        """Error in client connection should be caught gracefully."""
+        kernel = _failing_kernel()
+        runner = TutorialRunner(kernel)
+        call_count = 0
+        original = kernel.syscall
+
+        def _fail_on_client(*args: object, **kwargs: object) -> object:
+            nonlocal call_count
+            call_count += 1
+            if call_count > 4:  # noqa: PLR2004
+                raise SyscallError("client fail")
+            return original(*args, **kwargs)  # type: ignore[arg-type]
+
+        with patch.object(kernel, "syscall", side_effect=_fail_on_client):
+            output = runner.run("networking")
+        assert "(Error: client fail)" in output
+
+
+class TestInterruptsLessonErrors:
+    """Verify interrupts lesson error paths."""
+
+    def test_all_interrupt_errors(self) -> None:
+        """All interrupt operations failing should be caught gracefully."""
+        kernel = _failing_kernel()
+        runner = TutorialRunner(kernel)
+        with patch.object(kernel, "syscall", side_effect=SyscallError("int fail")):
+            output = runner.run("interrupts")
+        error_count = output.count("(Error: int fail)")
+        min_errors = 4
+        assert error_count >= min_errors
+
+
+class TestTcpLessonErrors:
+    """Verify TCP lesson error paths."""
+
+    def test_listen_error_returns_early(self) -> None:
+        """Error in TCP listen should return early."""
+        kernel = _failing_kernel()
+        runner = TutorialRunner(kernel)
+        with patch.object(kernel, "syscall", side_effect=SyscallError("tcp fail")):
+            output = runner.run("tcp")
+        assert "(Error: tcp fail)" in output
+        assert "Step 2" not in output
+
+    def test_send_error(self) -> None:
+        """Error in TCP send should be caught gracefully."""
+        kernel = _failing_kernel()
+        runner = TutorialRunner(kernel)
+        call_count = 0
+        original = kernel.syscall
+
+        def _fail_on_send(*args: object, **kwargs: object) -> object:
+            nonlocal call_count
+            call_count += 1
+            if call_count > 3:  # noqa: PLR2004
+                raise SyscallError("send fail")
+            return original(*args, **kwargs)  # type: ignore[arg-type]
+
+        with patch.object(kernel, "syscall", side_effect=_fail_on_send):
+            output = runner.run("tcp")
+        assert "(Error: send fail)" in output
+
+    def test_recv_error(self) -> None:
+        """Error in TCP receive should be caught gracefully."""
+        kernel = _failing_kernel()
+        runner = TutorialRunner(kernel)
+        call_count = 0
+        original = kernel.syscall
+
+        def _fail_on_recv(*args: object, **kwargs: object) -> object:
+            nonlocal call_count
+            call_count += 1
+            if call_count > 4:  # noqa: PLR2004
+                raise SyscallError("recv fail")
+            return original(*args, **kwargs)  # type: ignore[arg-type]
+
+        with patch.object(kernel, "syscall", side_effect=_fail_on_recv):
+            output = runner.run("tcp")
+        assert "(Error: recv fail)" in output
+
+    def test_info_error(self) -> None:
+        """Error getting TCP info should be caught gracefully."""
+        kernel = _failing_kernel()
+        runner = TutorialRunner(kernel)
+        call_count = 0
+        original = kernel.syscall
+
+        def _fail_on_info(*args: object, **kwargs: object) -> object:
+            nonlocal call_count
+            call_count += 1
+            if call_count > 5:  # noqa: PLR2004
+                raise SyscallError("info fail")
+            return original(*args, **kwargs)  # type: ignore[arg-type]
+
+        with patch.object(kernel, "syscall", side_effect=_fail_on_info):
+            output = runner.run("tcp")
+        assert "(Error: info fail)" in output
