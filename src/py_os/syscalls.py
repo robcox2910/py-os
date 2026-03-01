@@ -248,6 +248,11 @@ class SyscallNumber(IntEnum):
     SYS_BALANCE = 223
     SYS_MIGRATE = 224
 
+    # Swap / paging operations
+    SYS_SWAP_INFO = 250
+    SYS_SET_SWAP_POLICY = 251
+    SYS_SWAP_EXERCISE = 252
+
 
 class SyscallError(Exception):
     """Raised when a system call fails.
@@ -416,6 +421,9 @@ def dispatch_syscall(
         SyscallNumber.SYS_TCP_LIST: _sys_tcp_list,
         SyscallNumber.SYS_TCP_LISTEN: _sys_tcp_listen,
         SyscallNumber.SYS_TCP_ACCEPT: _sys_tcp_accept,
+        SyscallNumber.SYS_SWAP_INFO: _sys_swap_info,
+        SyscallNumber.SYS_SET_SWAP_POLICY: _sys_set_swap_policy,
+        SyscallNumber.SYS_SWAP_EXERCISE: _sys_swap_exercise,
     }
 
     handler = handlers.get(number)
@@ -1953,3 +1961,53 @@ def _sys_tcp_list(kernel: Any, **_kwargs: Any) -> list[dict[str, object]]:
         return kernel.tcp_list()
     except RuntimeError as e:
         raise SyscallError(str(e)) from e
+
+
+# -- Swap / paging syscall handlers -------------------------------------------
+
+
+def _sys_swap_info(kernel: Any, **_kwargs: Any) -> dict[str, object]:
+    """Return swap space and pager statistics."""
+    pager = kernel.pager
+    if pager is None:
+        msg = "Pager not initialised"
+        raise SyscallError(msg)
+    swap = pager.swap
+    return {
+        "swap_total": swap.capacity,
+        "swap_used": swap.used,
+        "swap_free": swap.capacity - swap.used,
+        "page_faults": pager.page_faults,
+        "resident_count": len(pager.resident_pages),
+        "policy": kernel.swap_policy_name,
+    }
+
+
+def _sys_set_swap_policy(kernel: Any, **kwargs: Any) -> dict[str, str]:
+    """Change the pager's replacement policy."""
+    name: str = kwargs["name"]
+    try:
+        kernel.set_swap_policy(name)
+    except ValueError as e:
+        raise SyscallError(str(e)) from e
+    return {"policy": name}
+
+
+def _sys_swap_exercise(kernel: Any, **_kwargs: Any) -> dict[str, object]:
+    """Exercise the pager by accessing pages beyond physical capacity."""
+    pager = kernel.pager
+    if pager is None:
+        msg = "Pager not initialised"
+        raise SyscallError(msg)
+    faults_before = pager.page_faults
+    # Write to virtual pages beyond the physical frame count to force evictions
+    exercise_pages = 24
+    for vpn in range(exercise_pages):
+        pager.write(virtual_page=vpn, offset=0, data=bytes([vpn & 0xFF]))
+    faults_after = pager.page_faults
+    return {
+        "pages_accessed": exercise_pages,
+        "faults_before": faults_before,
+        "faults_after": faults_after,
+        "new_faults": faults_after - faults_before,
+    }
