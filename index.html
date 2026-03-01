@@ -424,6 +424,33 @@
   
   
   
+    <li class="md-nav__item">
+      <a href="diagrams/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Visual Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
     
     
     
@@ -440,10 +467,10 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
             
   
   
@@ -461,8 +488,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -962,15 +989,15 @@
 <p>Ever wondered what happens when you open a program, save a file, or connect to the internet? An operating system makes all of that work. PyOS builds a mini version of one so you can see the pieces and how they fit together.</p>
 <p>Start here: <strong><a href="concepts/what-is-an-os/">What Is an Operating System?</a></strong></p>
 <h2 id="quick-start">Quick Start</h2>
-<pre><code class="language-bash"># Install dependencies
-uv sync
+<div class="highlight"><pre><span></span><code><span class="c1"># Install dependencies</span>
+uv<span class="w"> </span>sync
 
-# Run the interactive OS
-python -m py_os
+<span class="c1"># Run the interactive OS</span>
+python<span class="w"> </span>-m<span class="w"> </span>py_os
 
-# Run the test suite
-uv run pytest
-</code></pre>
+<span class="c1"># Run the test suite</span>
+uv<span class="w"> </span>run<span class="w"> </span>pytest
+</code></pre></div>
 <h2 id="learn-the-concepts">Learn the Concepts</h2>
 <p>Each guide explains one part of the OS with real-world analogies and simple language.</p>
 <table>
@@ -1253,7 +1280,7 @@ uv run pytest
 </tbody>
 </table>
 <h2 id="shell-commands">Shell Commands</h2>
-<pre><code>help        List available commands
+<div class="highlight"><pre><span></span><code>help        List available commands
 ps          Show running processes
 ls [path]   List directory contents
 mkdir path  Create a directory
@@ -1301,7 +1328,7 @@ open path   Open a file and get a file descriptor
 close fd    Close a file descriptor
 readfd fd   Read from a file descriptor
 writefd fd  Write to a file descriptor
-seek fd pos Reposition a file descriptor's offset
+seek fd pos Reposition a file descriptor&#39;s offset
 lsfd        List open file descriptors
 ln          Create hard or symbolic links
 readlink p  Read a symlink target
@@ -1334,40 +1361,40 @@ interrupt   Manage interrupts (list, mask &lt;vector&gt;, unmask &lt;vector&gt;)
 timer       Manage the timer (info, set &lt;interval&gt;)
 learn       Interactive tutorials (processes, memory, filesystem, ...)
 exit        Shut down the kernel
-</code></pre>
+</code></pre></div>
 <p>Commands can be piped: <code>ls / | grep txt | wc</code></p>
 <h3 id="scripting">Scripting</h3>
 <p>The shell supports scripts -- multi-line sequences of commands with comments, variable substitution, and conditionals:</p>
-<pre><code class="language-bash"># Setup script
-mkdir /data
-export NAME=hello
-echo $NAME
-if ls /data
-then
-  touch /data/$NAME.txt
-fi
-</code></pre>
+<div class="highlight"><pre><span></span><code><span class="c1"># Setup script</span>
+mkdir<span class="w"> </span>/data
+<span class="nb">export</span><span class="w"> </span><span class="nv">NAME</span><span class="o">=</span>hello
+<span class="nb">echo</span><span class="w"> </span><span class="nv">$NAME</span>
+<span class="k">if</span><span class="w"> </span>ls<span class="w"> </span>/data
+<span class="k">then</span>
+<span class="w">  </span>touch<span class="w"> </span>/data/<span class="nv">$NAME</span>.txt
+<span class="k">fi</span>
+</code></pre></div>
 <p>Scripts can be run from files with <code>source /path/to/script.sh</code>.</p>
 <h2 id="web-ui">Web UI</h2>
 <p>PyOS includes an optional browser-based terminal. Install Flask and start the server:</p>
-<pre><code class="language-bash">pip install py-os[web]
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>py-os<span class="o">[</span>web<span class="o">]</span>
 py-os-web
-</code></pre>
+</code></pre></div>
 <p>Then open <code>http://localhost:8080</code> in your browser. See <a href="concepts/web-ui/">Web UI</a> for details.</p>
 <h2 id="development">Development</h2>
-<pre><code class="language-bash"># Run tests with coverage
-uv run pytest --cov
+<div class="highlight"><pre><span></span><code><span class="c1"># Run tests with coverage</span>
+uv<span class="w"> </span>run<span class="w"> </span>pytest<span class="w"> </span>--cov
 
-# Format code
-uv run ruff format src/ tests/
+<span class="c1"># Format code</span>
+uv<span class="w"> </span>run<span class="w"> </span>ruff<span class="w"> </span>format<span class="w"> </span>src/<span class="w"> </span>tests/
 
-# Lint and type check
-uv run ruff check src/ tests/
-uv run pyright src/
+<span class="c1"># Lint and type check</span>
+uv<span class="w"> </span>run<span class="w"> </span>ruff<span class="w"> </span>check<span class="w"> </span>src/<span class="w"> </span>tests/
+uv<span class="w"> </span>run<span class="w"> </span>pyright<span class="w"> </span>src/
 
-# Pre-commit hooks (ruff, pyright, commitizen)
-uv run pre-commit run --all-files
-</code></pre>
+<span class="c1"># Pre-commit hooks (ruff, pyright, commitizen)</span>
+uv<span class="w"> </span>run<span class="w"> </span>pre-commit<span class="w"> </span>run<span class="w"> </span>--all-files
+</code></pre></div>
 <p><strong>Branch workflow:</strong> <code>feat/</code>, <code>fix/</code>, <code>chore/</code> prefixes, squash merges to protected <code>main</code>.</p>
 <p><strong>TDD cycle:</strong> Write failing tests (Red) -&gt; Implement (Green) -&gt; Lint and refactor (Refactor).</p>
 

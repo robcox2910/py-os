@@ -283,6 +283,33 @@
       
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../../diagrams/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Visual Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
     
   
   
@@ -301,10 +328,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
             
   
   
@@ -322,8 +349,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_3">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1262,46 +1289,46 @@
 <p>Synchronization primitives solve this. They are the traffic lights and turnstiles of concurrent programming.</p>
 <h2 id="the-problem-race-conditions">The Problem: Race Conditions</h2>
 <p>Imagine two threads both trying to increment a counter:</p>
-<pre><code>Thread A reads counter (value: 5)
+<div class="highlight"><pre><span></span><code>Thread A reads counter (value: 5)
 Thread B reads counter (value: 5)
 Thread A writes counter = 6
 Thread B writes counter = 6    &lt;-- should be 7!
-</code></pre>
+</code></pre></div>
 <p>One increment was lost. This is a <strong>data race</strong>: both threads read the old value before either wrote the new one.</p>
 <h2 id="mutex-mutual-exclusion">Mutex (Mutual Exclusion)</h2>
 <p><strong>Analogy: A bathroom lock.</strong></p>
 <p>A mutex is the simplest synchronization tool. Only one thread can hold it at a time. If another thread tries to acquire it, they wait in a queue until the holder releases it.</p>
-<pre><code>Thread A: acquire lock  -&gt; success, enters critical section
+<div class="highlight"><pre><span></span><code>Thread A: acquire lock  -&gt; success, enters critical section
 Thread B: acquire lock  -&gt; blocked, added to wait queue
 Thread A: release lock  -&gt; Thread B wakes up and acquires
 Thread B: release lock  -&gt; lock is free
-</code></pre>
+</code></pre></div>
 <p><strong>Key rules:</strong>
 - Only the thread that locked it can unlock it (owner tracking)
 - Waiters are served in FIFO order (no starvation)
 - Forgetting to release causes deadlock</p>
-<p><strong>Shell usage:</strong></p>
-<pre><code>mutex create mylock
+<p><strong>Shell usage:</strong>
+<div class="highlight"><pre><span></span><code>mutex create mylock
 mutex list
-</code></pre>
+</code></pre></div></p>
 <h2 id="semaphore-counting-lock">Semaphore (Counting Lock)</h2>
 <p><strong>Analogy: A parking lot with limited spaces.</strong></p>
 <p>A semaphore is like a mutex, but instead of allowing only 1 holder, it allows up to N concurrent holders. Each <code>acquire</code> decrements the count; each <code>release</code> increments it. When the count reaches zero, new arrivals wait.</p>
-<pre><code>Semaphore &quot;parking&quot; (count=3)
+<div class="highlight"><pre><span></span><code>Semaphore &quot;parking&quot; (count=3)
 
 Car A enters  -&gt; count=2
 Car B enters  -&gt; count=1
 Car C enters  -&gt; count=0
 Car D arrives -&gt; blocked (lot is full)
 Car A leaves  -&gt; count stays 0, Car D enters
-</code></pre>
+</code></pre></div>
 <p><strong>Special cases:</strong>
 - <strong>Binary semaphore</strong> (count=1): behaves like a mutex
 - <strong>Bounded semaphore</strong>: enforces a maximum count to prevent accidental over-releasing</p>
-<p><strong>Shell usage:</strong></p>
-<pre><code>semaphore create parking 3
+<p><strong>Shell usage:</strong>
+<div class="highlight"><pre><span></span><code>semaphore create parking 3
 semaphore list
-</code></pre>
+</code></pre></div></p>
 <h2 id="condition-variable-waitnotify">Condition Variable (Wait/Notify)</h2>
 <p><strong>Analogy: A waiting room where you sit until your name is called.</strong></p>
 <p>A condition variable lets threads wait for some condition to become true. It is always paired with a mutex:</p>
@@ -1320,20 +1347,20 @@ semaphore list
 - <strong>Multiple readers</strong> can hold the lock at the same time
 - <strong>Only one writer</strong> can hold the lock, and nobody else (no readers, no other writers)
 - This is perfect for data that gets read much more often than it gets written (config files, caches, lookup tables)</p>
-<pre><code>Thread A: acquire_read   -&gt; success (1 reader)
+<div class="highlight"><pre><span></span><code>Thread A: acquire_read   -&gt; success (1 reader)
 Thread B: acquire_read   -&gt; success (2 readers)
 Thread C: acquire_write  -&gt; blocked, added to wait queue
 Thread D: acquire_read   -&gt; blocked behind writer (writer-preference!)
 Thread A: release_read   -&gt; nothing happens (B still reading)
 Thread B: release_read   -&gt; 0 readers, C wakes up (writer goes next)
 Thread C: release_write  -&gt; D wakes up (reader gets in)
-</code></pre>
+</code></pre></div>
 <h3 id="writer-preference">Writer-Preference</h3>
 <p>Notice that Thread D was blocked even though it was a reader. This is <strong>writer-preference</strong>: when a writer is waiting in line, new readers queue behind it rather than jumping ahead. Without this rule, a steady stream of readers could starve the writer forever -- the writer would never get a turn.</p>
-<p><strong>Shell usage:</strong></p>
-<pre><code>rwlock create db_lock
+<p><strong>Shell usage:</strong>
+<div class="highlight"><pre><span></span><code>rwlock create db_lock
 rwlock list
-</code></pre>
+</code></pre></div></p>
 <h2 id="priority-inversion">Priority Inversion</h2>
 <p><strong>Analogy: Three students and one textbook.</strong></p>
 <p>Imagine a classroom with three students who all need the same textbook:</p>
@@ -1360,10 +1387,10 @@ rwlock list
 <li><strong>Medium-priority</strong> tasks that ran science experiments</li>
 </ul>
 <p>The high-priority bus manager kept getting starved. A watchdog timer detected the failure and rebooted the rover -- over and over. Engineers on Earth diagnosed the problem and uploaded a fix: <strong>priority inheritance</strong>.</p>
-<p><strong>Shell usage:</strong></p>
-<pre><code>pi demo     # Walk through the Mars Pathfinder scenario step by step
+<p><strong>Shell usage:</strong>
+<div class="highlight"><pre><span></span><code>pi demo     # Walk through the Mars Pathfinder scenario step by step
 pi status   # See which processes are currently boosted
-</code></pre>
+</code></pre></div></p>
 <h2 id="priority-inheritance">Priority Inheritance</h2>
 <p><strong>The fix: temporarily boost the slow student.</strong></p>
 <p>Priority inheritance is the kernel's solution to priority inversion. When a high-priority thread blocks on a mutex held by a lower-priority thread, the kernel temporarily <strong>boosts</strong> the holder's priority to match the waiter's.</p>
@@ -1379,13 +1406,13 @@ pi status   # See which processes are currently boosted
 </ol>
 <h3 id="transitive-inheritance">Transitive Inheritance</h3>
 <p>What if Slow Student is <em>also</em> waiting for something? The boost propagates through the chain:</p>
-<pre><code>Fast Student (priority=10) blocked on Textbook, held by Normal Student (priority=5)
+<div class="highlight"><pre><span></span><code>Fast Student (priority=10) blocked on Textbook, held by Normal Student (priority=5)
 Normal Student also blocked on Calculator, held by Slow Student (priority=1)
 
 Result: Slow Student boosted to 10, Normal Student boosted to 10
 When Slow Student returns Calculator -&gt; Normal Student gets it, Slow Student drops to 1
 When Normal Student returns Textbook -&gt; Fast Student gets it, Normal Student drops to 5
-</code></pre>
+</code></pre></div>
 <p>The kernel walks the chain of "who is blocked on what" and boosts everyone in the path. Loop detection (via a visited set) prevents infinite chains.</p>
 <h3 id="how-it-works">How It Works</h3>
 <p>Each process has two priority values:</p>
@@ -1453,14 +1480,14 @@ violation.</p>
 </tr>
 </tbody>
 </table>
-<p><strong>Shell usage:</strong></p>
-<pre><code>ordering mode strict
+<p><strong>Shell usage:</strong>
+<div class="highlight"><pre><span></span><code>ordering mode strict
 ordering register mutex:lock_a 1
 ordering register mutex:lock_b 2
 ordering status
 ordering violations
 ordering demo
-</code></pre>
+</code></pre></div></p>
 <h3 id="prevention-vs-detection">Prevention vs. Detection</h3>
 <p>PyOS has <em>two</em> complementary approaches to deadlock:</p>
 <table>

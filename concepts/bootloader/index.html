@@ -283,6 +283,33 @@
       
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../../diagrams/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Visual Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
     
   
   
@@ -301,10 +328,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
             
   
   
@@ -322,8 +349,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_3">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -966,7 +993,7 @@ the doors open and hope for the best. There's a whole sequence:</p>
    is the <strong>init process</strong> starting the <strong>shell</strong> so you can type commands.</li>
 </ol>
 <p>In a real computer, the chain looks like this:</p>
-<pre><code>Power on
+<div class="highlight"><pre><span></span><code>Power on
    |
    v
 Firmware POST     -- &quot;Is the hardware OK?&quot;
@@ -982,7 +1009,7 @@ Init (PID 1)      -- &quot;Start the first user-facing process&quot;
    |
    v
 Shell prompt      -- &quot;Ready for your commands!&quot;
-</code></pre>
+</code></pre></div>
 <hr />
 <h2 id="2-firmware-post">2. Firmware POST</h2>
 <p>POST stands for <strong>Power-On Self-Test</strong>. Before doing anything else, the
@@ -997,10 +1024,10 @@ essential hardware is working:</p>
 a series of beeps or see an error code. In PyOS, a <code>BootError</code> is raised with
 a message explaining what went wrong.</p>
 <p>In PyOS, you can see the POST results in the boot log:</p>
-<pre><code>[POST] Memory: 64 frames ... OK
+<div class="highlight"><pre><span></span><code>[POST] Memory: 64 frames ... OK
 [POST] Disk: accessible ... OK
 [POST] Devices: ready ... OK
-</code></pre>
+</code></pre></div>
 <hr />
 <h2 id="3-the-bootloader">3. The Bootloader</h2>
 <p>Once POST passes, the bootloader takes over. Its job is simple but critical:
@@ -1018,14 +1045,14 @@ contains:</p>
 <li><strong>default_policy</strong> -- which scheduling policy to start with</li>
 <li><strong>boot_args</strong> -- extra configuration settings</li>
 </ul>
-<pre><code>[BOOT] Loading kernel image v0.1.0 ... OK
-</code></pre>
+<div class="highlight"><pre><span></span><code>[BOOT] Loading kernel image v0.1.0 ... OK
+</code></pre></div>
 <hr />
 <h2 id="4-kernel-boot">4. Kernel Boot</h2>
 <p>With the kernel image loaded, the kernel itself takes over. It initializes
 every subsystem in a specific order (because each one depends on the ones
 before it):</p>
-<pre><code>[OK] Logger
+<div class="highlight"><pre><span></span><code>[OK] Logger
 [OK] Memory manager (64 frames)
 [OK] Slab allocator
 [OK] File system (journaled)
@@ -1038,7 +1065,7 @@ before it):</p>
 [OK] Scheduler (FCFS)
 [OK] /proc filesystem
 [OK] Init process (PID ...)
-</code></pre>
+</code></pre></div>
 <p>This is exactly what we covered in the
 <a href="../kernel-and-syscalls/">Kernel and System Calls</a> page -- the boot sequence
 hasn't changed, we've just made it visible through the boot log.</p>
@@ -1054,10 +1081,10 @@ of init.</p>
 - If a process's parent dies, init "adopts" the orphaned children
 - init is the last process to stop during shutdown</p>
 <p>In PyOS, the kernel creates init the same way:</p>
-<pre><code class="language-python">init = Process(name=&quot;init&quot;, priority=0)
-init.admit()
-scheduler.add(init)
-</code></pre>
+<div class="highlight"><pre><span></span><code><span class="n">init</span> <span class="o">=</span> <span class="n">Process</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;init&quot;</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">init</span><span class="o">.</span><span class="n">admit</span><span class="p">()</span>
+<span class="n">scheduler</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">init</span><span class="p">)</span>
+</code></pre></div>
 <p>Notice that init doesn't allocate memory -- it's a lightweight sentinel that
 just represents the root of the process tree. When you create a new process
 with <code>create_process()</code>, it automatically becomes a child of init (unless
@@ -1069,13 +1096,13 @@ the top.</p>
 reading the school's morning checklist after everything is already open --
 you can see exactly what happened during startup.</p>
 <p>PyOS has the same command:</p>
-<pre><code>$ dmesg
+<div class="highlight"><pre><span></span><code>$ dmesg
 [OK] Logger
 [OK] Memory manager (64 frames)
 [OK] Slab allocator
 [OK] File system (journaled)
 ...
-</code></pre>
+</code></pre></div>
 <p>Behind the scenes, <code>dmesg</code> uses the <code>SYS_DMESG</code> syscall (number 210) to
 fetch the boot log from the kernel.</p>
 <p>There's also <code>SYS_BOOT_INFO</code> (number 211) that returns metadata about the
@@ -1083,11 +1110,11 @@ boot: the init process PID, system uptime, and kernel version.</p>
 <hr />
 <h2 id="7-the-boot-chain-in-pyos-code">7. The Boot Chain in PyOS Code</h2>
 <p>Here's how the REPL brings everything together:</p>
-<pre><code class="language-python">bootloader = Bootloader()
-kernel = bootloader.boot()    # POST -&gt; load image -&gt; kernel.boot()
-shell = Shell(kernel=kernel)
-print(format_boot_log(bootloader.boot_log + kernel.dmesg()))
-</code></pre>
+<div class="highlight"><pre><span></span><code><span class="n">bootloader</span> <span class="o">=</span> <span class="n">Bootloader</span><span class="p">()</span>
+<span class="n">kernel</span> <span class="o">=</span> <span class="n">bootloader</span><span class="o">.</span><span class="n">boot</span><span class="p">()</span>    <span class="c1"># POST -&gt; load image -&gt; kernel.boot()</span>
+<span class="n">shell</span> <span class="o">=</span> <span class="n">Shell</span><span class="p">(</span><span class="n">kernel</span><span class="o">=</span><span class="n">kernel</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">format_boot_log</span><span class="p">(</span><span class="n">bootloader</span><span class="o">.</span><span class="n">boot_log</span> <span class="o">+</span> <span class="n">kernel</span><span class="o">.</span><span class="n">dmesg</span><span class="p">()))</span>
+</code></pre></div>
 <p>The <code>Bootloader.boot()</code> method runs through all four stages:</p>
 <ol>
 <li><strong>FIRMWARE</strong> -- run POST, check hardware</li>

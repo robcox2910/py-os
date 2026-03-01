@@ -13,7 +13,7 @@
         <link rel="canonical" href="https://robcox2910.github.io/py-os/concepts/what-is-an-os/">
       
       
-        <link rel="prev" href="../../architecture/">
+        <link rel="prev" href="../../diagrams/">
       
       
         <link rel="next" href="../processes/">
@@ -283,6 +283,33 @@
       
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../../diagrams/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Visual Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
     
   
   
@@ -301,10 +328,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
             
   
   
@@ -322,8 +349,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_3">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -947,7 +974,7 @@ kernel for help. No cutting in line, no back doors.</p>
 made. The kernel manages all the computer's resources: memory, files, running
 programs, devices, the network, and users. Everything flows through here.</p>
 <p>Here's a picture of how the layers stack up:</p>
-<pre><code>+---------------------------------------------+
+<div class="highlight"><pre><span></span><code>+---------------------------------------------+
 |                   Shell                      |  You talk to the OS here
 |  (commands, pipes, job control)              |
 +---------------------------------------------+
@@ -963,7 +990,7 @@ programs, devices, the network, and users. Everything flows through here.</p>
 |  |  Users   | | Devices  | | Network  |     |
 |  +----------+ +----------+ +----------+     |
 +---------------------------------------------+
-</code></pre>
+</code></pre></div>
 <p>You sit at the top (the shell). Your requests travel down through syscalls into
 the kernel. The kernel does the heavy lifting and sends results back up.</p>
 <h2 id="what-is-pyos">What Is PyOS?</h2>

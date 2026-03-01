@@ -283,6 +283,33 @@
       
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../../diagrams/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Visual Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
     
   
   
@@ -301,10 +328,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
             
   
   
@@ -322,8 +349,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_3">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -2195,10 +2222,9 @@ read the receipt.</p>
 </ol>
 <p>Here's what a real HTTP request looks like "on the wire" -- the raw bytes that
 travel over the socket:</p>
-<pre><code>GET /index.html HTTP/1.0
+<div class="highlight"><pre><span></span><code>GET /index.html HTTP/1.0
 Host: localhost
-
-</code></pre>
+</code></pre></div>
 <p>That's it. A method, a path, a version, some headers, and a blank line at the
 end. Simple.</p>
 <h3 id="responses-the-receipt">Responses -- The Receipt</h3>
@@ -2221,26 +2247,26 @@ end. Simple.</p>
 </li>
 </ol>
 <p>Here's what a real response looks like:</p>
-<pre><code>HTTP/1.0 200 OK
+<div class="highlight"><pre><span></span><code>HTTP/1.0 200 OK
 Content-Type: text/html
 Content-Length: 25
 
 &lt;h1&gt;Welcome to PyOS!&lt;/h1&gt;
-</code></pre>
+</code></pre></div>
 <h3 id="protocol-layering-http-on-top-of-sockets">Protocol Layering -- HTTP on Top of Sockets</h3>
 <p>Here's the key insight: HTTP doesn't know or care <em>how</em> bytes get from point A
 to point B. That's the socket's job. And sockets don't know or care <em>what</em> the
 bytes mean. That's HTTP's job.</p>
 <p>This separation is called <strong>protocol layering</strong>. Each layer does one thing well
 and relies on the layer below it for the rest:</p>
-<pre><code>  HTTP      (application layer -- what do the bytes mean?)
+<div class="highlight"><pre><span></span><code>  HTTP      (application layer -- what do the bytes mean?)
     |
   TCP       (transport layer -- reliable, ordered delivery)
     |
   Sockets   (network layer -- how do bytes get there?)
     |
   Buffers   (in-memory simulation of a network)
-</code></pre>
+</code></pre></div>
 <p>In a real OS, there are even more layers (IP, Ethernet). PyOS implements
 HTTP on TCP on sockets on in-memory buffers. See <a href="../tcp/">TCP: Reliable Delivery</a>
 for how TCP guarantees delivery with congestion control.</p>

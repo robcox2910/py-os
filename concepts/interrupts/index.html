@@ -281,6 +281,33 @@
   
   
   
+    <li class="md-nav__item">
+      <a href="../../diagrams/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Visual Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
     
     
     
@@ -297,10 +324,10 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
             
   
   
@@ -318,8 +345,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -838,19 +865,19 @@
 </table>
 <p>When a device needs attention, it sends a signal to the controller. The controller adds the request to a queue. When the CPU is ready, it asks the controller "what needs handling?" and the controller serves requests <strong>in priority order</strong> -- urgent ones first.</p>
 <p>In PyOS, the <code>InterruptController</code> class does exactly this:</p>
-<pre><code>interrupt list
+<div class="highlight"><pre><span></span><code>interrupt list
 
 VEC  TYPE      PRI  MASKED  PENDING  HANDLER
   0  timer       3      no        0  yes
  16  io          2      no        0  yes
-</code></pre>
+</code></pre></div>
 <h2 id="interrupt-masking">Interrupt Masking</h2>
 <p>Sometimes the OS needs to do something without being interrupted -- like updating a shared data structure. It can <strong>mask</strong> (silence) certain vectors temporarily. Masked interrupts still get queued, but they are not delivered until the vector is <strong>unmasked</strong>.</p>
 <p>Think of it like putting your phone on silent. Calls still come in (you see them later), but your phone does not ring while you are concentrating.</p>
-<pre><code>interrupt mask 0        # Silence the timer
+<div class="highlight"><pre><span></span><code>interrupt mask 0        # Silence the timer
 tick 5                  # Ticks happen, but timer interrupts queue silently
 interrupt unmask 0      # Resume -- queued interrupts are delivered
-</code></pre>
+</code></pre></div>
 <h2 id="the-timer">The Timer</h2>
 <p>The <strong>timer</strong> is a special device that ticks at a regular rate. Every N ticks, it fires an interrupt. The OS uses this for three things:</p>
 <ol>
@@ -859,7 +886,7 @@ interrupt unmask 0      # Resume -- queued interrupts are delivered
 <li><strong>Timeouts</strong> -- knowing when to retry a network request.</li>
 </ol>
 <p>In PyOS, the timer is a <code>TimerDevice</code> that plugs into the interrupt controller. You can check its status and change how often it fires:</p>
-<pre><code>timer info
+<div class="highlight"><pre><span></span><code>timer info
 
 Timer device:
   Interval:     5 ticks
@@ -868,15 +895,15 @@ Timer device:
   Total fires:  0
 
 timer set 3             # Fire every 3 ticks instead of 5
-</code></pre>
+</code></pre></div>
 <h2 id="ticking-the-system-clock">Ticking the System Clock</h2>
 <p>In a real computer, the timer ticks automatically based on a crystal oscillator. In PyOS, we advance time manually with the <code>tick</code> command:</p>
-<pre><code>tick 10
+<div class="highlight"><pre><span></span><code>tick 10
 
 Ticked 10 time(s)
   Current tick: 10
   Interrupts serviced: 2
-</code></pre>
+</code></pre></div>
 <p>Each tick:</p>
 <ol>
 <li>Advances the timer counter by one.</li>
@@ -893,7 +920,7 @@ Ticked 10 time(s)
 </ol>
 <p>This is how Round Robin, MLFQ, and CFS schedulers ensure fairness -- no single process can monopolise the CPU.</p>
 <h2 id="how-interrupts-fit-in-the-big-picture">How Interrupts Fit in the Big Picture</h2>
-<pre><code>┌─────────────────────────────────────────────────┐
+<div class="highlight"><pre><span></span><code>┌─────────────────────────────────────────────────┐
 │                    Kernel                        │
 │                                                  │
 │   Timer  ──fire──▶  Interrupt   ──dispatch──▶   │
@@ -903,21 +930,21 @@ Ticked 10 time(s)
 │   NIC                priority)      Handler      │
 │                                                  │
 └─────────────────────────────────────────────────┘
-</code></pre>
+</code></pre></div>
 <p>Devices raise interrupts. The controller queues them by priority. Handlers process them. The kernel keeps running.</p>
 <h2 id="try-it-yourself">Try It Yourself</h2>
 <p>Boot PyOS and run the interactive lesson:</p>
-<pre><code>learn interrupts
-</code></pre>
+<div class="highlight"><pre><span></span><code>learn interrupts
+</code></pre></div>
 <p>Or experiment manually:</p>
-<pre><code>timer info              # See the timer's state
+<div class="highlight"><pre><span></span><code>timer info              # See the timer&#39;s state
 tick 5                  # Advance 5 ticks (timer fires once at default interval)
 interrupt list          # See all registered vectors
 interrupt mask 0        # Silence the timer
-tick 5                  # Timer queues but doesn't fire
+tick 5                  # Timer queues but doesn&#39;t fire
 interrupt unmask 0      # Resume delivery
 tick 1                  # Queued interrupt is now serviced
-</code></pre>
+</code></pre></div>
 <hr />
 <p><strong>Next:</strong> Learn about reliable network delivery in <a href="../tcp/">TCP: Reliable Delivery</a>.</p>
 

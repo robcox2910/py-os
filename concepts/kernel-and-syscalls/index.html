@@ -283,6 +283,33 @@
       
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../../diagrams/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Visual Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
     
   
   
@@ -301,10 +328,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
             
   
   
@@ -322,8 +349,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_3">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1332,8 +1359,8 @@ grant the request. This keeps everything safe and organized.</p>
 <p><strong>It has a lifecycle.</strong> The kernel is not just "on" or "off." It moves through
 a series of states, like a school that opens in the morning and closes at
 night:</p>
-<pre><code>SHUTDOWN  --&gt;  BOOTING  --&gt;  RUNNING  --&gt;  SHUTTING_DOWN  --&gt;  SHUTDOWN
-</code></pre>
+<div class="highlight"><pre><span></span><code>SHUTDOWN  --&gt;  BOOTING  --&gt;  RUNNING  --&gt;  SHUTTING_DOWN  --&gt;  SHUTDOWN
+</code></pre></div>
 <ul>
 <li><strong>SHUTDOWN</strong> -- the school is closed, the lights are off.</li>
 <li><strong>BOOTING</strong> -- the janitor is unlocking doors and turning things on.</li>
@@ -1342,12 +1369,12 @@ night:</p>
 </ul>
 <p>You can find the lifecycle defined as a <code>KernelState</code> enum near the top of
 <code>kernel.py</code>. In Python, that looks like this:</p>
-<pre><code class="language-python">class KernelState(StrEnum):
-    SHUTDOWN = &quot;shutdown&quot;
-    BOOTING = &quot;booting&quot;
-    RUNNING = &quot;running&quot;
-    SHUTTING_DOWN = &quot;shutting_down&quot;
-</code></pre>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">KernelState</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+    <span class="n">SHUTDOWN</span> <span class="o">=</span> <span class="s2">&quot;shutdown&quot;</span>
+    <span class="n">BOOTING</span> <span class="o">=</span> <span class="s2">&quot;booting&quot;</span>
+    <span class="n">RUNNING</span> <span class="o">=</span> <span class="s2">&quot;running&quot;</span>
+    <span class="n">SHUTTING_DOWN</span> <span class="o">=</span> <span class="s2">&quot;shutting_down&quot;</span>
+</code></pre></div>
 <hr />
 <h2 id="2-before-the-kernel-the-boot-chain">2. Before the Kernel: The Boot Chain</h2>
 <p>Before the kernel even starts, a <strong>bootloader</strong> does the hard work of checking
@@ -1363,7 +1390,7 @@ before their classrooms are set up.</p>
 <p>Computers work the same way. When PyOS boots, the kernel initializes each
 subsystem one at a time, in a careful order. If you look at the <code>boot()</code>
 method in <code>kernel.py</code>, you'll see something like this:</p>
-<pre><code>0. Logger           -- Turn on the security cameras first
+<div class="highlight"><pre><span></span><code>0. Logger           -- Turn on the security cameras first
                        (so everything that happens is recorded)
 1. Memory Manager   -- Set up the desks
                        (everything needs somewhere to sit)
@@ -1390,7 +1417,7 @@ method in <code>kernel.py</code>, you'll see something like this:</p>
                        (live stats from all subsystems)
 10. Init Process    -- The vice principal sits at the front desk
                        (first process, parent of all others)
-</code></pre>
+</code></pre></div>
 <p>Only after every single one of those steps is finished does the kernel
 switch its state to <code>RUNNING</code> -- and it also flips the CPU from
 <strong>kernel mode</strong> to <strong>user mode</strong> (more on that in section 8 below).</p>
@@ -1444,8 +1471,8 @@ number at the front desk:</p>
 </ul>
 <p>When a program wants something, it calls <code>kernel.syscall()</code> with the right
 number and any details. For example, to create a file:</p>
-<pre><code class="language-python">kernel.syscall(SyscallNumber.SYS_CREATE_FILE, path=&quot;/homework/essay.txt&quot;)
-</code></pre>
+<div class="highlight"><pre><span></span><code><span class="n">kernel</span><span class="o">.</span><span class="n">syscall</span><span class="p">(</span><span class="n">SyscallNumber</span><span class="o">.</span><span class="n">SYS_CREATE_FILE</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="s2">&quot;/homework/essay.txt&quot;</span><span class="p">)</span>
+</code></pre></div>
 <p>Behind the scenes, the <code>dispatch_syscall()</code> function in <code>syscalls.py</code> looks up
 the number in a big table, finds the right handler function, and calls it.
 If something goes wrong, the program gets back a <code>SyscallError</code> -- a
@@ -1572,11 +1599,11 @@ operation a program can ask for has a number, and every single request goes
 through the same front desk.</p>
 <h3 id="what-a-syscall-handler-looks-like">What a syscall handler looks like</h3>
 <p>Here is a simplified version of the "who am I?" handler from <code>syscalls.py</code>:</p>
-<pre><code class="language-python">def _sys_whoami(kernel, **kwargs):
-    &quot;&quot;&quot;Return the current user's info.&quot;&quot;&quot;
-    user = kernel.user_manager.get_user(kernel.current_uid)
-    return {&quot;uid&quot;: user.uid, &quot;username&quot;: user.username}
-</code></pre>
+<div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_sys_whoami</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the current user&#39;s info.&quot;&quot;&quot;</span>
+    <span class="n">user</span> <span class="o">=</span> <span class="n">kernel</span><span class="o">.</span><span class="n">user_manager</span><span class="o">.</span><span class="n">get_user</span><span class="p">(</span><span class="n">kernel</span><span class="o">.</span><span class="n">current_uid</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;uid&quot;</span><span class="p">:</span> <span class="n">user</span><span class="o">.</span><span class="n">uid</span><span class="p">,</span> <span class="s2">&quot;username&quot;</span><span class="p">:</span> <span class="n">user</span><span class="o">.</span><span class="n">username</span><span class="p">}</span>
+</code></pre></div>
 <p>That's it. The front desk receives form #30 ("who am I?"), calls this
 function, and hands the answer back to the program. The program never had
 to touch the user manager directly.</p>
@@ -1605,7 +1632,7 @@ tried to switch users at 3am?").</p>
 <hr />
 <h2 id="6-tying-it-all-together">6. Tying It All Together</h2>
 <p>Here is the full picture of how a request flows through the system:</p>
-<pre><code>You type a command
+<div class="highlight"><pre><span></span><code>You type a command
         |
         v
    [The Shell]          interprets what you typed
@@ -1614,11 +1641,11 @@ tried to switch users at 3am?").</p>
    [System Call]        fills out the right form (syscall number + args)
         |
         v
-   [Kernel]             the principal's office does the work
+   [Kernel]             the principal&#39;s office does the work
    |    |    |
    v    v    v
 Memory Files Scheduler  ...and all the other subsystems
-</code></pre>
+</code></pre></div>
 <p>The shell is where you talk to the OS (see <a href="../shell/">The Shell</a>). System
 calls are the only way the shell -- or any program -- can ask the kernel to
 do something. And the kernel coordinates all the subsystems to make it
@@ -1635,14 +1662,14 @@ write down what the assistant gives back: "Here's the flour," "Oven is on,"
 or "Error: we're out of pasta."</p>
 <p>In real Linux, <code>strace</code> intercepts every system call a program makes and shows
 you a log like this:</p>
-<pre><code>open(&quot;/etc/passwd&quot;, O_RDONLY) = 3
+<div class="highlight"><pre><span></span><code>open(&quot;/etc/passwd&quot;, O_RDONLY) = 3
 read(3, &quot;root:x:0:0...&quot;, 4096) = 1024
 close(3) = 0
-</code></pre>
+</code></pre></div>
 <p>PyOS has its own strace. When you turn it on, every syscall gets recorded:
 the syscall name, the arguments, and what came back (or if there was an error).</p>
 <h3 id="using-strace-in-the-shell">Using strace in the shell</h3>
-<pre><code>$ strace on
+<div class="highlight"><pre><span></span><code>$ strace on
 Strace enabled.
 $ ls /
 bin  home  tmp
@@ -1650,7 +1677,7 @@ bin  home  tmp
 #1 SYS_LIST_DIR(path=&quot;/&quot;) = [&quot;bin&quot;, &quot;home&quot;, &quot;tmp&quot;]
 $ strace off
 Strace disabled.
-</code></pre>
+</code></pre></div>
 <p>The <code>--- strace ---</code> section appears automatically after every command when
 strace is on. Each entry has a sequence number (<code>#1</code>, <code>#2</code>, ...), the syscall
 name, the arguments, and the return value (or <code>ERROR:</code> if it failed).</p>
@@ -1715,9 +1742,9 @@ and do whatever the request asks for. The moment the system call finishes,
 your badge flips right back to blue.</p>
 <p>In a real CPU, this protection is built into the hardware using <strong>privilege
 rings</strong>:</p>
-<pre><code>Ring 0 (kernel mode) -- full access to hardware and memory
+<div class="highlight"><pre><span></span><code>Ring 0 (kernel mode) -- full access to hardware and memory
 Ring 3 (user mode)   -- restricted, can only ask the kernel for help
-</code></pre>
+</code></pre></div>
 <p>User programs always run in ring 3. They can't read the kernel's memory,
 they can't talk to hardware directly, and they can't touch the scheduler or
 filesystem structures. The only way to do any of those things is to make a
@@ -1725,32 +1752,32 @@ filesystem structures. The only way to do any of those things is to make a
 handler, and switches back.</p>
 <h3 id="how-pyos-enforces-this">How PyOS enforces this</h3>
 <p>PyOS has an <code>ExecutionMode</code> enum with two values:</p>
-<pre><code class="language-python">class ExecutionMode(StrEnum):
-    USER = &quot;user&quot;
-    KERNEL = &quot;kernel&quot;
-</code></pre>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ExecutionMode</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+    <span class="n">USER</span> <span class="o">=</span> <span class="s2">&quot;user&quot;</span>
+    <span class="n">KERNEL</span> <span class="o">=</span> <span class="s2">&quot;kernel&quot;</span>
+</code></pre></div>
 <p>When the kernel boots, it starts in <strong>kernel mode</strong> (the janitor is setting up
 the building, so they need full access). At the very end of <code>boot()</code>, the mode
 flips to <strong>user mode</strong> -- the doors are open, and normal rules apply.</p>
 <p>Every sensitive kernel property (scheduler, memory, filesystem, processes,
 etc.) has a guard at the top:</p>
-<pre><code class="language-python">@property
-def scheduler(self):
-    self._require_kernel_mode()   # raises KernelModeError if in USER mode
-    return self._scheduler
-</code></pre>
+<div class="highlight"><pre><span></span><code><span class="nd">@property</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">scheduler</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_require_kernel_mode</span><span class="p">()</span>   <span class="c1"># raises KernelModeError if in USER mode</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scheduler</span>
+</code></pre></div>
 <p>If the shell (or any other user-space code) tries to reach past the front desk
 and grab the scheduler directly, they'll get a <code>KernelModeError</code>. The only way
 to get scheduler information is through the proper syscall:</p>
-<pre><code class="language-python">kernel.syscall(SyscallNumber.SYS_SCHEDULER_INFO)
-</code></pre>
+<div class="highlight"><pre><span></span><code><span class="n">kernel</span><span class="o">.</span><span class="n">syscall</span><span class="p">(</span><span class="n">SyscallNumber</span><span class="o">.</span><span class="n">SYS_SCHEDULER_INFO</span><span class="p">)</span>
+</code></pre></div>
 <p>Inside <code>syscall()</code>, the kernel temporarily switches to kernel mode (flips the
 badge to red), runs the handler, and switches back (flips it to blue again).
 This is done with a context manager that always restores the previous mode,
 even if the handler crashes:</p>
-<pre><code class="language-python">with self._kernel_mode():
-    result = dispatch_syscall(self, number, **kwargs)
-</code></pre>
+<div class="highlight"><pre><span></span><code><span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_kernel_mode</span><span class="p">():</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">dispatch_syscall</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">number</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</code></pre></div>
 <h3 id="why-bother">Why bother?</h3>
 <p>Without this enforcement, nothing stops a programmer from writing
 <code>kernel.filesystem.create_file(...)</code> directly in the shell. It works, but

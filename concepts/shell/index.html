@@ -283,6 +283,33 @@
       
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../../diagrams/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Visual Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
     
   
   
@@ -301,10 +328,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
             
   
   
@@ -322,8 +349,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_3">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1521,13 +1548,13 @@ That turns out to be really powerful, as you'll see when we get to pipes.</p>
 called a <strong>dispatch table</strong>. That's a fancy name for a Python dictionary that
 maps command names to functions.</p>
 <p>It looks something like this:</p>
-<pre><code class="language-python">commands = {
-    &quot;ls&quot;:    self._cmd_ls,
-    &quot;mkdir&quot;: self._cmd_mkdir,
-    &quot;cat&quot;:   self._cmd_cat,
-    # ... and so on
-}
-</code></pre>
+<div class="highlight"><pre><span></span><code><span class="n">commands</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;ls&quot;</span><span class="p">:</span>    <span class="bp">self</span><span class="o">.</span><span class="n">_cmd_ls</span><span class="p">,</span>
+    <span class="s2">&quot;mkdir&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cmd_mkdir</span><span class="p">,</span>
+    <span class="s2">&quot;cat&quot;</span><span class="p">:</span>   <span class="bp">self</span><span class="o">.</span><span class="n">_cmd_cat</span><span class="p">,</span>
+    <span class="c1"># ... and so on</span>
+<span class="p">}</span>
+</code></pre></div>
 <p>When you type <code>ls /</code>, the shell splits that into the command name (<code>ls</code>) and
 the arguments (<code>/</code>). It looks up <code>"ls"</code> in the dictionary, finds the matching
 function, and calls it with the arguments. Done.</p>
@@ -1750,14 +1777,14 @@ then add one line to the dictionary. That's it. No long chain of
 <p><strong>Virtual filesystem</strong> -- inspecting the system through /proc:</p>
 <p><code>cat</code> and <code>ls</code> automatically detect <code>/proc</code> paths and read from the
 virtual filesystem instead of the real one. For example:</p>
-<pre><code>cat /proc/meminfo       -- memory statistics
+<div class="highlight"><pre><span></span><code>cat /proc/meminfo       -- memory statistics
 cat /proc/uptime        -- system uptime
 cat /proc/stat          -- performance metrics (context switches, throughput)
 ls /proc                -- list all /proc entries
 ls /proc/42             -- list files for process 42
-cat /proc/42/status     -- process 42's details
+cat /proc/42/status     -- process 42&#39;s details
 cat /proc/42/sched      -- per-process timing (wait, CPU, response, turnaround)
-</code></pre>
+</code></pre></div>
 <p><strong>Scheduling</strong> -- controlling how processes share the CPU:</p>
 <table>
 <thead>
@@ -1830,8 +1857,8 @@ slides it to the third worker, who counts the results. Each worker does one
 small job, and together they produce the final product.</p>
 <p>Pipes work exactly like that. The <code>|</code> character connects commands so that the
 output of one becomes the input of the next.</p>
-<pre><code>ls / | grep txt | wc
-</code></pre>
+<div class="highlight"><pre><span></span><code>ls / | grep txt | wc
+</code></pre></div>
 <p>Here's what happens step by step:</p>
 <ol>
 <li><code>ls /</code> lists all the files in the root directory. Its output is a bunch of
@@ -1859,9 +1886,9 @@ result directly -- like someone handing you a letter. Redirection says "don't
 hand it to me, put it in that mailbox over there instead."</p>
 <h3 id="output-redirection">Output redirection (<code>&gt;</code>)</h3>
 <p>The <code>&gt;</code> operator takes a command's output and writes it into a file:</p>
-<pre><code>echo hello &gt; /greeting.txt
+<div class="highlight"><pre><span></span><code>echo hello &gt; /greeting.txt
 cat /greeting.txt
-</code></pre>
+</code></pre></div>
 <p>The first command writes "hello" into <code>/greeting.txt</code>. The second reads it
 back. Notice that <code>echo hello &gt;</code> showed nothing on screen -- the output went
 to the file instead of being displayed.</p>
@@ -1870,33 +1897,33 @@ everything in it</strong> and writes the new content. It's like ripping out all 
 pages of a notebook and starting fresh.</p>
 <h3 id="append-redirection">Append redirection (<code>&gt;&gt;</code>)</h3>
 <p>What if you don't want to erase the file? Use <code>&gt;&gt;</code> to <strong>add</strong> to the end:</p>
-<pre><code>echo dear diary &gt;&gt; /diary.txt
+<div class="highlight"><pre><span></span><code>echo dear diary &gt;&gt; /diary.txt
 echo today was great &gt;&gt; /diary.txt
-</code></pre>
+</code></pre></div>
 <p>Think of <code>&gt;&gt;</code> as "keep writing where I left off" and <code>&gt;</code> as "start a brand new
 page." If you're building a log file where you want to add entries over time,
 <code>&gt;&gt;</code> is what you want.</p>
 <h3 id="input-redirection">Input redirection (<code>&lt;</code>)</h3>
 <p>The <code>&lt;</code> operator goes the other direction. Instead of redirecting output, it
 redirects <strong>input</strong> -- it feeds the contents of a file into a command:</p>
-<pre><code>grep apple &lt; /fruits.txt
-</code></pre>
+<div class="highlight"><pre><span></span><code>grep apple &lt; /fruits.txt
+</code></pre></div>
 <p>This is like saying "open that file and read it out loud to <code>grep</code>." The
 <code>grep</code> command then filters the lines just like it would with piped input. It
 works with any pipe-aware command like <code>grep</code> or <code>wc</code>:</p>
-<pre><code>wc &lt; /fruits.txt
-</code></pre>
+<div class="highlight"><pre><span></span><code>wc &lt; /fruits.txt
+</code></pre></div>
 <p>You can even combine input and output redirection:</p>
-<pre><code>grep apple &lt; /fruits.txt &gt; /results.txt
-</code></pre>
+<div class="highlight"><pre><span></span><code>grep apple &lt; /fruits.txt &gt; /results.txt
+</code></pre></div>
 <p>That reads from <code>/fruits.txt</code>, filters for lines containing "apple", and writes
 the matching lines into <code>/results.txt</code>.</p>
 <h3 id="error-redirection-2">Error redirection (<code>2&gt;</code>)</h3>
 <p>Sometimes a command fails. When that happens, the shell produces an <strong>error
 message</strong> instead of normal output. The <code>2&gt;</code> operator captures those error
 messages and sends them to a file:</p>
-<pre><code>cat /nonexistent 2&gt; /errors.txt
-</code></pre>
+<div class="highlight"><pre><span></span><code>cat /nonexistent 2&gt; /errors.txt
+</code></pre></div>
 <p>If <code>/nonexistent</code> doesn't exist, the error message goes into <code>/errors.txt</code>
 instead of being displayed. Normal (successful) output is unaffected -- <code>2&gt;</code>
 only catches errors.</p>
@@ -1904,8 +1931,8 @@ only catches errors.</p>
 (normal output) and one for bills and complaints (errors). The <code>&gt;</code> operator
 redirects the regular pile, and <code>2&gt;</code> redirects the complaints pile. You can
 even use both at once:</p>
-<pre><code>ls / &gt; /output.txt 2&gt; /errors.txt
-</code></pre>
+<div class="highlight"><pre><span></span><code>ls / &gt; /output.txt 2&gt; /errors.txt
+</code></pre></div>
 <p><strong>Why the <code>2</code>?</strong> In real Unix systems, every program has numbered channels
 called <strong>file descriptors</strong>. Channel 1 is "standard output" (stdout) and
 channel 2 is "standard error" (stderr). So <code>2&gt;</code> literally means "redirect
@@ -1914,8 +1941,8 @@ with "Error:" -- if it does, it's treated as stderr.</p>
 <h3 id="redirection-and-pipes-together">Redirection and pipes together</h3>
 <p>You can combine redirection with pipes. Redirection applies to whatever stage
 it appears in:</p>
-<pre><code>ls / | grep txt &gt; /matches.txt
-</code></pre>
+<div class="highlight"><pre><span></span><code>ls / | grep txt &gt; /matches.txt
+</code></pre></div>
 <p>Here, <code>ls /</code> produces a listing, the pipe feeds it to <code>grep txt</code>, and then <code>&gt;</code>
 sends grep's filtered output to a file.</p>
 <p><strong>Limitation:</strong> You can't combine redirection with background execution (<code>&amp;</code>).
@@ -1966,12 +1993,12 @@ what loops do in a script: they repeat a block of commands automatically.</p>
 <h3 id="while-loops">While loops</h3>
 <p>A while loop is like a traffic light. Keep going as long as the light is green.
 The moment it turns red, stop.</p>
-<pre><code class="language-bash">while cat /flag
-do
-  echo &quot;still going&quot;
-  rm /flag
-done
-</code></pre>
+<div class="highlight"><pre><span></span><code><span class="k">while</span><span class="w"> </span>cat<span class="w"> </span>/flag
+<span class="k">do</span>
+<span class="w">  </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;still going&quot;</span>
+<span class="w">  </span>rm<span class="w"> </span>/flag
+<span class="k">done</span>
+</code></pre></div>
 <p>Here's what happens:</p>
 <ol>
 <li>The shell runs <code>cat /flag</code>. If it succeeds (the file exists), the light is
@@ -1990,41 +2017,41 @@ the condition notice.</p>
 <h3 id="for-loops">For loops</h3>
 <p>A for loop is like taking attendance at school. The teacher has a list of names,
 and for each name on the list, they call it out and mark it down.</p>
-<pre><code class="language-bash">for FRUIT in apple banana cherry
-do
-  echo $FRUIT
-done
-</code></pre>
+<div class="highlight"><pre><span></span><code><span class="k">for</span><span class="w"> </span>FRUIT<span class="w"> </span><span class="k">in</span><span class="w"> </span>apple<span class="w"> </span>banana<span class="w"> </span>cherry
+<span class="k">do</span>
+<span class="w">  </span><span class="nb">echo</span><span class="w"> </span><span class="nv">$FRUIT</span>
+<span class="k">done</span>
+</code></pre></div>
 <p>This outputs:</p>
-<pre><code>apple
+<div class="highlight"><pre><span></span><code>apple
 banana
 cherry
-</code></pre>
+</code></pre></div>
 <p>The shell takes each item after <code>in</code>, assigns it to the variable <code>FRUIT</code>, and
 runs the body once. Then it assigns the next item and runs the body again, until
 the list is exhausted.</p>
 <p>You can use a variable for the list, too:</p>
-<pre><code class="language-bash">export COLORS=&quot;red green blue&quot;
-for C in $COLORS
-do
-  echo $C
-done
-</code></pre>
+<div class="highlight"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">COLORS</span><span class="o">=</span><span class="s2">&quot;red green blue&quot;</span>
+<span class="k">for</span><span class="w"> </span>C<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="nv">$COLORS</span>
+<span class="k">do</span>
+<span class="w">  </span><span class="nb">echo</span><span class="w"> </span><span class="nv">$C</span>
+<span class="k">done</span>
+</code></pre></div>
 <p>The <code>$COLORS</code> variable gets expanded to <code>red green blue</code>, and the loop iterates
 over those three words.</p>
 <h3 id="nesting">Nesting</h3>
 <p>Loops can go inside other loops, and loops can go inside <code>if</code> blocks (and vice
 versa). Think of Russian nesting dolls -- each doll can contain another doll
 inside.</p>
-<pre><code class="language-bash">for DIR in /data /logs
-do
-  mkdir $DIR
-  for FILE in a.txt b.txt
-  do
-    touch $DIR/$FILE
-  done
-done
-</code></pre>
+<div class="highlight"><pre><span></span><code><span class="k">for</span><span class="w"> </span>DIR<span class="w"> </span><span class="k">in</span><span class="w"> </span>/data<span class="w"> </span>/logs
+<span class="k">do</span>
+<span class="w">  </span>mkdir<span class="w"> </span><span class="nv">$DIR</span>
+<span class="w">  </span><span class="k">for</span><span class="w"> </span>FILE<span class="w"> </span><span class="k">in</span><span class="w"> </span>a.txt<span class="w"> </span>b.txt
+<span class="w">  </span><span class="k">do</span>
+<span class="w">    </span>touch<span class="w"> </span><span class="nv">$DIR</span>/<span class="nv">$FILE</span>
+<span class="w">  </span><span class="k">done</span>
+<span class="k">done</span>
+</code></pre></div>
 <p>This creates two directories and puts two files in each one. The outer loop runs
 twice (once for <code>/data</code>, once for <code>/logs</code>), and for each outer iteration, the
 inner loop runs twice (once for <code>a.txt</code>, once for <code>b.txt</code>). Total: four files
@@ -2034,11 +2061,11 @@ combination. The shell handles nesting by running each inner block as its own
 mini-script -- the same technique that makes the whole scripting engine work.</p>
 <h3 id="safety-net">Safety net</h3>
 <p>What if you accidentally write a while loop whose condition never fails?</p>
-<pre><code class="language-bash">while cat /always-exists
-do
-  echo &quot;forever!&quot;
-done
-</code></pre>
+<div class="highlight"><pre><span></span><code><span class="k">while</span><span class="w"> </span>cat<span class="w"> </span>/always-exists
+<span class="k">do</span>
+<span class="w">  </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;forever!&quot;</span>
+<span class="k">done</span>
+</code></pre></div>
 <p>In a real OS, this would run until you kill the process (Ctrl+C). In PyOS, we
 have a built-in safety limit: <strong>1,000 iterations</strong>. If a loop hits this limit,
 it stops and reports an error. This prevents your scripts from running away and
@@ -2078,15 +2105,15 @@ and say "do all of these, in order."</p>
 <p>That's a <strong>script</strong> -- a text file with commands, one per line. Instead of
 typing commands one by one, you write them all down and tell the shell to run
 the file.</p>
-<pre><code class="language-bash"># Set up a data directory and create a file in it
-mkdir /data
-export NAME=hello
-echo $NAME
-if ls /data
-then
-  touch /data/$NAME.txt
-fi
-</code></pre>
+<div class="highlight"><pre><span></span><code><span class="c1"># Set up a data directory and create a file in it</span>
+mkdir<span class="w"> </span>/data
+<span class="nb">export</span><span class="w"> </span><span class="nv">NAME</span><span class="o">=</span>hello
+<span class="nb">echo</span><span class="w"> </span><span class="nv">$NAME</span>
+<span class="k">if</span><span class="w"> </span>ls<span class="w"> </span>/data
+<span class="k">then</span>
+<span class="w">  </span>touch<span class="w"> </span>/data/<span class="nv">$NAME</span>.txt
+<span class="k">fi</span>
+</code></pre></div>
 <p>Let's break down the special features you see here.</p>
 <p><strong>Comments</strong> start with <code>#</code>. They're notes for humans. The shell completely
 ignores them. Use comments to explain <em>why</em> you're doing something so that
@@ -2097,21 +2124,21 @@ with whatever value <code>NAME</code> holds before running the command. So if <c
 Think of <code>$NAME</code> as a placeholder that gets filled in.</p>
 <p><strong>Conditionals</strong> let you make decisions. The <code>if</code>/<code>then</code>/<code>else</code>/<code>fi</code> block
 works like this:</p>
-<pre><code class="language-bash">if some_command
-then
-  # This runs if some_command succeeded
-else
-  # This runs if some_command failed
-fi
-</code></pre>
+<div class="highlight"><pre><span></span><code><span class="k">if</span><span class="w"> </span>some_command
+<span class="k">then</span>
+<span class="w">  </span><span class="c1"># This runs if some_command succeeded</span>
+<span class="k">else</span>
+<span class="w">  </span><span class="c1"># This runs if some_command failed</span>
+<span class="k">fi</span>
+</code></pre></div>
 <p>The shell runs <code>some_command</code>. If it works (no error), it runs the <code>then</code>
 block. If it fails, it runs the <code>else</code> block. The <code>else</code> part is optional --
 you can leave it out. <code>fi</code> marks the end (it's <code>if</code> spelled backwards, which
 is a real thing that actual Unix shells do).</p>
 <p><strong>source</strong> runs a script from a file. If you saved the script above to
 <code>/scripts/setup.sh</code>, you could run it with:</p>
-<pre><code>source /scripts/setup.sh
-</code></pre>
+<div class="highlight"><pre><span></span><code>source /scripts/setup.sh
+</code></pre></div>
 <p>The shell reads the file, and executes each line as if you had typed it
 yourself.</p>
 <h2 id="job-control">Job Control</h2>
@@ -2131,9 +2158,9 @@ list.</p>
 when it's ready, I don't need to watch you cook." The program runs, but instead
 of showing its output right away, the shell captures it silently and gives you
 a job notification:</p>
-<pre><code>&gt; run hello &amp;
+<div class="highlight"><pre><span></span><code>&gt; run hello &amp;
 [1] 42
-</code></pre>
+</code></pre></div>
 <p>That <code>[1]</code> is the <strong>job number</strong> and <code>42</code> is the process ID. The program has
 already finished -- its output is waiting for you whenever you're ready to look
 at it.</p>
@@ -2152,16 +2179,16 @@ Real shells can do this, but it adds complexity that we'll save for later.</p>
 <p>Once a job is running in the background, you have two ways to get its output:</p>
 <p><strong><code>fg &lt;job_id&gt;</code></strong> -- brings the job to the foreground and shows its captured
 output. This also removes the job from the list.</p>
-<pre><code>&gt; run hello &amp;
+<div class="highlight"><pre><span></span><code>&gt; run hello &amp;
 [1] 42
 &gt; fg 1
 Hello from PyOS!
 [exit code: 0]
-</code></pre>
+</code></pre></div>
 <p><strong><code>waitjob</code></strong> -- collects output from background jobs without "bringing them
 forward." Use <code>waitjob</code> to see all jobs, or <code>waitjob &lt;job_id&gt;</code> for a specific
 one. Either way, the jobs are removed after you collect them.</p>
-<pre><code>&gt; run hello &amp;
+<div class="highlight"><pre><span></span><code>&gt; run hello &amp;
 [1] 42
 &gt; run counter &amp;
 [2] 43
@@ -2176,7 +2203,7 @@ Hello from PyOS!
 4
 5
 [exit code: 0]
-</code></pre>
+</code></pre></div>
 <p>Why is <code>waitjob</code> a separate command from <code>wait</code>? Because they're different
 concepts. <code>wait</code> is a <strong>kernel-level</strong> command -- it tells a parent process to
 wait for a child process to finish (like a parent waiting for their kid to come
@@ -2233,18 +2260,18 @@ where each concept lives in the OS layers.</p>
 <p>The shell remembers every command you type. It's like a diary of your entire
 session. Type <code>history</code> and you'll see a numbered list of everything you've
 run:</p>
-<pre><code>  1  ls /
+<div class="highlight"><pre><span></span><code>  1  ls /
   2  mkdir /data
   3  touch /data/notes.txt
   4  cat /data/notes.txt
-</code></pre>
+</code></pre></div>
 <p>This is useful when you want to remember what you did, or when you want to
 double-check the exact command you ran earlier.</p>
 <h3 id="aliases">Aliases</h3>
 <p>An alias is a shortcut you create. Let's say you're tired of typing <code>ls /</code>
 over and over. You can make a shortcut:</p>
-<pre><code>alias ll=ls /
-</code></pre>
+<div class="highlight"><pre><span></span><code>alias ll=ls /
+</code></pre></div>
 <p>Now typing <code>ll</code> does the exact same thing as typing <code>ls /</code>. The shell sees
 <code>ll</code>, checks its alias list, and quietly replaces it with <code>ls /</code> before
 running anything.</p>
@@ -2318,19 +2345,19 @@ class so it can be tested without any I/O.</p>
 <h2 id="environment-variables">Environment Variables</h2>
 <p>Environment variables are like sticky notes on your desk. Each one has a name
 and a value, and they store settings that any program can read:</p>
-<pre><code>USER=rob
+<div class="highlight"><pre><span></span><code>USER=rob
 HOME=/root
 PATH=/bin
-</code></pre>
+</code></pre></div>
 <p>To set one:</p>
-<pre><code>export GREETING=hello
-</code></pre>
+<div class="highlight"><pre><span></span><code>export GREETING=hello
+</code></pre></div>
 <p>To see all of them:</p>
-<pre><code>env
-</code></pre>
+<div class="highlight"><pre><span></span><code>env
+</code></pre></div>
 <p>To use one in a command, put a <code>$</code> in front of the name:</p>
-<pre><code>echo $GREETING
-</code></pre>
+<div class="highlight"><pre><span></span><code>echo $GREETING
+</code></pre></div>
 <p>That prints <code>hello</code>.</p>
 <p>Here's something neat: when you <code>fork</code> a process (create a copy of it), the
 child process gets its own <strong>copy</strong> of all the environment variables. If the

@@ -16,7 +16,7 @@
         <link rel="prev" href="..">
       
       
-        <link rel="next" href="../concepts/what-is-an-os/">
+        <link rel="next" href="../diagrams/">
       
       
         
@@ -330,6 +330,50 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#system-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        System Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#boot-sequence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Boot Sequence
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#syscall-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Syscall Flow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#module-dependency-graph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Module Dependency Graph
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#concept-guides" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -514,6 +558,33 @@
   
   
   
+    <li class="md-nav__item">
+      <a href="../diagrams/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Visual Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
     
     
     
@@ -530,10 +601,10 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
             
   
   
@@ -551,8 +622,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -943,6 +1014,50 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#system-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        System Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#boot-sequence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Boot Sequence
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#syscall-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Syscall Flow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#module-dependency-graph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Module Dependency Graph
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#concept-guides" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1143,6 +1258,112 @@
 <li><strong>Returns strings, not prints</strong> -- everything is testable, no side effects.</li>
 <li><strong>Simplicity over performance</strong> -- clarity wins in a learning simulator.</li>
 </ol>
+<h2 id="system-overview">System Overview</h2>
+<p>How all the layers fit together, from user commands down to hardware simulation.</p>
+<pre class="mermaid"><code>graph TD
+    subgraph User Space
+        REPL[REPL / Web UI]
+        Shell[Shell]
+    end
+
+    subgraph Syscall Boundary
+        Syscalls[Syscall Dispatch]
+    end
+
+    subgraph Kernel
+        K[Kernel Coordinator]
+        Sched[Scheduler]
+        Mem[Memory Manager]
+        FS[Filesystem]
+        Dev[Device Manager]
+        Users[User Manager]
+        Net[Networking]
+        Sync[Sync Primitives]
+        Proc[/proc Filesystem]
+    end
+
+    REPL --&gt; Shell
+    Shell --&gt; Syscalls
+    Syscalls --&gt; K
+    K --&gt; Sched
+    K --&gt; Mem
+    K --&gt; FS
+    K --&gt; Dev
+    K --&gt; Users
+    K --&gt; Net
+    K --&gt; Sync
+    K --&gt; Proc</code></pre>
+<h2 id="boot-sequence">Boot Sequence</h2>
+<p>The chain of events from power-on to a working shell.</p>
+<pre class="mermaid"><code>sequenceDiagram
+    participant FW as Firmware
+    participant BL as Bootloader
+    participant K as Kernel
+    participant S as Shell
+
+    FW-&gt;&gt;FW: POST (check memory, CPU)
+    FW-&gt;&gt;BL: Hand off control
+    BL-&gt;&gt;BL: Load kernel image
+    BL-&gt;&gt;K: boot()
+    K-&gt;&gt;K: Init scheduler
+    K-&gt;&gt;K: Init memory manager
+    K-&gt;&gt;K: Init filesystem
+    K-&gt;&gt;K: Init device manager
+    K-&gt;&gt;K: Init user manager
+    K-&gt;&gt;K: Spawn init process
+    K-&gt;&gt;K: State → RUNNING
+    K-&gt;&gt;S: Create shell
+    S-&gt;&gt;S: Ready for commands</code></pre>
+<h2 id="syscall-flow">Syscall Flow</h2>
+<p>What happens when you type a command in the shell.</p>
+<pre class="mermaid"><code>sequenceDiagram
+    participant U as User
+    participant S as Shell
+    participant SC as Syscall Dispatch
+    participant K as Kernel
+    participant Sub as Subsystem
+
+    U-&gt;&gt;S: Type command
+    S-&gt;&gt;S: Parse command + args
+    S-&gt;&gt;SC: kernel.syscall(number, **kwargs)
+    SC-&gt;&gt;SC: Validate kernel is running
+    SC-&gt;&gt;SC: Switch to kernel mode
+    SC-&gt;&gt;K: dispatch_syscall(number, **kwargs)
+    K-&gt;&gt;Sub: Route to handler
+    Sub--&gt;&gt;K: Result
+    K--&gt;&gt;SC: Return result
+    SC--&gt;&gt;S: Return to user mode
+    S--&gt;&gt;U: Display output</code></pre>
+<h2 id="module-dependency-graph">Module Dependency Graph</h2>
+<p>How the source modules import from each other.</p>
+<pre class="mermaid"><code>graph LR
+    shell[shell.py] --&gt; syscalls[syscalls.py]
+    syscalls --&gt; kernel[kernel.py]
+    kernel --&gt; scheduler[scheduler.py]
+    kernel --&gt; manager[manager.py]
+    kernel --&gt; filesystem[filesystem.py]
+    kernel --&gt; devices[devices.py]
+    kernel --&gt; users[users.py]
+    kernel --&gt; networking[networking.py]
+    kernel --&gt; tcp[tcp.py]
+    kernel --&gt; dns[dns.py]
+    kernel --&gt; interrupts[interrupts.py]
+    kernel --&gt; timer[timer.py]
+    kernel --&gt; procfs[procfs.py]
+    kernel --&gt; inheritance[inheritance.py]
+    kernel --&gt; ordering[ordering.py]
+    kernel --&gt; deadlock[deadlock.py]
+    kernel --&gt; primitives[primitives.py]
+    kernel --&gt; slab[slab.py]
+    kernel --&gt; swap[swap.py]
+    kernel --&gt; journal[journal.py]
+    kernel --&gt; shm[shm.py]
+    kernel --&gt; logging[logging.py]
+    manager --&gt; virtual[virtual.py]
+    filesystem --&gt; fd[fd.py]
+    repl[repl.py] --&gt; bootloader[bootloader.py]
+    repl --&gt; shell
+    tutorials[tutorials.py] --&gt; syscalls</code></pre>
 <h2 id="concept-guides">Concept Guides</h2>
 <table>
 <thead>

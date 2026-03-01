@@ -10,27 +10,31 @@
       
       
       
-        <link rel="canonical" href="https://robcox2910.github.io/py-os/concepts/tcp/">
+        <link rel="canonical" href="https://robcox2910.github.io/py-os/diagrams/">
       
       
+        <link rel="prev" href="../architecture/">
+      
+      
+        <link rel="next" href="../concepts/what-is-an-os/">
       
       
         
       
       
-      <link rel="icon" href="../../assets/images/favicon.png">
+      <link rel="icon" href="../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.3">
     
     
       
-        <title>TCP: Reliable Delivery - PyOS</title>
+        <title>Visual Guide - PyOS</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -49,7 +53,7 @@
       
     
     
-    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -72,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#tcp-reliable-delivery" class="md-skip">
+        <a href="#visual-guide" class="md-skip">
           Skip to content
         </a>
       
@@ -88,7 +92,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="PyOS" class="md-header__button md-logo" aria-label="PyOS" data-md-component="logo">
+    <a href=".." title="PyOS" class="md-header__button md-logo" aria-label="PyOS" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -108,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              TCP: Reliable Delivery
+              Visual Guide
             
           </span>
         </div>
@@ -198,7 +202,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="PyOS" class="md-nav__button md-logo" aria-label="PyOS" data-md-component="logo">
+    <a href=".." title="PyOS" class="md-nav__button md-logo" aria-label="PyOS" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -228,7 +232,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../.." class="md-nav__link">
+      <a href=".." class="md-nav__link">
         
   
   
@@ -255,7 +259,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/" class="md-nav__link">
+      <a href="../architecture/" class="md-nav__link">
         
   
   
@@ -279,10 +283,37 @@
       
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../diagrams/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Visual Guide
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -298,6 +329,48 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#process-states-the-five-lives-of-a-program" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Process States: The Five Lives of a Program
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#memory-from-virtual-pages-to-physical-frames" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Memory: From Virtual Pages to Physical Frames
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -363,7 +436,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../what-is-an-os/" class="md-nav__link">
+      <a href="../concepts/what-is-an-os/" class="md-nav__link">
         
   
   
@@ -391,7 +464,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../processes/" class="md-nav__link">
+      <a href="../concepts/processes/" class="md-nav__link">
         
   
   
@@ -419,7 +492,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../memory/" class="md-nav__link">
+      <a href="../concepts/memory/" class="md-nav__link">
         
   
   
@@ -447,7 +520,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../filesystem/" class="md-nav__link">
+      <a href="../concepts/filesystem/" class="md-nav__link">
         
   
   
@@ -475,7 +548,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../kernel-and-syscalls/" class="md-nav__link">
+      <a href="../concepts/kernel-and-syscalls/" class="md-nav__link">
         
   
   
@@ -503,7 +576,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../shell/" class="md-nav__link">
+      <a href="../concepts/shell/" class="md-nav__link">
         
   
   
@@ -531,7 +604,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../devices-and-networking/" class="md-nav__link">
+      <a href="../concepts/devices-and-networking/" class="md-nav__link">
         
   
   
@@ -559,7 +632,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../users-and-safety/" class="md-nav__link">
+      <a href="../concepts/users-and-safety/" class="md-nav__link">
         
   
   
@@ -587,7 +660,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../synchronization/" class="md-nav__link">
+      <a href="../concepts/synchronization/" class="md-nav__link">
         
   
   
@@ -615,7 +688,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../bootloader/" class="md-nav__link">
+      <a href="../concepts/bootloader/" class="md-nav__link">
         
   
   
@@ -643,7 +716,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../tutorials/" class="md-nav__link">
+      <a href="../concepts/tutorials/" class="md-nav__link">
         
   
   
@@ -671,7 +744,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../web-ui/" class="md-nav__link">
+      <a href="../concepts/web-ui/" class="md-nav__link">
         
   
   
@@ -726,10 +799,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#what-is-tcp" class="md-nav__link">
+  <a href="#process-states-the-five-lives-of-a-program" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What Is TCP?
+        Process States: The Five Lives of a Program
       
     </span>
   </a>
@@ -737,126 +810,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#the-three-way-handshake" class="md-nav__link">
+  <a href="#memory-from-virtual-pages-to-physical-frames" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The Three-Way Handshake
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#sequence-numbers-and-acknowledgements" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Sequence Numbers and Acknowledgements
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#flow-control-the-sliding-window" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Flow Control: The Sliding Window
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#congestion-control-dont-flood-the-network" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Congestion Control: Don't Flood the Network
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Congestion Control: Don&#39;t Flood the Network">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#slow-start" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Slow Start
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#congestion-avoidance-aimd" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Congestion Avoidance (AIMD)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#the-effective-window" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Effective Window
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#retransmission" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Retransmission
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#graceful-close" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Graceful Close
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#tcp-state-machine" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        TCP State Machine
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#try-it-yourself" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Try It Yourself
+        Memory: From Virtual Pages to Physical Frames
       
     </span>
   </a>
@@ -883,189 +840,72 @@
   
 
 
-<h1 id="tcp-reliable-delivery">TCP: Reliable Delivery</h1>
-<p>Imagine sending a jigsaw puzzle to a friend through the post. You cannot fit the whole puzzle in one envelope, so you split it into numbered pieces and send each piece in its own envelope. Your friend checks the numbers, puts the pieces in order, and tells you which ones arrived safely. If any go missing, you send them again. That is TCP.</p>
-<hr />
-<h2 id="what-is-tcp">What Is TCP?</h2>
-<p><strong>TCP</strong> (Transmission Control Protocol) sits between the application layer (HTTP, DNS) and the network layer (IP). It turns unreliable, unordered network delivery into a reliable, ordered byte stream.</p>
-<p>TCP gives you four guarantees:</p>
-<ol>
-<li><strong>Reliable delivery</strong> -- lost segments are detected and retransmitted.</li>
-<li><strong>Ordered delivery</strong> -- segments arrive in the correct sequence.</li>
-<li><strong>Flow control</strong> -- the receiver tells the sender how much room it has.</li>
-<li><strong>Congestion control</strong> -- the sender slows down when the network is busy.</li>
-</ol>
-<p>Without TCP, applications would have to handle all of this themselves. With TCP, they just send and receive bytes.</p>
-<h2 id="the-three-way-handshake">The Three-Way Handshake</h2>
-<p>Before two computers can exchange data, they need to agree to start a conversation. TCP uses a <strong>three-way handshake</strong>:</p>
-<div class="highlight"><pre><span></span><code>Client                         Server
-  |                              |
-  |--- SYN (seq=0) ------------&gt;|   &quot;Hey, want to talk?&quot;
-  |                              |
-  |&lt;-- SYN+ACK (seq=0, ack=1) --|   &quot;Sure, let&#39;s talk!&quot;
-  |                              |
-  |--- ACK (ack=1) ------------&gt;|   &quot;Great, we&#39;re connected!&quot;
-  |                              |
-</code></pre></div>
+<h1 id="visual-guide">Visual Guide</h1>
+<p>Pictures are worth a thousand words. These diagrams show how the key parts of an operating system work, using the same concepts you'll find inside PyOS.</p>
+<h2 id="process-states-the-five-lives-of-a-program">Process States: The Five Lives of a Program</h2>
+<p>Think of a process like a student in a school. When they first arrive, they're <strong>new</strong>. Once they sit down and the teacher knows about them, they're <strong>ready</strong> to answer questions. When the teacher calls on them, they're <strong>running</strong> -- actively doing work. Sometimes they have to <strong>wait</strong> (like waiting for a book from the library). And eventually they finish their work and are <strong>terminated</strong>.</p>
+<pre class="mermaid"><code>stateDiagram-v2
+    [*] --&gt; NEW: Process created
+    NEW --&gt; READY: Admitted to scheduler
+    READY --&gt; RUNNING: Dispatched by CPU
+    RUNNING --&gt; READY: Preempted (time's up!)
+    RUNNING --&gt; WAITING: Needs I/O or resource
+    WAITING --&gt; READY: I/O complete
+    RUNNING --&gt; TERMINATED: Work finished
+    TERMINATED --&gt; [*]</code></pre>
+<p><strong>What's happening here?</strong></p>
 <ul>
-<li><strong>SYN</strong> -- "synchronise" -- the client proposes a starting sequence number.</li>
-<li><strong>SYN+ACK</strong> -- the server agrees and proposes its own sequence number.</li>
-<li><strong>ACK</strong> -- the client acknowledges. Both sides are now <strong>ESTABLISHED</strong>.</li>
+<li><strong>NEW</strong> -- The process was just created. It doesn't have a seat yet.</li>
+<li><strong>READY</strong> -- The process is in the ready queue, waiting its turn for the CPU.</li>
+<li><strong>RUNNING</strong> -- The process is actively executing on the CPU. Only one process per CPU can be here at a time.</li>
+<li><strong>WAITING</strong> -- The process asked for something slow (like reading a file) and is parked until that finishes.</li>
+<li><strong>TERMINATED</strong> -- The process is done. Its memory and resources are cleaned up.</li>
+<li>The arrows show every possible transition. Notice that a process can bounce between READY and RUNNING many times before it finally finishes.</li>
 </ul>
-<p>In PyOS:</p>
-<div class="highlight"><pre><span></span><code>tcp listen 80
-tcp connect 5000 80
-</code></pre></div>
-<h2 id="sequence-numbers-and-acknowledgements">Sequence Numbers and Acknowledgements</h2>
-<p>Every byte of data has a <strong>sequence number</strong>. When the receiver gets data, it sends back an <strong>ACK</strong> with the next sequence number it expects. This is how the sender knows what arrived safely.</p>
-<div class="highlight"><pre><span></span><code>Sender                           Receiver
-  |                                |
-  |--- data (seq=1, 5 bytes) ----&gt;|
-  |                                |
-  |&lt;-- ACK (ack=6) ---------------|   &quot;Got it, send byte 6 next&quot;
-  |                                |
-</code></pre></div>
-<p>If the sender does not get an ACK within a timeout, it <strong>retransmits</strong> the data.</p>
-<h2 id="flow-control-the-sliding-window">Flow Control: The Sliding Window</h2>
-<p>The receiver advertises a <strong>receive window</strong> -- the number of segments it can accept right now. The sender must not send more than this window allows.</p>
-<p>Think of it like a mailbox with limited space. If the mailbox is full, the postman waits until you empty it before delivering more.</p>
-<div class="highlight"><pre><span></span><code>Receiver says: &quot;window_size = 8&quot;
-→ Sender can have at most 8 segments in flight at once
-</code></pre></div>
-<h2 id="congestion-control-dont-flood-the-network">Congestion Control: Don't Flood the Network</h2>
-<p>Even if the receiver has room, the network might be busy. TCP uses <strong>congestion control</strong> to avoid overwhelming the network:</p>
-<h3 id="slow-start">Slow Start</h3>
-<p>Start slow and ramp up quickly:</p>
-<ol>
-<li>Begin with a <strong>congestion window</strong> (cwnd) of 1 segment.</li>
-<li>For each ACK received, increase cwnd by 1.</li>
-<li>This means cwnd doubles every round trip -- exponential growth!</li>
-<li>Keep growing until cwnd reaches the <strong>slow-start threshold</strong> (ssthresh).</li>
-</ol>
-<h3 id="congestion-avoidance-aimd">Congestion Avoidance (AIMD)</h3>
-<p>Once cwnd reaches ssthresh, switch to cautious growth:</p>
-<ul>
-<li><strong>Additive Increase</strong> -- increase cwnd by 1 per round trip (linear growth).</li>
-<li><strong>Multiplicative Decrease</strong> -- on timeout, set ssthresh = cwnd / 2 and reset cwnd to 1.</li>
-</ul>
-<p>This "AIMD" pattern creates a sawtooth shape: cwnd grows slowly, drops sharply on loss, then grows again.</p>
-<div class="highlight"><pre><span></span><code>cwnd
-  ^
-  |    /\      /\      /\
-  |   /  \    /  \    /  \
-  |  /    \  /    \  /    \
-  | /      \/      \/      \
-  +----------------------------&gt; time
-</code></pre></div>
-<p>In PyOS, you can see the congestion state:</p>
-<div class="highlight"><pre><span></span><code>tcp info 1
+<h2 id="memory-from-virtual-pages-to-physical-frames">Memory: From Virtual Pages to Physical Frames</h2>
+<p>Imagine your desk can only hold 4 books at a time (physical frames), but you have 8 chapters of notes (virtual pages). The page table is like a sticky note on each chapter telling you which desk slot it's in right now -- or that it's stored in your backpack (swap).</p>
+<pre class="mermaid"><code>graph LR
+    subgraph Virtual Pages
+        VP0[Page 0]
+        VP1[Page 1]
+        VP2[Page 2]
+        VP3[Page 3]
+    end
 
-Connection 1:
-  State:            ESTABLISHED
-  cwnd:             4
-  ssthresh:         16
-  effective_window: 4
-  unacked:          0
-</code></pre></div>
-<h2 id="the-effective-window">The Effective Window</h2>
-<p>The sender's actual limit is the <strong>effective window</strong>: the smaller of cwnd and the receiver's advertised window.</p>
-<div class="highlight"><pre><span></span><code>effective_window = min(cwnd, peer_recv_window)
-</code></pre></div>
-<p>This ensures the sender respects both the receiver's capacity and the network's capacity.</p>
-<h2 id="retransmission">Retransmission</h2>
-<p>If a segment is not acknowledged within a timeout period, the sender assumes it was lost and retransmits:</p>
-<ol>
-<li>Start a timer when a segment is sent.</li>
-<li>If the timer expires before an ACK arrives, retransmit the oldest unacknowledged segment.</li>
-<li>Apply multiplicative decrease: ssthresh = cwnd / 2, cwnd = 1.</li>
-</ol>
-<p>In PyOS, retransmission is driven by <code>kernel.tick()</code>. The default timeout is 10 ticks.</p>
-<h2 id="graceful-close">Graceful Close</h2>
-<p>When both sides are done, they close the connection with a <strong>four-way close</strong>:</p>
-<div class="highlight"><pre><span></span><code>Client                         Server
-  |                              |
-  |--- FIN ----------------------&gt;|   &quot;I&#39;m done sending&quot;
-  |&lt;-- ACK ----------------------|   &quot;OK, I heard you&quot;
-  |                              |
-  |&lt;-- FIN ----------------------|   &quot;I&#39;m done too&quot;
-  |--- ACK ----------------------&gt;|   &quot;OK, goodbye&quot;
-  |                              |
-</code></pre></div>
-<p>After the final ACK, the connection enters <strong>TIME_WAIT</strong> briefly to handle any delayed segments, then closes.</p>
-<h2 id="tcp-state-machine">TCP State Machine</h2>
-<p>A TCP connection moves through 11 states:</p>
-<table>
-<thead>
-<tr>
-<th>State</th>
-<th>Meaning</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>CLOSED</td>
-<td>No connection</td>
-</tr>
-<tr>
-<td>LISTEN</td>
-<td>Waiting for incoming SYN</td>
-</tr>
-<tr>
-<td>SYN_SENT</td>
-<td>SYN sent, waiting for SYN+ACK</td>
-</tr>
-<tr>
-<td>SYN_RECEIVED</td>
-<td>SYN received, SYN+ACK sent</td>
-</tr>
-<tr>
-<td>ESTABLISHED</td>
-<td>Connected, data flows</td>
-</tr>
-<tr>
-<td>FIN_WAIT_1</td>
-<td>FIN sent, waiting for ACK</td>
-</tr>
-<tr>
-<td>FIN_WAIT_2</td>
-<td>FIN acknowledged, waiting for peer's FIN</td>
-</tr>
-<tr>
-<td>TIME_WAIT</td>
-<td>Both FINs acknowledged, waiting before close</td>
-</tr>
-<tr>
-<td>CLOSE_WAIT</td>
-<td>Peer's FIN received, waiting to close</td>
-</tr>
-<tr>
-<td>LAST_ACK</td>
-<td>FIN sent, waiting for final ACK</td>
-</tr>
-<tr>
-<td>CLOSING</td>
-<td>Both sides sent FIN simultaneously</td>
-</tr>
-</tbody>
-</table>
-<h2 id="try-it-yourself">Try It Yourself</h2>
-<p>Boot PyOS and run the interactive lesson:</p>
-<div class="highlight"><pre><span></span><code>learn tcp
-</code></pre></div>
-<p>Or experiment manually:</p>
-<div class="highlight"><pre><span></span><code>tcp listen 80              # Server listens on port 80
-tcp connect 5000 80        # Client connects from port 5000
-tcp send 2 &quot;Hello!&quot;        # Send data on connection 2
-tcp recv 3                 # Receive data on connection 3
-tcp info 2                 # See congestion/flow control state
-tcp close 2                # Graceful close
-tcp list                   # See all connections
-</code></pre></div>
-<p>Or run the built-in demo:</p>
-<div class="highlight"><pre><span></span><code>tcp demo
-</code></pre></div>
-<hr />
-<p><strong>Previous:</strong> Learn about hardware events in <a href="../interrupts/">Interrupts and Timers</a>.</p>
+    subgraph Page Table
+        PT0[0 → Frame 2]
+        PT1[1 → Frame 0]
+        PT2[2 → Swap]
+        PT3[3 → Frame 3]
+    end
+
+    subgraph Physical Frames
+        F0[Frame 0]
+        F1[Frame 1 - free]
+        F2[Frame 2]
+        F3[Frame 3]
+    end
+
+    subgraph Swap Space
+        SW[Swapped page]
+    end
+
+    VP0 --&gt; PT0
+    VP1 --&gt; PT1
+    VP2 --&gt; PT2
+    VP3 --&gt; PT3
+    PT0 --&gt; F2
+    PT1 --&gt; F0
+    PT2 --&gt; SW
+    PT3 --&gt; F3</code></pre>
+<p><strong>What's happening here?</strong></p>
+<ul>
+<li>Each process thinks it has its own private memory (virtual pages).</li>
+<li>The <strong>page table</strong> translates virtual page numbers to physical frame numbers.</li>
+<li>Not every page needs to be in physical memory at once. Page 2 has been <strong>swapped</strong> to disk because we ran out of room.</li>
+<li>Frame 1 is <strong>free</strong> -- available for the next page that needs to be loaded.</li>
+<li>When the process accesses Page 2, a <strong>page fault</strong> occurs: the OS loads it from swap into a free frame and updates the page table.</li>
+</ul>
 
 
 
@@ -1115,10 +955,10 @@ tcp list                   # See all connections
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "search.highlight"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.expand", "search.highlight"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>
