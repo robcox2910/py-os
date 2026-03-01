@@ -10,6 +10,132 @@ Technical reference for every module in the system. For beginner-friendly explan
 4. **Returns strings, not prints** -- everything is testable, no side effects.
 5. **Simplicity over performance** -- clarity wins in a learning simulator.
 
+## System Overview
+
+How all the layers fit together, from user commands down to hardware simulation.
+
+```mermaid
+graph TD
+    subgraph User Space
+        REPL[REPL / Web UI]
+        Shell[Shell]
+    end
+
+    subgraph Syscall Boundary
+        Syscalls[Syscall Dispatch]
+    end
+
+    subgraph Kernel
+        K[Kernel Coordinator]
+        Sched[Scheduler]
+        Mem[Memory Manager]
+        FS[Filesystem]
+        Dev[Device Manager]
+        Users[User Manager]
+        Net[Networking]
+        Sync[Sync Primitives]
+        Proc[/proc Filesystem]
+    end
+
+    REPL --> Shell
+    Shell --> Syscalls
+    Syscalls --> K
+    K --> Sched
+    K --> Mem
+    K --> FS
+    K --> Dev
+    K --> Users
+    K --> Net
+    K --> Sync
+    K --> Proc
+```
+
+## Boot Sequence
+
+The chain of events from power-on to a working shell.
+
+```mermaid
+sequenceDiagram
+    participant FW as Firmware
+    participant BL as Bootloader
+    participant K as Kernel
+    participant S as Shell
+
+    FW->>FW: POST (check memory, CPU)
+    FW->>BL: Hand off control
+    BL->>BL: Load kernel image
+    BL->>K: boot()
+    K->>K: Init scheduler
+    K->>K: Init memory manager
+    K->>K: Init filesystem
+    K->>K: Init device manager
+    K->>K: Init user manager
+    K->>K: Spawn init process
+    K->>K: State → RUNNING
+    K->>S: Create shell
+    S->>S: Ready for commands
+```
+
+## Syscall Flow
+
+What happens when you type a command in the shell.
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant S as Shell
+    participant SC as Syscall Dispatch
+    participant K as Kernel
+    participant Sub as Subsystem
+
+    U->>S: Type command
+    S->>S: Parse command + args
+    S->>SC: kernel.syscall(number, **kwargs)
+    SC->>SC: Validate kernel is running
+    SC->>SC: Switch to kernel mode
+    SC->>K: dispatch_syscall(number, **kwargs)
+    K->>Sub: Route to handler
+    Sub-->>K: Result
+    K-->>SC: Return result
+    SC-->>S: Return to user mode
+    S-->>U: Display output
+```
+
+## Module Dependency Graph
+
+How the source modules import from each other.
+
+```mermaid
+graph LR
+    shell[shell.py] --> syscalls[syscalls.py]
+    syscalls --> kernel[kernel.py]
+    kernel --> scheduler[scheduler.py]
+    kernel --> manager[manager.py]
+    kernel --> filesystem[filesystem.py]
+    kernel --> devices[devices.py]
+    kernel --> users[users.py]
+    kernel --> networking[networking.py]
+    kernel --> tcp[tcp.py]
+    kernel --> dns[dns.py]
+    kernel --> interrupts[interrupts.py]
+    kernel --> timer[timer.py]
+    kernel --> procfs[procfs.py]
+    kernel --> inheritance[inheritance.py]
+    kernel --> ordering[ordering.py]
+    kernel --> deadlock[deadlock.py]
+    kernel --> primitives[primitives.py]
+    kernel --> slab[slab.py]
+    kernel --> swap[swap.py]
+    kernel --> journal[journal.py]
+    kernel --> shm[shm.py]
+    kernel --> logging[logging.py]
+    manager --> virtual[virtual.py]
+    filesystem --> fd[fd.py]
+    repl[repl.py] --> bootloader[bootloader.py]
+    repl --> shell
+    tutorials[tutorials.py] --> syscalls
+```
+
 ## Concept Guides
 
 | Guide | Topics |
