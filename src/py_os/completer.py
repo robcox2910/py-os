@@ -54,6 +54,7 @@ _SUBCOMMANDS: dict[str, list[str]] = {
         "tcp",
         "all",
     ],
+    "benchmark": ["run", "demo"],
 }
 
 # Minimum number of words needed before signal name completion kicks in.
