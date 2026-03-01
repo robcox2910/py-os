@@ -112,6 +112,13 @@ Commands can be piped: `ls / | grep txt | wc`
 | `devices` | List registered devices |
 | `devread dev` | Read from a device |
 | `devwrite dev data` | Write to a device |
+| `fb` | Show framebuffer info (dimensions, status) |
+| `fb render` | Display the current framebuffer contents |
+| `fb pixel x y c` | Set a character at position (x, y) |
+| `fb text x y msg` | Draw text starting at (x, y) |
+| `fb rect x1 y1 x2 y2 c` | Fill a rectangle with a character |
+| `fb clear` | Clear the framebuffer |
+| `fb demo` | Draw a demo pattern with borders and text |
 
 ## Networking
 

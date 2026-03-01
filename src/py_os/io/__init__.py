@@ -18,6 +18,7 @@ from py_os.io.devices import (
     RandomDevice,
 )
 from py_os.io.dns import DnsError, DnsRecord, DnsResolver
+from py_os.io.framebuffer import Framebuffer
 from py_os.io.http import (
     HttpError,
     HttpMethod,
@@ -55,6 +56,7 @@ __all__ = [
     "DnsError",
     "DnsRecord",
     "DnsResolver",
+    "Framebuffer",
     "HttpError",
     "HttpMethod",
     "HttpRequest",

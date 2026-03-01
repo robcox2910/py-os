@@ -58,4 +58,5 @@ nav:
       - Synchronization: concepts/synchronization.md
       - The Boot Chain: concepts/bootloader.md
       - Interactive Tutorials: concepts/tutorials.md
+      - Framebuffer: concepts/framebuffer.md
       - Web UI: concepts/web-ui.md
