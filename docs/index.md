@@ -13,13 +13,23 @@ Start here: **[What Is an Operating System?](concepts/what-is-an-os.md)**
 ## Quick Start
 
 ```bash
-# Install dependencies
-uv sync
+pip install pyos-learn
+pyos
+```
 
-# Run the interactive OS
-python -m py_os
+Want the browser-based terminal too?
 
-# Run the test suite
+```bash
+pip install pyos-learn[web]
+pyos-web
+```
+
+For development, clone the repo and use [uv](https://docs.astral.sh/uv/):
+
+```bash
+git clone https://github.com/robcox2910/py-os.git
+cd py-os
+uv sync --all-extras
 uv run pytest
 ```
 
@@ -46,166 +56,15 @@ Each guide explains one part of the OS with real-world analogies and simple lang
 
 For a technical overview of every module, see [Architecture](architecture.md).
 
-## Modules
-
-| Module | File | What It Teaches |
-|--------|------|-----------------|
-| Process | `process/pcb.py` | Five-state lifecycle, PID assignment |
-| Scheduler | `process/scheduler.py` | CPU scheduling (FCFS, Round Robin, Priority, Aging Priority, MLFQ, CFS) |
-| Memory | `memory/manager.py` | Page-based allocation, frame management |
-| Virtual Memory | `memory/virtual.py` | Address translation, page tables, isolation |
-| Filesystem | `fs/filesystem.py` | Inodes, path resolution, file CRUD |
-| Kernel | `kernel.py` | Boot/shutdown lifecycle, subsystem coordination |
-| System Calls | `syscalls.py` | User/kernel boundary, dispatch table |
-| Shell | `shell.py` | Commands, pipes, scripting, job control |
-| Users | `users.py` | Identity, file permissions |
-| Devices | `io/devices.py` | Null, console, and random devices |
-| IPC | `io/ipc.py` | Pipes and message queues |
-| Signals | `process/signals.py` | SIGTERM, SIGKILL, SIGSTOP, SIGCONT, SIGUSR1, SIGUSR2, custom handlers |
-| Logging | `logging.py` | Kernel log buffer, audit trail |
-| Environment | `env.py` | KEY=VALUE config |
-| Jobs | `jobs.py` | Background/foreground job control |
-| Swap | `memory/swap.py` | Page replacement (FIFO, LRU, Clock) |
-| Fork | `kernel.py` | Process forking, parent-child trees |
-| Threads | `process/threads.py` | Lightweight execution within a process |
-| Deadlock | `sync/deadlock.py` | Detection and Banker's algorithm |
-| Disk Scheduling | `io/disk.py` | FCFS, SSTF, SCAN, C-SCAN |
-| Scripting | `shell.py` | Scripts, variables, conditionals |
-| Networking | `io/networking.py` | Sockets, client-server model |
-| Persistence | `fs/persistence.py` | Save/load filesystem to JSON |
-| Execution | `process/pcb.py` | Running programs, exit codes |
-| Synchronization | `sync/primitives.py` | Mutex, semaphore, condition variable |
-| Bootloader | `bootloader.py` | Firmware POST, kernel image loading, boot chain |
-| Tutorials | `tutorials.py` | Guided hands-on lessons using real syscalls |
-| DNS | `io/dns.py` | Name resolution, A records |
-| HTTP | `io/http.py` | Request/response protocol, status codes |
-| Shared Memory | `io/shm.py` | Zero-copy IPC between processes |
-| Interrupts | `io/interrupts.py` | Interrupt controller, vectors, masking, priority-based servicing |
-| Timer | `io/timer.py` | Programmable interval timer, tick-driven preemption |
-| TCP | `io/tcp.py` | Reliable delivery: three-way handshake, flow control, congestion control |
-| File Descriptors | `fs/fd.py` | Open files, seek, per-process fd tables |
-| Journal | `fs/journal.py` | Write-ahead log, crash recovery |
-| ProcFS | `fs/procfs.py` | Virtual /proc filesystem |
-| Slab Allocator | `memory/slab.py` | Fixed-size object pools |
-| mmap | `memory/mmap.py` | Memory-mapped file regions |
-| Web Frontend | `web/app.py` | Browser-based terminal via Flask |
-| REPL | `repl.py` | Interactive terminal |
-
-## Shell Commands
-
-```
-help        List available commands
-ps          Show running processes
-ls [path]   List directory contents
-mkdir path  Create a directory
-touch path  Create an empty file
-write path  Write content to a file
-cat path    Read file contents
-rm path     Remove a file or directory
-kill pid    Terminate a process by PID
-whoami      Show the current user
-adduser     Create a new user
-su uid      Switch to another user
-signal pid  Send a signal (SIGTERM, SIGKILL, SIGUSR1, etc.)
-handle pid  Register a signal handler (log, ignore)
-env         List environment variables
-export K=V  Set an environment variable
-unset key   Remove an environment variable
-log         Show kernel log entries
-top         System status dashboard
-history     Show command history
-alias N=CMD Create a command alias
-unalias N   Remove a command alias
-jobs        List background jobs
-bg pid      Move a process to background
-fg job_id   Bring a job to foreground
-fork pid    Fork a process (create a child copy)
-wait pid    Wait for any child to terminate and collect its exit code
-waitpid p c Wait for a specific child (c) of parent (p) to terminate
-pstree      Show the process tree hierarchy
-threads pid List threads of a process
-resources   Show resource allocation status
-deadlock    Run deadlock detection
-devices     List registered devices
-devread     Read from a device
-devwrite    Write to a device
-scheduler   Show or switch scheduling policy (fcfs, rr, priority, aging, mlfq, cfs)
-            scheduler boost — reset MLFQ levels (anti-starvation)
-            scheduler balance — rebalance processes across CPUs
-mutex       Manage mutexes (create, list)
-semaphore   Manage semaphores (create, list)
-echo args   Print arguments to output
-source path Run a script from a file
-run prog [p] Run a built-in program with optional priority
-grep pat    Filter piped input (used with |)
-wc          Count lines in piped input
-open path   Open a file and get a file descriptor
-close fd    Close a file descriptor
-readfd fd   Read from a file descriptor
-writefd fd  Write to a file descriptor
-seek fd pos Reposition a file descriptor's offset
-lsfd        List open file descriptors
-ln          Create hard or symbolic links
-readlink p  Read a symlink target
-stat path   Show file metadata (type, size, links)
-journal     Manage journaling (status, checkpoint, recover, crash)
-rwlock      Manage reader-writer locks (create, list)
-pi          Priority inheritance (demo, status)
-ordering    Resource ordering (register, status, mode, violations, demo)
-waitjob id  Wait for a background job to complete
-shm         Shared memory (create, attach, detach, write, read, list, destroy, demo)
-dns         DNS operations (register, lookup, remove, list, flush, demo)
-socket      Socket operations (create, bind, listen, connect, accept, send, recv, close, list)
-http        HTTP demo (end-to-end request/response over sockets)
-tcp         TCP connections (listen, connect, send, recv, close, info, list, demo)
-proc        /proc virtual filesystem demo
-perf        Show performance metrics
-strace      Syscall tracing (on, off, show, clear, demo)
-dmesg       Show kernel boot log
-cpu         Show per-CPU status and scheduling info
-taskset     Show or set CPU affinity for a process
-mmap        Memory-map a file
-munmap      Unmap a memory-mapped region
-msync       Sync a shared mapping
-slabcreate  Create a slab cache
-slaballoc   Allocate from a slab cache
-slabfree    Free a slab allocation
-slabinfo    Show slab allocator statistics
-tick [N]    Advance the system clock by N ticks (default 1)
-interrupt   Manage interrupts (list, mask <vector>, unmask <vector>)
-timer       Manage the timer (info, set <interval>)
-learn       Interactive tutorials (processes, memory, filesystem, ...)
-benchmark   Run scheduling benchmarks (run, demo)
-dashboard   System dashboard (cpu, memory, processes, fs)
-exit        Shut down the kernel
-```
-
-Commands can be piped: `ls / | grep txt | wc`
-
-### Scripting
-
-The shell supports scripts -- multi-line sequences of commands with comments, variable substitution, and conditionals:
-
-```bash
-# Setup script
-mkdir /data
-export NAME=hello
-echo $NAME
-if ls /data
-then
-  touch /data/$NAME.txt
-fi
-```
-
-Scripts can be run from files with `source /path/to/script.sh`.
+For the full command listing, see [Shell Reference](shell-reference.md).
 
 ## Web UI
 
 PyOS includes an optional browser-based terminal. Install Flask and start the server:
 
 ```bash
-pip install py-os[web]
-py-os-web
+pip install pyos-learn[web]
+pyos-web
 ```
 
 Then open `http://localhost:8080` in your browser. See [Web UI](concepts/web-ui.md) for details.
