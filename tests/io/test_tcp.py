@@ -600,3 +600,293 @@ class TestTcpStack:
         stack = TcpStack()
         with pytest.raises(KeyError, match="not found"):
             stack.recv(conn_id=999)
+
+    def test_close_already_closed_connection(self) -> None:
+        """Closing a CLOSED connection should remove it and return empty."""
+        stack = TcpStack()
+        listener_id = stack.listen(port=SERVER_PORT)
+        client_id, syn_segs = stack.open_connection(
+            client_port=CLIENT_PORT,
+            server_port=SERVER_PORT,
+        )
+        syn_ack = stack.deliver_segment(syn_segs[0])
+        stack.deliver_segment(syn_ack[0])
+        stack.accept(listener_id=listener_id)
+        # Force connection to CLOSED state
+        conn = stack._connections[client_id]
+        conn._state = TcpState.CLOSED
+        result = stack.close_connection(conn_id=client_id)
+        assert result == []
+
+    def test_deliver_segment_no_match(self) -> None:
+        """Delivering a segment to a port with no matching connection returns empty."""
+        stack = TcpStack()
+        unmatched = TcpSegment(
+            src_port=9999,
+            dst_port=8888,
+            seq_number=0,
+            ack_number=0,
+            flags=frozenset({TcpFlag.ACK}),
+            window_size=0,
+        )
+        assert stack.deliver_segment(unmatched) == []
+
+
+# -- Connection edge cases --------------------------------------------------
+
+
+class TestConnectionEdgeCases:
+    """Test TCP connection edge cases and state transitions."""
+
+    def test_property_accessors(self) -> None:
+        """Connection properties send_unacked, recv_next, recv_window are accessible."""
+        conn = TcpConnection(local_port=CLIENT_PORT, remote_port=SERVER_PORT)
+        assert conn.send_unacked == INITIAL_SEQ_NUMBER
+        assert conn.recv_next == 0
+        assert conn.recv_window == DEFAULT_RECV_WINDOW
+
+    def test_listen_ignores_non_syn(self) -> None:
+        """LISTEN state ignores non-SYN segments."""
+        server = TcpConnection(local_port=SERVER_PORT, remote_port=CLIENT_PORT)
+        server.start_listen()
+        ack = TcpSegment(
+            src_port=CLIENT_PORT,
+            dst_port=SERVER_PORT,
+            seq_number=0,
+            ack_number=0,
+            flags=frozenset({TcpFlag.ACK}),
+            window_size=0,
+        )
+        responses = server.process_segment(ack)
+        assert responses == []
+        assert server.state is TcpState.LISTEN
+
+    def test_syn_sent_ignores_non_syn_ack(self) -> None:
+        """SYN_SENT state ignores segments without both SYN and ACK."""
+        client = TcpConnection(local_port=CLIENT_PORT, remote_port=SERVER_PORT)
+        client.initiate_open()
+        ack_only = TcpSegment(
+            src_port=SERVER_PORT,
+            dst_port=CLIENT_PORT,
+            seq_number=0,
+            ack_number=0,
+            flags=frozenset({TcpFlag.ACK}),
+            window_size=0,
+        )
+        responses = client.process_segment(ack_only)
+        assert responses == []
+        assert client.state is TcpState.SYN_SENT
+
+    def test_syn_received_ack_completes(self) -> None:
+        """ACK in SYN_RECEIVED transitions to ESTABLISHED."""
+        server = TcpConnection(local_port=SERVER_PORT, remote_port=CLIENT_PORT)
+        server.start_listen()
+        syn = TcpSegment(
+            src_port=CLIENT_PORT,
+            dst_port=SERVER_PORT,
+            seq_number=0,
+            ack_number=0,
+            flags=frozenset({TcpFlag.SYN}),
+            window_size=DEFAULT_RECV_WINDOW,
+        )
+        server.process_segment(syn)
+        assert server.state is TcpState.SYN_RECEIVED
+        ack = TcpSegment(
+            src_port=CLIENT_PORT,
+            dst_port=SERVER_PORT,
+            seq_number=1,
+            ack_number=1,
+            flags=frozenset({TcpFlag.ACK}),
+            window_size=DEFAULT_RECV_WINDOW,
+        )
+        server.process_segment(ack)
+        assert server.state is TcpState.ESTABLISHED
+
+    def test_close_wait_ignores_segments(self) -> None:
+        """CLOSE_WAIT connection ignores incoming segments."""
+        client, server = _established_pair()
+        fin = client.initiate_close()
+        server.process_segment(fin)
+        assert server.state is TcpState.CLOSE_WAIT
+        # Send another segment — should be ignored
+        extra = TcpSegment(
+            src_port=CLIENT_PORT,
+            dst_port=SERVER_PORT,
+            seq_number=0,
+            ack_number=0,
+            flags=frozenset({TcpFlag.ACK}),
+            window_size=0,
+        )
+        responses = server.process_segment(extra)
+        assert responses == []
+
+    def test_close_wait_to_last_ack(self) -> None:
+        """Initiating close from CLOSE_WAIT transitions to LAST_ACK."""
+        client, server = _established_pair()
+        fin = client.initiate_close()
+        server.process_segment(fin)
+        assert server.state is TcpState.CLOSE_WAIT
+        server_fin = server.initiate_close()
+        assert server.state is TcpState.LAST_ACK
+        assert server_fin.has_flag(TcpFlag.FIN)
+
+    def test_simultaneous_close(self) -> None:
+        """Simultaneous close: FIN_WAIT_1 receives ACK+FIN → TIME_WAIT."""
+        client, server = _established_pair()
+        client_fin = client.initiate_close()
+        assert client.state is TcpState.FIN_WAIT_1
+        # Simulate simultaneous close: server also sends FIN
+        server_fin = server.initiate_close()
+        # Client receives server's FIN+ACK while in FIN_WAIT_1
+        ack_fin = TcpSegment(
+            src_port=SERVER_PORT,
+            dst_port=CLIENT_PORT,
+            seq_number=server.send_next - 1,
+            ack_number=client.send_next,
+            flags=frozenset({TcpFlag.ACK, TcpFlag.FIN}),
+            window_size=DEFAULT_RECV_WINDOW,
+        )
+        responses = client.process_segment(ack_fin)
+        assert client.state is TcpState.TIME_WAIT
+        assert any(r.has_flag(TcpFlag.ACK) for r in responses)
+        assert client_fin.has_flag(TcpFlag.FIN)  # use client_fin
+        assert server_fin.has_flag(TcpFlag.FIN)  # use server_fin
+
+    def test_fin_wait_1_receives_fin_only(self) -> None:
+        """FIN without ACK in FIN_WAIT_1 enters CLOSING state."""
+        client, _server = _established_pair()
+        client.initiate_close()
+        assert client.state is TcpState.FIN_WAIT_1
+        fin_only = TcpSegment(
+            src_port=SERVER_PORT,
+            dst_port=CLIENT_PORT,
+            seq_number=1,
+            ack_number=0,
+            flags=frozenset({TcpFlag.FIN}),
+            window_size=DEFAULT_RECV_WINDOW,
+        )
+        responses = client.process_segment(fin_only)
+        assert client.state is TcpState.CLOSING
+        assert any(r.has_flag(TcpFlag.ACK) for r in responses)
+
+    def test_fin_wait_2_ignores_non_fin(self) -> None:
+        """FIN_WAIT_2 ignores segments without FIN flag."""
+        client, server = _established_pair()
+        fin = client.initiate_close()
+        # Deliver FIN to server, get ACK back
+        responses = server.process_segment(fin)
+        for resp in responses:
+            client.process_segment(resp)
+        assert client.state is TcpState.FIN_WAIT_2
+        # Send ACK-only — should be ignored
+        ack = TcpSegment(
+            src_port=SERVER_PORT,
+            dst_port=CLIENT_PORT,
+            seq_number=1,
+            ack_number=client.send_next,
+            flags=frozenset({TcpFlag.ACK}),
+            window_size=DEFAULT_RECV_WINDOW,
+        )
+        responses = client.process_segment(ack)
+        assert responses == []
+        assert client.state is TcpState.FIN_WAIT_2
+
+    def test_last_ack_receives_ack(self) -> None:
+        """ACK in LAST_ACK transitions to CLOSED."""
+        client, server = _established_pair()
+        fin = client.initiate_close()
+        server.process_segment(fin)
+        server.initiate_close()
+        assert server.state is TcpState.LAST_ACK
+        final_ack = TcpSegment(
+            src_port=CLIENT_PORT,
+            dst_port=SERVER_PORT,
+            seq_number=client.send_next,
+            ack_number=server.send_next,
+            flags=frozenset({TcpFlag.ACK}),
+            window_size=DEFAULT_RECV_WINDOW,
+        )
+        server.process_segment(final_ack)
+        assert server.state is TcpState.CLOSED
+
+    def test_closing_receives_ack(self) -> None:
+        """ACK in CLOSING state transitions to TIME_WAIT."""
+        client, _server = _established_pair()
+        client.initiate_close()
+        # Force into CLOSING state
+        fin_only = TcpSegment(
+            src_port=SERVER_PORT,
+            dst_port=CLIENT_PORT,
+            seq_number=1,
+            ack_number=0,
+            flags=frozenset({TcpFlag.FIN}),
+            window_size=DEFAULT_RECV_WINDOW,
+        )
+        client.process_segment(fin_only)
+        assert client.state is TcpState.CLOSING
+        # Now send ACK
+        ack = TcpSegment(
+            src_port=SERVER_PORT,
+            dst_port=CLIENT_PORT,
+            seq_number=2,
+            ack_number=client.send_next,
+            flags=frozenset({TcpFlag.ACK}),
+            window_size=DEFAULT_RECV_WINDOW,
+        )
+        client.process_segment(ack)
+        assert client.state is TcpState.TIME_WAIT
+
+    def test_time_wait_ignores_segments(self) -> None:
+        """TIME_WAIT connection ignores incoming segments."""
+        conn = TcpConnection(local_port=CLIENT_PORT, remote_port=SERVER_PORT)
+        conn._state = TcpState.TIME_WAIT
+        seg = TcpSegment(
+            src_port=SERVER_PORT,
+            dst_port=CLIENT_PORT,
+            seq_number=0,
+            ack_number=0,
+            flags=frozenset({TcpFlag.ACK}),
+            window_size=0,
+        )
+        assert conn.process_segment(seg) == []
+
+    def test_timeout_no_unacked_returns_empty(self) -> None:
+        """Timeout with no unacked segments returns empty list."""
+        client, _server = _established_pair()
+        assert client.on_timeout() == []
+
+    def test_congestion_avoidance_increment(self) -> None:
+        """In congestion avoidance, cwnd increments by 1 after cwnd ACKs."""
+        client, server = _established_pair()
+        # Set cwnd = ssthresh to enter congestion avoidance
+        client._cwnd = 2
+        client._ssthresh = 2
+        initial_cwnd = client.cwnd
+        # Send data and get ACKed
+        segments = client.send(b"data")
+        ack1 = TcpSegment(
+            src_port=SERVER_PORT,
+            dst_port=CLIENT_PORT,
+            seq_number=server.send_next,
+            ack_number=client.send_next,
+            flags=frozenset({TcpFlag.ACK}),
+            window_size=DEFAULT_RECV_WINDOW,
+        )
+        client.process_segment(ack1)
+        # First ACK → fractional increment (not enough for full +1)
+        assert client.cwnd == initial_cwnd  # not yet incremented
+        # Need cwnd more ACKs to increment — send more data
+        segments = client.send(b"more")
+        ack2 = TcpSegment(
+            src_port=SERVER_PORT,
+            dst_port=CLIENT_PORT,
+            seq_number=server.send_next,
+            ack_number=client.send_next,
+            flags=frozenset({TcpFlag.ACK}),
+            window_size=DEFAULT_RECV_WINDOW,
+        )
+        client.process_segment(ack2)
+        # After 2 ACKs with cwnd=2, should increment
+        expected_cwnd = initial_cwnd + 1
+        assert client.cwnd == expected_cwnd
+        assert len(segments) >= 1  # use segments var

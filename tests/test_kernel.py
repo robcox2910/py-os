@@ -7,8 +7,11 @@ other modules (scheduler, memory, file system).
 
 import pytest
 
+from py_os.fs.fd import FdError, SeekWhence
 from py_os.kernel import ExecutionMode, Kernel, KernelState
+from py_os.memory.mmap import MmapError
 from py_os.process.pcb import ProcessState
+from py_os.shell import Shell
 
 
 class TestKernelInitialisation:
@@ -249,3 +252,83 @@ class TestKernelTerminateProcess:
         kernel = Kernel()
         with pytest.raises(RuntimeError, match="not running"):
             kernel.terminate_process(pid=1)
+
+
+# -- File descriptor edge cases -----------------------------------------------
+
+NONEXISTENT_PID = 99999
+
+
+class TestKernelFdErrors:
+    """Verify error handling for file descriptor operations with invalid PIDs."""
+
+    def test_read_fd_missing_pid_raises(self) -> None:
+        """Reading from a PID with no fd table should raise FdError."""
+        kernel = Kernel()
+        kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
+        with pytest.raises(FdError, match="Bad file descriptor"):
+            kernel.read_fd(pid=NONEXISTENT_PID, fd=0, count=10)
+        kernel.shutdown()
+
+    def test_write_fd_missing_pid_raises(self) -> None:
+        """Writing to a PID with no fd table should raise FdError."""
+        kernel = Kernel()
+        kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
+        with pytest.raises(FdError, match="Bad file descriptor"):
+            kernel.write_fd(pid=NONEXISTENT_PID, fd=0, data=b"hello")
+        kernel.shutdown()
+
+    def test_seek_fd_missing_pid_raises(self) -> None:
+        """Seeking on a PID with no fd table should raise FdError."""
+        kernel = Kernel()
+        kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
+        with pytest.raises(FdError, match="Bad file descriptor"):
+            kernel.seek_fd(pid=NONEXISTENT_PID, fd=0, offset=0, whence=SeekWhence.SET)
+        kernel.shutdown()
+
+
+# -- Mmap edge cases -----------------------------------------------------------
+
+
+class TestKernelMmapErrors:
+    """Verify error handling for mmap operations."""
+
+    def test_mmap_nonexistent_pid_raises(self) -> None:
+        """Mmapping with a nonexistent PID should raise MmapError."""
+        kernel = Kernel()
+        kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
+        with pytest.raises(MmapError, match="not found"):
+            kernel.mmap_file(pid=NONEXISTENT_PID, path="/test.txt")
+        kernel.shutdown()
+
+    def test_mmap_offset_beyond_file_raises(self) -> None:
+        """Mmapping with offset beyond file size should raise MmapError."""
+        kernel = Kernel()
+        kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
+        sh = Shell(kernel=kernel)
+        sh.execute("touch /tiny.txt")
+        sh.execute("write /tiny.txt hi")
+        proc = kernel.create_process(name="mapper", num_pages=2)
+        big_offset = 9999
+        with pytest.raises(MmapError, match="beyond file size"):
+            kernel.mmap_file(pid=proc.pid, path="/tiny.txt", offset=big_offset)
+        kernel.shutdown()
+
+    def test_mmap_process_no_vm_raises(self) -> None:
+        """Mmapping a process with no virtual memory should raise MmapError."""
+        kernel = Kernel()
+        kernel.boot()
+        kernel._execution_mode = ExecutionMode.KERNEL
+        sh = Shell(kernel=kernel)
+        sh.execute("touch /vm_test.txt")
+        sh.execute("write /vm_test.txt data")
+        proc = kernel.create_process(name="novm", num_pages=2)
+        proc._virtual_memory = None
+        with pytest.raises(MmapError, match="no virtual memory"):
+            kernel.mmap_file(pid=proc.pid, path="/vm_test.txt")
+        kernel.shutdown()
