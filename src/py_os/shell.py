@@ -3178,7 +3178,7 @@ class Shell:
                 dispatched = self._kernel.syscall(SyscallNumber.SYS_DISPATCH)
                 if dispatched is not None:
                     self._kernel.syscall(SyscallNumber.SYS_TERMINATE_PROCESS, pid=demo_pid)
-            except (SyscallError, RuntimeError):
+            except SyscallError, RuntimeError:
                 pass
 
         lines.append("Virtual files are generated live — no disk storage needed!")
@@ -3889,7 +3889,7 @@ class Shell:
             # Try listing as directory; if it fails, it's a file
             try:
                 self._kernel.syscall(SyscallNumber.SYS_LIST_DIR, path=child_path)
-            except (SyscallError, NotADirectoryError):
+            except SyscallError, NotADirectoryError:
                 lines.append(f"{indent}  {entry}")
                 continue
             self._dashboard_fs_tree(lines, child_path, depth=depth + 1, max_depth=max_depth)

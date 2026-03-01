@@ -63,7 +63,7 @@ def build_prompt(kernel: Kernel) -> str:
     try:
         info: dict[str, object] = kernel.syscall(SyscallNumber.SYS_WHOAMI)
         return f"{info['username']}@pyos $ "
-    except (SyscallError, KeyError):
+    except SyscallError, KeyError:
         return "pyos $ "
 
 
