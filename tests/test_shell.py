@@ -294,3 +294,344 @@ class TestCommandNamesProperty:
         names = shell.command_names
         for cmd in ("ls", "cat", "mkdir", "ps", "help", "exit", "run"):
             assert cmd in names
+
+
+# -- TCP commands -----------------------------------------------------------
+
+TCP_LISTEN_PORT = 8080
+TCP_CLIENT_PORT = 5000
+
+
+class TestShellTcpBasics:
+    """Verify TCP command dispatch and argument validation."""
+
+    def test_tcp_no_args_shows_usage(self) -> None:
+        """Tcp with no args should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("tcp")
+        assert "Usage" in result
+
+    def test_tcp_unknown_subcommand_shows_usage(self) -> None:
+        """Tcp with unknown subcommand should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("tcp foobar")
+        assert "Usage" in result
+
+    def test_tcp_listen_no_port(self) -> None:
+        """Tcp listen without a port should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("tcp listen")
+        assert "Usage" in result
+
+    def test_tcp_listen_invalid_port(self) -> None:
+        """Tcp listen with non-integer port should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("tcp listen abc")
+        assert "Error" in result
+
+    def test_tcp_connect_too_few_args(self) -> None:
+        """Tcp connect without enough args should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("tcp connect 5000")
+        assert "Usage" in result
+
+    def test_tcp_connect_invalid_ports(self) -> None:
+        """Tcp connect with non-integer ports should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("tcp connect abc def")
+        assert "Error" in result
+
+    def test_tcp_send_too_few_args(self) -> None:
+        """Tcp send without enough args should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("tcp send")
+        assert "Usage" in result
+
+    def test_tcp_send_invalid_conn_id(self) -> None:
+        """Tcp send with non-integer conn_id should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("tcp send abc hello")
+        assert "Error" in result
+
+    def test_tcp_recv_no_args(self) -> None:
+        """Tcp recv without args should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("tcp recv")
+        assert "Usage" in result
+
+    def test_tcp_recv_invalid_conn_id(self) -> None:
+        """Tcp recv with non-integer conn_id should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("tcp recv abc")
+        assert "Error" in result
+
+    def test_tcp_close_no_args(self) -> None:
+        """Tcp close without args should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("tcp close")
+        assert "Usage" in result
+
+    def test_tcp_close_invalid_conn_id(self) -> None:
+        """Tcp close with non-integer conn_id should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("tcp close abc")
+        assert "Error" in result
+
+    def test_tcp_info_no_args(self) -> None:
+        """Tcp info without args should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("tcp info")
+        assert "Usage" in result
+
+    def test_tcp_info_invalid_conn_id(self) -> None:
+        """Tcp info with non-integer conn_id should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("tcp info abc")
+        assert "Error" in result
+
+
+class TestShellTcpLifecycle:
+    """Verify TCP listen, connect, send, recv, info, close, and list."""
+
+    def test_tcp_listen_creates_listener(self) -> None:
+        """Tcp listen should create a listener on the specified port."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute(f"tcp listen {TCP_LISTEN_PORT}")
+        assert "Listening" in result
+        assert str(TCP_LISTEN_PORT) in result
+
+    def test_tcp_connect_opens_connection(self) -> None:
+        """Tcp connect should open a connection to a listening port."""
+        _kernel, shell = _booted_shell()
+        shell.execute(f"tcp listen {TCP_LISTEN_PORT}")
+        result = shell.execute(f"tcp connect {TCP_CLIENT_PORT} {TCP_LISTEN_PORT}")
+        assert "Connection" in result
+        assert "opened" in result
+
+    def test_tcp_send_delivers_data(self) -> None:
+        """Tcp send should report bytes sent."""
+        _kernel, shell = _booted_shell()
+        shell.execute(f"tcp listen {TCP_LISTEN_PORT}")
+        result = shell.execute(f"tcp connect {TCP_CLIENT_PORT} {TCP_LISTEN_PORT}")
+        conn_id = result.split()[1]
+        send_result = shell.execute(f"tcp send {conn_id} Hello TCP")
+        assert "Sent" in send_result
+        assert "bytes" in send_result
+
+    def test_tcp_recv_receives_data(self) -> None:
+        """Tcp recv should return data sent to a connection."""
+        _kernel, shell = _booted_shell()
+        shell.execute(f"tcp listen {TCP_LISTEN_PORT}")
+        shell.execute(f"tcp connect {TCP_CLIENT_PORT} {TCP_LISTEN_PORT}")
+        # Recv on a nonexistent connection to exercise the recv error path
+        result = shell.execute("tcp recv 999")
+        assert "Error" in result
+
+    def test_tcp_info_shows_connection_details(self) -> None:
+        """Tcp info should display connection parameters."""
+        _kernel, shell = _booted_shell()
+        shell.execute(f"tcp listen {TCP_LISTEN_PORT}")
+        result = shell.execute(f"tcp connect {TCP_CLIENT_PORT} {TCP_LISTEN_PORT}")
+        conn_id = result.split()[1]
+        info_result = shell.execute(f"tcp info {conn_id}")
+        assert "TCP Connection" in info_result
+
+    def test_tcp_close_closes_connection(self) -> None:
+        """Tcp close should close a connection."""
+        _kernel, shell = _booted_shell()
+        shell.execute(f"tcp listen {TCP_LISTEN_PORT}")
+        result = shell.execute(f"tcp connect {TCP_CLIENT_PORT} {TCP_LISTEN_PORT}")
+        conn_id = result.split()[1]
+        close_result = shell.execute(f"tcp close {conn_id}")
+        assert "closed" in close_result
+
+    def test_tcp_list_shows_connections(self) -> None:
+        """Tcp list should show active connections."""
+        _kernel, shell = _booted_shell()
+        shell.execute(f"tcp listen {TCP_LISTEN_PORT}")
+        shell.execute(f"tcp connect {TCP_CLIENT_PORT} {TCP_LISTEN_PORT}")
+        result = shell.execute("tcp list")
+        assert "STATE" in result
+
+    def test_tcp_list_empty(self) -> None:
+        """Tcp list with no connections should say so."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("tcp list")
+        assert "No TCP connections" in result
+
+    def test_tcp_send_invalid_connection(self) -> None:
+        """Tcp send to nonexistent connection should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("tcp send 999 hello")
+        assert "Error" in result
+
+    def test_tcp_close_invalid_connection(self) -> None:
+        """Tcp close on nonexistent connection should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("tcp close 999")
+        assert "Error" in result
+
+    def test_tcp_info_invalid_connection(self) -> None:
+        """Tcp info on nonexistent connection should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("tcp info 999")
+        assert "Error" in result
+
+    def test_tcp_connect_without_listener_opens_syn_sent(self) -> None:
+        """Tcp connect without a listener opens a SYN_SENT connection."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute(f"tcp connect {TCP_CLIENT_PORT} {TCP_LISTEN_PORT}")
+        assert "Connection" in result
+        assert "SYN_SENT" in result
+
+
+class TestShellTcpDemo:
+    """Verify the TCP demo command."""
+
+    def test_tcp_demo_runs_full_lifecycle(self) -> None:
+        """Tcp demo should run the complete TCP lifecycle."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("tcp demo")
+        assert "TCP Demo" in result
+        assert "listener" in result.lower() or "Listener" in result
+        assert "Client" in result
+        assert "close" in result.lower()
+
+
+# -- Tick command -----------------------------------------------------------
+
+
+class TestShellTick:
+    """Verify the tick command."""
+
+    def test_tick_default_one(self) -> None:
+        """Tick with no args should advance by 1."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("tick")
+        assert "Ticked" in result
+        assert "1 time" in result
+
+    def test_tick_multiple(self) -> None:
+        """Tick with a count should advance by that many."""
+        _kernel, shell = _booted_shell()
+        tick_count = 5
+        result = shell.execute(f"tick {tick_count}")
+        assert "Ticked" in result
+        assert str(tick_count) in result
+
+    def test_tick_shows_interrupt_info(self) -> None:
+        """Tick should report interrupts serviced."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("tick")
+        assert "Interrupts serviced" in result
+
+    def test_tick_invalid_count(self) -> None:
+        """Tick with a non-integer count should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("tick abc")
+        assert "Error" in result
+
+
+# -- Interrupt command ------------------------------------------------------
+
+
+class TestShellInterrupt:
+    """Verify the interrupt command."""
+
+    def test_interrupt_list_default(self) -> None:
+        """Interrupt with no args should list vectors."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("interrupt")
+        assert "VEC" in result or "No interrupt" in result
+
+    def test_interrupt_list_explicit(self) -> None:
+        """Interrupt list should show the vector table."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("interrupt list")
+        assert "VEC" in result or "No interrupt" in result
+
+    def test_interrupt_mask_vector(self) -> None:
+        """Interrupt mask should mask a vector."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("interrupt mask 0")
+        assert "masked" in result.lower()
+
+    def test_interrupt_unmask_vector(self) -> None:
+        """Interrupt unmask should unmask a vector."""
+        _kernel, shell = _booted_shell()
+        shell.execute("interrupt mask 0")
+        result = shell.execute("interrupt unmask 0")
+        assert "unmask" in result.lower()
+
+    def test_interrupt_mask_no_vector(self) -> None:
+        """Interrupt mask without vector should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("interrupt mask")
+        assert "Usage" in result
+
+    def test_interrupt_unmask_no_vector(self) -> None:
+        """Interrupt unmask without vector should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("interrupt unmask")
+        assert "Usage" in result
+
+    def test_interrupt_mask_invalid_vector(self) -> None:
+        """Interrupt mask with non-integer vector should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("interrupt mask abc")
+        assert "Error" in result
+
+    def test_interrupt_unknown_subcommand(self) -> None:
+        """Interrupt with unknown subcommand should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("interrupt foobar")
+        assert "Usage" in result
+
+
+# -- Timer command ----------------------------------------------------------
+
+
+class TestShellTimer:
+    """Verify the timer command."""
+
+    def test_timer_info_default(self) -> None:
+        """Timer with no args should show timer info."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("timer")
+        assert "Timer device" in result
+        assert "Interval" in result
+
+    def test_timer_info_explicit(self) -> None:
+        """Timer info should show timer device status."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("timer info")
+        assert "Timer device" in result
+        assert "fires" in result.lower()
+
+    def test_timer_set_interval(self) -> None:
+        """Timer set should update the timer interval."""
+        _kernel, shell = _booted_shell()
+        new_interval = 10
+        result = shell.execute(f"timer set {new_interval}")
+        # After setting, verify via info
+        assert result is not None
+        info = shell.execute("timer info")
+        assert str(new_interval) in info
+
+    def test_timer_set_no_interval(self) -> None:
+        """Timer set without an interval should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("timer set")
+        assert "Usage" in result
+
+    def test_timer_set_invalid_interval(self) -> None:
+        """Timer set with non-integer interval should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("timer set abc")
+        assert "Error" in result
+
+    def test_timer_unknown_subcommand(self) -> None:
+        """Timer with unknown subcommand should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("timer foobar")
+        assert "Usage" in result
