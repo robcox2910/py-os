@@ -64,10 +64,12 @@
   
     
     
+      
     
     
     
-    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="indigo">
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="teal">
   
     
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
@@ -120,7 +122,33 @@
     </div>
     
       
+        <form class="md-header__option" data-md-component="palette">
+  
     
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="teal"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="teal"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
     
     
     
@@ -200,7 +228,9 @@
 
 
 
-<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  
+
+<nav class="md-nav md-nav--primary md-nav--integrated" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
     <a href="../.." title="PyOS" class="md-nav__button md-logo" aria-label="PyOS" data-md-component="logo">
       
@@ -1001,276 +1031,6 @@
               </div>
             
             
-              
-              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
-                <div class="md-sidebar__scrollwrap">
-                  <div class="md-sidebar__inner">
-                    
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#the-problem-race-conditions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Problem: Race Conditions
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#mutex-mutual-exclusion" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Mutex (Mutual Exclusion)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#semaphore-counting-lock" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Semaphore (Counting Lock)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#condition-variable-waitnotify" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Condition Variable (Wait/Notify)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#reader-writer-lock-rwlock" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Reader-Writer Lock (RWLock)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Reader-Writer Lock (RWLock)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#writer-preference" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Writer-Preference
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#priority-inversion" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Priority Inversion
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Priority Inversion">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#the-mars-pathfinder-bug" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Mars Pathfinder Bug
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#priority-inheritance" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Priority Inheritance
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Priority Inheritance">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#transitive-inheritance" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Transitive Inheritance
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#how-it-works" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How It Works
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#deadlock" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Deadlock
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Deadlock">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#the-four-coffman-conditions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Four Coffman Conditions
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#deadlock-prevention-resource-ordering" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Deadlock Prevention: Resource Ordering
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#three-modes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Three Modes
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#prevention-vs-detection" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Prevention vs. Detection
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#how-it-works-in-pyos" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How It Works in PyOS
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#syscall-interface" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Syscall Interface
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#real-world-examples" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Real-World Examples
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#where-to-go-next" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Where to Go Next
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-                  </div>
-                </div>
-              </div>
-            
           
           
             <div class="md-content" data-md-component="content">
@@ -1289,45 +1049,45 @@
 <p>Synchronization primitives solve this. They are the traffic lights and turnstiles of concurrent programming.</p>
 <h2 id="the-problem-race-conditions">The Problem: Race Conditions</h2>
 <p>Imagine two threads both trying to increment a counter:</p>
-<div class="highlight"><pre><span></span><code>Thread A reads counter (value: 5)
-Thread B reads counter (value: 5)
-Thread A writes counter = 6
-Thread B writes counter = 6    &lt;-- should be 7!
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Thread A reads counter (value: 5)
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>Thread B reads counter (value: 5)
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>Thread A writes counter = 6
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>Thread B writes counter = 6    &lt;-- should be 7!
 </code></pre></div>
 <p>One increment was lost. This is a <strong>data race</strong>: both threads read the old value before either wrote the new one.</p>
 <h2 id="mutex-mutual-exclusion">Mutex (Mutual Exclusion)</h2>
 <p><strong>Analogy: A bathroom lock.</strong></p>
 <p>A mutex is the simplest synchronization tool. Only one thread can hold it at a time. If another thread tries to acquire it, they wait in a queue until the holder releases it.</p>
-<div class="highlight"><pre><span></span><code>Thread A: acquire lock  -&gt; success, enters critical section
-Thread B: acquire lock  -&gt; blocked, added to wait queue
-Thread A: release lock  -&gt; Thread B wakes up and acquires
-Thread B: release lock  -&gt; lock is free
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Thread A: acquire lock  -&gt; success, enters critical section
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>Thread B: acquire lock  -&gt; blocked, added to wait queue
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>Thread A: release lock  -&gt; Thread B wakes up and acquires
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>Thread B: release lock  -&gt; lock is free
 </code></pre></div>
 <p><strong>Key rules:</strong>
 - Only the thread that locked it can unlock it (owner tracking)
 - Waiters are served in FIFO order (no starvation)
 - Forgetting to release causes deadlock</p>
 <p><strong>Shell usage:</strong>
-<div class="highlight"><pre><span></span><code>mutex create mylock
-mutex list
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>mutex create mylock
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>mutex list
 </code></pre></div></p>
 <h2 id="semaphore-counting-lock">Semaphore (Counting Lock)</h2>
 <p><strong>Analogy: A parking lot with limited spaces.</strong></p>
 <p>A semaphore is like a mutex, but instead of allowing only 1 holder, it allows up to N concurrent holders. Each <code>acquire</code> decrements the count; each <code>release</code> increments it. When the count reaches zero, new arrivals wait.</p>
-<div class="highlight"><pre><span></span><code>Semaphore &quot;parking&quot; (count=3)
-
-Car A enters  -&gt; count=2
-Car B enters  -&gt; count=1
-Car C enters  -&gt; count=0
-Car D arrives -&gt; blocked (lot is full)
-Car A leaves  -&gt; count stays 0, Car D enters
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Semaphore &quot;parking&quot; (count=3)
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>Car A enters  -&gt; count=2
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>Car B enters  -&gt; count=1
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>Car C enters  -&gt; count=0
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>Car D arrives -&gt; blocked (lot is full)
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>Car A leaves  -&gt; count stays 0, Car D enters
 </code></pre></div>
 <p><strong>Special cases:</strong>
 - <strong>Binary semaphore</strong> (count=1): behaves like a mutex
 - <strong>Bounded semaphore</strong>: enforces a maximum count to prevent accidental over-releasing</p>
 <p><strong>Shell usage:</strong>
-<div class="highlight"><pre><span></span><code>semaphore create parking 3
-semaphore list
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>semaphore create parking 3
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>semaphore list
 </code></pre></div></p>
 <h2 id="condition-variable-waitnotify">Condition Variable (Wait/Notify)</h2>
 <p><strong>Analogy: A waiting room where you sit until your name is called.</strong></p>
@@ -1347,19 +1107,19 @@ semaphore list
 - <strong>Multiple readers</strong> can hold the lock at the same time
 - <strong>Only one writer</strong> can hold the lock, and nobody else (no readers, no other writers)
 - This is perfect for data that gets read much more often than it gets written (config files, caches, lookup tables)</p>
-<div class="highlight"><pre><span></span><code>Thread A: acquire_read   -&gt; success (1 reader)
-Thread B: acquire_read   -&gt; success (2 readers)
-Thread C: acquire_write  -&gt; blocked, added to wait queue
-Thread D: acquire_read   -&gt; blocked behind writer (writer-preference!)
-Thread A: release_read   -&gt; nothing happens (B still reading)
-Thread B: release_read   -&gt; 0 readers, C wakes up (writer goes next)
-Thread C: release_write  -&gt; D wakes up (reader gets in)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>Thread A: acquire_read   -&gt; success (1 reader)
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>Thread B: acquire_read   -&gt; success (2 readers)
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>Thread C: acquire_write  -&gt; blocked, added to wait queue
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>Thread D: acquire_read   -&gt; blocked behind writer (writer-preference!)
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>Thread A: release_read   -&gt; nothing happens (B still reading)
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>Thread B: release_read   -&gt; 0 readers, C wakes up (writer goes next)
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>Thread C: release_write  -&gt; D wakes up (reader gets in)
 </code></pre></div>
 <h3 id="writer-preference">Writer-Preference</h3>
 <p>Notice that Thread D was blocked even though it was a reader. This is <strong>writer-preference</strong>: when a writer is waiting in line, new readers queue behind it rather than jumping ahead. Without this rule, a steady stream of readers could starve the writer forever -- the writer would never get a turn.</p>
 <p><strong>Shell usage:</strong>
-<div class="highlight"><pre><span></span><code>rwlock create db_lock
-rwlock list
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>rwlock create db_lock
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>rwlock list
 </code></pre></div></p>
 <h2 id="priority-inversion">Priority Inversion</h2>
 <p><strong>Analogy: Three students and one textbook.</strong></p>
@@ -1388,8 +1148,8 @@ rwlock list
 </ul>
 <p>The high-priority bus manager kept getting starved. A watchdog timer detected the failure and rebooted the rover -- over and over. Engineers on Earth diagnosed the problem and uploaded a fix: <strong>priority inheritance</strong>.</p>
 <p><strong>Shell usage:</strong>
-<div class="highlight"><pre><span></span><code>pi demo     # Walk through the Mars Pathfinder scenario step by step
-pi status   # See which processes are currently boosted
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>pi demo     # Walk through the Mars Pathfinder scenario step by step
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>pi status   # See which processes are currently boosted
 </code></pre></div></p>
 <h2 id="priority-inheritance">Priority Inheritance</h2>
 <p><strong>The fix: temporarily boost the slow student.</strong></p>
@@ -1406,12 +1166,12 @@ pi status   # See which processes are currently boosted
 </ol>
 <h3 id="transitive-inheritance">Transitive Inheritance</h3>
 <p>What if Slow Student is <em>also</em> waiting for something? The boost propagates through the chain:</p>
-<div class="highlight"><pre><span></span><code>Fast Student (priority=10) blocked on Textbook, held by Normal Student (priority=5)
-Normal Student also blocked on Calculator, held by Slow Student (priority=1)
-
-Result: Slow Student boosted to 10, Normal Student boosted to 10
-When Slow Student returns Calculator -&gt; Normal Student gets it, Slow Student drops to 1
-When Normal Student returns Textbook -&gt; Fast Student gets it, Normal Student drops to 5
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>Fast Student (priority=10) blocked on Textbook, held by Normal Student (priority=5)
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>Normal Student also blocked on Calculator, held by Slow Student (priority=1)
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>Result: Slow Student boosted to 10, Normal Student boosted to 10
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>When Slow Student returns Calculator -&gt; Normal Student gets it, Slow Student drops to 1
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>When Normal Student returns Textbook -&gt; Fast Student gets it, Normal Student drops to 5
 </code></pre></div>
 <p>The kernel walks the chain of "who is blocked on what" and boosts everyone in the path. Loop detection (via a visited set) prevents infinite chains.</p>
 <h3 id="how-it-works">How It Works</h3>
@@ -1481,12 +1241,12 @@ violation.</p>
 </tbody>
 </table>
 <p><strong>Shell usage:</strong>
-<div class="highlight"><pre><span></span><code>ordering mode strict
-ordering register mutex:lock_a 1
-ordering register mutex:lock_b 2
-ordering status
-ordering violations
-ordering demo
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>ordering mode strict
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>ordering register mutex:lock_a 1
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>ordering register mutex:lock_b 2
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>ordering status
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>ordering violations
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>ordering demo
 </code></pre></div></p>
 <h3 id="prevention-vs-detection">Prevention vs. Detection</h3>
 <p>PyOS has <em>two</em> complementary approaches to deadlock:</p>
@@ -1762,7 +1522,7 @@ inheritance in <code>sync/inheritance.py</code> and deadlock prevention in
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "search.highlight"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["content.code.copy", "navigation.sections", "navigation.expand", "toc.integrate", "search.highlight"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>

@@ -64,10 +64,12 @@
   
     
     
+      
     
     
     
-    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="indigo">
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="teal">
   
     
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
@@ -120,7 +122,33 @@
     </div>
     
       
+        <form class="md-header__option" data-md-component="palette">
+  
     
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="teal"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="teal"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
     
     
     
@@ -200,7 +228,9 @@
 
 
 
-<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  
+
+<nav class="md-nav md-nav--primary md-nav--integrated" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
     <a href="../.." title="PyOS" class="md-nav__button md-logo" aria-label="PyOS" data-md-component="logo">
       
@@ -1023,298 +1053,6 @@
               </div>
             
             
-              
-              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
-                <div class="md-sidebar__scrollwrap">
-                  <div class="md-sidebar__inner">
-                    
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#users-and-permissions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Users and Permissions
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Users and Permissions">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#uids-and-usernames" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        UIDs and Usernames
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#file-ownership" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        File Ownership
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#permissions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Permissions
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#the-root-user" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The root User
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#try-it-in-the-pyos-shell" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Try it in the PyOS shell
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#signals" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Signals
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Signals">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#the-six-signals" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Six Signals
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#user-defined-signals-sigusr1-and-sigusr2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        User-Defined Signals: SIGUSR1 and SIGUSR2
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#signal-handlers" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Signal Handlers
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#logging" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Logging
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Logging">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#log-levels" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Log Levels
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#try-it-in-the-pyos-shell_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Try it in the PyOS shell
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#deadlock" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Deadlock
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Deadlock">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#the-four-conditions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Four Conditions
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#prevention-the-bankers-algorithm" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Prevention: The Banker's Algorithm
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#detection-find-and-fix" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Detection: Find and Fix
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#two-philosophies" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Two Philosophies
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#try-it-in-the-pyos-shell_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Try it in the PyOS shell
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#putting-it-all-together" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Putting It All Together
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#key-terms" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Key Terms
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#where-to-go-next" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Where to Go Next
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-                  </div>
-                </div>
-              </div>
-            
           
           
             <div class="md-content" data-md-component="content">
@@ -1389,17 +1127,17 @@
 <p>Root is like the school principal. The principal can walk into any classroom, open any locker, and read any file in the school office. There are no locked doors for the principal. In the same way, root can read and write <em>any</em> file on the system, regardless of what the permissions say. Root is sometimes called the <strong>superuser</strong> because they have super-powered access to everything.</p>
 <p>On a real Unix system, root can do absolutely anything -- install programs, delete other users, change system settings, even break the operating system. That is why you should only use root when you truly need it. Running as root all the time is like leaving every door in the school unlocked. It works, but it is asking for trouble.</p>
 <h3 id="try-it-in-the-pyos-shell">Try it in the PyOS shell</h3>
-<div class="highlight"><pre><span></span><code>pyos&gt; whoami
-alice (uid=1000)
-
-pyos&gt; adduser bob
-User &#39;bob&#39; created with uid=1001
-
-pyos&gt; su bob
-Switched to user &#39;bob&#39;
-
-pyos&gt; whoami
-bob (uid=1001)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pyos&gt; whoami
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>alice (uid=1000)
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>pyos&gt; adduser bob
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>User &#39;bob&#39; created with uid=1001
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>pyos&gt; su bob
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>Switched to user &#39;bob&#39;
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>pyos&gt; whoami
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>bob (uid=1001)
 </code></pre></div>
 <ul>
 <li><code>whoami</code> -- tells you which user you are right now.</li>
@@ -1475,8 +1213,8 @@ bob (uid=1001)
 <p>In real Unix, programs use SIGUSR1 and SIGUSR2 for things like telling a server to reload its configuration file or triggering a status dump. They are completely up to the programmer.</p>
 <h3 id="signal-handlers">Signal Handlers</h3>
 <p>Here is where it gets interesting. A process can set up a <strong>signal handler</strong> -- a function that runs automatically when a specific signal arrives. Think of it like telling a friend: "If someone taps me on the left shoulder, remind me to save my work before I turn around."</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># &quot;When I receive SIGTERM, run my cleanup function first&quot;</span>
-<span class="n">kernel</span><span class="o">.</span><span class="n">register_signal_handler</span><span class="p">(</span><span class="n">pid</span><span class="p">,</span> <span class="n">SIGTERM</span><span class="p">,</span> <span class="n">my_cleanup_function</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># &quot;When I receive SIGTERM, run my cleanup function first&quot;</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">kernel</span><span class="o">.</span><span class="n">register_signal_handler</span><span class="p">(</span><span class="n">pid</span><span class="p">,</span> <span class="n">SIGTERM</span><span class="p">,</span> <span class="n">my_cleanup_function</span><span class="p">)</span>
 </code></pre></div>
 <p>When SIGTERM arrives, instead of the default action (terminating the process), the handler runs <em>instead</em>. The process stays alive. Maybe the handler saves a file. Maybe it sends a goodbye message. Maybe it decides to keep running. The handler <strong>replaces</strong> the default action -- this is exactly how real Unix works.</p>
 <p>This is <em>why</em> SIGKILL exists. If a process could catch SIGTERM and just... not stop, you would need an uncatchable signal as a last resort. SIGKILL is that last resort.</p>
@@ -1522,12 +1260,12 @@ bob (uid=1001)
 <p>Think of it this way. DEBUG is like the security camera footage of a student walking through the hallway -- nothing interesting, but useful if you need to retrace someone's steps. INFO is the morning announcement that school is open. WARNING is a note that the library is almost full and might need to start turning people away. ERROR is the fire alarm going off.</p>
 <p>Every <a href="../kernel-and-syscalls/">system call</a> gets logged at the DEBUG level. Boot events get logged at INFO. This means the log can get very long very quickly, which is why the levels exist -- you can filter for just WARNINGs and ERRORs when you do not need all the tiny details.</p>
 <h3 id="try-it-in-the-pyos-shell_1">Try it in the PyOS shell</h3>
-<div class="highlight"><pre><span></span><code>pyos&gt; log
-[INFO] System booted at tick 0
-[INFO] User &#39;root&#39; logged in
-[DEBUG] SYS_CREATE_PROCESS: pid=1 name=&#39;init&#39;
-[DEBUG] SYS_EXEC: pid=1 program=&#39;hello&#39;
-[WARNING] Memory usage at 85%
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pyos&gt; log
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>[INFO] System booted at tick 0
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>[INFO] User &#39;root&#39; logged in
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>[DEBUG] SYS_CREATE_PROCESS: pid=1 name=&#39;init&#39;
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>[DEBUG] SYS_EXEC: pid=1 program=&#39;hello&#39;
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>[WARNING] Memory usage at 85%
 </code></pre></div>
 <p>The <code>log</code> command shows you the kernel's log. It is like pulling up the security footage and scrolling through it. When something goes wrong and you are not sure why, the log is your best friend.</p>
 <hr />
@@ -1585,13 +1323,13 @@ bob (uid=1001)
 </tbody>
 </table>
 <h3 id="try-it-in-the-pyos-shell_2">Try it in the PyOS shell</h3>
-<div class="highlight"><pre><span></span><code>pyos&gt; resources
-Resource Allocation Table:
-  Process 1 holds: [Printer]  waiting for: [Scanner]
-  Process 2 holds: [Scanner]  waiting for: [Printer]
-
-pyos&gt; deadlock
-Deadlock detected! Processes 1 and 2 are in a circular wait.
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>pyos&gt; resources
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>Resource Allocation Table:
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>  Process 1 holds: [Printer]  waiting for: [Scanner]
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>  Process 2 holds: [Scanner]  waiting for: [Printer]
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>pyos&gt; deadlock
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>Deadlock detected! Processes 1 and 2 are in a circular wait.
 </code></pre></div>
 <ul>
 <li><code>resources</code> -- shows you which processes are holding which resources and what they are waiting for.</li>
@@ -1740,7 +1478,7 @@ Deadlock detected! Processes 1 and 2 are in a circular wait.
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "search.highlight"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["content.code.copy", "navigation.sections", "navigation.expand", "toc.integrate", "search.highlight"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>

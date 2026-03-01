@@ -64,10 +64,12 @@
   
     
     
+      
     
     
     
-    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="indigo">
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="teal">
   
     
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
@@ -120,7 +122,33 @@
     </div>
     
       
+        <form class="md-header__option" data-md-component="palette">
+  
     
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="teal"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="teal"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
     
     
     
@@ -200,7 +228,9 @@
 
 
 
-<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  
+
+<nav class="md-nav md-nav--primary md-nav--integrated" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
     <a href="../.." title="PyOS" class="md-nav__button md-logo" aria-label="PyOS" data-md-component="logo">
       
@@ -1238,513 +1268,6 @@
               </div>
             
             
-              
-              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
-                <div class="md-sidebar__scrollwrap">
-                  <div class="md-sidebar__inner">
-                    
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#what-is-a-filesystem" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What Is a Filesystem?
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#inodes-the-index-cards" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Inodes: The Index Cards
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#path-resolution-finding-your-file" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Path Resolution: Finding Your File
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#links-multiple-names-for-one-file" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Links: Multiple Names for One File
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Links: Multiple Names for One File">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#the-phone-contacts-analogy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Phone Contacts Analogy
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#hard-links" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Hard Links
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#link-count" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Link Count
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#symbolic-links-symlinks" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Symbolic Links (Symlinks)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#loop-detection" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Loop Detection
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#stat-vs-lstat" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        stat vs. lstat
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#deleting-links" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Deleting Links
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#saving-to-disk-persistence" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Saving to Disk: Persistence
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Saving to Disk: Persistence">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#the-photograph-analogy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Photograph Analogy
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#json-our-photograph-format" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        JSON: Our "Photograph" Format
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#base64-translating-pictures-into-words" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Base64: Translating Pictures Into Words
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#how-real-filesystems-do-it" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How Real Filesystems Do It
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#journaling-the-undo-history-safety-net" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Journaling: The Undo-History Safety Net
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Journaling: The Undo-History Safety Net">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#what-is-a-crash" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What Is a Crash?
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#write-ahead-logging-log-before-you-do" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Write-Ahead Logging: Log Before You Do
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#transactions-begin-commit-abort" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Transactions: Begin, Commit, Abort
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#checkpoints-the-known-good-snapshot" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Checkpoints: The Known-Good Snapshot
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#recovery-restore-replay" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Recovery: Restore + Replay
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#why-redo-logging-not-undo" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Why "Redo" Logging (Not Undo)?
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trying-it-in-pyos" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Trying It in PyOS
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#how-real-filesystems-do-it_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How Real Filesystems Do It
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#file-descriptors-bookmarks-in-a-library-book" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        File Descriptors: Bookmarks in a Library Book
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="File Descriptors: Bookmarks in a Library Book">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#the-library-analogy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Library Analogy
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#how-it-works-in-pyos" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How It Works in PyOS
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#access-modes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Access Modes
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#reading-past-the-end" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Reading Past the End
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#writing-past-the-end" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Writing Past the End
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#fork-and-file-descriptors" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Fork and File Descriptors
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#cleanup" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Cleanup
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#putting-it-all-together" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Putting It All Together
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#key-vocabulary" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Key Vocabulary
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#virtual-filesystems-proc" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Virtual Filesystems -- /proc
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Virtual Filesystems -- /proc">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#whats-inside-proc" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What's inside /proc?
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#how-to-use-it" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How to use it
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#why-does-this-exist" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Why does this exist?
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#virtual-vs-real-files" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Virtual vs real files
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#where-to-go-next" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Where to Go Next
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-                  </div>
-                </div>
-              </div>
-            
           
           
             <div class="md-content" data-md-component="content">
@@ -1796,13 +1319,13 @@ you.</p>
   basically the table of contents for that drawer.</li>
 </ul>
 <p>In our Python code, the <code>_Inode</code> class looks like this (simplified):</p>
-<div class="highlight"><pre><span></span><code><span class="nd">@dataclass</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">_Inode</span><span class="p">:</span>
-    <span class="n">inode_number</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">file_type</span><span class="p">:</span> <span class="n">FileType</span>      <span class="c1"># FILE, DIRECTORY, or SYMLINK</span>
-    <span class="n">data</span><span class="p">:</span> <span class="nb">bytes</span> <span class="o">=</span> <span class="sa">b</span><span class="s2">&quot;&quot;</span>        <span class="c1"># file contents (or symlink target path)</span>
-    <span class="n">children</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="c1"># name -&gt; inode number (for directories)</span>
-    <span class="n">link_count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>      <span class="c1"># how many names point to this inode</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nd">@dataclass</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">_Inode</span><span class="p">:</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">inode_number</span><span class="p">:</span> <span class="nb">int</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">file_type</span><span class="p">:</span> <span class="n">FileType</span>      <span class="c1"># FILE, DIRECTORY, or SYMLINK</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">data</span><span class="p">:</span> <span class="nb">bytes</span> <span class="o">=</span> <span class="sa">b</span><span class="s2">&quot;&quot;</span>        <span class="c1"># file contents (or symlink target path)</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">children</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="c1"># name -&gt; inode number (for directories)</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">link_count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>      <span class="c1"># how many names point to this inode</span>
 </code></pre></div>
 <p>Notice the <code>children</code> dictionary. If this inode is a directory, <code>children</code> maps
 each child's name to its inode number. That is the "attendance sheet" we talked
@@ -1831,17 +1354,17 @@ like following directions on a treasure map.</p>
 answer is yes, you follow the inode number and keep going. If the answer is no,
 you get a <code>FileNotFoundError</code> -- the path is broken somewhere along the way.</p>
 <p>In <code>fs/filesystem.py</code>, the <code>_resolve</code> method does exactly this:</p>
-<div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_Inode</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="n">parts</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
-    <span class="n">current</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inodes</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_root_ino</span><span class="p">]</span>
-
-    <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">parts</span><span class="p">:</span>
-        <span class="n">child_ino</span> <span class="o">=</span> <span class="n">current</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">part</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">child_ino</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">None</span>
-        <span class="n">current</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inodes</span><span class="p">[</span><span class="n">child_ino</span><span class="p">]</span>
-
-    <span class="k">return</span> <span class="n">current</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">_resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_Inode</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="n">parts</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="n">current</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inodes</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_root_ino</span><span class="p">]</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">parts</span><span class="p">:</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>        <span class="n">child_ino</span> <span class="o">=</span> <span class="n">current</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">part</span><span class="p">)</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>        <span class="k">if</span> <span class="n">child_ino</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>            <span class="k">return</span> <span class="kc">None</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>        <span class="n">current</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inodes</span><span class="p">[</span><span class="n">child_ino</span><span class="p">]</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>    <span class="k">return</span> <span class="n">current</span>
 </code></pre></div>
 <p>It splits the path into parts (<code>["home", "rob", "homework.txt"]</code>), then loops
 through them one by one, hopping from directory to directory. Simple and clean.</p>
@@ -1868,18 +1391,18 @@ link). But if someone later adds "Mom" back, the sticky note works again.</p>
 names point to the same inode number, they share everything: the same data, the
 same size, the same type. Writing through one name changes the data for the
 other name too, because there is only one copy of the data.</p>
-<div class="highlight"><pre><span></span><code>Directory /         Directory /docs
-name → inode        name → inode
-─────────────       ─────────────
-hello.txt → 5      ref.txt → 5      ← same inode!
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>Directory /         Directory /docs
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>name → inode        name → inode
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>─────────────       ─────────────
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>hello.txt → 5      ref.txt → 5      ← same inode!
 </code></pre></div>
 <p>In PyOS:</p>
-<div class="highlight"><pre><span></span><code><span class="n">fs</span><span class="o">.</span><span class="n">create_file</span><span class="p">(</span><span class="s2">&quot;/hello.txt&quot;</span><span class="p">)</span>
-<span class="n">fs</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;/hello.txt&quot;</span><span class="p">,</span> <span class="sa">b</span><span class="s2">&quot;Hi!&quot;</span><span class="p">)</span>
-<span class="n">fs</span><span class="o">.</span><span class="n">link</span><span class="p">(</span><span class="s2">&quot;/hello.txt&quot;</span><span class="p">,</span> <span class="s2">&quot;/docs/ref.txt&quot;</span><span class="p">)</span>
-
-<span class="c1"># Both names read the same data:</span>
-<span class="n">fs</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s2">&quot;/docs/ref.txt&quot;</span><span class="p">)</span>   <span class="c1"># b&quot;Hi!&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">fs</span><span class="o">.</span><span class="n">create_file</span><span class="p">(</span><span class="s2">&quot;/hello.txt&quot;</span><span class="p">)</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">fs</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;/hello.txt&quot;</span><span class="p">,</span> <span class="sa">b</span><span class="s2">&quot;Hi!&quot;</span><span class="p">)</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">fs</span><span class="o">.</span><span class="n">link</span><span class="p">(</span><span class="s2">&quot;/hello.txt&quot;</span><span class="p">,</span> <span class="s2">&quot;/docs/ref.txt&quot;</span><span class="p">)</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="c1"># Both names read the same data:</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="n">fs</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s2">&quot;/docs/ref.txt&quot;</span><span class="p">)</span>   <span class="c1"># b&quot;Hi!&quot;</span>
 </code></pre></div>
 <p><strong>Rules for hard links:</strong></p>
 <ul>
@@ -1894,22 +1417,22 @@ count</strong> -- a counter on the inode that tracks how many names point to it.
 time you create a hard link, the count goes up. Every time you delete a name,
 the count goes down. The inode (and its data) is only freed when the count hits
 zero.</p>
-<div class="highlight"><pre><span></span><code>fs.stat(&quot;/hello.txt&quot;).link_count   # 1  (just created)
-fs.link(&quot;/hello.txt&quot;, &quot;/alias.txt&quot;)
-fs.stat(&quot;/hello.txt&quot;).link_count   # 2  (two names now)
-fs.delete(&quot;/hello.txt&quot;)
-fs.stat(&quot;/alias.txt&quot;).link_count   # 1  (one name left, data still alive)
-fs.delete(&quot;/alias.txt&quot;)            # link_count → 0, inode freed
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>fs.stat(&quot;/hello.txt&quot;).link_count   # 1  (just created)
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>fs.link(&quot;/hello.txt&quot;, &quot;/alias.txt&quot;)
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>fs.stat(&quot;/hello.txt&quot;).link_count   # 2  (two names now)
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>fs.delete(&quot;/hello.txt&quot;)
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>fs.stat(&quot;/alias.txt&quot;).link_count   # 1  (one name left, data still alive)
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>fs.delete(&quot;/alias.txt&quot;)            # link_count → 0, inode freed
 </code></pre></div>
 <h3 id="symbolic-links-symlinks">Symbolic Links (Symlinks)</h3>
 <p>A symbolic link is a completely different kind of inode. Instead of pointing to
 the same inode number, it creates a <strong>new inode</strong> whose data is the <em>path</em> to
 the target. It is like a shortcut file that says "go look over there".</p>
-<div class="highlight"><pre><span></span><code><span class="n">fs</span><span class="o">.</span><span class="n">create_file</span><span class="p">(</span><span class="s2">&quot;/target.txt&quot;</span><span class="p">)</span>
-<span class="n">fs</span><span class="o">.</span><span class="n">symlink</span><span class="p">(</span><span class="s2">&quot;/target.txt&quot;</span><span class="p">,</span> <span class="s2">&quot;/shortcut.txt&quot;</span><span class="p">)</span>
-
-<span class="n">fs</span><span class="o">.</span><span class="n">readlink</span><span class="p">(</span><span class="s2">&quot;/shortcut.txt&quot;</span><span class="p">)</span>   <span class="c1"># &quot;/target.txt&quot;</span>
-<span class="n">fs</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s2">&quot;/shortcut.txt&quot;</span><span class="p">)</span>       <span class="c1"># reads /target.txt&#39;s data (followed the link)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">fs</span><span class="o">.</span><span class="n">create_file</span><span class="p">(</span><span class="s2">&quot;/target.txt&quot;</span><span class="p">)</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">fs</span><span class="o">.</span><span class="n">symlink</span><span class="p">(</span><span class="s2">&quot;/target.txt&quot;</span><span class="p">,</span> <span class="s2">&quot;/shortcut.txt&quot;</span><span class="p">)</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="n">fs</span><span class="o">.</span><span class="n">readlink</span><span class="p">(</span><span class="s2">&quot;/shortcut.txt&quot;</span><span class="p">)</span>   <span class="c1"># &quot;/target.txt&quot;</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="n">fs</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s2">&quot;/shortcut.txt&quot;</span><span class="p">)</span>       <span class="c1"># reads /target.txt&#39;s data (followed the link)</span>
 </code></pre></div>
 <p>The filesystem follows symlinks <strong>automatically</strong> during path resolution. When
 <code>_resolve()</code> encounters a symlink, it reads the stored target path and
@@ -1929,17 +1452,17 @@ continues resolving from there.</p>
 follow links forever. To prevent this, <code>_resolve()</code> counts how many symlinks
 it has followed. If the count exceeds <code>MAX_SYMLINK_DEPTH</code> (40, matching Linux),
 it raises an error: "Too many levels of symbolic links".</p>
-<div class="highlight"><pre><span></span><code><span class="n">fs</span><span class="o">.</span><span class="n">symlink</span><span class="p">(</span><span class="s2">&quot;/b&quot;</span><span class="p">,</span> <span class="s2">&quot;/a&quot;</span><span class="p">)</span>   <span class="c1"># /a → /b</span>
-<span class="n">fs</span><span class="o">.</span><span class="n">symlink</span><span class="p">(</span><span class="s2">&quot;/a&quot;</span><span class="p">,</span> <span class="s2">&quot;/b&quot;</span><span class="p">)</span>   <span class="c1"># /b → /a (circular!)</span>
-<span class="n">fs</span><span class="o">.</span><span class="n">stat</span><span class="p">(</span><span class="s2">&quot;/a&quot;</span><span class="p">)</span>             <span class="c1"># OSError: Too many levels of symbolic links</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">fs</span><span class="o">.</span><span class="n">symlink</span><span class="p">(</span><span class="s2">&quot;/b&quot;</span><span class="p">,</span> <span class="s2">&quot;/a&quot;</span><span class="p">)</span>   <span class="c1"># /a → /b</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="n">fs</span><span class="o">.</span><span class="n">symlink</span><span class="p">(</span><span class="s2">&quot;/a&quot;</span><span class="p">,</span> <span class="s2">&quot;/b&quot;</span><span class="p">)</span>   <span class="c1"># /b → /a (circular!)</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">fs</span><span class="o">.</span><span class="n">stat</span><span class="p">(</span><span class="s2">&quot;/a&quot;</span><span class="p">)</span>             <span class="c1"># OSError: Too many levels of symbolic links</span>
 </code></pre></div>
 <h3 id="stat-vs-lstat">stat vs. lstat</h3>
 <p>The <code>stat()</code> function follows symlinks -- if you stat a symlink, you get the
 target's metadata. But sometimes you want to see the symlink itself. That is
 what <code>lstat()</code> does: it returns the symlink's own inode info (type=SYMLINK,
 size=length of the target path) without following it.</p>
-<div class="highlight"><pre><span></span><code><span class="n">fs</span><span class="o">.</span><span class="n">stat</span><span class="p">(</span><span class="s2">&quot;/shortcut.txt&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">file_type</span>    <span class="c1"># FileType.FILE (the target)</span>
-<span class="n">fs</span><span class="o">.</span><span class="n">lstat</span><span class="p">(</span><span class="s2">&quot;/shortcut.txt&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">file_type</span>   <span class="c1"># FileType.SYMLINK (the link itself)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">fs</span><span class="o">.</span><span class="n">stat</span><span class="p">(</span><span class="s2">&quot;/shortcut.txt&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">file_type</span>    <span class="c1"># FileType.FILE (the target)</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="n">fs</span><span class="o">.</span><span class="n">lstat</span><span class="p">(</span><span class="s2">&quot;/shortcut.txt&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">file_type</span>   <span class="c1"># FileType.SYMLINK (the link itself)</span>
 </code></pre></div>
 <h3 id="deleting-links">Deleting Links</h3>
 <ul>
@@ -1969,23 +1492,23 @@ format back into live data).</p>
 <h3 id="json-our-photograph-format">JSON: Our "Photograph" Format</h3>
 <p>Our "photographs" are saved as <strong>JSON</strong> -- a simple text format that looks like
 this:</p>
-<div class="highlight"><pre><span></span><code><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;root_ino&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;inodes&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;0&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="nt">&quot;inode_number&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;file_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;directory&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;data&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;children&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;homework.txt&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">}</span>
-<span class="w">    </span><span class="p">},</span>
-<span class="w">    </span><span class="nt">&quot;1&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="nt">&quot;inode_number&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;file_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;file&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;data&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;SGVsbG8gd29ybGQ=&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;children&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{}</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="w">  </span><span class="p">}</span>
-<span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="p">{</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span><span class="nt">&quot;root_ino&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span><span class="nt">&quot;inodes&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">    </span><span class="nt">&quot;0&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">      </span><span class="nt">&quot;inode_number&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">      </span><span class="nt">&quot;file_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;directory&quot;</span><span class="p">,</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="w">      </span><span class="nt">&quot;data&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="w">      </span><span class="nt">&quot;children&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;homework.txt&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">}</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="w">    </span><span class="p">},</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="w">    </span><span class="nt">&quot;1&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="w">      </span><span class="nt">&quot;inode_number&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="w">      </span><span class="nt">&quot;file_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;file&quot;</span><span class="p">,</span>
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="w">      </span><span class="nt">&quot;data&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;SGVsbG8gd29ybGQ=&quot;</span><span class="p">,</span>
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a><span class="w">      </span><span class="nt">&quot;children&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{}</span>
+<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a><span class="p">}</span>
 </code></pre></div>
 <p>You can read it with your eyes -- it's just text. That is the whole point. JSON
 is human-readable, which makes it great for learning. You can open the saved
@@ -2064,17 +1587,17 @@ broken mix of both.</p>
 <p>The key idea is simple: <strong>write down what you're about to do before you
 actually do it</strong>. This is called <strong>write-ahead logging</strong> (WAL). Here's the
 pattern every journaled operation follows:</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># 1. Begin a transaction</span>
-<span class="n">txn</span> <span class="o">=</span> <span class="n">journal</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span>
-
-<span class="c1"># 2. Log what we&#39;re about to do</span>
-<span class="n">journal</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">txn</span><span class="p">,</span> <span class="n">entry</span><span class="p">)</span>
-
-<span class="c1"># 3. Actually do it</span>
-<span class="n">filesystem</span><span class="o">.</span><span class="n">create_file</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-
-<span class="c1"># 4. Mark the transaction as done</span>
-<span class="n">journal</span><span class="o">.</span><span class="n">commit</span><span class="p">(</span><span class="n">txn</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># 1. Begin a transaction</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="n">txn</span> <span class="o">=</span> <span class="n">journal</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># 2. Log what we&#39;re about to do</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="n">journal</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">txn</span><span class="p">,</span> <span class="n">entry</span><span class="p">)</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="c1"># 3. Actually do it</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="n">filesystem</span><span class="o">.</span><span class="n">create_file</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="c1"># 4. Mark the transaction as done</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="n">journal</span><span class="o">.</span><span class="n">commit</span><span class="p">(</span><span class="n">txn</span><span class="p">)</span>
 </code></pre></div>
 <p>If a crash happens between steps 2 and 4, the transaction stays "active"
 (uncommitted). On recovery, we know it didn't finish, so we can safely ignore
@@ -2113,7 +1636,7 @@ photograph of the entire filesystem at that moment. We call this the
 "known-good state" because we know it's consistent and correct.</p>
 <p>After a checkpoint, we can also clean up the journal -- we don't need to keep
 records of work that's already been safely saved.</p>
-<div class="highlight"><pre><span></span><code>journal checkpoint    →  &quot;Checkpoint created&quot;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>journal checkpoint    →  &quot;Checkpoint created&quot;
 </code></pre></div>
 <h3 id="recovery-restore-replay">Recovery: Restore + Replay</h3>
 <p>When you recover from a crash, three things happen:</p>
@@ -2125,7 +1648,7 @@ records of work that's already been safely saved.</p>
 <li><strong>Discard</strong> any active or aborted transactions. These were unfinished, so
    we throw them away.</li>
 </ol>
-<div class="highlight"><pre><span></span><code>journal recover    →  &quot;Recovery complete: replayed 3 transactions&quot;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>journal recover    →  &quot;Recovery complete: replayed 3 transactions&quot;
 </code></pre></div>
 <p>The result? Your filesystem is back to a consistent state, with all completed
 work preserved. Only truly unfinished operations are lost.</p>
@@ -2141,16 +1664,16 @@ work preserved. Only truly unfinished operations are lost.</p>
 the simpler approach, and it works great.</p>
 <h3 id="trying-it-in-pyos">Trying It in PyOS</h3>
 <p>You can experiment with crash recovery in the PyOS shell:</p>
-<div class="highlight"><pre><span></span><code>touch /important.txt              # create a file
-write /important.txt secret data  # write to it
-journal checkpoint                # save a known-good state
-touch /experiment.txt             # create another file
-write /experiment.txt testing     # write some data
-journal crash                     # simulate a power failure!
-cat /important.txt                # still here (was checkpointed)
-cat /experiment.txt               # Error! (but was committed...)
-journal recover                   # replay committed transactions
-cat /experiment.txt               # back! recovered from the journal
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>touch /important.txt              # create a file
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>write /important.txt secret data  # write to it
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>journal checkpoint                # save a known-good state
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>touch /experiment.txt             # create another file
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>write /experiment.txt testing     # write some data
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>journal crash                     # simulate a power failure!
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>cat /important.txt                # still here (was checkpointed)
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>cat /experiment.txt               # Error! (but was committed...)
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>journal recover                   # replay committed transactions
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>cat /experiment.txt               # back! recovered from the journal
 </code></pre></div>
 <h3 id="how-real-filesystems-do-it_1">How Real Filesystems Do It</h3>
 <p>Real filesystems like ext4 journal their metadata by default. More advanced
@@ -2423,33 +1946,33 @@ automatically from the school's current records. A new student arrives?
 Their name instantly appears on the board. A student leaves? Their entry
 vanishes.</p>
 <h3 id="whats-inside-proc">What's inside /proc?</h3>
-<div class="highlight"><pre><span></span><code>/proc/
-├── meminfo          -- Memory statistics (total, free, used, shared)
-├── uptime           -- How long the system has been running
-├── cpuinfo          -- Scheduler policy, ready queue size (per-CPU on multi-CPU systems)
-├── stat             -- Performance metrics (context switches, throughput)
-├── [pid]/           -- One directory per process
-│   ├── status       -- Name, PID, parent, state, priority, threads
-│   ├── maps         -- Which memory pages the process uses
-│   ├── cmdline      -- The process name
-│   └── sched        -- Timing info (wait time, CPU time, response time)
-└── self/            -- Alias for whatever process is running right now
-    ├── status
-    ├── maps
-    ├── cmdline
-    └── sched
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>/proc/
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>├── meminfo          -- Memory statistics (total, free, used, shared)
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>├── uptime           -- How long the system has been running
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>├── cpuinfo          -- Scheduler policy, ready queue size (per-CPU on multi-CPU systems)
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>├── stat             -- Performance metrics (context switches, throughput)
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>├── [pid]/           -- One directory per process
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>│   ├── status       -- Name, PID, parent, state, priority, threads
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>│   ├── maps         -- Which memory pages the process uses
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>│   ├── cmdline      -- The process name
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>│   └── sched        -- Timing info (wait time, CPU time, response time)
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>└── self/            -- Alias for whatever process is running right now
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>    ├── status
+<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a>    ├── maps
+<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a>    ├── cmdline
+<a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a>    └── sched
 </code></pre></div>
 <h3 id="how-to-use-it">How to use it</h3>
 <p>You use the same commands you already know! <code>cat</code> and <code>ls</code> automatically
 detect <code>/proc</code> paths and route to the virtual filesystem instead of the
 real one.</p>
-<div class="highlight"><pre><span></span><code>ls /proc            -- see what&#39;s on the bulletin board
-cat /proc/meminfo   -- check memory usage
-cat /proc/uptime    -- see how long the system has been up
-cat /proc/stat      -- see performance metrics (context switches, throughput)
-ls /proc/42         -- list files for process 42
-cat /proc/42/status -- see process 42&#39;s details
-cat /proc/42/sched  -- see process 42&#39;s timing (wait, CPU, response time)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>ls /proc            -- see what&#39;s on the bulletin board
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>cat /proc/meminfo   -- check memory usage
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>cat /proc/uptime    -- see how long the system has been up
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>cat /proc/stat      -- see performance metrics (context switches, throughput)
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>ls /proc/42         -- list files for process 42
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>cat /proc/42/status -- see process 42&#39;s details
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>cat /proc/42/sched  -- see process 42&#39;s timing (wait, CPU, response time)
 </code></pre></div>
 <h3 id="why-does-this-exist">Why does this exist?</h3>
 <p>In real Linux, tools like <code>ps</code>, <code>top</code>, and <code>free</code> don't have special
@@ -2567,7 +2090,7 @@ If you know how to read a file, you know how to inspect the entire system.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "search.highlight"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["content.code.copy", "navigation.sections", "navigation.expand", "toc.integrate", "search.highlight"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>

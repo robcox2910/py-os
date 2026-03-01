@@ -64,10 +64,12 @@
   
     
     
+      
     
     
     
-    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="indigo">
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="teal">
   
     
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
@@ -120,7 +122,33 @@
     </div>
     
       
+        <form class="md-header__option" data-md-component="palette">
+  
     
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="teal"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="teal"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
     
     
     
@@ -200,7 +228,9 @@
 
 
 
-<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  
+
+<nav class="md-nav md-nav--primary md-nav--integrated" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
     <a href="../.." title="PyOS" class="md-nav__button md-logo" aria-label="PyOS" data-md-component="logo">
       
@@ -1256,531 +1286,6 @@
               </div>
             
             
-              
-              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
-                <div class="md-sidebar__scrollwrap">
-                  <div class="md-sidebar__inner">
-                    
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#1-devices-iodevicespy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Devices (io/devices.py)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="1. Devices (io/devices.py)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#the-school-supplies-analogy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The School Supplies Analogy
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#three-built-in-devices" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Three Built-In Devices
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Three Built-In Devices">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#nulldevice-devnull-the-trash-can" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        NullDevice (/dev/null) -- The Trash Can
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#consoledevice-the-whiteboard" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ConsoleDevice -- The Whiteboard
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#randomdevice-devrandom-the-magic-8-ball" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        RandomDevice (/dev/random) -- The Magic 8-Ball
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#the-device-manager" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Device Manager
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#2-ipc-inter-process-communication-ioipcpy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. IPC -- Inter-Process Communication (io/ipc.py)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="2. IPC -- Inter-Process Communication (io/ipc.py)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#pipes-the-tin-can-telephone" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Pipes -- The Tin-Can Telephone
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#message-queues-the-mailbox" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Message Queues -- The Mailbox
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#shared-memory-the-shared-whiteboard" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Shared Memory -- The Shared Whiteboard
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Shared Memory -- The Shared Whiteboard">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#the-synchronization-problem" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Synchronization Problem
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pipes-vs-message-queues-vs-shared-memory-when-to-use-which" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Pipes vs. Message Queues vs. Shared Memory -- When to Use Which?
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#3-disk-scheduling-iodiskpy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Disk Scheduling (io/disk.py)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="3. Disk Scheduling (io/disk.py)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#the-elevator-analogy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Elevator Analogy
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#fcfs-first-come-first-served" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        FCFS -- First Come, First Served
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#sstf-shortest-seek-time-first" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        SSTF -- Shortest Seek Time First
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#scan-the-elevator-algorithm" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        SCAN -- The Elevator Algorithm
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#c-scan-circular-scan" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        C-SCAN -- Circular SCAN
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#the-classic-textbook-example" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Classic Textbook Example
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#the-diskscheduler" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The DiskScheduler
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#4-networking-ionetworkingpy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Networking (io/networking.py)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="4. Networking (io/networking.py)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#the-phone-call-analogy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Phone Call Analogy
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#socket-states" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Socket States
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#handling-multiple-clients" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Handling Multiple Clients
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#data-buffers-the-in-memory-network" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Data Buffers -- The In-Memory Network
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#the-socket-manager" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Socket Manager
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#5-dns-name-resolution-iodnspy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. DNS -- Name Resolution (io/dns.py)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="5. DNS -- Name Resolution (io/dns.py)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#the-phone-book-analogy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Phone Book Analogy
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#how-it-works-in-pyos" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How It Works in PyOS
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#dns-over-sockets-how-queries-really-travel" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        DNS Over Sockets -- How Queries Really Travel
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#a-records-keeping-it-simple" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        A Records -- Keeping It Simple
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#6-http-talking-on-the-web-iohttppy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        6. HTTP -- Talking on the Web (io/http.py)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="6. HTTP -- Talking on the Web (io/http.py)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#the-restaurant-analogy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Restaurant Analogy
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#requests-the-order-form" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Requests -- The Order Form
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#responses-the-receipt" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Responses -- The Receipt
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#protocol-layering-http-on-top-of-sockets" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Protocol Layering -- HTTP on Top of Sockets
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#the-http-demo-command" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The http demo Command
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#http-is-user-space" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        HTTP Is User-Space
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#putting-it-all-together" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Putting It All Together
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#where-to-go-next" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Where to Go Next
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-                  </div>
-                </div>
-              </div>
-            
           
           
             <div class="md-content" data-md-component="content">
@@ -2222,8 +1727,8 @@ read the receipt.</p>
 </ol>
 <p>Here's what a real HTTP request looks like "on the wire" -- the raw bytes that
 travel over the socket:</p>
-<div class="highlight"><pre><span></span><code>GET /index.html HTTP/1.0
-Host: localhost
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>GET /index.html HTTP/1.0
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>Host: localhost
 </code></pre></div>
 <p>That's it. A method, a path, a version, some headers, and a blank line at the
 end. Simple.</p>
@@ -2247,11 +1752,11 @@ end. Simple.</p>
 </li>
 </ol>
 <p>Here's what a real response looks like:</p>
-<div class="highlight"><pre><span></span><code>HTTP/1.0 200 OK
-Content-Type: text/html
-Content-Length: 25
-
-&lt;h1&gt;Welcome to PyOS!&lt;/h1&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>HTTP/1.0 200 OK
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>Content-Type: text/html
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>Content-Length: 25
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>&lt;h1&gt;Welcome to PyOS!&lt;/h1&gt;
 </code></pre></div>
 <h3 id="protocol-layering-http-on-top-of-sockets">Protocol Layering -- HTTP on Top of Sockets</h3>
 <p>Here's the key insight: HTTP doesn't know or care <em>how</em> bytes get from point A
@@ -2259,13 +1764,13 @@ to point B. That's the socket's job. And sockets don't know or care <em>what</em
 bytes mean. That's HTTP's job.</p>
 <p>This separation is called <strong>protocol layering</strong>. Each layer does one thing well
 and relies on the layer below it for the rest:</p>
-<div class="highlight"><pre><span></span><code>  HTTP      (application layer -- what do the bytes mean?)
-    |
-  TCP       (transport layer -- reliable, ordered delivery)
-    |
-  Sockets   (network layer -- how do bytes get there?)
-    |
-  Buffers   (in-memory simulation of a network)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>  HTTP      (application layer -- what do the bytes mean?)
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    |
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>  TCP       (transport layer -- reliable, ordered delivery)
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    |
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>  Sockets   (network layer -- how do bytes get there?)
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    |
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>  Buffers   (in-memory simulation of a network)
 </code></pre></div>
 <p>In a real OS, there are even more layers (IP, Ethernet). PyOS implements
 HTTP on TCP on sockets on in-memory buffers. See <a href="../tcp/">TCP: Reliable Delivery</a>
@@ -2398,7 +1903,7 @@ halfway around the world.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "search.highlight"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["content.code.copy", "navigation.sections", "navigation.expand", "toc.integrate", "search.highlight"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>

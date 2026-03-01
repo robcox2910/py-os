@@ -64,10 +64,12 @@
   
     
     
+      
     
     
     
-    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="indigo">
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="teal">
   
     
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
@@ -120,7 +122,33 @@
     </div>
     
       
+        <form class="md-header__option" data-md-component="palette">
+  
     
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="teal"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="teal"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
     
     
     
@@ -200,7 +228,9 @@
 
 
 
-<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  
+
+<nav class="md-nav md-nav--primary md-nav--integrated" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
     <a href="../.." title="PyOS" class="md-nav__button md-logo" aria-label="PyOS" data-md-component="logo">
       
@@ -845,120 +875,6 @@
               </div>
             
             
-              
-              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
-                <div class="md-sidebar__scrollwrap">
-                  <div class="md-sidebar__inner">
-                    
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#1-the-power-button-analogy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. The Power Button Analogy
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#2-firmware-post" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Firmware POST
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#3-the-bootloader" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. The Bootloader
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#4-kernel-boot" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Kernel Boot
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#5-the-init-process" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. The Init Process
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#6-the-dmesg-command" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        6. The dmesg Command
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#7-the-boot-chain-in-pyos-code" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        7. The Boot Chain in PyOS Code
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#where-to-go-next" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Where to Go Next
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-                  </div>
-                </div>
-              </div>
-            
           
           
             <div class="md-content" data-md-component="content">
@@ -993,22 +909,22 @@ the doors open and hope for the best. There's a whole sequence:</p>
    is the <strong>init process</strong> starting the <strong>shell</strong> so you can type commands.</li>
 </ol>
 <p>In a real computer, the chain looks like this:</p>
-<div class="highlight"><pre><span></span><code>Power on
-   |
-   v
-Firmware POST     -- &quot;Is the hardware OK?&quot;
-   |
-   v
-Bootloader        -- &quot;Find and load the kernel from disk&quot;
-   |
-   v
-Kernel boot       -- &quot;Set up all subsystems&quot;
-   |
-   v
-Init (PID 1)      -- &quot;Start the first user-facing process&quot;
-   |
-   v
-Shell prompt      -- &quot;Ready for your commands!&quot;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Power on
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>   |
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>   v
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>Firmware POST     -- &quot;Is the hardware OK?&quot;
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>   |
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>   v
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>Bootloader        -- &quot;Find and load the kernel from disk&quot;
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>   |
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>   v
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>Kernel boot       -- &quot;Set up all subsystems&quot;
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>   |
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>   v
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>Init (PID 1)      -- &quot;Start the first user-facing process&quot;
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>   |
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>   v
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>Shell prompt      -- &quot;Ready for your commands!&quot;
 </code></pre></div>
 <hr />
 <h2 id="2-firmware-post">2. Firmware POST</h2>
@@ -1024,9 +940,9 @@ essential hardware is working:</p>
 a series of beeps or see an error code. In PyOS, a <code>BootError</code> is raised with
 a message explaining what went wrong.</p>
 <p>In PyOS, you can see the POST results in the boot log:</p>
-<div class="highlight"><pre><span></span><code>[POST] Memory: 64 frames ... OK
-[POST] Disk: accessible ... OK
-[POST] Devices: ready ... OK
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>[POST] Memory: 64 frames ... OK
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>[POST] Disk: accessible ... OK
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>[POST] Devices: ready ... OK
 </code></pre></div>
 <hr />
 <h2 id="3-the-bootloader">3. The Bootloader</h2>
@@ -1045,26 +961,26 @@ contains:</p>
 <li><strong>default_policy</strong> -- which scheduling policy to start with</li>
 <li><strong>boot_args</strong> -- extra configuration settings</li>
 </ul>
-<div class="highlight"><pre><span></span><code>[BOOT] Loading kernel image v0.1.0 ... OK
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>[BOOT] Loading kernel image v0.1.0 ... OK
 </code></pre></div>
 <hr />
 <h2 id="4-kernel-boot">4. Kernel Boot</h2>
 <p>With the kernel image loaded, the kernel itself takes over. It initializes
 every subsystem in a specific order (because each one depends on the ones
 before it):</p>
-<div class="highlight"><pre><span></span><code>[OK] Logger
-[OK] Memory manager (64 frames)
-[OK] Slab allocator
-[OK] File system (journaled)
-[OK] User manager
-[OK] Environment
-[OK] Device manager
-[OK] DNS resolver
-[OK] Network stack
-[OK] Sync primitives
-[OK] Scheduler (FCFS)
-[OK] /proc filesystem
-[OK] Init process (PID ...)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>[OK] Logger
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>[OK] Memory manager (64 frames)
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>[OK] Slab allocator
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>[OK] File system (journaled)
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>[OK] User manager
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>[OK] Environment
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>[OK] Device manager
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>[OK] DNS resolver
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>[OK] Network stack
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>[OK] Sync primitives
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>[OK] Scheduler (FCFS)
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>[OK] /proc filesystem
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>[OK] Init process (PID ...)
 </code></pre></div>
 <p>This is exactly what we covered in the
 <a href="../kernel-and-syscalls/">Kernel and System Calls</a> page -- the boot sequence
@@ -1081,9 +997,9 @@ of init.</p>
 - If a process's parent dies, init "adopts" the orphaned children
 - init is the last process to stop during shutdown</p>
 <p>In PyOS, the kernel creates init the same way:</p>
-<div class="highlight"><pre><span></span><code><span class="n">init</span> <span class="o">=</span> <span class="n">Process</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;init&quot;</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-<span class="n">init</span><span class="o">.</span><span class="n">admit</span><span class="p">()</span>
-<span class="n">scheduler</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">init</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">init</span> <span class="o">=</span> <span class="n">Process</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;init&quot;</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">init</span><span class="o">.</span><span class="n">admit</span><span class="p">()</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">scheduler</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">init</span><span class="p">)</span>
 </code></pre></div>
 <p>Notice that init doesn't allocate memory -- it's a lightweight sentinel that
 just represents the root of the process tree. When you create a new process
@@ -1096,12 +1012,12 @@ the top.</p>
 reading the school's morning checklist after everything is already open --
 you can see exactly what happened during startup.</p>
 <p>PyOS has the same command:</p>
-<div class="highlight"><pre><span></span><code>$ dmesg
-[OK] Logger
-[OK] Memory manager (64 frames)
-[OK] Slab allocator
-[OK] File system (journaled)
-...
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>$ dmesg
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>[OK] Logger
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>[OK] Memory manager (64 frames)
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>[OK] Slab allocator
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>[OK] File system (journaled)
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>...
 </code></pre></div>
 <p>Behind the scenes, <code>dmesg</code> uses the <code>SYS_DMESG</code> syscall (number 210) to
 fetch the boot log from the kernel.</p>
@@ -1110,10 +1026,10 @@ boot: the init process PID, system uptime, and kernel version.</p>
 <hr />
 <h2 id="7-the-boot-chain-in-pyos-code">7. The Boot Chain in PyOS Code</h2>
 <p>Here's how the REPL brings everything together:</p>
-<div class="highlight"><pre><span></span><code><span class="n">bootloader</span> <span class="o">=</span> <span class="n">Bootloader</span><span class="p">()</span>
-<span class="n">kernel</span> <span class="o">=</span> <span class="n">bootloader</span><span class="o">.</span><span class="n">boot</span><span class="p">()</span>    <span class="c1"># POST -&gt; load image -&gt; kernel.boot()</span>
-<span class="n">shell</span> <span class="o">=</span> <span class="n">Shell</span><span class="p">(</span><span class="n">kernel</span><span class="o">=</span><span class="n">kernel</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">format_boot_log</span><span class="p">(</span><span class="n">bootloader</span><span class="o">.</span><span class="n">boot_log</span> <span class="o">+</span> <span class="n">kernel</span><span class="o">.</span><span class="n">dmesg</span><span class="p">()))</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">bootloader</span> <span class="o">=</span> <span class="n">Bootloader</span><span class="p">()</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="n">kernel</span> <span class="o">=</span> <span class="n">bootloader</span><span class="o">.</span><span class="n">boot</span><span class="p">()</span>    <span class="c1"># POST -&gt; load image -&gt; kernel.boot()</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">shell</span> <span class="o">=</span> <span class="n">Shell</span><span class="p">(</span><span class="n">kernel</span><span class="o">=</span><span class="n">kernel</span><span class="p">)</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="nb">print</span><span class="p">(</span><span class="n">format_boot_log</span><span class="p">(</span><span class="n">bootloader</span><span class="o">.</span><span class="n">boot_log</span> <span class="o">+</span> <span class="n">kernel</span><span class="o">.</span><span class="n">dmesg</span><span class="p">()))</span>
 </code></pre></div>
 <p>The <code>Bootloader.boot()</code> method runs through all four stages:</p>
 <ol>
@@ -1180,7 +1096,7 @@ which returns a <code>BootStage</code> enum value.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "search.highlight"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["content.code.copy", "navigation.sections", "navigation.expand", "toc.integrate", "search.highlight"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>

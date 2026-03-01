@@ -64,10 +64,12 @@
   
     
     
+      
     
     
     
-    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="indigo">
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="teal">
   
     
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
@@ -120,7 +122,33 @@
     </div>
     
       
+        <form class="md-header__option" data-md-component="palette">
+  
     
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="teal"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="teal"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
     
     
     
@@ -200,7 +228,9 @@
 
 
 
-<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  
+
+<nav class="md-nav md-nav--primary md-nav--integrated" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
     <a href="../.." title="PyOS" class="md-nav__button md-logo" aria-label="PyOS" data-md-component="logo">
       
@@ -1229,504 +1259,6 @@
               </div>
             
             
-              
-              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
-                <div class="md-sidebar__scrollwrap">
-                  <div class="md-sidebar__inner">
-                    
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#what-is-a-process" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What is a Process?
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="What is a Process?">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#the-process-control-block-pcb" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Process Control Block (PCB)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#the-five-states" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Five States
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="The Five States">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#transitions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Transitions
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#the-scheduler" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Scheduler
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="The Scheduler">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#fcfs-first-come-first-served" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        FCFS (First Come, First Served)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#round-robin" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Round Robin
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#priority-scheduling" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Priority Scheduling
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#aging-priority" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Aging Priority
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#multilevel-feedback-queue-mlfq" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Multilevel Feedback Queue (MLFQ)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#completely-fair-scheduler-cfs" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Completely Fair Scheduler (CFS)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#comparing-the-six-policies" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Comparing the Six Policies
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#the-strategy-pattern" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Strategy Pattern
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#forking" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Forking
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Forking">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#what-gets-copied" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What gets copied
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#why-is-forking-useful" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Why is forking useful?
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#the-process-tree" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Process Tree
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#threads" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Threads
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Threads">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#why-threads-are-cheap" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Why threads are cheap
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#why-sharing-is-tricky" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Why sharing is tricky
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#threads-vs-fork-when-to-use-which" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Threads vs Fork -- When to use which
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#running-programs" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Running Programs
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Running Programs">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#exit-codes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Exit Codes
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#try-it-in-the-pyos-shell" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Try it in the PyOS shell
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#zombies-and-waiting" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Zombies and Waiting
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Zombies and Waiting">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#the-milk-analogy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The milk analogy
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#wait-and-waitpid" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        wait() and waitpid()
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#what-happens-to-orphans" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What happens to orphans?
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#try-it-in-the-pyos-shell_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Try it in the PyOS shell
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#performance-metrics" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Performance Metrics
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Performance Metrics">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#try-it-in-the-pyos-shell_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Try it in the PyOS shell
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#multiple-cpus" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Multiple CPUs
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Multiple CPUs">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#how-it-works" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How it works
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#try-it-in-the-pyos-shell_3" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Try it in the PyOS shell
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#under-the-hood" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Under the hood
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#putting-it-all-together" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Putting It All Together
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#key-terms" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Key Terms
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#where-to-go-next" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Where to Go Next
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-                  </div>
-                </div>
-              </div>
-            
           
           
             <div class="md-content" data-md-component="content">
@@ -1791,10 +1323,10 @@
 <hr />
 <h2 id="the-five-states">The Five States</h2>
 <p>A process is not always running. Most of the time, it is waiting for its turn. Every process moves through up to five states during its life:</p>
-<div class="highlight"><pre><span></span><code>NEW --&gt; READY &lt;--&gt; RUNNING --&gt; TERMINATED
-                    |   ^
-                    v   |
-                  WAITING
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>NEW --&gt; READY &lt;--&gt; RUNNING --&gt; TERMINATED
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>                    |   ^
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>                    v   |
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>                  WAITING
 </code></pre></div>
 <p>Think of a classroom where only <strong>one student can use the whiteboard</strong> at a time.</p>
 <p><strong>NEW</strong> -- The student just arrived at school. They are registered, but they have not joined the line for the whiteboard yet. In PyOS, a process starts in NEW and moves to READY when it is <em>admitted</em> to the scheduler.</p>
@@ -1861,28 +1393,28 @@
 <h3 id="round-robin">Round Robin</h3>
 <p>A fairer rule: each student gets a fixed amount of time at the whiteboard (say, 2 minutes). When their time is up, they go to the back of the line, and the next student steps up. Everyone gets a turn, no one hogs the whiteboard forever.</p>
 <p>In PyOS, the amount of time each process gets is called the <strong>quantum</strong>. The <code>RoundRobinPolicy</code> stores this value, and the scheduler preempts (pulls back) the running process when its quantum expires. This preemption is driven by the hardware timer -- a device that fires an <a href="../interrupts/">interrupt</a> every few ticks. When the interrupt fires, the kernel checks whether the current process has used up its quantum and, if so, switches to the next one.</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># Round Robin with a quantum of 3 ticks</span>
-<span class="n">policy</span> <span class="o">=</span> <span class="n">RoundRobinPolicy</span><span class="p">(</span><span class="n">quantum</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
-<span class="n">scheduler</span> <span class="o">=</span> <span class="n">Scheduler</span><span class="p">(</span><span class="n">policy</span><span class="o">=</span><span class="n">policy</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Round Robin with a quantum of 3 ticks</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">policy</span> <span class="o">=</span> <span class="n">RoundRobinPolicy</span><span class="p">(</span><span class="n">quantum</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="n">scheduler</span> <span class="o">=</span> <span class="n">Scheduler</span><span class="p">(</span><span class="n">policy</span><span class="o">=</span><span class="n">policy</span><span class="p">)</span>
 </code></pre></div>
 <h3 id="priority-scheduling">Priority Scheduling</h3>
 <p>What if some tasks are more important than others? In a hospital emergency room, a patient with a broken arm is seen before someone with a splinter, even if the splinter patient arrived first. Priority scheduling works the same way: every process has a <strong>priority number</strong>, and the scheduler always picks the highest-priority process next.</p>
 <p>In PyOS, higher numbers mean higher priority. A process with <code>priority=10</code> runs before one with <code>priority=1</code>. When two processes have the same priority, the scheduler falls back to FIFO -- whoever arrived first goes first.</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># Priority scheduling -- highest priority runs first</span>
-<span class="n">policy</span> <span class="o">=</span> <span class="n">PriorityPolicy</span><span class="p">()</span>
-<span class="n">scheduler</span> <span class="o">=</span> <span class="n">Scheduler</span><span class="p">(</span><span class="n">policy</span><span class="o">=</span><span class="n">policy</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Priority scheduling -- highest priority runs first</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">policy</span> <span class="o">=</span> <span class="n">PriorityPolicy</span><span class="p">()</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">scheduler</span> <span class="o">=</span> <span class="n">Scheduler</span><span class="p">(</span><span class="n">policy</span><span class="o">=</span><span class="n">policy</span><span class="p">)</span>
 </code></pre></div>
 <p>There is a catch: <strong>starvation</strong>. If high-priority processes keep arriving, the low-priority ones never get a turn -- like an emergency room where critical patients keep showing up and the person with a sprained ankle waits forever. The next policy solves exactly this problem.</p>
 <h3 id="aging-priority">Aging Priority</h3>
 <p>Imagine a lunch queue where VIP students always cut in front. That is unfair -- regular students could wait all day. <strong>Aging</strong> is like giving every waiting student a "patience sticker" each time someone cuts ahead of them. Once you collect enough stickers, the lunch lady says "You've waited long enough -- you're next!" After you get served, your stickers are cleared and the counting starts over.</p>
 <p>In PyOS, every time the scheduler runs, each waiting process earns a small priority bonus (the <code>aging_boost</code>, default 1). The <strong>effective priority</strong> is the process's base priority plus its accumulated bonus. Eventually, even a low-priority process collects enough bonus to beat the high-priority newcomers. Once selected, the bonus resets to zero. A cap (<code>max_age</code>, default 10) prevents the bonus from growing without limit.</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># Aging Priority with default settings (boost=1, max_age=10)</span>
-<span class="n">policy</span> <span class="o">=</span> <span class="n">AgingPriorityPolicy</span><span class="p">()</span>
-<span class="n">scheduler</span> <span class="o">=</span> <span class="n">Scheduler</span><span class="p">(</span><span class="n">policy</span><span class="o">=</span><span class="n">policy</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Aging Priority with default settings (boost=1, max_age=10)</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">policy</span> <span class="o">=</span> <span class="n">AgingPriorityPolicy</span><span class="p">()</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">scheduler</span> <span class="o">=</span> <span class="n">Scheduler</span><span class="p">(</span><span class="n">policy</span><span class="o">=</span><span class="n">policy</span><span class="p">)</span>
 </code></pre></div>
 <p>You can switch to it from the shell:</p>
-<div class="highlight"><pre><span></span><code>pyos&gt; scheduler aging
-Scheduler set to Aging Priority (boost=1, max_age=10)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>pyos&gt; scheduler aging
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>Scheduler set to Aging Priority (boost=1, max_age=10)
 </code></pre></div>
 <h3 id="multilevel-feedback-queue-mlfq">Multilevel Feedback Queue (MLFQ)</h3>
 <p>What if the scheduler could <em>learn</em> whether a process is a quick task or a long-running one, and adjust accordingly? That is what the <strong>Multilevel Feedback Queue</strong> does. It is the most important adaptive scheduling algorithm in real operating systems -- used by Linux (the predecessor to CFS), Windows, and macOS.</p>
@@ -1895,32 +1427,32 @@ Scheduler set to Aging Priority (boost=1, max_age=10)
 <li><strong>Periodic boost</strong> resets everyone to level 0 to prevent starvation.</li>
 </ol>
 <p>This means short I/O-bound processes (like typing in a text editor) stay at level 0 and get fast response times, while long CPU-bound processes (like video encoding) naturally sink to lower levels with longer quanta -- less context-switching overhead for them.</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># MLFQ with 3 levels, base quantum of 2</span>
-<span class="n">policy</span> <span class="o">=</span> <span class="n">MLFQPolicy</span><span class="p">(</span><span class="n">num_levels</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">base_quantum</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-<span class="c1"># Quanta: level 0 = 2, level 1 = 4, level 2 = 8</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># MLFQ with 3 levels, base quantum of 2</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">policy</span> <span class="o">=</span> <span class="n">MLFQPolicy</span><span class="p">(</span><span class="n">num_levels</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">base_quantum</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="c1"># Quanta: level 0 = 2, level 1 = 4, level 2 = 8</span>
 </code></pre></div>
 <p>You can switch to MLFQ and trigger boosts from the shell:</p>
-<div class="highlight"><pre><span></span><code>pyos&gt; scheduler mlfq
-Scheduler set to MLFQ (3 levels, base_quantum=2)
-
-pyos&gt; scheduler boost
-MLFQ boost: all processes reset to level 0
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>pyos&gt; scheduler mlfq
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>Scheduler set to MLFQ (3 levels, base_quantum=2)
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>pyos&gt; scheduler boost
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>MLFQ boost: all processes reset to level 0
 </code></pre></div>
 <h3 id="completely-fair-scheduler-cfs">Completely Fair Scheduler (CFS)</h3>
 <p>Linux replaced its earlier O(1) scheduler with the <strong>Completely Fair Scheduler</strong> in 2007, and it has been the default ever since. The goal is simple: give every process exactly its fair share of CPU time.</p>
 <p><strong>Analogy</strong>: Imagine a pizza party where everyone should get equal slices, but some kids ordered extra toppings (higher priority). The host keeps a notebook tracking how many slices each person has eaten. The person who has eaten the fewest slices goes next. Kids with extra toppings have their count go up more slowly, so they get to eat more total slices before their number catches up. Eventually, everyone's count is roughly equal -- that is fairness.</p>
 <p>The notebook number is called <strong>virtual runtime</strong> (vruntime). Every time a process runs for one scheduling round, its vruntime goes up by <code>base_slice / weight</code>. The <strong>weight</strong> comes from the process's priority: <code>weight = max(1, priority + 1)</code>. A process with priority 5 has weight 6, so its vruntime grows six times slower than a priority-0 process. That means it gets picked more often before its count catches up -- more CPU time, just like the "extra toppings" kids.</p>
 <p>New processes start with their vruntime set to the current minimum across all processes, so they do not jump ahead or fall behind unfairly.</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># CFS with default base_slice of 1</span>
-<span class="n">policy</span> <span class="o">=</span> <span class="n">CFSPolicy</span><span class="p">(</span><span class="n">base_slice</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="n">scheduler</span> <span class="o">=</span> <span class="n">Scheduler</span><span class="p">(</span><span class="n">policy</span><span class="o">=</span><span class="n">policy</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># CFS with default base_slice of 1</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="n">policy</span> <span class="o">=</span> <span class="n">CFSPolicy</span><span class="p">(</span><span class="n">base_slice</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="n">scheduler</span> <span class="o">=</span> <span class="n">Scheduler</span><span class="p">(</span><span class="n">policy</span><span class="o">=</span><span class="n">policy</span><span class="p">)</span>
 </code></pre></div>
 <p>You can switch to CFS from the shell:</p>
-<div class="highlight"><pre><span></span><code>pyos&gt; scheduler cfs
-Scheduler set to CFS (base_slice=1)
-
-pyos&gt; scheduler cfs 3
-Scheduler set to CFS (base_slice=3)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>pyos&gt; scheduler cfs
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>Scheduler set to CFS (base_slice=1)
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>pyos&gt; scheduler cfs 3
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>Scheduler set to CFS (base_slice=3)
 </code></pre></div>
 <blockquote>
 <p><strong>How would you make it faster?</strong> Our simulator finds the lowest vruntime by scanning through all processes in the queue -- this takes O(n) time. Real Linux CFS uses a <strong>red-black tree</strong> (a self-balancing binary search tree) so that finding and removing the minimum takes only O(log n) time. For our small simulations this does not matter, but in a real kernel with thousands of processes, that speedup is essential.</p>
@@ -1982,8 +1514,8 @@ Scheduler set to CFS (base_slice=3)
 </tbody>
 </table>
 <p>You can switch policies at runtime using the <code>scheduler</code> shell command:</p>
-<div class="highlight"><pre><span></span><code>pyos&gt; scheduler priority
-Scheduler set to Priority
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>pyos&gt; scheduler priority
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>Scheduler set to Priority
 </code></pre></div>
 <h3 id="the-strategy-pattern">The Strategy Pattern</h3>
 <p>Notice something neat about this design: the scheduler itself does not know <em>how</em> to pick the next process. It just asks the policy. You can swap <code>FCFSPolicy</code> for <code>RoundRobinPolicy</code> or <code>PriorityPolicy</code> (or write your own!) without changing a single line in the <code>Scheduler</code> class. This is a design pattern called <strong>Strategy</strong> -- the "rules for taking turns" are a separate, swappable piece.</p>
@@ -2028,10 +1560,10 @@ Scheduler set to Priority
 <p>Forking is how an operating system creates new workers. A web server might fork a child process for every new visitor, so each visitor gets their own handler. If one child crashes, the others keep running.</p>
 <h3 id="the-process-tree">The Process Tree</h3>
 <p>Because every child remembers its parent (via <code>parent_pid</code>), processes form a <strong>tree</strong>. On a real Linux system, you can see this with the <code>pstree</code> command:</p>
-<div class="highlight"><pre><span></span><code>server (pid=1)
-  +-- server (fork) (pid=2)
-  +-- server (fork) (pid=3)
-       +-- server (fork) (fork) (pid=4)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>server (pid=1)
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>  +-- server (fork) (pid=2)
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>  +-- server (fork) (pid=3)
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>       +-- server (fork) (fork) (pid=4)
 </code></pre></div>
 <p>Every Unix system has a process tree rooted at PID 1 (called <code>init</code> or <code>systemd</code>). All other processes are descendants, created through chains of fork calls.</p>
 <hr />
@@ -2041,8 +1573,8 @@ Scheduler set to Priority
 <p>If forking is like photocopying an entire student (desk, notes, pencil, everything), creating a thread is like giving one student a <strong>second pair of hands</strong>. Both pairs of hands share the same desk and the same notes. They can work on two things at the same time, and they can both see everything the other is doing.</p>
 <h3 id="why-threads-are-cheap">Why threads are cheap</h3>
 <p>When you fork, the <a href="../kernel-and-syscalls/">kernel</a> has to copy all of the parent's <a href="../memory/">memory</a> into new physical frames. That takes time and space. When you create a thread, no new memory is allocated at all. The thread just uses the memory that the process already has. That is why threads are called "lightweight."</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># Creating a thread inside a process -- no memory cost</span>
-<span class="n">worker</span> <span class="o">=</span> <span class="n">process</span><span class="o">.</span><span class="n">create_thread</span><span class="p">(</span><span class="s2">&quot;worker-1&quot;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># Creating a thread inside a process -- no memory cost</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="n">worker</span> <span class="o">=</span> <span class="n">process</span><span class="o">.</span><span class="n">create_thread</span><span class="p">(</span><span class="s2">&quot;worker-1&quot;</span><span class="p">)</span>
 </code></pre></div>
 <h3 id="why-sharing-is-tricky">Why sharing is tricky</h3>
 <p>Sharing sounds great, but it comes with a catch. If both pairs of hands try to erase and write in the same spot at the same time, you get a mess. One hand erases while the other is writing, and the result is garbled nonsense.</p>
@@ -2102,17 +1634,17 @@ Scheduler set to Priority
 <p>In real Unix, you can check the last command's exit code with <code>$?</code>. In PyOS, the exit code is stored on the process object after execution.</p>
 <h3 id="try-it-in-the-pyos-shell">Try it in the PyOS shell</h3>
 <p>PyOS comes with a couple of built-in programs you can run:</p>
-<div class="highlight"><pre><span></span><code>pyos&gt; run hello
-Hello from PyOS!
-[exit code: 0]
-
-pyos&gt; run counter
-1
-2
-3
-4
-5
-[exit code: 0]
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>pyos&gt; run hello
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>Hello from PyOS!
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>[exit code: 0]
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>pyos&gt; run counter
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>1
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>2
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>3
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>4
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>5
+<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a>[exit code: 0]
 </code></pre></div>
 <p>The <code>run</code> command does the full lifecycle behind the scenes: it creates a process, loads the named program, dispatches and executes it, captures the output, and cleans up -- all through <a href="../kernel-and-syscalls/">syscalls</a> (<code>SYS_EXEC</code> and <code>SYS_RUN</code>).</p>
 <hr />
@@ -2131,15 +1663,15 @@ pyos&gt; run counter
 <h3 id="what-happens-to-orphans">What happens to orphans?</h3>
 <p>If a process has no parent (or the parent has already been removed), it is an <strong>orphan</strong>. Orphans are cleaned up immediately when they terminate -- no zombie stage needed, because nobody is going to collect them.</p>
 <h3 id="try-it-in-the-pyos-shell_1">Try it in the PyOS shell</h3>
-<div class="highlight"><pre><span></span><code>pyos&gt; fork 1
-Forked pid 1 → child pid 2 (parent (fork))
-
-pyos&gt; wait 1
-Collected child pid 2 (exit_code=0, output=&#39;hello&#39;)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>pyos&gt; fork 1
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>Forked pid 1 → child pid 2 (parent (fork))
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>pyos&gt; wait 1
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>Collected child pid 2 (exit_code=0, output=&#39;hello&#39;)
 </code></pre></div>
 <p>If the child has not finished yet, you will see:</p>
-<div class="highlight"><pre><span></span><code>pyos&gt; wait 1
-Process 1 is now waiting for a child.
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>pyos&gt; wait 1
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>Process 1 is now waiting for a child.
 </code></pre></div>
 <hr />
 <h2 id="performance-metrics">Performance Metrics</h2>
@@ -2181,32 +1713,32 @@ Process 1 is now waiting for a child.
 - "Is the system getting work done?" (throughput — completed processes per second)
 - "Does the system feel responsive?" (low average response time)</p>
 <h3 id="try-it-in-the-pyos-shell_2">Try it in the PyOS shell</h3>
-<div class="highlight"><pre><span></span><code>pyos&gt; perf
-=== PyOS Performance Metrics ===
-Context switches:    0
-Processes created:   0
-Processes completed: 0
-Avg wait time:       0.00s
-Avg turnaround:      0.00s
-Avg response:        0.00s
-Throughput:          0.00 procs/sec
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>pyos&gt; perf
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>=== PyOS Performance Metrics ===
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>Context switches:    0
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>Processes created:   0
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>Processes completed: 0
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>Avg wait time:       0.00s
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>Avg turnaround:      0.00s
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>Avg response:        0.00s
+<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a>Throughput:          0.00 procs/sec
 </code></pre></div>
 <p>You can also read the raw numbers from the virtual filesystem:</p>
-<div class="highlight"><pre><span></span><code>pyos&gt; cat /proc/stat
-CtxSwitches:    42
-TotalCreated:   10
-TotalCompleted: 7
-AvgWaitTime:    0.15 seconds
-AvgTurnaround:  1.23 seconds
-AvgResponse:    0.05 seconds
-Throughput:     2.33 procs/sec
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>pyos&gt; cat /proc/stat
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>CtxSwitches:    42
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>TotalCreated:   10
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>TotalCompleted: 7
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>AvgWaitTime:    0.15 seconds
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>AvgTurnaround:  1.23 seconds
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>AvgResponse:    0.05 seconds
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>Throughput:     2.33 procs/sec
 </code></pre></div>
 <p>Or check individual process timing:</p>
-<div class="highlight"><pre><span></span><code>pyos&gt; cat /proc/42/sched
-WaitTime:       0.05 seconds
-CpuTime:        0.10 seconds
-ResponseTime:   0.02 seconds
-Turnaround:     0.15 seconds
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>pyos&gt; cat /proc/42/sched
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>WaitTime:       0.05 seconds
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>CpuTime:        0.10 seconds
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>ResponseTime:   0.02 seconds
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>Turnaround:     0.15 seconds
 </code></pre></div>
 <p>Run <code>perf demo</code> for a guided walkthrough that creates processes and shows how the numbers change.</p>
 <hr />
@@ -2221,25 +1753,25 @@ Turnaround:     0.15 seconds
 </ul>
 <h3 id="try-it-in-the-pyos-shell_3">Try it in the PyOS shell</h3>
 <p>PyOS supports multiple CPUs through the bootloader or kernel configuration:</p>
-<div class="highlight"><pre><span></span><code>pyos&gt; cpu
-CPU 0: FCFSPolicy  ready=2  current=pid 1 (init)
-CPU 1: FCFSPolicy  ready=1  current=none
-
-pyos&gt; taskset 3
-Process 3 affinity: CPU 0, 1
-
-pyos&gt; taskset 3 0
-Set process 3 affinity to CPU 0
-
-pyos&gt; scheduler balance
-Balanced: 1 migration(s)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>pyos&gt; cpu
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>CPU 0: FCFSPolicy  ready=2  current=pid 1 (init)
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>CPU 1: FCFSPolicy  ready=1  current=none
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>pyos&gt; taskset 3
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>Process 3 affinity: CPU 0, 1
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a>
+<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a>pyos&gt; taskset 3 0
+<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a>Set process 3 affinity to CPU 0
+<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a>
+<a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a>pyos&gt; scheduler balance
+<a id="__codelineno-18-12" name="__codelineno-18-12" href="#__codelineno-18-12"></a>Balanced: 1 migration(s)
 </code></pre></div>
 <p>The <code>ps</code> command shows which CPU each process is on:</p>
-<div class="highlight"><pre><span></span><code>pyos&gt; ps
-PID    CPU  STATE       NAME
-1      0    running     init
-2      1    ready       worker-a
-3      0    ready       worker-b
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>pyos&gt; ps
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>PID    CPU  STATE       NAME
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>1      0    running     init
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>2      1    ready       worker-a
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>3      0    ready       worker-b
 </code></pre></div>
 <h3 id="under-the-hood">Under the hood</h3>
 <p>The <code>MultiCPUScheduler</code> wraps N <code>Scheduler</code> instances -- one per CPU. It exposes the same interface as a single-CPU scheduler (so existing code works unchanged), plus new methods for load balancing, affinity, and migration. Each per-CPU scheduler has its own ready queue, current process, and context-switch counter.</p>
@@ -2431,7 +1963,7 @@ PID    CPU  STATE       NAME
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "search.highlight"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["content.code.copy", "navigation.sections", "navigation.expand", "toc.integrate", "search.highlight"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>

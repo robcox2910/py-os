@@ -64,10 +64,12 @@
   
     
     
+      
     
     
     
-    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="indigo">
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="teal">
   
     
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
@@ -120,7 +122,33 @@
     </div>
     
       
+        <form class="md-header__option" data-md-component="palette">
+  
     
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="teal"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="teal"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
     
     
     
@@ -200,7 +228,9 @@
 
 
 
-<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  
+
+<nav class="md-nav md-nav--primary md-nav--integrated" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
     <a href="../.." title="PyOS" class="md-nav__button md-logo" aria-label="PyOS" data-md-component="logo">
       
@@ -1023,298 +1053,6 @@
               </div>
             
             
-              
-              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
-                <div class="md-sidebar__scrollwrap">
-                  <div class="md-sidebar__inner">
-                    
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#1-what-is-the-kernel" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. What Is the Kernel?
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#2-before-the-kernel-the-boot-chain" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Before the Kernel: The Boot Chain
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#3-the-kernel-boot-sequence" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. The Kernel Boot Sequence
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="3. The Kernel Boot Sequence">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#why-does-order-matter" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Why does order matter?
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#shutdown-is-the-reverse" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Shutdown is the reverse
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#4-system-calls" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. System Calls
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="4. System Calls">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#the-front-desk-analogy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The front desk analogy
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#how-it-works-in-pyos" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How it works in PyOS
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#the-full-list-of-syscall-numbers" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The full list of syscall numbers
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#what-a-syscall-handler-looks-like" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What a syscall handler looks like
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#5-why-have-system-calls-at-all" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. Why Have System Calls at All?
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#6-tying-it-all-together" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        6. Tying It All Together
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#7-tracing-system-calls-with-strace" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        7. Tracing System Calls with strace
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="7. Tracing System Calls with strace">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#using-strace-in-the-shell" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Using strace in the shell
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#why-is-strace-useful" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Why is strace useful?
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#how-it-works-inside-the-kernel" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How it works inside the kernel
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#strace-syscall-numbers" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Strace syscall numbers
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#8-user-mode-vs-kernel-mode" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        8. User Mode vs Kernel Mode
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="8. User Mode vs Kernel Mode">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#how-pyos-enforces-this" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How PyOS enforces this
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#why-bother" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Why bother?
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#kernel-mode-helper-syscalls" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Kernel-mode helper syscalls
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#where-to-go-next" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Where to Go Next
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-                  </div>
-                </div>
-              </div>
-            
           
           
             <div class="md-content" data-md-component="content">
@@ -1359,7 +1097,7 @@ grant the request. This keeps everything safe and organized.</p>
 <p><strong>It has a lifecycle.</strong> The kernel is not just "on" or "off." It moves through
 a series of states, like a school that opens in the morning and closes at
 night:</p>
-<div class="highlight"><pre><span></span><code>SHUTDOWN  --&gt;  BOOTING  --&gt;  RUNNING  --&gt;  SHUTTING_DOWN  --&gt;  SHUTDOWN
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>SHUTDOWN  --&gt;  BOOTING  --&gt;  RUNNING  --&gt;  SHUTTING_DOWN  --&gt;  SHUTDOWN
 </code></pre></div>
 <ul>
 <li><strong>SHUTDOWN</strong> -- the school is closed, the lights are off.</li>
@@ -1369,11 +1107,11 @@ night:</p>
 </ul>
 <p>You can find the lifecycle defined as a <code>KernelState</code> enum near the top of
 <code>kernel.py</code>. In Python, that looks like this:</p>
-<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">KernelState</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
-    <span class="n">SHUTDOWN</span> <span class="o">=</span> <span class="s2">&quot;shutdown&quot;</span>
-    <span class="n">BOOTING</span> <span class="o">=</span> <span class="s2">&quot;booting&quot;</span>
-    <span class="n">RUNNING</span> <span class="o">=</span> <span class="s2">&quot;running&quot;</span>
-    <span class="n">SHUTTING_DOWN</span> <span class="o">=</span> <span class="s2">&quot;shutting_down&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">KernelState</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="n">SHUTDOWN</span> <span class="o">=</span> <span class="s2">&quot;shutdown&quot;</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="n">BOOTING</span> <span class="o">=</span> <span class="s2">&quot;booting&quot;</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">RUNNING</span> <span class="o">=</span> <span class="s2">&quot;running&quot;</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">SHUTTING_DOWN</span> <span class="o">=</span> <span class="s2">&quot;shutting_down&quot;</span>
 </code></pre></div>
 <hr />
 <h2 id="2-before-the-kernel-the-boot-chain">2. Before the Kernel: The Boot Chain</h2>
@@ -1390,33 +1128,33 @@ before their classrooms are set up.</p>
 <p>Computers work the same way. When PyOS boots, the kernel initializes each
 subsystem one at a time, in a careful order. If you look at the <code>boot()</code>
 method in <code>kernel.py</code>, you'll see something like this:</p>
-<div class="highlight"><pre><span></span><code>0. Logger           -- Turn on the security cameras first
-                       (so everything that happens is recorded)
-1. Memory Manager   -- Set up the desks
-                       (everything needs somewhere to sit)
-1b. Slab Allocator  -- Set up the supply cupboards
-                       (fixed-size object pools for fast allocation)
-2. File System      -- Unlock the filing cabinets
-3. User Manager     -- Get the attendance list ready
-4. Environment      -- Post the daily schedule on the board
-5. Device Manager   -- Turn on the printers and projectors
-5b. DNS Resolver    -- Open the phone book (hostname -&gt; IP)
-5c. Socket Manager  -- Set up the phone lines (network stack)
-5d. Interrupt Controller + Timer
-                    -- Wire up the doorbells (hardware event dispatch)
-5e. TCP Stack       -- Set up reliable mail delivery between buildings
-6. Resource Manager -- Set up the rules for sharing supplies
-7. Sync Manager     -- Hand out the shared-equipment sign-out sheets
-                       (mutexes, semaphores, condition variables)
-7b. PI Manager      -- Turn on the &quot;no cutting in line&quot; rule
-                       (priority inheritance to prevent priority inversion)
-7c. Ordering Manager -- Post the &quot;walk forward only&quot; rule for lockers
-                       (resource ordering to prevent deadlock)
-8. Scheduler        -- Open the doors and let students in
-9. /proc Filesystem -- Turn on the magic bulletin board
-                       (live stats from all subsystems)
-10. Init Process    -- The vice principal sits at the front desk
-                       (first process, parent of all others)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>0. Logger           -- Turn on the security cameras first
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>                       (so everything that happens is recorded)
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>1. Memory Manager   -- Set up the desks
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>                       (everything needs somewhere to sit)
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>1b. Slab Allocator  -- Set up the supply cupboards
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>                       (fixed-size object pools for fast allocation)
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>2. File System      -- Unlock the filing cabinets
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>3. User Manager     -- Get the attendance list ready
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>4. Environment      -- Post the daily schedule on the board
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>5. Device Manager   -- Turn on the printers and projectors
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>5b. DNS Resolver    -- Open the phone book (hostname -&gt; IP)
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>5c. Socket Manager  -- Set up the phone lines (network stack)
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>5d. Interrupt Controller + Timer
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>                    -- Wire up the doorbells (hardware event dispatch)
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>5e. TCP Stack       -- Set up reliable mail delivery between buildings
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>6. Resource Manager -- Set up the rules for sharing supplies
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>7. Sync Manager     -- Hand out the shared-equipment sign-out sheets
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>                       (mutexes, semaphores, condition variables)
+<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>7b. PI Manager      -- Turn on the &quot;no cutting in line&quot; rule
+<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>                       (priority inheritance to prevent priority inversion)
+<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a>7c. Ordering Manager -- Post the &quot;walk forward only&quot; rule for lockers
+<a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a>                       (resource ordering to prevent deadlock)
+<a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a>8. Scheduler        -- Open the doors and let students in
+<a id="__codelineno-2-24" name="__codelineno-2-24" href="#__codelineno-2-24"></a>9. /proc Filesystem -- Turn on the magic bulletin board
+<a id="__codelineno-2-25" name="__codelineno-2-25" href="#__codelineno-2-25"></a>                       (live stats from all subsystems)
+<a id="__codelineno-2-26" name="__codelineno-2-26" href="#__codelineno-2-26"></a>10. Init Process    -- The vice principal sits at the front desk
+<a id="__codelineno-2-27" name="__codelineno-2-27" href="#__codelineno-2-27"></a>                       (first process, parent of all others)
 </code></pre></div>
 <p>Only after every single one of those steps is finished does the kernel
 switch its state to <code>RUNNING</code> -- and it also flips the CPU from
@@ -1471,7 +1209,7 @@ number at the front desk:</p>
 </ul>
 <p>When a program wants something, it calls <code>kernel.syscall()</code> with the right
 number and any details. For example, to create a file:</p>
-<div class="highlight"><pre><span></span><code><span class="n">kernel</span><span class="o">.</span><span class="n">syscall</span><span class="p">(</span><span class="n">SyscallNumber</span><span class="o">.</span><span class="n">SYS_CREATE_FILE</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="s2">&quot;/homework/essay.txt&quot;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">kernel</span><span class="o">.</span><span class="n">syscall</span><span class="p">(</span><span class="n">SyscallNumber</span><span class="o">.</span><span class="n">SYS_CREATE_FILE</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="s2">&quot;/homework/essay.txt&quot;</span><span class="p">)</span>
 </code></pre></div>
 <p>Behind the scenes, the <code>dispatch_syscall()</code> function in <code>syscalls.py</code> looks up
 the number in a big table, finds the right handler function, and calls it.
@@ -1599,10 +1337,10 @@ operation a program can ask for has a number, and every single request goes
 through the same front desk.</p>
 <h3 id="what-a-syscall-handler-looks-like">What a syscall handler looks like</h3>
 <p>Here is a simplified version of the "who am I?" handler from <code>syscalls.py</code>:</p>
-<div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_sys_whoami</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the current user&#39;s info.&quot;&quot;&quot;</span>
-    <span class="n">user</span> <span class="o">=</span> <span class="n">kernel</span><span class="o">.</span><span class="n">user_manager</span><span class="o">.</span><span class="n">get_user</span><span class="p">(</span><span class="n">kernel</span><span class="o">.</span><span class="n">current_uid</span><span class="p">)</span>
-    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;uid&quot;</span><span class="p">:</span> <span class="n">user</span><span class="o">.</span><span class="n">uid</span><span class="p">,</span> <span class="s2">&quot;username&quot;</span><span class="p">:</span> <span class="n">user</span><span class="o">.</span><span class="n">username</span><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">_sys_whoami</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the current user&#39;s info.&quot;&quot;&quot;</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="n">user</span> <span class="o">=</span> <span class="n">kernel</span><span class="o">.</span><span class="n">user_manager</span><span class="o">.</span><span class="n">get_user</span><span class="p">(</span><span class="n">kernel</span><span class="o">.</span><span class="n">current_uid</span><span class="p">)</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;uid&quot;</span><span class="p">:</span> <span class="n">user</span><span class="o">.</span><span class="n">uid</span><span class="p">,</span> <span class="s2">&quot;username&quot;</span><span class="p">:</span> <span class="n">user</span><span class="o">.</span><span class="n">username</span><span class="p">}</span>
 </code></pre></div>
 <p>That's it. The front desk receives form #30 ("who am I?"), calls this
 function, and hands the answer back to the program. The program never had
@@ -1632,19 +1370,19 @@ tried to switch users at 3am?").</p>
 <hr />
 <h2 id="6-tying-it-all-together">6. Tying It All Together</h2>
 <p>Here is the full picture of how a request flows through the system:</p>
-<div class="highlight"><pre><span></span><code>You type a command
-        |
-        v
-   [The Shell]          interprets what you typed
-        |
-        v
-   [System Call]        fills out the right form (syscall number + args)
-        |
-        v
-   [Kernel]             the principal&#39;s office does the work
-   |    |    |
-   v    v    v
-Memory Files Scheduler  ...and all the other subsystems
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>You type a command
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>        |
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>        v
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>   [The Shell]          interprets what you typed
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>        |
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>        v
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>   [System Call]        fills out the right form (syscall number + args)
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>        |
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>        v
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>   [Kernel]             the principal&#39;s office does the work
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>   |    |    |
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>   v    v    v
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>Memory Files Scheduler  ...and all the other subsystems
 </code></pre></div>
 <p>The shell is where you talk to the OS (see <a href="../shell/">The Shell</a>). System
 calls are the only way the shell -- or any program -- can ask the kernel to
@@ -1662,21 +1400,21 @@ write down what the assistant gives back: "Here's the flour," "Oven is on,"
 or "Error: we're out of pasta."</p>
 <p>In real Linux, <code>strace</code> intercepts every system call a program makes and shows
 you a log like this:</p>
-<div class="highlight"><pre><span></span><code>open(&quot;/etc/passwd&quot;, O_RDONLY) = 3
-read(3, &quot;root:x:0:0...&quot;, 4096) = 1024
-close(3) = 0
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>open(&quot;/etc/passwd&quot;, O_RDONLY) = 3
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>read(3, &quot;root:x:0:0...&quot;, 4096) = 1024
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>close(3) = 0
 </code></pre></div>
 <p>PyOS has its own strace. When you turn it on, every syscall gets recorded:
 the syscall name, the arguments, and what came back (or if there was an error).</p>
 <h3 id="using-strace-in-the-shell">Using strace in the shell</h3>
-<div class="highlight"><pre><span></span><code>$ strace on
-Strace enabled.
-$ ls /
-bin  home  tmp
---- strace ---
-#1 SYS_LIST_DIR(path=&quot;/&quot;) = [&quot;bin&quot;, &quot;home&quot;, &quot;tmp&quot;]
-$ strace off
-Strace disabled.
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>$ strace on
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>Strace enabled.
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>$ ls /
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>bin  home  tmp
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>--- strace ---
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>#1 SYS_LIST_DIR(path=&quot;/&quot;) = [&quot;bin&quot;, &quot;home&quot;, &quot;tmp&quot;]
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>$ strace off
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>Strace disabled.
 </code></pre></div>
 <p>The <code>--- strace ---</code> section appears automatically after every command when
 strace is on. Each entry has a sequence number (<code>#1</code>, <code>#2</code>, ...), the syscall
@@ -1742,8 +1480,8 @@ and do whatever the request asks for. The moment the system call finishes,
 your badge flips right back to blue.</p>
 <p>In a real CPU, this protection is built into the hardware using <strong>privilege
 rings</strong>:</p>
-<div class="highlight"><pre><span></span><code>Ring 0 (kernel mode) -- full access to hardware and memory
-Ring 3 (user mode)   -- restricted, can only ask the kernel for help
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>Ring 0 (kernel mode) -- full access to hardware and memory
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>Ring 3 (user mode)   -- restricted, can only ask the kernel for help
 </code></pre></div>
 <p>User programs always run in ring 3. They can't read the kernel's memory,
 they can't talk to hardware directly, and they can't touch the scheduler or
@@ -1752,31 +1490,31 @@ filesystem structures. The only way to do any of those things is to make a
 handler, and switches back.</p>
 <h3 id="how-pyos-enforces-this">How PyOS enforces this</h3>
 <p>PyOS has an <code>ExecutionMode</code> enum with two values:</p>
-<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ExecutionMode</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
-    <span class="n">USER</span> <span class="o">=</span> <span class="s2">&quot;user&quot;</span>
-    <span class="n">KERNEL</span> <span class="o">=</span> <span class="s2">&quot;kernel&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">ExecutionMode</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>    <span class="n">USER</span> <span class="o">=</span> <span class="s2">&quot;user&quot;</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>    <span class="n">KERNEL</span> <span class="o">=</span> <span class="s2">&quot;kernel&quot;</span>
 </code></pre></div>
 <p>When the kernel boots, it starts in <strong>kernel mode</strong> (the janitor is setting up
 the building, so they need full access). At the very end of <code>boot()</code>, the mode
 flips to <strong>user mode</strong> -- the doors are open, and normal rules apply.</p>
 <p>Every sensitive kernel property (scheduler, memory, filesystem, processes,
 etc.) has a guard at the top:</p>
-<div class="highlight"><pre><span></span><code><span class="nd">@property</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">scheduler</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">_require_kernel_mode</span><span class="p">()</span>   <span class="c1"># raises KernelModeError if in USER mode</span>
-    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scheduler</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nd">@property</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="k">def</span><span class="w"> </span><span class="nf">scheduler</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_require_kernel_mode</span><span class="p">()</span>   <span class="c1"># raises KernelModeError if in USER mode</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scheduler</span>
 </code></pre></div>
 <p>If the shell (or any other user-space code) tries to reach past the front desk
 and grab the scheduler directly, they'll get a <code>KernelModeError</code>. The only way
 to get scheduler information is through the proper syscall:</p>
-<div class="highlight"><pre><span></span><code><span class="n">kernel</span><span class="o">.</span><span class="n">syscall</span><span class="p">(</span><span class="n">SyscallNumber</span><span class="o">.</span><span class="n">SYS_SCHEDULER_INFO</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="n">kernel</span><span class="o">.</span><span class="n">syscall</span><span class="p">(</span><span class="n">SyscallNumber</span><span class="o">.</span><span class="n">SYS_SCHEDULER_INFO</span><span class="p">)</span>
 </code></pre></div>
 <p>Inside <code>syscall()</code>, the kernel temporarily switches to kernel mode (flips the
 badge to red), runs the handler, and switches back (flips it to blue again).
 This is done with a context manager that always restores the previous mode,
 even if the handler crashes:</p>
-<div class="highlight"><pre><span></span><code><span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_kernel_mode</span><span class="p">():</span>
-    <span class="n">result</span> <span class="o">=</span> <span class="n">dispatch_syscall</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">number</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_kernel_mode</span><span class="p">():</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>    <span class="n">result</span> <span class="o">=</span> <span class="n">dispatch_syscall</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">number</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </code></pre></div>
 <h3 id="why-bother">Why bother?</h3>
 <p>Without this enforcement, nothing stops a programmer from writing
@@ -1936,7 +1674,7 @@ syscalls in the 190-203 range:</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "search.highlight"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["content.code.copy", "navigation.sections", "navigation.expand", "toc.integrate", "search.highlight"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>

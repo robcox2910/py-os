@@ -60,10 +60,12 @@
   
     
     
+      
     
     
     
-    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="indigo">
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="teal">
   
     
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
@@ -116,7 +118,33 @@
     </div>
     
       
+        <form class="md-header__option" data-md-component="palette">
+  
     
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="teal"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="teal"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
     
     
     
@@ -196,7 +224,9 @@
 
 
 
-<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  
+
+<nav class="md-nav md-nav--primary md-nav--integrated" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
     <a href="../.." title="PyOS" class="md-nav__button md-logo" aria-label="PyOS" data-md-component="logo">
       
@@ -706,170 +736,6 @@
               </div>
             
             
-              
-              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
-                <div class="md-sidebar__scrollwrap">
-                  <div class="md-sidebar__inner">
-                    
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#what-is-tcp" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What Is TCP?
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#the-three-way-handshake" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Three-Way Handshake
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#sequence-numbers-and-acknowledgements" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Sequence Numbers and Acknowledgements
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#flow-control-the-sliding-window" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Flow Control: The Sliding Window
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#congestion-control-dont-flood-the-network" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Congestion Control: Don't Flood the Network
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Congestion Control: Don&#39;t Flood the Network">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#slow-start" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Slow Start
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#congestion-avoidance-aimd" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Congestion Avoidance (AIMD)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#the-effective-window" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Effective Window
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#retransmission" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Retransmission
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#graceful-close" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Graceful Close
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#tcp-state-machine" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        TCP State Machine
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#try-it-yourself" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Try It Yourself
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-                  </div>
-                </div>
-              </div>
-            
           
           
             <div class="md-content" data-md-component="content">
@@ -898,14 +764,14 @@
 <p>Without TCP, applications would have to handle all of this themselves. With TCP, they just send and receive bytes.</p>
 <h2 id="the-three-way-handshake">The Three-Way Handshake</h2>
 <p>Before two computers can exchange data, they need to agree to start a conversation. TCP uses a <strong>three-way handshake</strong>:</p>
-<div class="highlight"><pre><span></span><code>Client                         Server
-  |                              |
-  |--- SYN (seq=0) ------------&gt;|   &quot;Hey, want to talk?&quot;
-  |                              |
-  |&lt;-- SYN+ACK (seq=0, ack=1) --|   &quot;Sure, let&#39;s talk!&quot;
-  |                              |
-  |--- ACK (ack=1) ------------&gt;|   &quot;Great, we&#39;re connected!&quot;
-  |                              |
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Client                         Server
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  |                              |
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>  |--- SYN (seq=0) ------------&gt;|   &quot;Hey, want to talk?&quot;
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>  |                              |
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>  |&lt;-- SYN+ACK (seq=0, ack=1) --|   &quot;Sure, let&#39;s talk!&quot;
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>  |                              |
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>  |--- ACK (ack=1) ------------&gt;|   &quot;Great, we&#39;re connected!&quot;
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>  |                              |
 </code></pre></div>
 <ul>
 <li><strong>SYN</strong> -- "synchronise" -- the client proposes a starting sequence number.</li>
@@ -913,24 +779,24 @@
 <li><strong>ACK</strong> -- the client acknowledges. Both sides are now <strong>ESTABLISHED</strong>.</li>
 </ul>
 <p>In PyOS:</p>
-<div class="highlight"><pre><span></span><code>tcp listen 80
-tcp connect 5000 80
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>tcp listen 80
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>tcp connect 5000 80
 </code></pre></div>
 <h2 id="sequence-numbers-and-acknowledgements">Sequence Numbers and Acknowledgements</h2>
 <p>Every byte of data has a <strong>sequence number</strong>. When the receiver gets data, it sends back an <strong>ACK</strong> with the next sequence number it expects. This is how the sender knows what arrived safely.</p>
-<div class="highlight"><pre><span></span><code>Sender                           Receiver
-  |                                |
-  |--- data (seq=1, 5 bytes) ----&gt;|
-  |                                |
-  |&lt;-- ACK (ack=6) ---------------|   &quot;Got it, send byte 6 next&quot;
-  |                                |
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>Sender                           Receiver
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>  |                                |
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>  |--- data (seq=1, 5 bytes) ----&gt;|
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>  |                                |
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>  |&lt;-- ACK (ack=6) ---------------|   &quot;Got it, send byte 6 next&quot;
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>  |                                |
 </code></pre></div>
 <p>If the sender does not get an ACK within a timeout, it <strong>retransmits</strong> the data.</p>
 <h2 id="flow-control-the-sliding-window">Flow Control: The Sliding Window</h2>
 <p>The receiver advertises a <strong>receive window</strong> -- the number of segments it can accept right now. The sender must not send more than this window allows.</p>
 <p>Think of it like a mailbox with limited space. If the mailbox is full, the postman waits until you empty it before delivering more.</p>
-<div class="highlight"><pre><span></span><code>Receiver says: &quot;window_size = 8&quot;
-→ Sender can have at most 8 segments in flight at once
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Receiver says: &quot;window_size = 8&quot;
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>→ Sender can have at most 8 segments in flight at once
 </code></pre></div>
 <h2 id="congestion-control-dont-flood-the-network">Congestion Control: Don't Flood the Network</h2>
 <p>Even if the receiver has room, the network might be busy. TCP uses <strong>congestion control</strong> to avoid overwhelming the network:</p>
@@ -949,27 +815,27 @@ tcp connect 5000 80
 <li><strong>Multiplicative Decrease</strong> -- on timeout, set ssthresh = cwnd / 2 and reset cwnd to 1.</li>
 </ul>
 <p>This "AIMD" pattern creates a sawtooth shape: cwnd grows slowly, drops sharply on loss, then grows again.</p>
-<div class="highlight"><pre><span></span><code>cwnd
-  ^
-  |    /\      /\      /\
-  |   /  \    /  \    /  \
-  |  /    \  /    \  /    \
-  | /      \/      \/      \
-  +----------------------------&gt; time
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>cwnd
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>  ^
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>  |    /\      /\      /\
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>  |   /  \    /  \    /  \
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>  |  /    \  /    \  /    \
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>  | /      \/      \/      \
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>  +----------------------------&gt; time
 </code></pre></div>
 <p>In PyOS, you can see the congestion state:</p>
-<div class="highlight"><pre><span></span><code>tcp info 1
-
-Connection 1:
-  State:            ESTABLISHED
-  cwnd:             4
-  ssthresh:         16
-  effective_window: 4
-  unacked:          0
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>tcp info 1
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>Connection 1:
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>  State:            ESTABLISHED
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>  cwnd:             4
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>  ssthresh:         16
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>  effective_window: 4
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>  unacked:          0
 </code></pre></div>
 <h2 id="the-effective-window">The Effective Window</h2>
 <p>The sender's actual limit is the <strong>effective window</strong>: the smaller of cwnd and the receiver's advertised window.</p>
-<div class="highlight"><pre><span></span><code>effective_window = min(cwnd, peer_recv_window)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>effective_window = min(cwnd, peer_recv_window)
 </code></pre></div>
 <p>This ensures the sender respects both the receiver's capacity and the network's capacity.</p>
 <h2 id="retransmission">Retransmission</h2>
@@ -982,14 +848,14 @@ Connection 1:
 <p>In PyOS, retransmission is driven by <code>kernel.tick()</code>. The default timeout is 10 ticks.</p>
 <h2 id="graceful-close">Graceful Close</h2>
 <p>When both sides are done, they close the connection with a <strong>four-way close</strong>:</p>
-<div class="highlight"><pre><span></span><code>Client                         Server
-  |                              |
-  |--- FIN ----------------------&gt;|   &quot;I&#39;m done sending&quot;
-  |&lt;-- ACK ----------------------|   &quot;OK, I heard you&quot;
-  |                              |
-  |&lt;-- FIN ----------------------|   &quot;I&#39;m done too&quot;
-  |--- ACK ----------------------&gt;|   &quot;OK, goodbye&quot;
-  |                              |
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>Client                         Server
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>  |                              |
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>  |--- FIN ----------------------&gt;|   &quot;I&#39;m done sending&quot;
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>  |&lt;-- ACK ----------------------|   &quot;OK, I heard you&quot;
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>  |                              |
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>  |&lt;-- FIN ----------------------|   &quot;I&#39;m done too&quot;
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>  |--- ACK ----------------------&gt;|   &quot;OK, goodbye&quot;
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>  |                              |
 </code></pre></div>
 <p>After the final ACK, the connection enters <strong>TIME_WAIT</strong> briefly to handle any delayed segments, then closes.</p>
 <h2 id="tcp-state-machine">TCP State Machine</h2>
@@ -1050,19 +916,19 @@ Connection 1:
 </table>
 <h2 id="try-it-yourself">Try It Yourself</h2>
 <p>Boot PyOS and run the interactive lesson:</p>
-<div class="highlight"><pre><span></span><code>learn tcp
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>learn tcp
 </code></pre></div>
 <p>Or experiment manually:</p>
-<div class="highlight"><pre><span></span><code>tcp listen 80              # Server listens on port 80
-tcp connect 5000 80        # Client connects from port 5000
-tcp send 2 &quot;Hello!&quot;        # Send data on connection 2
-tcp recv 3                 # Receive data on connection 3
-tcp info 2                 # See congestion/flow control state
-tcp close 2                # Graceful close
-tcp list                   # See all connections
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>tcp listen 80              # Server listens on port 80
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>tcp connect 5000 80        # Client connects from port 5000
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>tcp send 2 &quot;Hello!&quot;        # Send data on connection 2
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>tcp recv 3                 # Receive data on connection 3
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>tcp info 2                 # See congestion/flow control state
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>tcp close 2                # Graceful close
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>tcp list                   # See all connections
 </code></pre></div>
 <p>Or run the built-in demo:</p>
-<div class="highlight"><pre><span></span><code>tcp demo
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>tcp demo
 </code></pre></div>
 <hr />
 <p><strong>Previous:</strong> Learn about hardware events in <a href="../interrupts/">Interrupts and Timers</a>.</p>
@@ -1115,7 +981,7 @@ tcp list                   # See all connections
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "search.highlight"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["content.code.copy", "navigation.sections", "navigation.expand", "toc.integrate", "search.highlight"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
