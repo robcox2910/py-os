@@ -35,13 +35,12 @@ dev = [
     "pre-commit>=4.0.1",
     "pyright>=1.1.400",
 ]
+docs = [
+    "mkdocs-material>=9.5",
+]
 
 web = [
     "flask>=3.0",
-]
-
-docs = [
-    "mkdocs-material>=9.0",
 ]
 
 [build-system]
