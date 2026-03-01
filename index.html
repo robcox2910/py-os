@@ -760,6 +760,62 @@
   
   
     <li class="md-nav__item">
+      <a href="concepts/interrupts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interrupts and Timers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="concepts/tcp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    TCP: Reliable Delivery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="concepts/synchronization/" class="md-nav__link">
         
   
@@ -1227,50 +1283,53 @@
 <a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a>devwrite    Write to a device
 <a id="__codelineno-1-36" name="__codelineno-1-36" href="#__codelineno-1-36"></a>scheduler   Show or switch scheduling policy (fcfs, rr, priority, aging, mlfq, cfs)
 <a id="__codelineno-1-37" name="__codelineno-1-37" href="#__codelineno-1-37"></a>            scheduler boost — reset MLFQ levels (anti-starvation)
-<a id="__codelineno-1-38" name="__codelineno-1-38" href="#__codelineno-1-38"></a>mutex       Manage mutexes (create, list)
-<a id="__codelineno-1-39" name="__codelineno-1-39" href="#__codelineno-1-39"></a>semaphore   Manage semaphores (create, list)
-<a id="__codelineno-1-40" name="__codelineno-1-40" href="#__codelineno-1-40"></a>echo args   Print arguments to output
-<a id="__codelineno-1-41" name="__codelineno-1-41" href="#__codelineno-1-41"></a>source path Run a script from a file
-<a id="__codelineno-1-42" name="__codelineno-1-42" href="#__codelineno-1-42"></a>run prog [p] Run a built-in program with optional priority
-<a id="__codelineno-1-43" name="__codelineno-1-43" href="#__codelineno-1-43"></a>grep pat    Filter piped input (used with |)
-<a id="__codelineno-1-44" name="__codelineno-1-44" href="#__codelineno-1-44"></a>wc          Count lines in piped input
-<a id="__codelineno-1-45" name="__codelineno-1-45" href="#__codelineno-1-45"></a>open path   Open a file and get a file descriptor
-<a id="__codelineno-1-46" name="__codelineno-1-46" href="#__codelineno-1-46"></a>close fd    Close a file descriptor
-<a id="__codelineno-1-47" name="__codelineno-1-47" href="#__codelineno-1-47"></a>readfd fd   Read from a file descriptor
-<a id="__codelineno-1-48" name="__codelineno-1-48" href="#__codelineno-1-48"></a>writefd fd  Write to a file descriptor
-<a id="__codelineno-1-49" name="__codelineno-1-49" href="#__codelineno-1-49"></a>seek fd pos Reposition a file descriptor&#39;s offset
-<a id="__codelineno-1-50" name="__codelineno-1-50" href="#__codelineno-1-50"></a>lsfd        List open file descriptors
-<a id="__codelineno-1-51" name="__codelineno-1-51" href="#__codelineno-1-51"></a>ln          Create hard or symbolic links
-<a id="__codelineno-1-52" name="__codelineno-1-52" href="#__codelineno-1-52"></a>readlink p  Read a symlink target
-<a id="__codelineno-1-53" name="__codelineno-1-53" href="#__codelineno-1-53"></a>stat path   Show file metadata (type, size, links)
-<a id="__codelineno-1-54" name="__codelineno-1-54" href="#__codelineno-1-54"></a>journal     Manage journaling (status, checkpoint, recover, crash)
-<a id="__codelineno-1-55" name="__codelineno-1-55" href="#__codelineno-1-55"></a>rwlock      Manage reader-writer locks (create, list)
-<a id="__codelineno-1-56" name="__codelineno-1-56" href="#__codelineno-1-56"></a>pi          Priority inheritance (demo, status)
-<a id="__codelineno-1-57" name="__codelineno-1-57" href="#__codelineno-1-57"></a>ordering    Resource ordering (register, status, mode, violations, demo)
-<a id="__codelineno-1-58" name="__codelineno-1-58" href="#__codelineno-1-58"></a>waitjob id  Wait for a background job to complete
-<a id="__codelineno-1-59" name="__codelineno-1-59" href="#__codelineno-1-59"></a>shm         Shared memory (create, attach, detach, write, read, list, destroy, demo)
-<a id="__codelineno-1-60" name="__codelineno-1-60" href="#__codelineno-1-60"></a>dns         DNS operations (register, lookup, remove, list, flush, demo)
-<a id="__codelineno-1-61" name="__codelineno-1-61" href="#__codelineno-1-61"></a>socket      Socket operations (create, bind, listen, connect, accept, send, recv, close, list)
-<a id="__codelineno-1-62" name="__codelineno-1-62" href="#__codelineno-1-62"></a>http        HTTP demo (end-to-end request/response over sockets)
-<a id="__codelineno-1-63" name="__codelineno-1-63" href="#__codelineno-1-63"></a>tcp         TCP connections (listen, connect, send, recv, close, info, list, demo)
-<a id="__codelineno-1-64" name="__codelineno-1-64" href="#__codelineno-1-64"></a>proc        /proc virtual filesystem demo
-<a id="__codelineno-1-65" name="__codelineno-1-65" href="#__codelineno-1-65"></a>perf        Show performance metrics
-<a id="__codelineno-1-66" name="__codelineno-1-66" href="#__codelineno-1-66"></a>strace      Syscall tracing (on, off, show, clear, demo)
-<a id="__codelineno-1-67" name="__codelineno-1-67" href="#__codelineno-1-67"></a>dmesg       Show kernel boot log
-<a id="__codelineno-1-68" name="__codelineno-1-68" href="#__codelineno-1-68"></a>cpu         Show per-CPU status and scheduling info
-<a id="__codelineno-1-69" name="__codelineno-1-69" href="#__codelineno-1-69"></a>taskset     Show or set CPU affinity for a process
-<a id="__codelineno-1-70" name="__codelineno-1-70" href="#__codelineno-1-70"></a>mmap        Memory-map a file
-<a id="__codelineno-1-71" name="__codelineno-1-71" href="#__codelineno-1-71"></a>munmap      Unmap a memory-mapped region
-<a id="__codelineno-1-72" name="__codelineno-1-72" href="#__codelineno-1-72"></a>msync       Sync a shared mapping
-<a id="__codelineno-1-73" name="__codelineno-1-73" href="#__codelineno-1-73"></a>slabcreate  Create a slab cache
-<a id="__codelineno-1-74" name="__codelineno-1-74" href="#__codelineno-1-74"></a>slaballoc   Allocate from a slab cache
-<a id="__codelineno-1-75" name="__codelineno-1-75" href="#__codelineno-1-75"></a>slabfree    Free a slab allocation
-<a id="__codelineno-1-76" name="__codelineno-1-76" href="#__codelineno-1-76"></a>slabinfo    Show slab allocator statistics
-<a id="__codelineno-1-77" name="__codelineno-1-77" href="#__codelineno-1-77"></a>tick [N]    Advance the system clock by N ticks (default 1)
-<a id="__codelineno-1-78" name="__codelineno-1-78" href="#__codelineno-1-78"></a>interrupt   Manage interrupts (list, mask &lt;vector&gt;, unmask &lt;vector&gt;)
-<a id="__codelineno-1-79" name="__codelineno-1-79" href="#__codelineno-1-79"></a>timer       Manage the timer (info, set &lt;interval&gt;)
-<a id="__codelineno-1-80" name="__codelineno-1-80" href="#__codelineno-1-80"></a>learn       Interactive tutorials (processes, memory, filesystem, ...)
-<a id="__codelineno-1-81" name="__codelineno-1-81" href="#__codelineno-1-81"></a>exit        Shut down the kernel
+<a id="__codelineno-1-38" name="__codelineno-1-38" href="#__codelineno-1-38"></a>            scheduler balance — rebalance processes across CPUs
+<a id="__codelineno-1-39" name="__codelineno-1-39" href="#__codelineno-1-39"></a>mutex       Manage mutexes (create, list)
+<a id="__codelineno-1-40" name="__codelineno-1-40" href="#__codelineno-1-40"></a>semaphore   Manage semaphores (create, list)
+<a id="__codelineno-1-41" name="__codelineno-1-41" href="#__codelineno-1-41"></a>echo args   Print arguments to output
+<a id="__codelineno-1-42" name="__codelineno-1-42" href="#__codelineno-1-42"></a>source path Run a script from a file
+<a id="__codelineno-1-43" name="__codelineno-1-43" href="#__codelineno-1-43"></a>run prog [p] Run a built-in program with optional priority
+<a id="__codelineno-1-44" name="__codelineno-1-44" href="#__codelineno-1-44"></a>grep pat    Filter piped input (used with |)
+<a id="__codelineno-1-45" name="__codelineno-1-45" href="#__codelineno-1-45"></a>wc          Count lines in piped input
+<a id="__codelineno-1-46" name="__codelineno-1-46" href="#__codelineno-1-46"></a>open path   Open a file and get a file descriptor
+<a id="__codelineno-1-47" name="__codelineno-1-47" href="#__codelineno-1-47"></a>close fd    Close a file descriptor
+<a id="__codelineno-1-48" name="__codelineno-1-48" href="#__codelineno-1-48"></a>readfd fd   Read from a file descriptor
+<a id="__codelineno-1-49" name="__codelineno-1-49" href="#__codelineno-1-49"></a>writefd fd  Write to a file descriptor
+<a id="__codelineno-1-50" name="__codelineno-1-50" href="#__codelineno-1-50"></a>seek fd pos Reposition a file descriptor&#39;s offset
+<a id="__codelineno-1-51" name="__codelineno-1-51" href="#__codelineno-1-51"></a>lsfd        List open file descriptors
+<a id="__codelineno-1-52" name="__codelineno-1-52" href="#__codelineno-1-52"></a>ln          Create hard or symbolic links
+<a id="__codelineno-1-53" name="__codelineno-1-53" href="#__codelineno-1-53"></a>readlink p  Read a symlink target
+<a id="__codelineno-1-54" name="__codelineno-1-54" href="#__codelineno-1-54"></a>stat path   Show file metadata (type, size, links)
+<a id="__codelineno-1-55" name="__codelineno-1-55" href="#__codelineno-1-55"></a>journal     Manage journaling (status, checkpoint, recover, crash)
+<a id="__codelineno-1-56" name="__codelineno-1-56" href="#__codelineno-1-56"></a>rwlock      Manage reader-writer locks (create, list)
+<a id="__codelineno-1-57" name="__codelineno-1-57" href="#__codelineno-1-57"></a>pi          Priority inheritance (demo, status)
+<a id="__codelineno-1-58" name="__codelineno-1-58" href="#__codelineno-1-58"></a>ordering    Resource ordering (register, status, mode, violations, demo)
+<a id="__codelineno-1-59" name="__codelineno-1-59" href="#__codelineno-1-59"></a>waitjob id  Wait for a background job to complete
+<a id="__codelineno-1-60" name="__codelineno-1-60" href="#__codelineno-1-60"></a>shm         Shared memory (create, attach, detach, write, read, list, destroy, demo)
+<a id="__codelineno-1-61" name="__codelineno-1-61" href="#__codelineno-1-61"></a>dns         DNS operations (register, lookup, remove, list, flush, demo)
+<a id="__codelineno-1-62" name="__codelineno-1-62" href="#__codelineno-1-62"></a>socket      Socket operations (create, bind, listen, connect, accept, send, recv, close, list)
+<a id="__codelineno-1-63" name="__codelineno-1-63" href="#__codelineno-1-63"></a>http        HTTP demo (end-to-end request/response over sockets)
+<a id="__codelineno-1-64" name="__codelineno-1-64" href="#__codelineno-1-64"></a>tcp         TCP connections (listen, connect, send, recv, close, info, list, demo)
+<a id="__codelineno-1-65" name="__codelineno-1-65" href="#__codelineno-1-65"></a>proc        /proc virtual filesystem demo
+<a id="__codelineno-1-66" name="__codelineno-1-66" href="#__codelineno-1-66"></a>perf        Show performance metrics
+<a id="__codelineno-1-67" name="__codelineno-1-67" href="#__codelineno-1-67"></a>strace      Syscall tracing (on, off, show, clear, demo)
+<a id="__codelineno-1-68" name="__codelineno-1-68" href="#__codelineno-1-68"></a>dmesg       Show kernel boot log
+<a id="__codelineno-1-69" name="__codelineno-1-69" href="#__codelineno-1-69"></a>cpu         Show per-CPU status and scheduling info
+<a id="__codelineno-1-70" name="__codelineno-1-70" href="#__codelineno-1-70"></a>taskset     Show or set CPU affinity for a process
+<a id="__codelineno-1-71" name="__codelineno-1-71" href="#__codelineno-1-71"></a>mmap        Memory-map a file
+<a id="__codelineno-1-72" name="__codelineno-1-72" href="#__codelineno-1-72"></a>munmap      Unmap a memory-mapped region
+<a id="__codelineno-1-73" name="__codelineno-1-73" href="#__codelineno-1-73"></a>msync       Sync a shared mapping
+<a id="__codelineno-1-74" name="__codelineno-1-74" href="#__codelineno-1-74"></a>slabcreate  Create a slab cache
+<a id="__codelineno-1-75" name="__codelineno-1-75" href="#__codelineno-1-75"></a>slaballoc   Allocate from a slab cache
+<a id="__codelineno-1-76" name="__codelineno-1-76" href="#__codelineno-1-76"></a>slabfree    Free a slab allocation
+<a id="__codelineno-1-77" name="__codelineno-1-77" href="#__codelineno-1-77"></a>slabinfo    Show slab allocator statistics
+<a id="__codelineno-1-78" name="__codelineno-1-78" href="#__codelineno-1-78"></a>tick [N]    Advance the system clock by N ticks (default 1)
+<a id="__codelineno-1-79" name="__codelineno-1-79" href="#__codelineno-1-79"></a>interrupt   Manage interrupts (list, mask &lt;vector&gt;, unmask &lt;vector&gt;)
+<a id="__codelineno-1-80" name="__codelineno-1-80" href="#__codelineno-1-80"></a>timer       Manage the timer (info, set &lt;interval&gt;)
+<a id="__codelineno-1-81" name="__codelineno-1-81" href="#__codelineno-1-81"></a>learn       Interactive tutorials (processes, memory, filesystem, ...)
+<a id="__codelineno-1-82" name="__codelineno-1-82" href="#__codelineno-1-82"></a>benchmark   Run scheduling benchmarks (run, demo)
+<a id="__codelineno-1-83" name="__codelineno-1-83" href="#__codelineno-1-83"></a>dashboard   System dashboard (cpu, memory, processes, fs)
+<a id="__codelineno-1-84" name="__codelineno-1-84" href="#__codelineno-1-84"></a>exit        Shut down the kernel
 </code></pre></div>
 <p>Commands can be piped: <code>ls / | grep txt | wc</code></p>
 <h3 id="scripting">Scripting</h3>
