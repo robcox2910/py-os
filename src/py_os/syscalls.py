@@ -248,6 +248,11 @@ class SyscallNumber(IntEnum):
     SYS_BALANCE = 223
     SYS_MIGRATE = 224
 
+    # Framebuffer operations
+    SYS_FB_WRITE = 260
+    SYS_FB_READ = 261
+    SYS_FB_INFO = 262
+
 
 class SyscallError(Exception):
     """Raised when a system call fails.
@@ -416,6 +421,9 @@ def dispatch_syscall(
         SyscallNumber.SYS_TCP_LIST: _sys_tcp_list,
         SyscallNumber.SYS_TCP_LISTEN: _sys_tcp_listen,
         SyscallNumber.SYS_TCP_ACCEPT: _sys_tcp_accept,
+        SyscallNumber.SYS_FB_WRITE: _sys_fb_write,
+        SyscallNumber.SYS_FB_READ: _sys_fb_read,
+        SyscallNumber.SYS_FB_INFO: _sys_fb_info,
     }
 
     handler = handlers.get(number)
@@ -1953,3 +1961,38 @@ def _sys_tcp_list(kernel: Any, **_kwargs: Any) -> list[dict[str, object]]:
         return kernel.tcp_list()
     except RuntimeError as e:
         raise SyscallError(str(e)) from e
+
+
+# -- Framebuffer syscall handlers ---------------------------------------------
+
+
+def _sys_fb_write(kernel: Any, **kwargs: Any) -> None:
+    """Write a drawing command to the framebuffer."""
+    fb = kernel.framebuffer
+    if fb is None:
+        msg = "Framebuffer not initialised"
+        raise SyscallError(msg)
+    command: str = kwargs["command"]
+    fb.write(command.encode())
+
+
+def _sys_fb_read(kernel: Any, **_kwargs: Any) -> str:
+    """Read the rendered framebuffer contents."""
+    fb = kernel.framebuffer
+    if fb is None:
+        msg = "Framebuffer not initialised"
+        raise SyscallError(msg)
+    return fb.render()
+
+
+def _sys_fb_info(kernel: Any, **_kwargs: Any) -> dict[str, object]:
+    """Return framebuffer dimensions and status."""
+    fb = kernel.framebuffer
+    if fb is None:
+        msg = "Framebuffer not initialised"
+        raise SyscallError(msg)
+    return {
+        "width": fb.width,
+        "height": fb.height,
+        "status": str(fb.status),
+    }

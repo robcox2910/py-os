@@ -38,6 +38,7 @@ from py_os.fs.journal import JournaledFileSystem
 from py_os.fs.procfs import ProcError, ProcFilesystem
 from py_os.io.devices import ConsoleDevice, DeviceManager, NullDevice, RandomDevice
 from py_os.io.dns import DnsRecord, DnsResolver
+from py_os.io.framebuffer import Framebuffer
 from py_os.io.interrupts import (
     VECTOR_IO_BASE,
     VECTOR_TIMER,
@@ -180,6 +181,7 @@ class Kernel:
         # Interrupt controller and timer — hardware event dispatching
         self._interrupt_controller: InterruptController | None = None
         self._timer: TimerDevice | None = None
+        self._framebuffer: Framebuffer | None = None
         self._tick_count: int = 0
         self._ticks_since_dispatch: int = 0
 
@@ -375,6 +377,12 @@ class Kernel:
         return self._timer
 
     @property
+    def framebuffer(self) -> Framebuffer | None:
+        """Return the framebuffer device, or None if not booted."""
+        self._require_kernel_mode()
+        return self._framebuffer
+
+    @property
     def tick_count(self) -> int:
         """Return the total number of ticks since boot."""
         return self._tick_count
@@ -444,7 +452,12 @@ class Kernel:
         self._device_manager.register(NullDevice())
         self._device_manager.register(ConsoleDevice())
         self._device_manager.register(RandomDevice())
+        self._framebuffer = Framebuffer()
+        self._device_manager.register(self._framebuffer)
         self._boot_log.append("[OK] Device manager")
+        self._boot_log.append(
+            f"[OK] Framebuffer ({self._framebuffer.width}x{self._framebuffer.height})"
+        )
 
         # DNS resolver — pre-seed with localhost
         self._dns_resolver = DnsResolver()
@@ -586,6 +599,7 @@ class Kernel:
         self._pi_manager = None
         self._sync_manager = None
         self._resource_manager = None
+        self._framebuffer = None
         self._device_manager = None
         self._env = None
         self._user_manager = None
@@ -605,12 +619,10 @@ class Kernel:
         self._dns_resolver = None
         self._interrupt_controller = None
         self._timer = None
-        self._tick_count = 0
-        self._ticks_since_dispatch = 0
+        self._tick_count = self._ticks_since_dispatch = 0
 
         # Reset performance metrics and strace state
-        self._total_created = 0
-        self._total_completed = 0
+        self._total_created = self._total_completed = 0
         self._total_wait_time = 0.0
         self._total_turnaround_time = 0.0
         self._total_response_time = 0.0
