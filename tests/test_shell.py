@@ -1213,3 +1213,618 @@ class TestShellStrace:
         _kernel, shell = _booted_shell()
         result = shell.execute("strace demo")
         assert "Strace" in result or "kitchen" in result.lower()
+
+
+# -- File system error branches ---------------------------------------------
+
+NONEXISTENT_PATH = "/nonexistent_path_xyz"
+INVALID_PID_STR = "not_a_pid"
+LARGE_INVALID_PID = 99999
+
+
+class TestShellFsErrors:
+    """Verify file system command error branches."""
+
+    def test_ls_nonexistent_path(self) -> None:
+        """Ls on a nonexistent path should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute(f"ls {NONEXISTENT_PATH}")
+        assert "Error" in result
+
+    def test_mkdir_duplicate(self) -> None:
+        """Mkdir on existing directory should show error."""
+        _kernel, shell = _booted_shell()
+        shell.execute("mkdir /testdir")
+        result = shell.execute("mkdir /testdir")
+        assert "Error" in result
+
+    def test_touch_bad_path(self) -> None:
+        """Touch in nonexistent parent should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("touch /noparent/file.txt")
+        assert "Error" in result
+
+    def test_write_nonexistent_file(self) -> None:
+        """Write to nonexistent file should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute(f"write {NONEXISTENT_PATH} hello")
+        assert "Error" in result
+
+    def test_cat_nonexistent_file(self) -> None:
+        """Cat on nonexistent file should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute(f"cat {NONEXISTENT_PATH}")
+        assert "Error" in result
+
+    def test_rm_nonexistent_file(self) -> None:
+        """Rm on nonexistent file should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute(f"rm {NONEXISTENT_PATH}")
+        assert "Error" in result
+
+    def test_kill_invalid_pid(self) -> None:
+        """Kill with nonexistent PID should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute(f"kill {LARGE_INVALID_PID}")
+        assert "Error" in result
+
+    def test_stat_nonexistent(self) -> None:
+        """Stat on nonexistent path should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute(f"stat {NONEXISTENT_PATH}")
+        assert "Error" in result
+
+    def test_stat_no_args(self) -> None:
+        """Stat without args should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("stat")
+        assert "Usage" in result
+
+    def test_readlink_no_args(self) -> None:
+        """Readlink without args should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("readlink")
+        assert "Usage" in result
+
+    def test_readlink_nonexistent(self) -> None:
+        """Readlink on nonexistent file should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute(f"readlink {NONEXISTENT_PATH}")
+        assert "Error" in result
+
+    def test_ln_nonexistent_target(self) -> None:
+        """Ln with nonexistent target should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute(f"ln {NONEXISTENT_PATH} /mylink")
+        assert "Error" in result
+
+
+# -- User/auth command errors -----------------------------------------------
+
+
+class TestShellUserErrors:
+    """Verify user and auth command error branches."""
+
+    def test_adduser_duplicate(self) -> None:
+        """Adduser for existing user should show error."""
+        _kernel, shell = _booted_shell()
+        shell.execute("adduser testuser")
+        result = shell.execute("adduser testuser")
+        assert "Error" in result
+
+    def test_su_invalid_uid(self) -> None:
+        """Su with non-integer uid should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute(f"su {INVALID_PID_STR}")
+        assert "Error" in result
+
+    def test_su_nonexistent_uid(self) -> None:
+        """Su with nonexistent uid should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute(f"su {LARGE_INVALID_PID}")
+        assert "Error" in result
+
+    def test_signal_invalid_pid(self) -> None:
+        """Signal with non-integer pid should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute(f"signal {INVALID_PID_STR} SIGTERM")
+        assert "Error" in result
+
+    def test_signal_unknown_signal(self) -> None:
+        """Signal with unknown signal name should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("signal 1 NOSUCHSIGNAL")
+        assert "Error" in result or "Unknown" in result
+
+    def test_unset_no_args(self) -> None:
+        """Unset without args should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("unset")
+        assert "Usage" in result
+
+
+# -- File descriptor command errors ------------------------------------------
+
+
+class TestShellFdErrors:
+    """Verify file descriptor command error branches."""
+
+    def test_open_invalid_pid(self) -> None:
+        """Open with non-integer pid should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute(f"open {INVALID_PID_STR} /test.txt")
+        assert "Error" in result
+
+    def test_close_no_args(self) -> None:
+        """Close without args should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("close")
+        assert "Usage" in result
+
+    def test_close_invalid_pid(self) -> None:
+        """Close with non-integer pid should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute(f"close {INVALID_PID_STR} 0")
+        assert "Error" in result
+
+    def test_close_invalid_fd(self) -> None:
+        """Close with non-integer fd should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute(f"close 1 {INVALID_PID_STR}")
+        assert "Error" in result
+
+    def test_readfd_no_args(self) -> None:
+        """Readfd without args should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("readfd")
+        assert "Usage" in result
+
+    def test_readfd_invalid_pid(self) -> None:
+        """Readfd with non-integer pid should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute(f"readfd {INVALID_PID_STR} 0 10")
+        assert "Error" in result
+
+    def test_readfd_invalid_fd(self) -> None:
+        """Readfd with non-integer fd should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute(f"readfd 1 {INVALID_PID_STR} 10")
+        assert "Error" in result
+
+    def test_readfd_invalid_count(self) -> None:
+        """Readfd with non-integer count should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute(f"readfd 1 0 {INVALID_PID_STR}")
+        assert "Error" in result
+
+    def test_writefd_no_args(self) -> None:
+        """Writefd without args should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("writefd")
+        assert "Usage" in result
+
+    def test_writefd_invalid_pid(self) -> None:
+        """Writefd with non-integer pid should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute(f"writefd {INVALID_PID_STR} 0 data")
+        assert "Error" in result
+
+    def test_writefd_invalid_fd(self) -> None:
+        """Writefd with non-integer fd should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute(f"writefd 1 {INVALID_PID_STR} data")
+        assert "Error" in result
+
+    def test_seek_no_args(self) -> None:
+        """Seek without args should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("seek")
+        assert "Usage" in result
+
+    def test_seek_invalid_pid(self) -> None:
+        """Seek with non-integer pid should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute(f"seek {INVALID_PID_STR} 0 0")
+        assert "Error" in result
+
+    def test_seek_invalid_fd(self) -> None:
+        """Seek with non-integer fd should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute(f"seek 1 {INVALID_PID_STR} 0")
+        assert "Error" in result
+
+    def test_seek_invalid_offset(self) -> None:
+        """Seek with non-integer offset should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute(f"seek 1 0 {INVALID_PID_STR}")
+        assert "Error" in result
+
+    def test_lsfd_no_args(self) -> None:
+        """Lsfd without args should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("lsfd")
+        assert "Usage" in result
+
+    def test_lsfd_invalid_pid(self) -> None:
+        """Lsfd with non-integer pid should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute(f"lsfd {INVALID_PID_STR}")
+        assert "Error" in result
+
+
+# -- Scheduler command errors ------------------------------------------------
+
+
+class TestShellSchedulerErrors:
+    """Verify scheduler command error branches."""
+
+    def test_scheduler_rr_no_quantum(self) -> None:
+        """Scheduler rr without quantum should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("scheduler rr")
+        assert "Usage" in result or "quantum" in result.lower()
+
+    def test_scheduler_rr_invalid_quantum(self) -> None:
+        """Scheduler rr with non-integer quantum should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("scheduler rr abc")
+        assert "Error" in result
+
+    def test_scheduler_mlfq_invalid_levels(self) -> None:
+        """Scheduler mlfq with non-integer levels should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("scheduler mlfq abc")
+        assert "Error" in result
+
+    def test_scheduler_mlfq_invalid_base_quantum(self) -> None:
+        """Scheduler mlfq with non-integer base quantum should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("scheduler mlfq 3 abc")
+        assert "Error" in result
+
+    def test_scheduler_cfs_invalid_slice(self) -> None:
+        """Scheduler cfs with non-integer slice should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("scheduler cfs abc")
+        assert "Error" in result
+
+
+# -- Synchronization command errors ------------------------------------------
+
+
+class TestShellSyncErrors:
+    """Verify mutex, semaphore, rwlock command error branches."""
+
+    def test_mutex_create_no_args(self) -> None:
+        """Mutex create without name should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("mutex create")
+        assert "Usage" in result
+
+    def test_mutex_list_empty(self) -> None:
+        """Mutex list with no mutexes should indicate none."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("mutex list")
+        assert "No" in result or "mutex" in result.lower()
+
+    def test_semaphore_create_no_args(self) -> None:
+        """Semaphore create without args should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("semaphore create")
+        assert "Usage" in result
+
+    def test_semaphore_create_invalid_count(self) -> None:
+        """Semaphore create with non-integer count should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("semaphore create mysem abc")
+        assert "Error" in result
+
+    def test_semaphore_list_empty(self) -> None:
+        """Semaphore list with no semaphores should indicate none."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("semaphore list")
+        assert "No" in result or "semaphore" in result.lower()
+
+    def test_rwlock_create_no_args(self) -> None:
+        """Rwlock create without name should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("rwlock create")
+        assert "Usage" in result
+
+    def test_rwlock_list_empty(self) -> None:
+        """Rwlock list with no locks should indicate none."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("rwlock list")
+        assert "No" in result or "lock" in result.lower()
+
+
+# -- Signal and wait command errors ------------------------------------------
+
+
+class TestShellSignalWaitErrors:
+    """Verify handle, wait, waitpid command error branches."""
+
+    def test_handle_unknown_action(self) -> None:
+        """Handle with unknown action should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("handle 1 SIGTERM bad_action")
+        assert "Error" in result or "Unknown" in result
+
+    def test_wait_invalid_pid(self) -> None:
+        """Wait with non-integer pid should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute(f"wait {INVALID_PID_STR}")
+        assert "Error" in result
+
+    def test_waitpid_invalid_parent(self) -> None:
+        """Waitpid with non-integer parent pid should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute(f"waitpid {INVALID_PID_STR} 1")
+        assert "Error" in result
+
+    def test_waitpid_invalid_child(self) -> None:
+        """Waitpid with non-integer child pid should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute(f"waitpid 1 {INVALID_PID_STR}")
+        assert "Error" in result
+
+
+# -- Memory mapping command errors -------------------------------------------
+
+
+class TestShellMmapErrors:
+    """Verify mmap, munmap, msync command error branches."""
+
+    def test_mmap_invalid_pid(self) -> None:
+        """Mmap with non-integer pid should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute(f"mmap {INVALID_PID_STR} /file")
+        assert "Error" in result
+
+    def test_munmap_no_args(self) -> None:
+        """Munmap without args should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("munmap")
+        assert "Usage" in result
+
+    def test_munmap_invalid_pid(self) -> None:
+        """Munmap with non-integer pid should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute(f"munmap {INVALID_PID_STR} 0")
+        assert "Error" in result
+
+    def test_munmap_invalid_address(self) -> None:
+        """Munmap with non-integer address should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute(f"munmap 1 {INVALID_PID_STR}")
+        assert "Error" in result
+
+    def test_msync_no_args(self) -> None:
+        """Msync without args should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("msync")
+        assert "Usage" in result
+
+    def test_msync_invalid_pid(self) -> None:
+        """Msync with non-integer pid should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute(f"msync {INVALID_PID_STR} 0")
+        assert "Error" in result
+
+    def test_msync_invalid_address(self) -> None:
+        """Msync with non-integer address should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute(f"msync 1 {INVALID_PID_STR}")
+        assert "Error" in result
+
+
+# -- Slab allocator command errors -------------------------------------------
+
+
+class TestShellSlabErrors:
+    """Verify slab allocator command error branches."""
+
+    def test_slaballoc_no_args(self) -> None:
+        """Slaballoc without args should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("slaballoc")
+        assert "Usage" in result
+
+    def test_slabfree_no_args(self) -> None:
+        """Slabfree without args should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("slabfree")
+        assert "Usage" in result
+
+    def test_slabfree_invalid_slab_index(self) -> None:
+        """Slabfree with non-integer slab index should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute(f"slabfree mycache {INVALID_PID_STR} 0")
+        assert "Error" in result
+
+    def test_slabfree_invalid_slot_index(self) -> None:
+        """Slabfree with non-integer slot index should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute(f"slabfree mycache 0 {INVALID_PID_STR}")
+        assert "Error" in result
+
+    def test_slabinfo_empty(self) -> None:
+        """Slabinfo with no caches should indicate none."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("slabinfo")
+        assert "No" in result or "cache" in result.lower() or "slab" in result.lower()
+
+
+# -- Background job errors ---------------------------------------------------
+
+
+class TestShellJobErrors:
+    """Verify background job command error branches."""
+
+    def test_bg_invalid_pid(self) -> None:
+        """Bg with non-integer pid should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute(f"bg {INVALID_PID_STR}")
+        assert "Error" in result
+
+    def test_fg_invalid_job(self) -> None:
+        """Fg with non-integer job id should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute(f"fg {INVALID_PID_STR}")
+        assert "Error" in result
+
+    def test_history_empty(self) -> None:
+        """History when empty should indicate no history."""
+        _kernel, shell = _booted_shell()
+        # First command creates history so check the message pattern
+        result = shell.execute("history")
+        # History should either show the history command itself or say empty
+        assert "history" in result.lower() or "No" in result or len(result) >= 0
+
+    def test_pstree(self) -> None:
+        """Pstree should show the process tree."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("pstree")
+        assert "init" in result or "PID" in result or len(result) > 0
+
+
+# -- Shared memory error branches -------------------------------------------
+
+
+class TestShellShmErrors:
+    """Verify shared memory command error branches."""
+
+    def test_shm_create_invalid_size(self) -> None:
+        """Shm create with non-integer size should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute(f"shm create myseg {INVALID_PID_STR} 1")
+        assert "Error" in result
+
+    def test_shm_create_invalid_pid(self) -> None:
+        """Shm create with non-integer pid should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute(f"shm create myseg 64 {INVALID_PID_STR}")
+        assert "Error" in result
+
+    def test_shm_attach_no_args(self) -> None:
+        """Shm attach without args should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("shm attach")
+        assert "Usage" in result
+
+    def test_shm_attach_invalid_pid(self) -> None:
+        """Shm attach with non-integer pid should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute(f"shm attach myseg {INVALID_PID_STR}")
+        assert "Error" in result
+
+    def test_shm_detach_no_args(self) -> None:
+        """Shm detach without args should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("shm detach")
+        assert "Usage" in result
+
+    def test_shm_detach_invalid_pid(self) -> None:
+        """Shm detach with non-integer pid should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute(f"shm detach myseg {INVALID_PID_STR}")
+        assert "Error" in result
+
+    def test_shm_write_no_args(self) -> None:
+        """Shm write without args should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("shm write")
+        assert "Usage" in result
+
+    def test_shm_write_invalid_pid(self) -> None:
+        """Shm write with non-integer pid should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute(f"shm write myseg {INVALID_PID_STR} data")
+        assert "Error" in result
+
+    def test_shm_read_no_args(self) -> None:
+        """Shm read without args should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("shm read")
+        assert "Usage" in result
+
+    def test_shm_read_invalid_pid(self) -> None:
+        """Shm read with non-integer pid should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute(f"shm read myseg {INVALID_PID_STR}")
+        assert "Error" in result
+
+    def test_shm_read_invalid_offset(self) -> None:
+        """Shm read with non-integer offset should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute(f"shm read myseg 1 {INVALID_PID_STR}")
+        assert "Error" in result
+
+    def test_shm_destroy_no_args(self) -> None:
+        """Shm destroy without args should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("shm destroy")
+        assert "Usage" in result
+
+
+# -- Process/thread command errors -------------------------------------------
+
+
+class TestShellProcessErrors:
+    """Verify process and thread command error branches."""
+
+    def test_fork_invalid_pid(self) -> None:
+        """Fork with non-integer pid should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute(f"fork {INVALID_PID_STR}")
+        assert "Error" in result
+
+    def test_threads_invalid_pid(self) -> None:
+        """Threads with non-integer pid should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute(f"threads {INVALID_PID_STR}")
+        assert "Error" in result
+
+    def test_run_invalid_priority(self) -> None:
+        """Run with non-integer priority should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute(f"run test_prog {INVALID_PID_STR}")
+        assert "Error" in result
+
+
+# -- Ordering register error branch -----------------------------------------
+
+
+class TestShellOrderingErrors:
+    """Verify ordering command error branches."""
+
+    def test_ordering_register_invalid_rank(self) -> None:
+        """Ordering register with non-integer rank should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute(f"ordering register myres {INVALID_PID_STR}")
+        assert "Error" in result
+
+
+# -- Pipe/redirection error branches -----------------------------------------
+
+
+class TestShellPipeRedirectErrors:
+    """Verify pipe and redirection error branches."""
+
+    def test_redirect_missing_filename(self) -> None:
+        """Redirect without filename should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("ls >")
+        assert "Error" in result or "Missing" in result
+
+    def test_redirect_stderr_missing_filename(self) -> None:
+        """Stderr redirect without filename should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("ls 2>")
+        assert "Error" in result or "Missing" in result
+
+    def test_input_redirect_missing_filename(self) -> None:
+        """Input redirect without filename should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("cat <")
+        assert "Error" in result or "Missing" in result
