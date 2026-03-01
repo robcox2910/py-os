@@ -14,9 +14,17 @@ theme:
     - navigation.expand
     - search.highlight
 
+markdown_extensions:
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
 nav:
   - Home: index.md
   - Architecture: architecture.md
+  - Visual Guide: diagrams.md
   - Concepts:
       - What Is an OS?: concepts/what-is-an-os.md
       - Processes: concepts/processes.md
