@@ -31,9 +31,6 @@ jobs:
       - name: Run tests with HTML coverage
         run: uv run pytest --cov-report=html:docs/coverage
 
-      - name: Install mkdocs-material
-        run: uv pip install mkdocs-material
-
       - name: Build docs
         run: uv run mkdocs build --strict
 

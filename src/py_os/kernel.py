@@ -26,11 +26,10 @@ Shutdown sequence (reverse order):
     0. Logger — last to go (captures shutdown events).
 """
 
-from collections.abc import Callable, Generator
 from contextlib import AbstractContextManager, contextmanager, suppress
 from enum import StrEnum
 from time import monotonic
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from py_os.env import Environment
 from py_os.fs.fd import FdError, FdTable, FileMode, OpenFileDescription, SeekWhence
@@ -66,13 +65,17 @@ from py_os.process.scheduler import (
     SchedulingPolicy,
 )
 from py_os.process.signals import DEFAULT_ACTIONS, UNCATCHABLE, Signal, SignalAction, SignalError
-from py_os.process.threads import Thread
 from py_os.sync.deadlock import ResourceManager
 from py_os.sync.inheritance import PriorityInheritanceManager
 from py_os.sync.ordering import ResourceOrderingManager
 from py_os.sync.primitives import Condition, Mutex, ReadWriteLock, Semaphore, SyncManager
 from py_os.syscalls import SyscallNumber, dispatch_syscall
 from py_os.users import FilePermissions, UserManager
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Generator
+
+    from py_os.process.threads import Thread
 
 DEFAULT_TOTAL_FRAMES = 64
 

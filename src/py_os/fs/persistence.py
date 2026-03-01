@@ -19,10 +19,13 @@ Key concepts:
 """
 
 import json
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from py_os.fs.filesystem import FileSystem
 from py_os.fs.journal import JournaledFileSystem
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def dump_filesystem(fs: FileSystem, path: Path) -> None:

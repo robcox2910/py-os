@@ -55,7 +55,7 @@ class Environment:
         """Return all (key, value) pairs."""
         return list(self._vars.items())
 
-    def copy(self) -> "Environment":
+    def copy(self) -> Environment:
         """Return an independent copy of this environment."""
         return Environment(initial=self._vars)
 

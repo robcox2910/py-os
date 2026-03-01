@@ -52,6 +52,8 @@ nav:
       - The Shell: concepts/shell.md
       - Devices and Networking: concepts/devices-and-networking.md
       - Users and Safety: concepts/users-and-safety.md
+      - Interrupts and Timers: concepts/interrupts.md
+      - "TCP: Reliable Delivery": concepts/tcp.md
       - Synchronization: concepts/synchronization.md
       - The Boot Chain: concepts/bootloader.md
       - Interactive Tutorials: concepts/tutorials.md

@@ -1,7 +1,7 @@
 """Tests for filesystem journaling — write-ahead log for crash recovery."""
 
-from pathlib import Path
 from time import monotonic
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -18,6 +18,9 @@ from py_os.fs.persistence import dump_journaled_filesystem, load_journaled_files
 from py_os.kernel import ExecutionMode, Kernel
 from py_os.shell import Shell
 from py_os.syscalls import SyscallNumber
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 # Named constants for magic values in tests (PLR2004)
 TRANSACTION_STATE_COUNT = 3

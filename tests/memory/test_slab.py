@@ -155,7 +155,7 @@ class TestSlab:
 def _make_allocator_fn(
     mm: MemoryManager,
     page_size: int = PAGE_SIZE,
-) -> tuple[MemoryManager, "SlabCache._AllocatorFn"]:
+) -> tuple[MemoryManager, SlabCache._AllocatorFn]:
     """Build an allocator callback that requests frames from a MemoryManager."""
 
     def _alloc() -> tuple[int, bytearray]:
