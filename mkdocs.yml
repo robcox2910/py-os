@@ -59,4 +59,5 @@ nav:
       - The Boot Chain: concepts/bootloader.md
       - Interactive Tutorials: concepts/tutorials.md
       - Framebuffer: concepts/framebuffer.md
+      - TUI Dashboard: concepts/tui.md
       - Web UI: concepts/web-ui.md
