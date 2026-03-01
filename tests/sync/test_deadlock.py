@@ -15,6 +15,8 @@ Two strategies address deadlock:
       an unsafe state (no guaranteed completion sequence).
 """
 
+import pytest
+
 from py_os.kernel import ExecutionMode, Kernel
 from py_os.shell import Shell
 from py_os.sync.deadlock import ResourceManager
@@ -115,6 +117,40 @@ class TestResourceManagerBasics:
         resources = rm.resources()
         assert "CPU" in resources
         assert "Disk" in resources
+
+    def test_request_negative_amount_raises(self) -> None:
+        """Requesting a negative amount should raise ValueError."""
+        rm = ResourceManager()
+        rm.add_resource("CPU", total=4)
+        rm.declare_max(pid=1, resource="CPU", maximum=3)
+        with pytest.raises(ValueError, match="negative"):
+            rm.request(pid=1, resource="CPU", amount=-1)
+
+    def test_request_exceeding_available_raises(self) -> None:
+        """Requesting more than available should raise ValueError."""
+        rm = ResourceManager()
+        rm.add_resource("CPU", total=2)
+        rm.declare_max(pid=1, resource="CPU", maximum=3)
+        with pytest.raises(ValueError, match="Cannot allocate"):
+            rm.request(pid=1, resource="CPU", amount=3)
+
+    def test_release_negative_amount_raises(self) -> None:
+        """Releasing a negative amount should raise ValueError."""
+        rm = ResourceManager()
+        rm.add_resource("CPU", total=4)
+        rm.declare_max(pid=1, resource="CPU", maximum=3)
+        rm.request(pid=1, resource="CPU", amount=2)
+        with pytest.raises(ValueError, match="negative"):
+            rm.release(pid=1, resource="CPU", amount=-1)
+
+    def test_release_exceeding_allocation_raises(self) -> None:
+        """Releasing more than allocated should raise ValueError."""
+        rm = ResourceManager()
+        rm.add_resource("CPU", total=4)
+        rm.declare_max(pid=1, resource="CPU", maximum=3)
+        rm.request(pid=1, resource="CPU", amount=1)
+        with pytest.raises(ValueError, match="Cannot release"):
+            rm.release(pid=1, resource="CPU", amount=2)
 
 
 # -- Banker's Algorithm (Safety Check) -----------------------------------------
@@ -245,6 +281,33 @@ class TestBankersAlgorithm:
         # Available=0, both need 1 more — neither can finish
         assert not rm.is_safe()
         assert rm.find_safe_sequence() is None
+
+    def test_safe_sequence_empty_when_no_processes(self) -> None:
+        """Safe sequence should return empty list when no processes are registered."""
+        rm = ResourceManager()
+        rm.add_resource("R", total=5)
+        seq = rm.find_safe_sequence()
+        assert seq == []
+
+    def test_request_safe_denied_when_exceeds_available(self) -> None:
+        """Banker's should deny when amount exceeds available resources."""
+        rm = ResourceManager()
+        rm.add_resource("R", total=2)
+        rm.declare_max(pid=1, resource="R", maximum=3)
+        rm.request(pid=1, resource="R", amount=2)
+        # Available=0, requesting 1 more
+        granted = rm.request_safe(pid=1, resource="R", amount=1)
+        assert not granted
+
+    def test_request_safe_denied_when_exceeds_need(self) -> None:
+        """Banker's should deny when amount exceeds declared need."""
+        rm = ResourceManager()
+        rm.add_resource("R", total=10)
+        rm.declare_max(pid=1, resource="R", maximum=3)
+        rm.request(pid=1, resource="R", amount=2)
+        # Need is 1, but requesting 2 → exceeds need
+        granted = rm.request_safe(pid=1, resource="R", amount=2)
+        assert not granted
 
 
 # -- Deadlock Detection --------------------------------------------------------

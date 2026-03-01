@@ -122,6 +122,19 @@ class TestProcGlobalFiles:
         assert "ReadyQueue:" in content
         k.shutdown()
 
+    def test_cpuinfo_multi_cpu(self) -> None:
+        """Verify cpuinfo shows per-CPU info when multiple CPUs are configured."""
+        num_cpus = 2
+        k = Kernel(num_cpus=num_cpus)
+        k.boot()
+        k._execution_mode = ExecutionMode.KERNEL
+        pfs = ProcFilesystem(kernel=k)
+        content = pfs.read("/proc/cpuinfo")
+        assert "NumCPUs:" in content
+        assert "CPU 0:" in content
+        assert "CPU 1:" in content
+        k.shutdown()
+
 
 # ---------------------------------------------------------------------------
 # Cycle 3 — Per-process files: status, maps, cmdline
@@ -183,6 +196,21 @@ class TestProcProcessFiles:
         p = k.create_process(name="myapp", num_pages=1)
         content = pfs.read(f"/proc/{p.pid}/cmdline")
         assert content == "myapp"
+        k.shutdown()
+
+    def test_maps_shows_mmap_regions(self) -> None:
+        """Maps should include mmap region details when present."""
+        k = _booted_kernel()
+        pfs = ProcFilesystem(kernel=k)
+        p = k.create_process(name="mapper", num_pages=2)
+        # Create a file via shell and mmap it into the process
+        sh = Shell(kernel=k)
+        sh.execute("touch /mapfile.txt")
+        sh.execute("write /mapfile.txt mapped_content")
+        k.mmap_file(pid=p.pid, path="/mapfile.txt")
+        content = pfs.read(f"/proc/{p.pid}/maps")
+        assert "Mmap:" in content
+        assert "/mapfile.txt" in content
         k.shutdown()
 
     def test_nonexistent_pid_raises(self) -> None:
@@ -297,6 +325,71 @@ class TestProcListDir:
         pfs = ProcFilesystem(kernel=k)
         with pytest.raises(ProcError, match=r"Process .* not found"):
             pfs.list_dir("/proc/99999")
+        k.shutdown()
+
+    def test_list_self_dir(self) -> None:
+        """Listing /proc/self should return per-process files."""
+        k = _booted_kernel()
+        pfs = ProcFilesystem(kernel=k)
+        entries = pfs.list_dir("/proc/self")
+        assert "status" in entries
+        assert "maps" in entries
+        assert "cmdline" in entries
+        assert "sched" in entries
+        k.shutdown()
+
+    def test_not_a_proc_directory_raises(self) -> None:
+        """Listing a file-like path should raise ProcError."""
+        k = _booted_kernel()
+        pfs = ProcFilesystem(kernel=k)
+        with pytest.raises(ProcError, match="Not a /proc directory"):
+            pfs.list_dir("/proc/meminfo")
+        k.shutdown()
+
+
+# ---------------------------------------------------------------------------
+# Cycle 5b — Error branches
+# ---------------------------------------------------------------------------
+
+
+class TestProcErrorBranches:
+    """Verify error paths for edge cases in /proc file generation."""
+
+    def test_strip_prefix_bad_path_raises(self) -> None:
+        """Reading a path that doesn't start with /proc should raise ProcError."""
+        k = _booted_kernel()
+        pfs = ProcFilesystem(kernel=k)
+        with pytest.raises(ProcError, match="Path does not start with /proc"):
+            pfs.read("/sys/meminfo")
+        k.shutdown()
+
+    def test_unrecognized_subfile_raises(self) -> None:
+        """Reading an unrecognized per-process file should raise ProcError."""
+        k = _booted_kernel()
+        pfs = ProcFilesystem(kernel=k)
+        p = k.create_process(name="worker", num_pages=1)
+        with pytest.raises(ProcError, match="No such file"):
+            pfs.read(f"/proc/{p.pid}/nonexistent")
+        k.shutdown()
+
+    def test_sched_file_shows_timing(self) -> None:
+        """Reading /proc/{pid}/sched should show timing metrics."""
+        k = _booted_kernel()
+        pfs = ProcFilesystem(kernel=k)
+        p = k.create_process(name="worker", num_pages=1)
+        content = pfs.read(f"/proc/{p.pid}/sched")
+        assert "WaitTime:" in content
+        assert "CpuTime:" in content
+        k.shutdown()
+
+    def test_stat_file_shows_metrics(self) -> None:
+        """Reading /proc/stat should show kernel performance metrics."""
+        k = _booted_kernel()
+        pfs = ProcFilesystem(kernel=k)
+        content = pfs.read("/proc/stat")
+        assert "CtxSwitches:" in content
+        assert "TotalCreated:" in content
+        assert "Throughput:" in content
         k.shutdown()
 
 
