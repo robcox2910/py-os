@@ -2,6 +2,8 @@
 
 Complete list of shell commands, grouped by subsystem. All commands are available in both the terminal REPL (`pyos`) and the web UI (`pyos-web`).
 
+A live terminal dashboard is also available via `pyos-tui` (requires the `[tui]` extra — see [TUI Dashboard](concepts/tui.md)).
+
 Commands can be piped: `ls / | grep txt | wc`
 
 ## General
