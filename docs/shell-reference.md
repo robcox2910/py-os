@@ -54,6 +54,9 @@ Commands can be piped: `ls / | grep txt | wc`
 | `slaballoc name` | Allocate from a slab cache |
 | `slabfree name addr` | Free a slab allocation |
 | `slabinfo` | Show slab allocator statistics |
+| `swap` | Show swap space status (policy, usage, page faults) |
+| `swap policy P` | Change replacement policy (fifo, lru, clock) |
+| `swap demo` | Exercise the pager — force page faults and show stats |
 
 ## Files
 

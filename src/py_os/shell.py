@@ -177,6 +177,7 @@ class Shell:
             "timer": self._cmd_timer,
             "benchmark": self._cmd_benchmark,
             "dashboard": self._cmd_dashboard,
+            "swap": self._cmd_swap,
         }
 
     @property
@@ -3893,3 +3894,63 @@ class Shell:
                 lines.append(f"{indent}  {entry}")
                 continue
             self._dashboard_fs_tree(lines, child_path, depth=depth + 1, max_depth=max_depth)
+
+    # -- swap command -----------------------------------------------------------
+
+    def _cmd_swap(self, args: list[str]) -> str:
+        """Display or manage swap space and page replacement."""
+        if not args:
+            return self._swap_status()
+        match args[0]:
+            case "policy":
+                return self._swap_policy(args[1:])
+            case "demo":
+                return self._swap_demo()
+            case _:
+                return "Usage: swap [policy <fifo|lru|clock>|demo]"
+
+    def _swap_status(self) -> str:
+        """Display swap space status."""
+        try:
+            info: dict[str, object] = self._kernel.syscall(SyscallNumber.SYS_SWAP_INFO)
+        except SyscallError as e:
+            return f"Error: {e}"
+        lines: list[str] = [
+            "--- Swap Status ---",
+            f"  Policy:         {info['policy']}",
+            f"  Swap used:      {info['swap_used']}/{info['swap_total']} pages",
+            f"  Swap free:      {info['swap_free']} pages",
+            f"  Page faults:    {info['page_faults']}",
+            f"  Resident pages: {info['resident_count']}",
+        ]
+        return "\n".join(lines)
+
+    def _swap_policy(self, args: list[str]) -> str:
+        """Change the swap replacement policy."""
+        if not args:
+            return "Usage: swap policy <fifo|lru|clock>"
+        name = args[0]
+        try:
+            self._kernel.syscall(SyscallNumber.SYS_SET_SWAP_POLICY, name=name)
+        except SyscallError as e:
+            return f"Error: {e}"
+        return f"Swap policy changed to {name}"
+
+    def _swap_demo(self) -> str:
+        """Exercise the pager and show before/after statistics."""
+        try:
+            before: dict[str, object] = self._kernel.syscall(SyscallNumber.SYS_SWAP_INFO)
+            result: dict[str, object] = self._kernel.syscall(SyscallNumber.SYS_SWAP_EXERCISE)
+            after: dict[str, object] = self._kernel.syscall(SyscallNumber.SYS_SWAP_INFO)
+        except SyscallError as e:
+            return f"Error: {e}"
+        lines: list[str] = [
+            "--- Swap Demo ---",
+            f"  Policy:          {before['policy']}",
+            f"  Pages accessed:  {result['pages_accessed']}",
+            f"  Faults before:   {result['faults_before']}",
+            f"  Faults after:    {result['faults_after']}",
+            f"  New faults:      {result['new_faults']}",
+            f"  Swap used after: {after['swap_used']}/{after['swap_total']} pages",
+        ]
+        return "\n".join(lines)
