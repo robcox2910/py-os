@@ -964,3 +964,252 @@ class TestShellHttp:
         _kernel, shell = _booted_shell()
         result = shell.execute("http demo")
         assert "HTTP Demo" in result
+
+
+# -- Priority inheritance commands ------------------------------------------
+
+
+class TestShellPriorityInheritance:
+    """Verify priority inheritance (pi) commands."""
+
+    def test_pi_no_args_shows_usage(self) -> None:
+        """Pi with no args should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("pi")
+        assert "Usage" in result
+
+    def test_pi_unknown_subcommand_shows_usage(self) -> None:
+        """Pi with unknown subcommand should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("pi foobar")
+        assert "Usage" in result
+
+    def test_pi_status(self) -> None:
+        """Pi status should show current boosted processes."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("pi status")
+        assert "boost" in result.lower() or "No" in result or "Priority" in result
+
+    def test_pi_demo_runs(self) -> None:
+        """Pi demo should walk through the Mars Pathfinder scenario."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("pi demo")
+        assert "Priority Inheritance" in result or "Mars" in result
+
+
+# -- Ordering commands ------------------------------------------------------
+
+
+class TestShellOrdering:
+    """Verify resource ordering commands."""
+
+    def test_ordering_no_args_shows_usage(self) -> None:
+        """Ordering with no args should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("ordering")
+        assert "Usage" in result
+
+    def test_ordering_unknown_subcommand_shows_usage(self) -> None:
+        """Ordering with unknown subcommand should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("ordering foobar")
+        assert "Usage" in result
+
+    def test_ordering_register(self) -> None:
+        """Ordering register should register a resource with a rank."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("ordering register lock_a 1")
+        assert "Registered" in result or "rank" in result.lower()
+
+    def test_ordering_register_no_args_shows_usage(self) -> None:
+        """Ordering register without enough args should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("ordering register")
+        assert "Usage" in result
+
+    def test_ordering_status(self) -> None:
+        """Ordering status should show the current ordering state."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("ordering status")
+        assert "mode" in result.lower() or "Order" in result
+
+    def test_ordering_mode_strict(self) -> None:
+        """Ordering mode should change the enforcement mode."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("ordering mode strict")
+        assert "strict" in result.lower()
+
+    def test_ordering_mode_no_args_shows_usage(self) -> None:
+        """Ordering mode without args should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("ordering mode")
+        assert "Usage" in result
+
+    def test_ordering_violations(self) -> None:
+        """Ordering violations should report any ordering violations."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("ordering violations")
+        assert "violation" in result.lower() or "No" in result or "0" in result
+
+    def test_ordering_demo_runs(self) -> None:
+        """Ordering demo should walk through the numbered-lockers scenario."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("ordering demo")
+        assert "Ordering" in result or "locker" in result.lower()
+
+
+# -- Shared memory commands -------------------------------------------------
+
+
+class TestShellShm:
+    """Verify shared memory (shm) commands."""
+
+    def test_shm_no_args_shows_usage(self) -> None:
+        """Shm with no args should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("shm")
+        assert "Usage" in result
+
+    def test_shm_unknown_subcommand_shows_usage(self) -> None:
+        """Shm with unknown subcommand should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("shm foobar")
+        assert "Usage" in result
+
+    def test_shm_create(self) -> None:
+        """Shm create should create a shared memory segment."""
+        kernel, shell = _booted_shell()
+        # shm create requires <name> <size> <pid>
+        proc = kernel.create_process(name="shm_test", num_pages=2)
+        result = shell.execute(f"shm create test_segment 64 {proc.pid}")
+        assert "Created" in result or "segment" in result.lower()
+
+    def test_shm_create_no_args_shows_usage(self) -> None:
+        """Shm create without args should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("shm create")
+        assert "Usage" in result
+
+    def test_shm_list_empty(self) -> None:
+        """Shm list with no segments should say so."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("shm list")
+        assert "No" in result or "segment" in result.lower()
+
+    def test_shm_list_shows_segments(self) -> None:
+        """Shm list should show created segments."""
+        kernel, shell = _booted_shell()
+        proc = kernel.create_process(name="shm_test", num_pages=2)
+        shell.execute(f"shm create seg1 32 {proc.pid}")
+        result = shell.execute("shm list")
+        assert "seg1" in result
+
+    def test_shm_demo_runs(self) -> None:
+        """Shm demo should walk through shared whiteboard scenario."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("shm demo")
+        assert "Shared Memory" in result or "whiteboard" in result.lower()
+
+
+# -- /proc virtual filesystem commands --------------------------------------
+
+
+class TestShellProc:
+    """Verify /proc virtual filesystem commands."""
+
+    def test_proc_no_args_shows_usage(self) -> None:
+        """Proc with no args should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("proc")
+        assert "Usage" in result
+
+    def test_proc_unknown_subcommand_shows_usage(self) -> None:
+        """Proc with unknown subcommand should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("proc foobar")
+        assert "Usage" in result
+
+    def test_proc_demo_runs(self) -> None:
+        """Proc demo should walk through the bulletin board scenario."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("proc demo")
+        assert "/proc" in result or "bulletin" in result.lower()
+
+
+# -- Performance metrics commands -------------------------------------------
+
+
+class TestShellPerf:
+    """Verify performance metrics commands."""
+
+    def test_perf_no_args_shows_summary(self) -> None:
+        """Perf with no args should show a metrics summary."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("perf")
+        assert "Metrics" in result or "throughput" in result.lower()
+
+    def test_perf_demo_runs(self) -> None:
+        """Perf demo should walk through the sports day scenario."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("perf demo")
+        assert "Performance" in result or "sports" in result.lower()
+
+
+# -- Strace commands --------------------------------------------------------
+
+
+class TestShellStrace:
+    """Verify syscall tracing (strace) commands."""
+
+    def test_strace_no_args_shows_usage(self) -> None:
+        """Strace with no args should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("strace")
+        assert "Usage" in result
+
+    def test_strace_unknown_subcommand_shows_usage(self) -> None:
+        """Strace with unknown subcommand should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("strace foobar")
+        assert "Usage" in result
+
+    def test_strace_on(self) -> None:
+        """Strace on should enable tracing."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("strace on")
+        assert "enabled" in result.lower()
+
+    def test_strace_off(self) -> None:
+        """Strace off should disable tracing."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("strace off")
+        assert "disabled" in result.lower()
+
+    def test_strace_show_empty(self) -> None:
+        """Strace show with no log should indicate empty."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("strace show")
+        assert "empty" in result.lower()
+
+    def test_strace_inline_output(self) -> None:
+        """Strace output should appear inline with the traced command."""
+        _kernel, shell = _booted_shell()
+        shell.execute("strace on")
+        result = shell.execute("ls /")
+        # Strace entries are appended inline and the log is cleared
+        assert "--- strace ---" in result
+        assert "SYS_LIST_DIR" in result
+
+    def test_strace_clear(self) -> None:
+        """Strace clear should clear the log."""
+        _kernel, shell = _booted_shell()
+        shell.execute("strace on")
+        shell.execute("ls /")
+        result = shell.execute("strace clear")
+        assert "cleared" in result.lower()
+
+    def test_strace_demo_runs(self) -> None:
+        """Strace demo should walk through the kitchen clipboard scenario."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("strace demo")
+        assert "Strace" in result or "kitchen" in result.lower()
