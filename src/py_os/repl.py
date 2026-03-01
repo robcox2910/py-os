@@ -67,7 +67,7 @@ def build_prompt(kernel: Kernel) -> str:
         return "pyos $ "
 
 
-def run() -> None:
+def run() -> None:  # pragma: no cover
     """Boot the OS and run the interactive REPL.
 
     This is the main entrypoint.  It handles:
