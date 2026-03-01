@@ -6,10 +6,12 @@ we test the components it depends on rather than the loop itself:
 - The REPL module's helper functions are testable in isolation.
 """
 
+from unittest.mock import patch
+
 from py_os.kernel import ExecutionMode, Kernel, KernelState
 from py_os.repl import build_prompt, format_boot_log
 from py_os.shell import Shell
-from py_os.syscalls import SyscallNumber
+from py_os.syscalls import SyscallError, SyscallNumber
 
 
 def _booted_shell() -> tuple[Kernel, Shell]:
@@ -75,3 +77,23 @@ class TestREPLHelpers:
         banner = format_boot_log(kernel.dmesg())
         assert "PyOS" in banner
         assert "[OK]" in banner
+
+    def test_build_prompt_when_not_running(self) -> None:
+        """Build prompt should return a fallback when kernel is not running."""
+        kernel = Kernel()
+        prompt = build_prompt(kernel)
+        assert prompt == "pyos $ "
+
+    def test_build_prompt_syscall_error_fallback(self) -> None:
+        """Build prompt should return fallback when whoami syscall fails."""
+        kernel, _shell = _booted_shell()
+        with patch.object(kernel, "syscall", side_effect=SyscallError("whoami failed")):
+            prompt = build_prompt(kernel)
+        assert prompt == "pyos $ "
+
+    def test_build_prompt_key_error_fallback(self) -> None:
+        """Build prompt should return fallback when response lacks username."""
+        kernel, _shell = _booted_shell()
+        with patch.object(kernel, "syscall", return_value={}):
+            prompt = build_prompt(kernel)
+        assert prompt == "pyos $ "
