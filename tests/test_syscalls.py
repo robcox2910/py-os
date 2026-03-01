@@ -256,3 +256,397 @@ class TestSyscallValidation:
         kernel = _booted_kernel()
         with pytest.raises(SyscallError, match="Unknown syscall"):
             kernel.syscall(999)  # type: ignore[arg-type]
+
+
+# -- File-system error paths ---------------------------------------------------
+
+NONEXISTENT_PID = 99999
+
+
+class TestSyscallFileErrors:
+    """Verify syscall exception handling for filesystem operations."""
+
+    def test_create_file_duplicate_raises(self) -> None:
+        """Creating an already-existing file should raise SyscallError."""
+        kernel = _booted_kernel()
+        kernel.syscall(SyscallNumber.SYS_CREATE_FILE, path="/dup.txt")
+        with pytest.raises(SyscallError):
+            kernel.syscall(SyscallNumber.SYS_CREATE_FILE, path="/dup.txt")
+
+    def test_create_dir_duplicate_raises(self) -> None:
+        """Creating an already-existing directory should raise SyscallError."""
+        kernel = _booted_kernel()
+        kernel.syscall(SyscallNumber.SYS_CREATE_DIR, path="/mydir")
+        with pytest.raises(SyscallError):
+            kernel.syscall(SyscallNumber.SYS_CREATE_DIR, path="/mydir")
+
+    def test_delete_nonexistent_file_raises(self) -> None:
+        """Deleting a nonexistent file should raise SyscallError."""
+        kernel = _booted_kernel()
+        with pytest.raises(SyscallError):
+            kernel.syscall(SyscallNumber.SYS_DELETE_FILE, path="/gone.txt")
+
+
+# -- File descriptor error paths -----------------------------------------------
+
+
+class TestSyscallFdErrors:
+    """Verify syscall exception handling for file descriptor operations."""
+
+    def test_read_fd_invalid_raises(self) -> None:
+        """Reading from an invalid FD should raise SyscallError."""
+        kernel = _booted_kernel()
+        proc = kernel.create_process(name="app", num_pages=NUM_PAGES)
+        with pytest.raises(SyscallError):
+            kernel.syscall(SyscallNumber.SYS_READ_FD, pid=proc.pid, fd=999, count=10)
+
+    def test_write_fd_invalid_raises(self) -> None:
+        """Writing to an invalid FD should raise SyscallError."""
+        kernel = _booted_kernel()
+        proc = kernel.create_process(name="app", num_pages=NUM_PAGES)
+        with pytest.raises(SyscallError):
+            kernel.syscall(SyscallNumber.SYS_WRITE_FD, pid=proc.pid, fd=999, data=b"hi")
+
+    def test_seek_fd_invalid_raises(self) -> None:
+        """Seeking on an invalid FD should raise SyscallError."""
+        kernel = _booted_kernel()
+        proc = kernel.create_process(name="app", num_pages=NUM_PAGES)
+        with pytest.raises(SyscallError):
+            kernel.syscall(
+                SyscallNumber.SYS_SEEK,
+                pid=proc.pid,
+                fd=999,
+                offset=0,
+                whence="set",
+            )
+
+
+# -- Sync primitive error paths ------------------------------------------------
+
+
+class TestSyscallSyncErrors:
+    """Verify syscall exception handling for sync primitives."""
+
+    def test_create_duplicate_mutex_raises(self) -> None:
+        """Creating a duplicate mutex should raise SyscallError."""
+        kernel = _booted_kernel()
+        kernel.syscall(SyscallNumber.SYS_CREATE_MUTEX, name="m")
+        with pytest.raises(SyscallError):
+            kernel.syscall(SyscallNumber.SYS_CREATE_MUTEX, name="m")
+
+    def test_acquire_nonexistent_mutex_raises(self) -> None:
+        """Acquiring a nonexistent mutex should raise SyscallError."""
+        kernel = _booted_kernel()
+        with pytest.raises(SyscallError):
+            kernel.syscall(SyscallNumber.SYS_ACQUIRE_MUTEX, name="nope", tid=0)
+
+    def test_release_nonexistent_mutex_raises(self) -> None:
+        """Releasing a nonexistent mutex should raise SyscallError."""
+        kernel = _booted_kernel()
+        with pytest.raises(SyscallError):
+            kernel.syscall(SyscallNumber.SYS_RELEASE_MUTEX, name="nope", tid=0)
+
+    def test_create_duplicate_semaphore_raises(self) -> None:
+        """Creating a duplicate semaphore should raise SyscallError."""
+        kernel = _booted_kernel()
+        kernel.syscall(SyscallNumber.SYS_CREATE_SEMAPHORE, name="s", count=1)
+        with pytest.raises(SyscallError):
+            kernel.syscall(SyscallNumber.SYS_CREATE_SEMAPHORE, name="s", count=1)
+
+    def test_acquire_nonexistent_semaphore_raises(self) -> None:
+        """Acquiring a nonexistent semaphore should raise SyscallError."""
+        kernel = _booted_kernel()
+        with pytest.raises(SyscallError):
+            kernel.syscall(SyscallNumber.SYS_ACQUIRE_SEMAPHORE, name="nope", tid=0)
+
+    def test_release_nonexistent_semaphore_raises(self) -> None:
+        """Releasing a nonexistent semaphore should raise SyscallError."""
+        kernel = _booted_kernel()
+        with pytest.raises(SyscallError):
+            kernel.syscall(SyscallNumber.SYS_RELEASE_SEMAPHORE, name="nope")
+
+    def test_create_condition_bad_mutex_raises(self) -> None:
+        """Creating a condition with nonexistent mutex should raise SyscallError."""
+        kernel = _booted_kernel()
+        with pytest.raises(SyscallError):
+            kernel.syscall(
+                SyscallNumber.SYS_CREATE_CONDITION,
+                name="c",
+                mutex_name="nope",
+            )
+
+    def test_condition_wait_nonexistent_raises(self) -> None:
+        """Waiting on nonexistent condition should raise SyscallError."""
+        kernel = _booted_kernel()
+        with pytest.raises(SyscallError):
+            kernel.syscall(SyscallNumber.SYS_CONDITION_WAIT, name="nope", tid=0)
+
+    def test_condition_notify_nonexistent_raises(self) -> None:
+        """Notifying nonexistent condition should raise SyscallError."""
+        kernel = _booted_kernel()
+        with pytest.raises(SyscallError):
+            kernel.syscall(SyscallNumber.SYS_CONDITION_NOTIFY, name="nope")
+
+    def test_condition_notify_all(self) -> None:
+        """Notify-all on an existing condition should succeed."""
+        kernel = _booted_kernel()
+        kernel.syscall(SyscallNumber.SYS_CREATE_MUTEX, name="m")
+        kernel.syscall(SyscallNumber.SYS_CREATE_CONDITION, name="c", mutex_name="m")
+        result = kernel.syscall(SyscallNumber.SYS_CONDITION_NOTIFY, name="c", notify_all=True)
+        assert "notified" in result
+
+    def test_create_duplicate_rwlock_raises(self) -> None:
+        """Creating a duplicate rwlock should raise SyscallError."""
+        kernel = _booted_kernel()
+        kernel.syscall(SyscallNumber.SYS_CREATE_RWLOCK, name="rw")
+        with pytest.raises(SyscallError):
+            kernel.syscall(SyscallNumber.SYS_CREATE_RWLOCK, name="rw")
+
+    def test_acquire_nonexistent_read_lock_raises(self) -> None:
+        """Acquiring read lock on nonexistent rwlock should raise SyscallError."""
+        kernel = _booted_kernel()
+        with pytest.raises(SyscallError):
+            kernel.syscall(SyscallNumber.SYS_ACQUIRE_READ_LOCK, name="nope", tid=0)
+
+    def test_acquire_nonexistent_write_lock_raises(self) -> None:
+        """Acquiring write lock on nonexistent rwlock should raise SyscallError."""
+        kernel = _booted_kernel()
+        with pytest.raises(SyscallError):
+            kernel.syscall(SyscallNumber.SYS_ACQUIRE_WRITE_LOCK, name="nope", tid=0)
+
+    def test_release_nonexistent_read_lock_raises(self) -> None:
+        """Releasing read lock on nonexistent rwlock should raise SyscallError."""
+        kernel = _booted_kernel()
+        with pytest.raises(SyscallError):
+            kernel.syscall(SyscallNumber.SYS_RELEASE_READ_LOCK, name="nope", tid=0)
+
+    def test_release_nonexistent_write_lock_raises(self) -> None:
+        """Releasing write lock on nonexistent rwlock should raise SyscallError."""
+        kernel = _booted_kernel()
+        with pytest.raises(SyscallError):
+            kernel.syscall(SyscallNumber.SYS_RELEASE_WRITE_LOCK, name="nope", tid=0)
+
+
+# -- DNS error paths -----------------------------------------------------------
+
+
+class TestSyscallDnsErrors:
+    """Verify syscall exception handling for DNS operations."""
+
+    def test_dns_register_duplicate_raises(self) -> None:
+        """Registering a duplicate hostname should raise SyscallError."""
+        kernel = _booted_kernel()
+        kernel.syscall(SyscallNumber.SYS_DNS_REGISTER, hostname="a.com", address="1.1.1.1")
+        with pytest.raises(SyscallError):
+            kernel.syscall(
+                SyscallNumber.SYS_DNS_REGISTER,
+                hostname="a.com",
+                address="2.2.2.2",
+            )
+
+    def test_dns_lookup_nonexistent_raises(self) -> None:
+        """Looking up a nonexistent hostname should raise SyscallError."""
+        kernel = _booted_kernel()
+        with pytest.raises(SyscallError):
+            kernel.syscall(SyscallNumber.SYS_DNS_LOOKUP, hostname="nope.com")
+
+    def test_dns_remove_nonexistent_raises(self) -> None:
+        """Removing a nonexistent hostname should raise SyscallError."""
+        kernel = _booted_kernel()
+        with pytest.raises(SyscallError):
+            kernel.syscall(SyscallNumber.SYS_DNS_REMOVE, hostname="nope.com")
+
+
+# -- Socket error paths --------------------------------------------------------
+
+
+class TestSyscallSocketErrors:
+    """Verify syscall exception handling for socket operations."""
+
+    def test_socket_bind_invalid_raises(self) -> None:
+        """Binding an invalid socket should raise SyscallError."""
+        kernel = _booted_kernel()
+        with pytest.raises(SyscallError):
+            kernel.syscall(
+                SyscallNumber.SYS_SOCKET_BIND,
+                sock_id=999,
+                address="127.0.0.1",
+                port=80,
+            )
+
+    def test_socket_listen_invalid_raises(self) -> None:
+        """Listening on invalid socket should raise SyscallError."""
+        kernel = _booted_kernel()
+        with pytest.raises(SyscallError):
+            kernel.syscall(SyscallNumber.SYS_SOCKET_LISTEN, sock_id=999)
+
+    def test_socket_connect_invalid_raises(self) -> None:
+        """Connecting an invalid socket should raise SyscallError."""
+        kernel = _booted_kernel()
+        with pytest.raises(SyscallError):
+            kernel.syscall(
+                SyscallNumber.SYS_SOCKET_CONNECT,
+                sock_id=999,
+                address="1.1.1.1",
+                port=80,
+            )
+
+    def test_socket_accept_invalid_raises(self) -> None:
+        """Accepting on invalid socket should raise SyscallError."""
+        kernel = _booted_kernel()
+        with pytest.raises(SyscallError):
+            kernel.syscall(SyscallNumber.SYS_SOCKET_ACCEPT, sock_id=999)
+
+    def test_socket_send_invalid_raises(self) -> None:
+        """Sending on invalid socket should raise SyscallError."""
+        kernel = _booted_kernel()
+        with pytest.raises(SyscallError):
+            kernel.syscall(SyscallNumber.SYS_SOCKET_SEND, sock_id=999, data=b"hi")
+
+    def test_socket_recv_invalid_raises(self) -> None:
+        """Receiving from invalid socket should raise SyscallError."""
+        kernel = _booted_kernel()
+        with pytest.raises(SyscallError):
+            kernel.syscall(SyscallNumber.SYS_SOCKET_RECV, sock_id=999)
+
+    def test_socket_close_invalid_raises(self) -> None:
+        """Closing an invalid socket should raise SyscallError."""
+        kernel = _booted_kernel()
+        with pytest.raises(SyscallError):
+            kernel.syscall(SyscallNumber.SYS_SOCKET_CLOSE, sock_id=999)
+
+
+# -- SHM error paths ----------------------------------------------------------
+
+
+class TestSyscallShmErrors:
+    """Verify syscall exception handling for shared memory operations."""
+
+    def test_shm_detach_nonexistent_raises(self) -> None:
+        """Detaching from nonexistent segment should raise SyscallError."""
+        kernel = _booted_kernel()
+        with pytest.raises(SyscallError):
+            kernel.syscall(SyscallNumber.SYS_SHM_DETACH, name="nope", pid=1)
+
+    def test_shm_destroy_nonexistent_raises(self) -> None:
+        """Destroying nonexistent segment should raise SyscallError."""
+        kernel = _booted_kernel()
+        with pytest.raises(SyscallError):
+            kernel.syscall(SyscallNumber.SYS_SHM_DESTROY, name="nope")
+
+    def test_shm_write_nonexistent_raises(self) -> None:
+        """Writing to nonexistent segment should raise SyscallError."""
+        kernel = _booted_kernel()
+        with pytest.raises(SyscallError):
+            kernel.syscall(
+                SyscallNumber.SYS_SHM_WRITE,
+                name="nope",
+                pid=1,
+                data=b"hi",
+            )
+
+    def test_shm_read_nonexistent_raises(self) -> None:
+        """Reading from nonexistent segment should raise SyscallError."""
+        kernel = _booted_kernel()
+        with pytest.raises(SyscallError):
+            kernel.syscall(
+                SyscallNumber.SYS_SHM_READ,
+                name="nope",
+                pid=1,
+            )
+
+
+# -- Mmap error paths ---------------------------------------------------------
+
+
+class TestSyscallMmapErrors:
+    """Verify syscall exception handling for mmap operations."""
+
+    def test_munmap_invalid_raises(self) -> None:
+        """Unmapping an invalid address should raise SyscallError."""
+        kernel = _booted_kernel()
+        proc = kernel.create_process(name="app", num_pages=NUM_PAGES)
+        with pytest.raises(SyscallError):
+            kernel.syscall(SyscallNumber.SYS_MUNMAP, pid=proc.pid, virtual_address=9999)
+
+
+# -- Scheduler info paths -----------------------------------------------------
+
+
+class TestSyscallSchedulerInfo:
+    """Verify scheduler info syscall covers all policy types."""
+
+    def test_scheduler_info_rr(self) -> None:
+        """Scheduler info should show Round Robin details."""
+        kernel = _booted_kernel()
+        rr_quantum = 3
+        kernel.syscall(SyscallNumber.SYS_SET_SCHEDULER, policy="rr", quantum=rr_quantum)
+        result = kernel.syscall(SyscallNumber.SYS_SCHEDULER_INFO)
+        assert "Round Robin" in result["policy"]
+
+    def test_scheduler_info_priority(self) -> None:
+        """Scheduler info should show Priority."""
+        kernel = _booted_kernel()
+        kernel.syscall(SyscallNumber.SYS_SET_SCHEDULER, policy="priority")
+        result = kernel.syscall(SyscallNumber.SYS_SCHEDULER_INFO)
+        assert "Priority" in result["policy"]
+
+    def test_rr_without_quantum_raises(self) -> None:
+        """Setting RR scheduler without quantum should raise SyscallError."""
+        kernel = _booted_kernel()
+        with pytest.raises(SyscallError, match="quantum"):
+            kernel.syscall(SyscallNumber.SYS_SET_SCHEDULER, policy="rr")
+
+
+# -- TCP error paths -----------------------------------------------------------
+
+
+class TestSyscallTcpErrors:
+    """Verify syscall exception handling for TCP operations."""
+
+    def test_tcp_listen_invalid_raises(self) -> None:
+        """TCP listen on invalid port should raise SyscallError."""
+        kernel = _booted_kernel()
+        kernel.syscall(SyscallNumber.SYS_TCP_LISTEN, port=80)
+        with pytest.raises(SyscallError):
+            kernel.syscall(SyscallNumber.SYS_TCP_LISTEN, port=80)
+
+    def test_tcp_accept_invalid_raises(self) -> None:
+        """TCP accept on invalid listener should raise SyscallError."""
+        kernel = _booted_kernel()
+        with pytest.raises(SyscallError):
+            kernel.syscall(SyscallNumber.SYS_TCP_ACCEPT, listener_id=999)
+
+    def test_tcp_connect_returns_info(self) -> None:
+        """TCP connect should return connection info."""
+        kernel = _booted_kernel()
+        result = kernel.syscall(
+            SyscallNumber.SYS_TCP_CONNECT,
+            client_port=5000,
+            server_port=80,
+        )
+        assert "conn_id" in result
+
+    def test_tcp_send_invalid_raises(self) -> None:
+        """TCP send on invalid connection should raise SyscallError."""
+        kernel = _booted_kernel()
+        with pytest.raises(SyscallError):
+            kernel.syscall(SyscallNumber.SYS_TCP_SEND, conn_id=999, data=b"hi")
+
+    def test_tcp_recv_invalid_raises(self) -> None:
+        """TCP recv on invalid connection should raise SyscallError."""
+        kernel = _booted_kernel()
+        with pytest.raises(SyscallError):
+            kernel.syscall(SyscallNumber.SYS_TCP_RECV, conn_id=999)
+
+    def test_tcp_close_invalid_raises(self) -> None:
+        """TCP close on invalid connection should raise SyscallError."""
+        kernel = _booted_kernel()
+        with pytest.raises(SyscallError):
+            kernel.syscall(SyscallNumber.SYS_TCP_CLOSE, conn_id=999)
+
+    def test_tcp_info_invalid_raises(self) -> None:
+        """TCP info on invalid connection should raise SyscallError."""
+        kernel = _booted_kernel()
+        with pytest.raises(SyscallError):
+            kernel.syscall(SyscallNumber.SYS_TCP_INFO, conn_id=999)
