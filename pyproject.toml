@@ -1,5 +1,5 @@
 [project]
-name = "py-os"
+name = "pyos-learn"
 dynamic = ["version"]
 description = "A simulated operating system built in Python for learning OS concepts"
 readme = "README.md"
@@ -16,16 +16,20 @@ classifiers = [
     "Programming Language :: Python :: 3.14",
     "Topic :: Education",
     "Topic :: System :: Operating System",
+    "Typing :: Typed",
 ]
+keywords = ["operating-system", "simulator", "education", "os-concepts", "learning"]
 dependencies = []
 
 [project.urls]
 Homepage = "https://github.com/robcox2910/py-os"
 Repository = "https://github.com/robcox2910/py-os"
 Issues = "https://github.com/robcox2910/py-os/issues"
+Documentation = "https://robcox2910.github.io/py-os/"
 
 [project.scripts]
-py-os = "py_os.repl:run"
+pyos = "py_os.repl:run"
+pyos-web = "py_os.web.app:main"
 
 [project.optional-dependencies]
 dev = [
