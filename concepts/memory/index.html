@@ -984,6 +984,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#7-demand-paging-in-pyos-the-library-desk" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Demand Paging in PyOS: The Library Desk
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7. Demand Paging in PyOS: The Library Desk">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-analogy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Analogy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#try-it-yourself" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Try It Yourself
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#putting-it-all-together" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1700,6 +1739,32 @@ reclaim empty slabs.</p>
 <p><strong>On destroy</strong>, all backing frames are returned to the memory manager.</p>
 </li>
 </ol>
+<hr />
+<h2 id="7-demand-paging-in-pyos-the-library-desk">7. Demand Paging in PyOS: The Library Desk</h2>
+<h3 id="the-analogy">The Analogy</h3>
+<p>Imagine you're studying in the library. There's a huge shelf of books (virtual
+memory), but your desk (physical RAM) only fits a handful of books at a time.</p>
+<p>When you need a book that's already on your desk, great -- just grab it. But when
+you need a book that's on the shelf, you have to make room. You pick a book on your
+desk that you're not reading right now, put it back on the shelf, and grab the new
+one. That swap -- putting one back, pulling one out -- is exactly what the OS does.</p>
+<p>In PyOS, the <code>Pager</code> is the librarian managing your desk. It:</p>
+<ol>
+<li><strong>Keeps track</strong> of which "books" (pages) are on your desk (resident in RAM).</li>
+<li><strong>Notices</strong> when you ask for a book that isn't there (a <strong>page fault</strong>).</li>
+<li><strong>Picks a book to shelve</strong> using one of three strategies (FIFO, LRU, or Clock).</li>
+<li><strong>Swaps them</strong> -- saves the old page to swap space, loads the new one into RAM.</li>
+</ol>
+<h3 id="try-it-yourself">Try It Yourself</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>swap              # See current swap status
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>swap policy fifo  # Switch to FIFO replacement
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>swap demo         # Force page faults and see what happens
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>swap policy lru   # Switch back to LRU
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>swap demo         # Compare the results
+</code></pre></div>
+<p>The <code>swap demo</code> command writes to more virtual pages than fit in physical RAM,
+forcing the pager to evict and reload pages. Watch how the number of page faults
+changes with different policies!</p>
 <hr />
 <h2 id="putting-it-all-together">Putting It All Together</h2>
 <p>Here's how these pieces work as a team:</p>
