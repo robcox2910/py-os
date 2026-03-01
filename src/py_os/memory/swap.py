@@ -98,6 +98,11 @@ class SwapSpace:
         self._slots: dict[int, bytes] = {}
 
     @property
+    def capacity(self) -> int:
+        """Return the maximum number of pages this swap can store."""
+        return self._capacity
+
+    @property
     def used(self) -> int:
         """Return the number of pages currently stored in swap."""
         return len(self._slots)
@@ -335,6 +340,11 @@ class Pager:
             self._vpn_to_frame[vpn] = frame
             self._resident.add(vpn)
             self._policy.add_page(vpn)
+
+    @property
+    def swap(self) -> SwapSpace:
+        """Return the backing swap space."""
+        return self._swap
 
     @property
     def page_faults(self) -> int:
