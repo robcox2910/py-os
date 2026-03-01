@@ -131,7 +131,7 @@ The teacher (scheduler) always calls on the highest-priority student who is read
 5. Slow Student never gets a turn, so they can never finish and return the textbook
 6. Fast Student is stuck forever!
 
-This is **priority inversion**: the high-priority task is effectively running at the *lowest* priority because it's blocked behind the low-priority holder, and medium-priority tasks keep jumping ahead.
+This is **priority inversion**: the high-priority task is effectively running at the *lowest* priority because it's blocked behind the low-priority holder, and medium-priority tasks keep jumping ahead. In other words, the important task gets stuck waiting because a less important task is hogging the lock.
 
 ### The Mars Pathfinder Bug
 

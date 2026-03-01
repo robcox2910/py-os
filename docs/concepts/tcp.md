@@ -71,6 +71,8 @@ Receiver says: "window_size = 8"
 
 ## Congestion Control: Don't Flood the Network
 
+Imagine you're pouring water into a cup. You start with a tiny trickle to make sure you don't spill. As you see it's going fine, you pour a little more. If it overflows, you slow way down. That's how congestion control works!
+
 Even if the receiver has room, the network might be busy. TCP uses **congestion control** to avoid overwhelming the network:
 
 ### Slow Start

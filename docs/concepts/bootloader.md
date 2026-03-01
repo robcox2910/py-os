@@ -48,8 +48,9 @@ Shell prompt      -- "Ready for your commands!"
 ## 2. Firmware POST
 
 POST stands for **Power-On Self-Test**. Before doing anything else, the
-computer's firmware (a tiny program baked into the motherboard) checks that the
-essential hardware is working:
+computer's firmware (firmware is special software built permanently into the
+computer's motherboard -- a tiny program baked into the hardware) checks that
+the essential hardware is working:
 
 - **Memory** -- are there enough memory frames available?
 - **Disk** -- can we read from the storage device?

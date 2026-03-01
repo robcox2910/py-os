@@ -23,6 +23,10 @@ Commands can be piped: `ls / | grep txt | wc`
 |---------|-------------|
 | `ps` | Show running processes |
 | `run prog [p]` | Run a built-in program with optional priority |
+| `run /path` | Load and execute a binary file from the filesystem |
+| `compile name` | Build a demo program into `/bin` |
+| `compile list` | List available demo programs |
+| `hexdump path` | Show an annotated hex dump of a binary file |
 | `kill pid` | Terminate a process by PID |
 | `fork pid` | Fork a process (create a child copy) |
 | `wait pid` | Wait for any child to terminate and collect its exit code |
@@ -89,6 +93,15 @@ Commands can be piped: `ls / | grep txt | wc`
 | `whoami` | Show the current user |
 | `adduser name` | Create a new user |
 | `su uid` | Switch to another user |
+| `chmod path mode` | Set file permissions (e.g. `rwxr-xr--`) |
+| `chown path uid [gid]` | Change file owner and/or group |
+| `getfacl path` | Show permissions and ACL entries for a file |
+| `setfacl path spec` | Add an ACL entry (e.g. `user:1:rwx` or `group:2:r-x`) |
+| `groups` | Show current user's group memberships |
+| `groups list` | List all groups and their members |
+| `groups add name` | Create a new group |
+| `groups adduser uid gid` | Add a user to a group |
+| `groups removeuser uid gid` | Remove a user from a group |
 
 ## Environment
 
@@ -130,6 +143,31 @@ Commands can be piped: `ls / | grep txt | wc`
 | `dns cmd` | DNS operations (register, lookup, remove, list, flush, demo) |
 | `http cmd` | HTTP demo (end-to-end request/response over sockets) |
 | `tcp cmd` | TCP connections (listen, connect, send, recv, close, info, list, demo) |
+
+## Containers
+
+| Command | Description |
+|---------|-------------|
+| `container create name` | Create a new container with isolated namespaces |
+| `container list` | List all containers (name, state, processes, fs root) |
+| `container exec name prog` | Run a program inside a container |
+| `container info name` | Show container namespace details |
+| `container destroy name` | Destroy a container and clean up |
+| `container demo` | Run a container demonstration |
+
+## Cluster (Inter-Machine Networking)
+
+| Command | Description |
+|---------|-------------|
+| `cluster create` | Initialize a cluster with this kernel |
+| `cluster add` | Add a new kernel to the cluster |
+| `cluster remove id` | Remove a kernel from the cluster |
+| `cluster list` | List all kernels (ID, state, pending packets) |
+| `cluster send id msg` | Send a message to another kernel |
+| `cluster recv` | Receive the next message |
+| `cluster ping id` | Check if a kernel is reachable |
+| `cluster dns id host` | Look up a hostname on another kernel |
+| `cluster demo` | Run a cluster demonstration |
 
 ## Synchronization
 

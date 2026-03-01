@@ -31,11 +31,13 @@ from enum import StrEnum
 from time import monotonic
 from typing import TYPE_CHECKING, Any
 
+from py_os.containers import ContainerManager
 from py_os.env import Environment
 from py_os.fs.fd import FdError, FdTable, FileMode, OpenFileDescription, SeekWhence
 from py_os.fs.filesystem import FileType
 from py_os.fs.journal import JournaledFileSystem
 from py_os.fs.procfs import ProcError, ProcFilesystem
+from py_os.io.bridge import Cluster
 from py_os.io.devices import ConsoleDevice, DeviceManager, NullDevice, RandomDevice
 from py_os.io.dns import DnsRecord, DnsResolver
 from py_os.io.framebuffer import Framebuffer
@@ -57,6 +59,7 @@ from py_os.memory.mmap import MmapError, MmapRegion
 from py_os.memory.slab import SlabAllocator, SlabCache
 from py_os.memory.swap import ClockPolicy, FIFOPolicy, LRUPolicy, Pager
 from py_os.memory.virtual import VirtualMemory
+from py_os.process.binary import DEMO_PROGRAMS
 from py_os.process.pcb import Process, ProcessState
 from py_os.process.scheduler import (
     CFSPolicy,
@@ -214,6 +217,13 @@ class Kernel:
         self._strace_log: list[str] = []
         self._strace_sequence: int = 0
 
+        # Container manager — namespace-isolated environments
+        self._container_manager: ContainerManager | None = None
+
+        # Cluster — inter-machine networking (opt-in, not created at boot)
+        self._cluster: Cluster | None = None
+        self._cluster_kernel_id: int | None = None
+
     @property
     def state(self) -> KernelState:
         """Return the current kernel state."""
@@ -291,6 +301,16 @@ class Kernel:
         return self._device_manager
 
     @property
+    def container_manager(self) -> ContainerManager | None:
+        """Return the container manager, or None if not booted."""
+        return self._container_manager
+
+    @property
+    def dns_resolver(self) -> DnsResolver | None:
+        """Return the DNS resolver, or None if not booted."""
+        return self._dns_resolver
+
+    @property
     def env(self) -> Environment | None:
         """Return the global environment, or None if not booted."""
         self._require_kernel_mode()
@@ -313,6 +333,17 @@ class Kernel:
         """Set the current user uid."""
         self._require_kernel_mode()
         self._current_uid = uid
+
+    def user_group_ids(self) -> frozenset[int]:
+        """Return the current user's group memberships.
+
+        Convenience helper used by permission checks so syscall
+        handlers don't need to fetch groups themselves.
+        """
+        self._require_kernel_mode()
+        if self._user_manager is None:
+            return frozenset()
+        return self._user_manager.user_group_ids(self._current_uid)
 
     @property
     def file_permissions(self) -> dict[str, FilePermissions]:
@@ -490,6 +521,26 @@ class Kernel:
             msg = f"Kernel is not running (state: {self._state})"
             raise RuntimeError(msg)
 
+    def _setup_bin_directory(self) -> None:
+        """Create /bin and populate it with demo binaries.
+
+        Called during boot after the filesystem is ready.  Installs
+        each demo program from DEMO_PROGRAMS as a file in /bin with
+        execute permission for everyone.
+        """
+        assert self._filesystem is not None  # noqa: S101
+        with suppress(FileExistsError):
+            self._filesystem.create_dir("/bin")
+        for name, factory in DEMO_PROGRAMS.items():
+            path = f"/bin/{name}"
+            with suppress(FileExistsError):
+                self._filesystem.create_file(path)
+            self._filesystem.write(path, factory())
+            self._file_permissions[path] = FilePermissions(
+                owner_uid=0, owner_execute=True, other_execute=True
+            )
+        self._boot_log.append(f"[OK] /bin ({len(DEMO_PROGRAMS)} programs)")
+
     def _boot_io_subsystem(self) -> None:
         """Initialize I/O subsystem: devices, networking, interrupts.
 
@@ -628,6 +679,13 @@ class Kernel:
         self._init_pid = init.pid
         self._boot_log.append(f"[OK] Init process (PID {init.pid})")
 
+        # 12. /bin directory — store executable binaries
+        self._setup_bin_directory()
+
+        # 13. Container manager — namespace isolation
+        self._container_manager = ContainerManager()
+        self._boot_log.append("[OK] Container manager")
+
         self._state = KernelState.RUNNING
         self._logger.log(LogLevel.INFO, "Kernel boot complete", source="kernel")
         self._execution_mode = ExecutionMode.USER
@@ -649,8 +707,9 @@ class Kernel:
         self._state = KernelState.SHUTTING_DOWN
 
         # Tear down in reverse order
-        self._proc_fs = None
-        self._scheduler = None
+        self._teardown_cluster()
+        self._container_manager = None
+        self._proc_fs = self._scheduler = None
         if self._ordering_manager is not None:
             self._ordering_manager.clear()
         self._ordering_manager = None
@@ -675,18 +734,13 @@ class Kernel:
         self._mmap_regions.clear()
         self._shared_file_frames.clear()
         self._shared_memory.clear()
-        self._socket_manager = None
-        self._tcp_stack = None
-        self._dns_resolver = None
-        self._interrupt_controller = None
-        self._timer = None
+        self._socket_manager = self._tcp_stack = self._dns_resolver = None
+        self._interrupt_controller = self._timer = None
         self._tick_count = self._ticks_since_dispatch = 0
 
         # Reset performance metrics and strace state
         self._total_created = self._total_completed = 0
-        self._total_wait_time = 0.0
-        self._total_turnaround_time = 0.0
-        self._total_response_time = 0.0
+        self._total_wait_time = self._total_turnaround_time = self._total_response_time = 0.0
         self._strace_enabled = False
         self._strace_log.clear()
         self._strace_sequence = 0
@@ -3279,3 +3333,221 @@ class Kernel:
         """
         stack = self._require_tcp()
         return stack.list_connections()
+
+    # -- Container operations --------------------------------------------------
+
+    def _require_container_manager(self) -> ContainerManager:
+        """Return the container manager, raising if not booted."""
+        self._require_running()
+        if self._container_manager is None:
+            msg = "Container manager not initialised"
+            raise RuntimeError(msg)
+        return self._container_manager
+
+    def container_create(self, name: str) -> dict[str, object]:
+        """Create a named container with isolated namespaces.
+
+        Args:
+            name: The container name.
+
+        Returns:
+            Dict with container metadata.
+
+        """
+        mgr = self._require_container_manager()
+        assert self._filesystem is not None  # noqa: S101
+        fs_root = f"/containers/{name}"
+        with suppress(FileExistsError):
+            self._filesystem.create_dir("/containers")
+        with suppress(FileExistsError):
+            self._filesystem.create_dir(fs_root)
+        container = mgr.create(name, fs_root=fs_root)
+        return {"name": container.name, "state": container.state.value}
+
+    def container_destroy(self, name: str) -> None:
+        """Destroy a container and clean up its filesystem.
+
+        Args:
+            name: The container name.
+
+        """
+        mgr = self._require_container_manager()
+        mgr.destroy(name)
+
+    def container_list(self) -> list[dict[str, str | int]]:
+        """List all containers.
+
+        Returns:
+            List of dicts with container summaries.
+
+        """
+        mgr = self._require_container_manager()
+        return mgr.list_containers()
+
+    def container_info(self, name: str) -> dict[str, object]:
+        """Return detailed info about a container.
+
+        Args:
+            name: The container name.
+
+        Returns:
+            Dict with namespace details.
+
+        """
+        mgr = self._require_container_manager()
+        container = mgr.get(name)
+        return {
+            "name": container.name,
+            "state": container.state.value,
+            "processes": container.process_count,
+            "fs_root": container.mount_namespace.fs_root,
+            "pid_namespace": container.pid_namespace.virtual_pids(),
+            "network": {
+                "sockets": len(container.network_namespace.socket_manager.list_sockets()),
+                "dns_records": len(container.network_namespace.dns_resolver.list_records()),
+            },
+        }
+
+    def container_exec(
+        self,
+        name: str,
+        *,
+        program: Callable[[], str],
+        program_name: str,
+    ) -> dict[str, object]:
+        """Execute a program inside a container.
+
+        Args:
+            name: The container name.
+            program: The callable to execute.
+            program_name: Human-readable program name.
+
+        Returns:
+            Dict with virtual PID and program output.
+
+        """
+        mgr = self._require_container_manager()
+        container = mgr.get(name)
+        container.start()
+        process = self.create_process(name=program_name, num_pages=1)
+        vpid = container.add_process(process.pid)
+        self.exec_process(pid=process.pid, program=program)
+        output = program()
+        return {"vpid": vpid, "real_pid": process.pid, "output": output}
+
+    # -- Cluster operations (opt-in inter-machine networking) ------------------
+
+    def _teardown_cluster(self) -> None:
+        """Unregister from the cluster bridge during shutdown."""
+        if self._cluster is not None and self._cluster_kernel_id is not None:
+            self._cluster.bridge.unregister_kernel(self._cluster_kernel_id)
+        self._cluster = None
+        self._cluster_kernel_id = None
+
+    def _require_cluster(self) -> Cluster:
+        """Return the cluster, raising if not initialized."""
+        self._require_running()
+        if self._cluster is None:
+            msg = "No cluster initialized — use cluster_create() first"
+            raise RuntimeError(msg)
+        return self._cluster
+
+    def cluster_create(self) -> dict[str, object]:
+        """Create a cluster and register this kernel as the first member.
+
+        Returns:
+            Dict with the kernel's cluster ID.
+
+        """
+        self._require_running()
+        cluster = Cluster()
+        kid = cluster.register_existing(self)
+        self._cluster = cluster
+        self._cluster_kernel_id = kid
+        return {"kernel_id": kid}
+
+    def cluster_add_kernel(self) -> dict[str, object]:
+        """Add a new kernel to the cluster.
+
+        Returns:
+            Dict with the new kernel's cluster ID.
+
+        """
+        cluster = self._require_cluster()
+        kid, _kernel = cluster.add_kernel()
+        return {"kernel_id": kid}
+
+    def cluster_remove_kernel(self, kernel_id: int) -> None:
+        """Remove a kernel from the cluster.
+
+        Args:
+            kernel_id: The cluster ID of the kernel to remove.
+
+        """
+        cluster = self._require_cluster()
+        cluster.remove_kernel(kernel_id)
+
+    def cluster_send(self, to_id: int, data: bytes) -> None:
+        """Send a message to another kernel in the cluster.
+
+        Args:
+            to_id: Destination kernel ID.
+            data: Message payload.
+
+        """
+        cluster = self._require_cluster()
+        assert self._cluster_kernel_id is not None  # noqa: S101
+        cluster.send_message(self._cluster_kernel_id, to_id, data)
+
+    def cluster_recv(self) -> dict[str, object]:
+        """Receive the next message from the cluster.
+
+        Returns:
+            Dict with the message data, or None payload if empty.
+
+        """
+        cluster = self._require_cluster()
+        assert self._cluster_kernel_id is not None  # noqa: S101
+        data = cluster.receive_message(self._cluster_kernel_id)
+        return {"data": data}
+
+    def cluster_ping(self, target_id: int) -> dict[str, object]:
+        """Ping another kernel in the cluster.
+
+        Args:
+            target_id: The kernel to ping.
+
+        Returns:
+            Dict with reachability status.
+
+        """
+        cluster = self._require_cluster()
+        assert self._cluster_kernel_id is not None  # noqa: S101
+        reachable = cluster.ping(self._cluster_kernel_id, target_id)
+        return {"reachable": reachable, "target": target_id}
+
+    def cluster_list(self) -> list[dict[str, object]]:
+        """List all kernels in the cluster.
+
+        Returns:
+            List of dicts with kernel info.
+
+        """
+        cluster = self._require_cluster()
+        return cluster.list_kernels()
+
+    def cluster_dns_query(self, target_id: int, hostname: str) -> dict[str, object]:
+        """Look up a hostname using another kernel's DNS resolver.
+
+        Args:
+            target_id: The kernel whose DNS to query.
+            hostname: The hostname to look up.
+
+        Returns:
+            Dict with the resolved address or None.
+
+        """
+        cluster = self._require_cluster()
+        assert self._cluster_kernel_id is not None  # noqa: S101
+        result = cluster.dns_query(self._cluster_kernel_id, target_id, hostname)
+        return {"hostname": hostname, "address": result}

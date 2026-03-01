@@ -143,7 +143,7 @@ Here is how it works:
 3. **Judges always serve the highest level first** (lowest number = highest priority).
 4. **Periodic boost** resets everyone to level 0 to prevent starvation.
 
-This means short I/O-bound processes (like typing in a text editor) stay at level 0 and get fast response times, while long CPU-bound processes (like video encoding) naturally sink to lower levels with longer quanta -- less context-switching overhead for them.
+This means short I/O-bound processes (like typing in a text editor) stay at level 0 and get fast response times, while long CPU-bound processes (like rendering a complex game scene) naturally sink to lower levels with longer quanta -- less context-switching overhead for them.
 
 ```python
 # MLFQ with 3 levels, base quantum of 2

@@ -366,7 +366,9 @@ name, arguments, and return value, and appends it to a ring buffer (capped at
 1,000 entries).
 
 Strace management syscalls (enable, disable, log, clear) and the read-log
-syscall are excluded from tracing to avoid infinite loops and noise.
+syscall are excluded from tracing to avoid infinite loops and noise (if we
+traced the tracing commands themselves, they'd endlessly trace each other --
+like pointing two mirrors at each other!).
 
 ### Strace syscall numbers
 
