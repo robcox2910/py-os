@@ -14,7 +14,7 @@
       
       
       
-        <link rel="next" href="architecture/">
+        <link rel="next" href="shell-reference/">
       
       
         
@@ -353,45 +353,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#modules" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Modules
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#shell-commands" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Shell Commands
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Shell Commands">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#scripting" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Scripting
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#web-ui" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -417,6 +378,33 @@
   
 </nav>
       
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="shell-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Shell Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -497,10 +485,10 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
         
           
-          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
             
   
   
@@ -518,8 +506,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_4">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -955,14 +943,18 @@
 <p>Ever wondered what happens when you open a program, save a file, or connect to the internet? An operating system makes all of that work. PyOS builds a mini version of one so you can see the pieces and how they fit together.</p>
 <p>Start here: <strong><a href="concepts/what-is-an-os/">What Is an Operating System?</a></strong></p>
 <h2 id="quick-start">Quick Start</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Install dependencies</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>uv<span class="w"> </span>sync
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Run the interactive OS</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>python<span class="w"> </span>-m<span class="w"> </span>py_os
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1"># Run the test suite</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>uv<span class="w"> </span>run<span class="w"> </span>pytest
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip<span class="w"> </span>install<span class="w"> </span>pyos-learn
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>pyos
+</code></pre></div>
+<p>Want the browser-based terminal too?</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pip<span class="w"> </span>install<span class="w"> </span>pyos-learn<span class="o">[</span>web<span class="o">]</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>pyos-web
+</code></pre></div>
+<p>For development, clone the repo and use <a href="https://docs.astral.sh/uv/">uv</a>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/robcox2910/py-os.git
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nb">cd</span><span class="w"> </span>py-os
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>uv<span class="w"> </span>sync<span class="w"> </span>--all-extras
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>uv<span class="w"> </span>run<span class="w"> </span>pytest
 </code></pre></div>
 <h2 id="learn-the-concepts">Learn the Concepts</h2>
 <p>Each guide explains one part of the OS with real-world analogies and simple language.</p>
@@ -1033,321 +1025,11 @@
 </tbody>
 </table>
 <p>For a technical overview of every module, see <a href="architecture/">Architecture</a>.</p>
-<h2 id="modules">Modules</h2>
-<table>
-<thead>
-<tr>
-<th>Module</th>
-<th>File</th>
-<th>What It Teaches</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Process</td>
-<td><code>process/pcb.py</code></td>
-<td>Five-state lifecycle, PID assignment</td>
-</tr>
-<tr>
-<td>Scheduler</td>
-<td><code>process/scheduler.py</code></td>
-<td>CPU scheduling (FCFS, Round Robin, Priority, Aging Priority, MLFQ, CFS)</td>
-</tr>
-<tr>
-<td>Memory</td>
-<td><code>memory/manager.py</code></td>
-<td>Page-based allocation, frame management</td>
-</tr>
-<tr>
-<td>Virtual Memory</td>
-<td><code>memory/virtual.py</code></td>
-<td>Address translation, page tables, isolation</td>
-</tr>
-<tr>
-<td>Filesystem</td>
-<td><code>fs/filesystem.py</code></td>
-<td>Inodes, path resolution, file CRUD</td>
-</tr>
-<tr>
-<td>Kernel</td>
-<td><code>kernel.py</code></td>
-<td>Boot/shutdown lifecycle, subsystem coordination</td>
-</tr>
-<tr>
-<td>System Calls</td>
-<td><code>syscalls.py</code></td>
-<td>User/kernel boundary, dispatch table</td>
-</tr>
-<tr>
-<td>Shell</td>
-<td><code>shell.py</code></td>
-<td>Commands, pipes, scripting, job control</td>
-</tr>
-<tr>
-<td>Users</td>
-<td><code>users.py</code></td>
-<td>Identity, file permissions</td>
-</tr>
-<tr>
-<td>Devices</td>
-<td><code>io/devices.py</code></td>
-<td>Null, console, and random devices</td>
-</tr>
-<tr>
-<td>IPC</td>
-<td><code>io/ipc.py</code></td>
-<td>Pipes and message queues</td>
-</tr>
-<tr>
-<td>Signals</td>
-<td><code>process/signals.py</code></td>
-<td>SIGTERM, SIGKILL, SIGSTOP, SIGCONT, SIGUSR1, SIGUSR2, custom handlers</td>
-</tr>
-<tr>
-<td>Logging</td>
-<td><code>logging.py</code></td>
-<td>Kernel log buffer, audit trail</td>
-</tr>
-<tr>
-<td>Environment</td>
-<td><code>env.py</code></td>
-<td>KEY=VALUE config</td>
-</tr>
-<tr>
-<td>Jobs</td>
-<td><code>jobs.py</code></td>
-<td>Background/foreground job control</td>
-</tr>
-<tr>
-<td>Swap</td>
-<td><code>memory/swap.py</code></td>
-<td>Page replacement (FIFO, LRU, Clock)</td>
-</tr>
-<tr>
-<td>Fork</td>
-<td><code>kernel.py</code></td>
-<td>Process forking, parent-child trees</td>
-</tr>
-<tr>
-<td>Threads</td>
-<td><code>process/threads.py</code></td>
-<td>Lightweight execution within a process</td>
-</tr>
-<tr>
-<td>Deadlock</td>
-<td><code>sync/deadlock.py</code></td>
-<td>Detection and Banker's algorithm</td>
-</tr>
-<tr>
-<td>Disk Scheduling</td>
-<td><code>io/disk.py</code></td>
-<td>FCFS, SSTF, SCAN, C-SCAN</td>
-</tr>
-<tr>
-<td>Scripting</td>
-<td><code>shell.py</code></td>
-<td>Scripts, variables, conditionals</td>
-</tr>
-<tr>
-<td>Networking</td>
-<td><code>io/networking.py</code></td>
-<td>Sockets, client-server model</td>
-</tr>
-<tr>
-<td>Persistence</td>
-<td><code>fs/persistence.py</code></td>
-<td>Save/load filesystem to JSON</td>
-</tr>
-<tr>
-<td>Execution</td>
-<td><code>process/pcb.py</code></td>
-<td>Running programs, exit codes</td>
-</tr>
-<tr>
-<td>Synchronization</td>
-<td><code>sync/primitives.py</code></td>
-<td>Mutex, semaphore, condition variable</td>
-</tr>
-<tr>
-<td>Bootloader</td>
-<td><code>bootloader.py</code></td>
-<td>Firmware POST, kernel image loading, boot chain</td>
-</tr>
-<tr>
-<td>Tutorials</td>
-<td><code>tutorials.py</code></td>
-<td>Guided hands-on lessons using real syscalls</td>
-</tr>
-<tr>
-<td>DNS</td>
-<td><code>io/dns.py</code></td>
-<td>Name resolution, A records</td>
-</tr>
-<tr>
-<td>HTTP</td>
-<td><code>io/http.py</code></td>
-<td>Request/response protocol, status codes</td>
-</tr>
-<tr>
-<td>Shared Memory</td>
-<td><code>io/shm.py</code></td>
-<td>Zero-copy IPC between processes</td>
-</tr>
-<tr>
-<td>Interrupts</td>
-<td><code>io/interrupts.py</code></td>
-<td>Interrupt controller, vectors, masking, priority-based servicing</td>
-</tr>
-<tr>
-<td>Timer</td>
-<td><code>io/timer.py</code></td>
-<td>Programmable interval timer, tick-driven preemption</td>
-</tr>
-<tr>
-<td>TCP</td>
-<td><code>io/tcp.py</code></td>
-<td>Reliable delivery: three-way handshake, flow control, congestion control</td>
-</tr>
-<tr>
-<td>File Descriptors</td>
-<td><code>fs/fd.py</code></td>
-<td>Open files, seek, per-process fd tables</td>
-</tr>
-<tr>
-<td>Journal</td>
-<td><code>fs/journal.py</code></td>
-<td>Write-ahead log, crash recovery</td>
-</tr>
-<tr>
-<td>ProcFS</td>
-<td><code>fs/procfs.py</code></td>
-<td>Virtual /proc filesystem</td>
-</tr>
-<tr>
-<td>Slab Allocator</td>
-<td><code>memory/slab.py</code></td>
-<td>Fixed-size object pools</td>
-</tr>
-<tr>
-<td>mmap</td>
-<td><code>memory/mmap.py</code></td>
-<td>Memory-mapped file regions</td>
-</tr>
-<tr>
-<td>Web Frontend</td>
-<td><code>web/app.py</code></td>
-<td>Browser-based terminal via Flask</td>
-</tr>
-<tr>
-<td>REPL</td>
-<td><code>repl.py</code></td>
-<td>Interactive terminal</td>
-</tr>
-</tbody>
-</table>
-<h2 id="shell-commands">Shell Commands</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>help        List available commands
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>ps          Show running processes
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>ls [path]   List directory contents
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>mkdir path  Create a directory
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>touch path  Create an empty file
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>write path  Write content to a file
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>cat path    Read file contents
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>rm path     Remove a file or directory
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>kill pid    Terminate a process by PID
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>whoami      Show the current user
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>adduser     Create a new user
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>su uid      Switch to another user
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>signal pid  Send a signal (SIGTERM, SIGKILL, SIGUSR1, etc.)
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>handle pid  Register a signal handler (log, ignore)
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>env         List environment variables
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>export K=V  Set an environment variable
-<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>unset key   Remove an environment variable
-<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>log         Show kernel log entries
-<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>top         System status dashboard
-<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>history     Show command history
-<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>alias N=CMD Create a command alias
-<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>unalias N   Remove a command alias
-<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>jobs        List background jobs
-<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>bg pid      Move a process to background
-<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>fg job_id   Bring a job to foreground
-<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>fork pid    Fork a process (create a child copy)
-<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>wait pid    Wait for any child to terminate and collect its exit code
-<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a>waitpid p c Wait for a specific child (c) of parent (p) to terminate
-<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>pstree      Show the process tree hierarchy
-<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a>threads pid List threads of a process
-<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a>resources   Show resource allocation status
-<a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a>deadlock    Run deadlock detection
-<a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a>devices     List registered devices
-<a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a>devread     Read from a device
-<a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a>devwrite    Write to a device
-<a id="__codelineno-1-36" name="__codelineno-1-36" href="#__codelineno-1-36"></a>scheduler   Show or switch scheduling policy (fcfs, rr, priority, aging, mlfq, cfs)
-<a id="__codelineno-1-37" name="__codelineno-1-37" href="#__codelineno-1-37"></a>            scheduler boost — reset MLFQ levels (anti-starvation)
-<a id="__codelineno-1-38" name="__codelineno-1-38" href="#__codelineno-1-38"></a>            scheduler balance — rebalance processes across CPUs
-<a id="__codelineno-1-39" name="__codelineno-1-39" href="#__codelineno-1-39"></a>mutex       Manage mutexes (create, list)
-<a id="__codelineno-1-40" name="__codelineno-1-40" href="#__codelineno-1-40"></a>semaphore   Manage semaphores (create, list)
-<a id="__codelineno-1-41" name="__codelineno-1-41" href="#__codelineno-1-41"></a>echo args   Print arguments to output
-<a id="__codelineno-1-42" name="__codelineno-1-42" href="#__codelineno-1-42"></a>source path Run a script from a file
-<a id="__codelineno-1-43" name="__codelineno-1-43" href="#__codelineno-1-43"></a>run prog [p] Run a built-in program with optional priority
-<a id="__codelineno-1-44" name="__codelineno-1-44" href="#__codelineno-1-44"></a>grep pat    Filter piped input (used with |)
-<a id="__codelineno-1-45" name="__codelineno-1-45" href="#__codelineno-1-45"></a>wc          Count lines in piped input
-<a id="__codelineno-1-46" name="__codelineno-1-46" href="#__codelineno-1-46"></a>open path   Open a file and get a file descriptor
-<a id="__codelineno-1-47" name="__codelineno-1-47" href="#__codelineno-1-47"></a>close fd    Close a file descriptor
-<a id="__codelineno-1-48" name="__codelineno-1-48" href="#__codelineno-1-48"></a>readfd fd   Read from a file descriptor
-<a id="__codelineno-1-49" name="__codelineno-1-49" href="#__codelineno-1-49"></a>writefd fd  Write to a file descriptor
-<a id="__codelineno-1-50" name="__codelineno-1-50" href="#__codelineno-1-50"></a>seek fd pos Reposition a file descriptor&#39;s offset
-<a id="__codelineno-1-51" name="__codelineno-1-51" href="#__codelineno-1-51"></a>lsfd        List open file descriptors
-<a id="__codelineno-1-52" name="__codelineno-1-52" href="#__codelineno-1-52"></a>ln          Create hard or symbolic links
-<a id="__codelineno-1-53" name="__codelineno-1-53" href="#__codelineno-1-53"></a>readlink p  Read a symlink target
-<a id="__codelineno-1-54" name="__codelineno-1-54" href="#__codelineno-1-54"></a>stat path   Show file metadata (type, size, links)
-<a id="__codelineno-1-55" name="__codelineno-1-55" href="#__codelineno-1-55"></a>journal     Manage journaling (status, checkpoint, recover, crash)
-<a id="__codelineno-1-56" name="__codelineno-1-56" href="#__codelineno-1-56"></a>rwlock      Manage reader-writer locks (create, list)
-<a id="__codelineno-1-57" name="__codelineno-1-57" href="#__codelineno-1-57"></a>pi          Priority inheritance (demo, status)
-<a id="__codelineno-1-58" name="__codelineno-1-58" href="#__codelineno-1-58"></a>ordering    Resource ordering (register, status, mode, violations, demo)
-<a id="__codelineno-1-59" name="__codelineno-1-59" href="#__codelineno-1-59"></a>waitjob id  Wait for a background job to complete
-<a id="__codelineno-1-60" name="__codelineno-1-60" href="#__codelineno-1-60"></a>shm         Shared memory (create, attach, detach, write, read, list, destroy, demo)
-<a id="__codelineno-1-61" name="__codelineno-1-61" href="#__codelineno-1-61"></a>dns         DNS operations (register, lookup, remove, list, flush, demo)
-<a id="__codelineno-1-62" name="__codelineno-1-62" href="#__codelineno-1-62"></a>socket      Socket operations (create, bind, listen, connect, accept, send, recv, close, list)
-<a id="__codelineno-1-63" name="__codelineno-1-63" href="#__codelineno-1-63"></a>http        HTTP demo (end-to-end request/response over sockets)
-<a id="__codelineno-1-64" name="__codelineno-1-64" href="#__codelineno-1-64"></a>tcp         TCP connections (listen, connect, send, recv, close, info, list, demo)
-<a id="__codelineno-1-65" name="__codelineno-1-65" href="#__codelineno-1-65"></a>proc        /proc virtual filesystem demo
-<a id="__codelineno-1-66" name="__codelineno-1-66" href="#__codelineno-1-66"></a>perf        Show performance metrics
-<a id="__codelineno-1-67" name="__codelineno-1-67" href="#__codelineno-1-67"></a>strace      Syscall tracing (on, off, show, clear, demo)
-<a id="__codelineno-1-68" name="__codelineno-1-68" href="#__codelineno-1-68"></a>dmesg       Show kernel boot log
-<a id="__codelineno-1-69" name="__codelineno-1-69" href="#__codelineno-1-69"></a>cpu         Show per-CPU status and scheduling info
-<a id="__codelineno-1-70" name="__codelineno-1-70" href="#__codelineno-1-70"></a>taskset     Show or set CPU affinity for a process
-<a id="__codelineno-1-71" name="__codelineno-1-71" href="#__codelineno-1-71"></a>mmap        Memory-map a file
-<a id="__codelineno-1-72" name="__codelineno-1-72" href="#__codelineno-1-72"></a>munmap      Unmap a memory-mapped region
-<a id="__codelineno-1-73" name="__codelineno-1-73" href="#__codelineno-1-73"></a>msync       Sync a shared mapping
-<a id="__codelineno-1-74" name="__codelineno-1-74" href="#__codelineno-1-74"></a>slabcreate  Create a slab cache
-<a id="__codelineno-1-75" name="__codelineno-1-75" href="#__codelineno-1-75"></a>slaballoc   Allocate from a slab cache
-<a id="__codelineno-1-76" name="__codelineno-1-76" href="#__codelineno-1-76"></a>slabfree    Free a slab allocation
-<a id="__codelineno-1-77" name="__codelineno-1-77" href="#__codelineno-1-77"></a>slabinfo    Show slab allocator statistics
-<a id="__codelineno-1-78" name="__codelineno-1-78" href="#__codelineno-1-78"></a>tick [N]    Advance the system clock by N ticks (default 1)
-<a id="__codelineno-1-79" name="__codelineno-1-79" href="#__codelineno-1-79"></a>interrupt   Manage interrupts (list, mask &lt;vector&gt;, unmask &lt;vector&gt;)
-<a id="__codelineno-1-80" name="__codelineno-1-80" href="#__codelineno-1-80"></a>timer       Manage the timer (info, set &lt;interval&gt;)
-<a id="__codelineno-1-81" name="__codelineno-1-81" href="#__codelineno-1-81"></a>learn       Interactive tutorials (processes, memory, filesystem, ...)
-<a id="__codelineno-1-82" name="__codelineno-1-82" href="#__codelineno-1-82"></a>benchmark   Run scheduling benchmarks (run, demo)
-<a id="__codelineno-1-83" name="__codelineno-1-83" href="#__codelineno-1-83"></a>dashboard   System dashboard (cpu, memory, processes, fs)
-<a id="__codelineno-1-84" name="__codelineno-1-84" href="#__codelineno-1-84"></a>exit        Shut down the kernel
-</code></pre></div>
-<p>Commands can be piped: <code>ls / | grep txt | wc</code></p>
-<h3 id="scripting">Scripting</h3>
-<p>The shell supports scripts -- multi-line sequences of commands with comments, variable substitution, and conditionals:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Setup script</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>mkdir<span class="w"> </span>/data
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="nb">export</span><span class="w"> </span><span class="nv">NAME</span><span class="o">=</span>hello
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="nb">echo</span><span class="w"> </span><span class="nv">$NAME</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="k">if</span><span class="w"> </span>ls<span class="w"> </span>/data
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="k">then</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">  </span>touch<span class="w"> </span>/data/<span class="nv">$NAME</span>.txt
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="k">fi</span>
-</code></pre></div>
-<p>Scripts can be run from files with <code>source /path/to/script.sh</code>.</p>
+<p>For the full command listing, see <a href="shell-reference/">Shell Reference</a>.</p>
 <h2 id="web-ui">Web UI</h2>
 <p>PyOS includes an optional browser-based terminal. Install Flask and start the server:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>pip<span class="w"> </span>install<span class="w"> </span>py-os<span class="o">[</span>web<span class="o">]</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>py-os-web
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>pip<span class="w"> </span>install<span class="w"> </span>pyos-learn<span class="o">[</span>web<span class="o">]</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>pyos-web
 </code></pre></div>
 <p>Then open <code>http://localhost:8080</code> in your browser. See <a href="concepts/web-ui/">Web UI</a> for details.</p>
 <h2 id="development">Development</h2>

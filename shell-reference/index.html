@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://robcox2910.github.io/py-os/diagrams/">
+        <link rel="canonical" href="https://robcox2910.github.io/py-os/shell-reference/">
       
       
-        <link rel="prev" href="../architecture/">
+        <link rel="prev" href="..">
       
       
-        <link rel="next" href="../concepts/what-is-an-os/">
+        <link rel="next" href="../architecture/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Visual Guide - PyOS</title>
+        <title>Shell Reference - PyOS</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#visual-guide" class="md-skip">
+        <a href="#shell-reference" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Visual Guide
+              Shell Reference
             
           </span>
         </div>
@@ -286,10 +286,37 @@
       
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../shell-reference/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Shell Reference
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -305,6 +332,191 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#general" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        General
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#processes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Processes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scheduling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scheduling
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#memory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Memory
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Files
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#users-and-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Users and Permissions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#environment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Environment
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jobs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Jobs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#devices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Devices
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#networking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Networking
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#synchronization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Synchronization
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#interrupts-and-timers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interrupts and Timers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scripting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scripting
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#diagnostics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Diagnostics
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tutorials" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tutorials
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -340,37 +552,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Visual Guide
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../diagrams/" class="md-nav__link">
         
   
   
@@ -386,48 +571,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#process-states-the-five-lives-of-a-program" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Process States: The Five Lives of a Program
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#memory-from-virtual-pages-to-physical-frames" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Memory: From Virtual Pages to Physical Frames
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -905,72 +1048,510 @@
   
 
 
-<h1 id="visual-guide">Visual Guide</h1>
-<p>Pictures are worth a thousand words. These diagrams show how the key parts of an operating system work, using the same concepts you'll find inside PyOS.</p>
-<h2 id="process-states-the-five-lives-of-a-program">Process States: The Five Lives of a Program</h2>
-<p>Think of a process like a student in a school. When they first arrive, they're <strong>new</strong>. Once they sit down and the teacher knows about them, they're <strong>ready</strong> to answer questions. When the teacher calls on them, they're <strong>running</strong> -- actively doing work. Sometimes they have to <strong>wait</strong> (like waiting for a book from the library). And eventually they finish their work and are <strong>terminated</strong>.</p>
-<pre class="mermaid"><code>stateDiagram-v2
-    [*] --&gt; NEW: Process created
-    NEW --&gt; READY: Admitted to scheduler
-    READY --&gt; RUNNING: Dispatched by CPU
-    RUNNING --&gt; READY: Preempted (time's up!)
-    RUNNING --&gt; WAITING: Needs I/O or resource
-    WAITING --&gt; READY: I/O complete
-    RUNNING --&gt; TERMINATED: Work finished
-    TERMINATED --&gt; [*]</code></pre>
-<p><strong>What's happening here?</strong></p>
-<ul>
-<li><strong>NEW</strong> -- The process was just created. It doesn't have a seat yet.</li>
-<li><strong>READY</strong> -- The process is in the ready queue, waiting its turn for the CPU.</li>
-<li><strong>RUNNING</strong> -- The process is actively executing on the CPU. Only one process per CPU can be here at a time.</li>
-<li><strong>WAITING</strong> -- The process asked for something slow (like reading a file) and is parked until that finishes.</li>
-<li><strong>TERMINATED</strong> -- The process is done. Its memory and resources are cleaned up.</li>
-<li>The arrows show every possible transition. Notice that a process can bounce between READY and RUNNING many times before it finally finishes.</li>
-</ul>
-<h2 id="memory-from-virtual-pages-to-physical-frames">Memory: From Virtual Pages to Physical Frames</h2>
-<p>Imagine your desk can only hold 4 books at a time (physical frames), but you have 8 chapters of notes (virtual pages). The page table is like a sticky note on each chapter telling you which desk slot it's in right now -- or that it's stored in your backpack (swap).</p>
-<pre class="mermaid"><code>graph LR
-    subgraph Virtual Pages
-        VP0[Page 0]
-        VP1[Page 1]
-        VP2[Page 2]
-        VP3[Page 3]
-    end
-
-    subgraph Page Table
-        PT0[0 → Frame 2]
-        PT1[1 → Frame 0]
-        PT2[2 → Swap]
-        PT3[3 → Frame 3]
-    end
-
-    subgraph Physical Frames
-        F0[Frame 0]
-        F1[Frame 1 - free]
-        F2[Frame 2]
-        F3[Frame 3]
-    end
-
-    subgraph Swap Space
-        SW[Swapped page]
-    end
-
-    VP0 --&gt; PT0
-    VP1 --&gt; PT1
-    VP2 --&gt; PT2
-    VP3 --&gt; PT3
-    PT0 --&gt; F2
-    PT1 --&gt; F0
-    PT2 --&gt; SW
-    PT3 --&gt; F3</code></pre>
-<p><strong>What's happening here?</strong></p>
-<ul>
-<li>Each process thinks it has its own private memory (virtual pages).</li>
-<li>The <strong>page table</strong> translates virtual page numbers to physical frame numbers.</li>
-<li>Not every page needs to be in physical memory at once. Page 2 has been <strong>swapped</strong> to disk because we ran out of room.</li>
-<li>Frame 1 is <strong>free</strong> -- available for the next page that needs to be loaded.</li>
-<li>When the process accesses Page 2, a <strong>page fault</strong> occurs: the OS loads it from swap into a free frame and updates the page table.</li>
-</ul>
+<h1 id="shell-reference">Shell Reference</h1>
+<p>Complete list of shell commands, grouped by subsystem. All commands are available in both the terminal REPL (<code>pyos</code>) and the web UI (<code>pyos-web</code>).</p>
+<p>Commands can be piped: <code>ls / | grep txt | wc</code></p>
+<h2 id="general">General</h2>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>help</code></td>
+<td>List available commands</td>
+</tr>
+<tr>
+<td><code>echo args</code></td>
+<td>Print arguments to output</td>
+</tr>
+<tr>
+<td><code>history</code></td>
+<td>Show command history</td>
+</tr>
+<tr>
+<td><code>alias N=CMD</code></td>
+<td>Create a command alias</td>
+</tr>
+<tr>
+<td><code>unalias N</code></td>
+<td>Remove a command alias</td>
+</tr>
+<tr>
+<td><code>exit</code></td>
+<td>Shut down the kernel</td>
+</tr>
+</tbody>
+</table>
+<h2 id="processes">Processes</h2>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ps</code></td>
+<td>Show running processes</td>
+</tr>
+<tr>
+<td><code>run prog [p]</code></td>
+<td>Run a built-in program with optional priority</td>
+</tr>
+<tr>
+<td><code>kill pid</code></td>
+<td>Terminate a process by PID</td>
+</tr>
+<tr>
+<td><code>fork pid</code></td>
+<td>Fork a process (create a child copy)</td>
+</tr>
+<tr>
+<td><code>wait pid</code></td>
+<td>Wait for any child to terminate and collect its exit code</td>
+</tr>
+<tr>
+<td><code>waitpid p c</code></td>
+<td>Wait for a specific child (c) of parent (p) to terminate</td>
+</tr>
+<tr>
+<td><code>pstree</code></td>
+<td>Show the process tree hierarchy</td>
+</tr>
+<tr>
+<td><code>threads pid</code></td>
+<td>List threads of a process</td>
+</tr>
+<tr>
+<td><code>top</code></td>
+<td>System status dashboard</td>
+</tr>
+<tr>
+<td><code>signal pid sig</code></td>
+<td>Send a signal (SIGTERM, SIGKILL, SIGUSR1, etc.)</td>
+</tr>
+<tr>
+<td><code>handle pid act</code></td>
+<td>Register a signal handler (log, ignore)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="scheduling">Scheduling</h2>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>scheduler</code></td>
+<td>Show or switch scheduling policy (fcfs, rr, priority, aging, mlfq, cfs)</td>
+</tr>
+<tr>
+<td><code>scheduler boost</code></td>
+<td>Reset MLFQ levels (anti-starvation)</td>
+</tr>
+<tr>
+<td><code>scheduler balance</code></td>
+<td>Rebalance processes across CPUs</td>
+</tr>
+<tr>
+<td><code>cpu</code></td>
+<td>Show per-CPU status and scheduling info</td>
+</tr>
+<tr>
+<td><code>taskset pid [cpus]</code></td>
+<td>Show or set CPU affinity for a process</td>
+</tr>
+<tr>
+<td><code>benchmark</code></td>
+<td>Run scheduling benchmarks (run, demo)</td>
+</tr>
+<tr>
+<td><code>tick [N]</code></td>
+<td>Advance the system clock by N ticks (default 1)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="memory">Memory</h2>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>mmap path</code></td>
+<td>Memory-map a file</td>
+</tr>
+<tr>
+<td><code>munmap addr</code></td>
+<td>Unmap a memory-mapped region</td>
+</tr>
+<tr>
+<td><code>msync addr</code></td>
+<td>Sync a shared mapping</td>
+</tr>
+<tr>
+<td><code>slabcreate name size</code></td>
+<td>Create a slab cache</td>
+</tr>
+<tr>
+<td><code>slaballoc name</code></td>
+<td>Allocate from a slab cache</td>
+</tr>
+<tr>
+<td><code>slabfree name addr</code></td>
+<td>Free a slab allocation</td>
+</tr>
+<tr>
+<td><code>slabinfo</code></td>
+<td>Show slab allocator statistics</td>
+</tr>
+</tbody>
+</table>
+<h2 id="files">Files</h2>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ls [path]</code></td>
+<td>List directory contents</td>
+</tr>
+<tr>
+<td><code>mkdir path</code></td>
+<td>Create a directory</td>
+</tr>
+<tr>
+<td><code>touch path</code></td>
+<td>Create an empty file</td>
+</tr>
+<tr>
+<td><code>write path content</code></td>
+<td>Write content to a file</td>
+</tr>
+<tr>
+<td><code>cat path</code></td>
+<td>Read file contents</td>
+</tr>
+<tr>
+<td><code>rm path</code></td>
+<td>Remove a file or directory</td>
+</tr>
+<tr>
+<td><code>ln target link</code></td>
+<td>Create hard or symbolic links</td>
+</tr>
+<tr>
+<td><code>readlink path</code></td>
+<td>Read a symlink target</td>
+</tr>
+<tr>
+<td><code>stat path</code></td>
+<td>Show file metadata (type, size, links)</td>
+</tr>
+<tr>
+<td><code>open path</code></td>
+<td>Open a file and get a file descriptor</td>
+</tr>
+<tr>
+<td><code>close fd</code></td>
+<td>Close a file descriptor</td>
+</tr>
+<tr>
+<td><code>readfd fd</code></td>
+<td>Read from a file descriptor</td>
+</tr>
+<tr>
+<td><code>writefd fd content</code></td>
+<td>Write to a file descriptor</td>
+</tr>
+<tr>
+<td><code>seek fd pos</code></td>
+<td>Reposition a file descriptor's offset</td>
+</tr>
+<tr>
+<td><code>lsfd</code></td>
+<td>List open file descriptors</td>
+</tr>
+<tr>
+<td><code>journal cmd</code></td>
+<td>Manage journaling (status, checkpoint, recover, crash)</td>
+</tr>
+<tr>
+<td><code>proc</code></td>
+<td>/proc virtual filesystem demo</td>
+</tr>
+</tbody>
+</table>
+<h2 id="users-and-permissions">Users and Permissions</h2>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>whoami</code></td>
+<td>Show the current user</td>
+</tr>
+<tr>
+<td><code>adduser name</code></td>
+<td>Create a new user</td>
+</tr>
+<tr>
+<td><code>su uid</code></td>
+<td>Switch to another user</td>
+</tr>
+</tbody>
+</table>
+<h2 id="environment">Environment</h2>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>env</code></td>
+<td>List environment variables</td>
+</tr>
+<tr>
+<td><code>export K=V</code></td>
+<td>Set an environment variable</td>
+</tr>
+<tr>
+<td><code>unset key</code></td>
+<td>Remove an environment variable</td>
+</tr>
+</tbody>
+</table>
+<h2 id="jobs">Jobs</h2>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>jobs</code></td>
+<td>List background jobs</td>
+</tr>
+<tr>
+<td><code>bg pid</code></td>
+<td>Move a process to background</td>
+</tr>
+<tr>
+<td><code>fg job_id</code></td>
+<td>Bring a job to foreground</td>
+</tr>
+<tr>
+<td><code>waitjob id</code></td>
+<td>Wait for a background job to complete</td>
+</tr>
+</tbody>
+</table>
+<h2 id="devices">Devices</h2>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>devices</code></td>
+<td>List registered devices</td>
+</tr>
+<tr>
+<td><code>devread dev</code></td>
+<td>Read from a device</td>
+</tr>
+<tr>
+<td><code>devwrite dev data</code></td>
+<td>Write to a device</td>
+</tr>
+</tbody>
+</table>
+<h2 id="networking">Networking</h2>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>socket cmd</code></td>
+<td>Socket operations (create, bind, listen, connect, accept, send, recv, close, list)</td>
+</tr>
+<tr>
+<td><code>dns cmd</code></td>
+<td>DNS operations (register, lookup, remove, list, flush, demo)</td>
+</tr>
+<tr>
+<td><code>http cmd</code></td>
+<td>HTTP demo (end-to-end request/response over sockets)</td>
+</tr>
+<tr>
+<td><code>tcp cmd</code></td>
+<td>TCP connections (listen, connect, send, recv, close, info, list, demo)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="synchronization">Synchronization</h2>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>mutex cmd</code></td>
+<td>Manage mutexes (create, list)</td>
+</tr>
+<tr>
+<td><code>semaphore cmd</code></td>
+<td>Manage semaphores (create, list)</td>
+</tr>
+<tr>
+<td><code>rwlock cmd</code></td>
+<td>Manage reader-writer locks (create, list)</td>
+</tr>
+<tr>
+<td><code>resources</code></td>
+<td>Show resource allocation status</td>
+</tr>
+<tr>
+<td><code>deadlock</code></td>
+<td>Run deadlock detection</td>
+</tr>
+<tr>
+<td><code>pi cmd</code></td>
+<td>Priority inheritance (demo, status)</td>
+</tr>
+<tr>
+<td><code>ordering cmd</code></td>
+<td>Resource ordering (register, status, mode, violations, demo)</td>
+</tr>
+<tr>
+<td><code>shm cmd</code></td>
+<td>Shared memory (create, attach, detach, write, read, list, destroy, demo)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="interrupts-and-timers">Interrupts and Timers</h2>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>interrupt cmd</code></td>
+<td>Manage interrupts (list, mask, unmask)</td>
+</tr>
+<tr>
+<td><code>timer cmd</code></td>
+<td>Manage the timer (info, set)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="scripting">Scripting</h2>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>source path</code></td>
+<td>Run a script from a file</td>
+</tr>
+<tr>
+<td><code>grep pattern</code></td>
+<td>Filter piped input (used with <code>\|</code>)</td>
+</tr>
+<tr>
+<td><code>wc</code></td>
+<td>Count lines in piped input</td>
+</tr>
+</tbody>
+</table>
+<h2 id="diagnostics">Diagnostics</h2>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>log</code></td>
+<td>Show kernel log entries</td>
+</tr>
+<tr>
+<td><code>dmesg</code></td>
+<td>Show kernel boot log</td>
+</tr>
+<tr>
+<td><code>perf</code></td>
+<td>Show performance metrics</td>
+</tr>
+<tr>
+<td><code>strace cmd</code></td>
+<td>Syscall tracing (on, off, show, clear, demo)</td>
+</tr>
+<tr>
+<td><code>dashboard cmd</code></td>
+<td>System dashboard (cpu, memory, processes, fs)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="tutorials">Tutorials</h2>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>learn [topic]</code></td>
+<td>Interactive tutorials (processes, memory, filesystem, shell, scheduling)</td>
+</tr>
+</tbody>
+</table>
 
 
 
