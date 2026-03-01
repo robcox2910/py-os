@@ -137,6 +137,31 @@ class TestPriorityInheritanceManager:
         mgr.clear()
         assert mgr.holder("m1") is None
 
+    def test_on_block_no_holder_is_noop(self) -> None:
+        """Blocking on a mutex with no holder should not raise."""
+        mgr = PriorityInheritanceManager()
+        waiter = Process(name="w", priority=PRIORITY_HIGH)
+        processes = {waiter.pid: waiter}
+        # No on_acquire → no holder for "m1"
+        mgr.on_block("m1", waiter_pid=waiter.pid, processes=processes)
+        assert waiter.effective_priority == PRIORITY_HIGH
+
+    def test_on_block_missing_process_is_noop(self) -> None:
+        """Blocking when waiter/holder PID is not in process table should not raise."""
+        mgr = PriorityInheritanceManager()
+        holder = Process(name="h", priority=PRIORITY_LOW)
+        mgr.on_acquire("m1", pid=holder.pid)
+        # Pass empty process table — waiter/holder not found
+        nonexistent_pid = 9999
+        mgr.on_block("m1", waiter_pid=nonexistent_pid, processes={})
+
+    def test_on_release_missing_process_returns_early(self) -> None:
+        """Releasing when process is not in the table should not raise."""
+        mgr = PriorityInheritanceManager()
+        mgr.on_acquire("m1", pid=1)
+        # Process not in table
+        mgr.on_release("m1", pid=1, new_holder_pid=None, processes={})
+
 
 # -- Cycle 3: Transitive inheritance ---------------------------------------
 
@@ -185,6 +210,21 @@ class TestTransitiveInheritance:
         assert b.effective_priority == PRIORITY_VERY_HIGH
         assert c.effective_priority == PRIORITY_VERY_HIGH
         assert d.effective_priority == PRIORITY_VERY_HIGH
+
+    def test_propagation_stops_on_missing_holder(self) -> None:
+        """Propagation should stop when a holder in the chain is missing from processes."""
+        mgr = PriorityInheritanceManager()
+        a = Process(name="A", priority=PRIORITY_HIGH)
+        b = Process(name="B", priority=PRIORITY_LOW)
+        # B holds M1, but B is blocked on M2 whose holder is not in processes
+        mgr.on_acquire("m1", pid=b.pid)
+        mgr.on_acquire("m2", pid=999)  # holder PID 999 not in process table
+        # Record B as blocked on M2 (manually, to set up chain)
+        mgr._blocked_on[b.pid] = "m2"
+        # A blocks on M1 → B boosted, propagation tries 999 but stops
+        processes = {a.pid: a, b.pid: b}
+        mgr.on_block("m1", waiter_pid=a.pid, processes=processes)
+        assert b.effective_priority == PRIORITY_HIGH
 
     def test_multiple_waiters_highest_wins(self) -> None:
         """When multiple threads wait on the same mutex, the holder gets the highest."""

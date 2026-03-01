@@ -91,6 +91,21 @@ class TestThread:
         thread.force_terminate()
         assert thread.state is ThreadState.TERMINATED
 
+    def test_force_terminate_already_terminated_raises(self) -> None:
+        """Force-terminating an already terminated thread should raise RuntimeError."""
+        thread = Thread(tid=0, name="main", pid=1)
+        thread.admit()
+        thread.dispatch()
+        thread.terminate()
+        with pytest.raises(RuntimeError, match="already terminated"):
+            thread.force_terminate()
+
+    def test_force_terminate_new_thread_raises(self) -> None:
+        """Force-terminating a NEW (not yet admitted) thread should raise RuntimeError."""
+        thread = Thread(tid=0, name="main", pid=1)
+        with pytest.raises(RuntimeError, match="not yet admitted"):
+            thread.force_terminate()
+
     def test_repr(self) -> None:
         """Thread repr should show tid, name, and state."""
         thread = Thread(tid=1, name="worker", pid=5)
