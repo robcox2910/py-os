@@ -131,6 +131,7 @@ devread     Read from a device
 devwrite    Write to a device
 scheduler   Show or switch scheduling policy (fcfs, rr, priority, aging, mlfq, cfs)
             scheduler boost — reset MLFQ levels (anti-starvation)
+            scheduler balance — rebalance processes across CPUs
 mutex       Manage mutexes (create, list)
 semaphore   Manage semaphores (create, list)
 echo args   Print arguments to output
@@ -174,6 +175,8 @@ tick [N]    Advance the system clock by N ticks (default 1)
 interrupt   Manage interrupts (list, mask <vector>, unmask <vector>)
 timer       Manage the timer (info, set <interval>)
 learn       Interactive tutorials (processes, memory, filesystem, ...)
+benchmark   Run scheduling benchmarks (run, demo)
+dashboard   System dashboard (cpu, memory, processes, fs)
 exit        Shut down the kernel
 ```
 

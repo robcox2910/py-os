@@ -5,10 +5,14 @@ A "job" is a shell-level concept that wraps a kernel process, adding
 a job number and status tracking (running, stopped, done).
 """
 
+from typing import TYPE_CHECKING
+
 from py_os.jobs import Job, JobManager, JobStatus
 from py_os.kernel import ExecutionMode, Kernel
-from py_os.process.pcb import Process
 from py_os.shell import Shell
+
+if TYPE_CHECKING:
+    from py_os.process.pcb import Process
 
 
 def _booted_kernel() -> Kernel:

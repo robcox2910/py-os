@@ -22,9 +22,10 @@ provides fine-grained slots.
 """
 
 from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from py_os.memory.manager import MemoryManager
+if TYPE_CHECKING:
+    from py_os.memory.manager import MemoryManager
 
 
 class SlabError(Exception):

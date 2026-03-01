@@ -23,9 +23,12 @@ calls ``service_pending()`` at each tick to process queued IRQs.
 """
 
 from collections import deque
-from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import IntEnum, StrEnum
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class InterruptType(StrEnum):

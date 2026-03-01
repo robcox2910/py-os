@@ -14,10 +14,13 @@ restores it on load.  This teaches:
 """
 
 import json
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from py_os.fs.filesystem import FileSystem
 from py_os.fs.persistence import dump_filesystem, load_filesystem
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 # -- Round-trip (save and reload) -----------------------------------------------
 
