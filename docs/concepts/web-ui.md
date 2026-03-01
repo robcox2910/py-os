@@ -38,8 +38,8 @@ The web server exposes three endpoints:
 Install the optional ``web`` extra, then start the server:
 
 ```bash
-pip install py-os[web]
-py-os-web
+pip install pyos-learn[web]
+pyos-web
 ```
 
 Open your browser to ``http://localhost:8080`` and start typing

@@ -41,6 +41,7 @@ markdown_extensions:
 
 nav:
   - Home: index.md
+  - Shell Reference: shell-reference.md
   - Architecture: architecture.md
   - Visual Guide: diagrams.md
   - Concepts:
