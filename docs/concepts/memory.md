@@ -435,6 +435,41 @@ reclaim empty slabs.
 
 ---
 
+## 7. Demand Paging in PyOS: The Library Desk
+
+### The Analogy
+
+Imagine you're studying in the library. There's a huge shelf of books (virtual
+memory), but your desk (physical RAM) only fits a handful of books at a time.
+
+When you need a book that's already on your desk, great -- just grab it. But when
+you need a book that's on the shelf, you have to make room. You pick a book on your
+desk that you're not reading right now, put it back on the shelf, and grab the new
+one. That swap -- putting one back, pulling one out -- is exactly what the OS does.
+
+In PyOS, the `Pager` is the librarian managing your desk. It:
+
+1. **Keeps track** of which "books" (pages) are on your desk (resident in RAM).
+2. **Notices** when you ask for a book that isn't there (a **page fault**).
+3. **Picks a book to shelve** using one of three strategies (FIFO, LRU, or Clock).
+4. **Swaps them** -- saves the old page to swap space, loads the new one into RAM.
+
+### Try It Yourself
+
+```
+swap              # See current swap status
+swap policy fifo  # Switch to FIFO replacement
+swap demo         # Force page faults and see what happens
+swap policy lru   # Switch back to LRU
+swap demo         # Compare the results
+```
+
+The `swap demo` command writes to more virtual pages than fit in physical RAM,
+forcing the pager to evict and reload pages. Watch how the number of page faults
+changes with different policies!
+
+---
+
 ## Putting It All Together
 
 Here's how these pieces work as a team:

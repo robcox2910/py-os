@@ -38,6 +38,7 @@ from py_os.fs.journal import JournaledFileSystem
 from py_os.fs.procfs import ProcError, ProcFilesystem
 from py_os.io.devices import ConsoleDevice, DeviceManager, NullDevice, RandomDevice
 from py_os.io.dns import DnsRecord, DnsResolver
+from py_os.io.framebuffer import Framebuffer
 from py_os.io.interrupts import (
     VECTOR_IO_BASE,
     VECTOR_TIMER,
@@ -54,6 +55,7 @@ from py_os.logging import Logger, LogLevel
 from py_os.memory.manager import MemoryManager
 from py_os.memory.mmap import MmapError, MmapRegion
 from py_os.memory.slab import SlabAllocator, SlabCache
+from py_os.memory.swap import ClockPolicy, FIFOPolicy, LRUPolicy, Pager
 from py_os.memory.virtual import VirtualMemory
 from py_os.process.pcb import Process, ProcessState
 from py_os.process.scheduler import (
@@ -169,6 +171,9 @@ class Kernel:
         self._pi_manager: PriorityInheritanceManager | None = None
         self._ordering_manager: ResourceOrderingManager | None = None
         self._slab_allocator: SlabAllocator | None = None
+        # Demand paging — swap space + page replacement policy
+        self._pager: Pager | None = None
+        self._swap_policy_name: str = "lru"
         # Per-process mmap regions: pid → {start_vpn → MmapRegion}
         self._mmap_regions: dict[int, dict[int, MmapRegion]] = {}
         # Shared frame cache: (inode_number, page_index) → (frame, bytearray)
@@ -180,6 +185,7 @@ class Kernel:
         # Interrupt controller and timer — hardware event dispatching
         self._interrupt_controller: InterruptController | None = None
         self._timer: TimerDevice | None = None
+        self._framebuffer: Framebuffer | None = None
         self._tick_count: int = 0
         self._ticks_since_dispatch: int = 0
 
@@ -351,6 +357,18 @@ class Kernel:
         return self._slab_allocator
 
     @property
+    def pager(self) -> Pager | None:
+        """Return the demand pager, or None if not booted."""
+        self._require_kernel_mode()
+        return self._pager
+
+    @property
+    def swap_policy_name(self) -> str:
+        """Return the name of the current swap replacement policy."""
+        self._require_kernel_mode()
+        return self._swap_policy_name
+
+    @property
     def socket_manager(self) -> SocketManager | None:
         """Return the socket manager, or None if not booted."""
         self._require_kernel_mode()
@@ -373,6 +391,12 @@ class Kernel:
         """Return the timer device, or None if not booted."""
         self._require_kernel_mode()
         return self._timer
+
+    @property
+    def framebuffer(self) -> Framebuffer | None:
+        """Return the framebuffer device, or None if not booted."""
+        self._require_kernel_mode()
+        return self._framebuffer
 
     @property
     def tick_count(self) -> int:
@@ -427,6 +451,39 @@ class Kernel:
 
         self._scheduler = new
 
+    def set_swap_policy(self, name: str) -> None:
+        """Replace the pager's replacement policy.
+
+        Rebuild the pager with a fresh policy instance.  All resident
+        pages and swap state are reset.
+
+        Args:
+            name: Policy name — "fifo", "lru", or "clock".
+
+        Raises:
+            ValueError: If the name is not a recognised policy.
+
+        """
+        self._require_running()
+        match name:
+            case "fifo":
+                policy = FIFOPolicy()
+            case "lru":
+                policy = LRUPolicy()
+            case "clock":
+                policy = ClockPolicy()
+            case _:
+                msg = f"Unknown swap policy: {name!r} (choose fifo, lru, or clock)"
+                raise ValueError(msg)
+        num_physical_frames = 16
+        num_virtual_pages = 32
+        self._pager = Pager(
+            num_physical_frames=num_physical_frames,
+            num_virtual_pages=num_virtual_pages,
+            policy=policy,
+        )
+        self._swap_policy_name = name
+
     def _require_running(self) -> None:
         """Raise if the kernel is not in the RUNNING state."""
         if self._state is not KernelState.RUNNING:
@@ -444,7 +501,12 @@ class Kernel:
         self._device_manager.register(NullDevice())
         self._device_manager.register(ConsoleDevice())
         self._device_manager.register(RandomDevice())
+        self._framebuffer = Framebuffer()
+        self._device_manager.register(self._framebuffer)
         self._boot_log.append("[OK] Device manager")
+        self._boot_log.append(
+            f"[OK] Framebuffer ({self._framebuffer.width}x{self._framebuffer.height})"
+        )
 
         # DNS resolver — pre-seed with localhost
         self._dns_resolver = DnsResolver()
@@ -502,6 +564,17 @@ class Kernel:
         self._slab_allocator.create_cache("pcb", obj_size=64)
         self._slab_allocator.create_cache("inode", obj_size=48)
         self._boot_log.append("[OK] Slab allocator")
+
+        # 1c. Pager — demand paging with swap space
+        num_physical_frames = 16
+        num_virtual_pages = 32
+        self._pager = Pager(
+            num_physical_frames=num_physical_frames,
+            num_virtual_pages=num_virtual_pages,
+            policy=LRUPolicy(),
+        )
+        self._swap_policy_name = "lru"
+        self._boot_log.append("[OK] Swap space (LRU)")
 
         # 2. File system — processes may need files (with journaling for crash recovery)
         self._filesystem = JournaledFileSystem()
@@ -586,12 +659,14 @@ class Kernel:
         self._pi_manager = None
         self._sync_manager = None
         self._resource_manager = None
+        self._framebuffer = None
         self._device_manager = None
         self._env = None
         self._user_manager = None
         self._current_uid = 0
         self._file_permissions.clear()
         self._filesystem = None
+        self._pager = None
         self._slab_allocator = None
         self._memory = None
         self._processes.clear()
@@ -605,12 +680,10 @@ class Kernel:
         self._dns_resolver = None
         self._interrupt_controller = None
         self._timer = None
-        self._tick_count = 0
-        self._ticks_since_dispatch = 0
+        self._tick_count = self._ticks_since_dispatch = 0
 
         # Reset performance metrics and strace state
-        self._total_created = 0
-        self._total_completed = 0
+        self._total_created = self._total_completed = 0
         self._total_wait_time = 0.0
         self._total_turnaround_time = 0.0
         self._total_response_time = 0.0

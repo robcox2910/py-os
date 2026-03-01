@@ -56,6 +56,9 @@ Commands can be piped: `ls / | grep txt | wc`
 | `slaballoc name` | Allocate from a slab cache |
 | `slabfree name addr` | Free a slab allocation |
 | `slabinfo` | Show slab allocator statistics |
+| `swap` | Show swap space status (policy, usage, page faults) |
+| `swap policy P` | Change replacement policy (fifo, lru, clock) |
+| `swap demo` | Exercise the pager — force page faults and show stats |
 
 ## Files
 
@@ -111,6 +114,13 @@ Commands can be piped: `ls / | grep txt | wc`
 | `devices` | List registered devices |
 | `devread dev` | Read from a device |
 | `devwrite dev data` | Write to a device |
+| `fb` | Show framebuffer info (dimensions, status) |
+| `fb render` | Display the current framebuffer contents |
+| `fb pixel x y c` | Set a character at position (x, y) |
+| `fb text x y msg` | Draw text starting at (x, y) |
+| `fb rect x1 y1 x2 y2 c` | Fill a rectangle with a character |
+| `fb clear` | Clear the framebuffer |
+| `fb demo` | Draw a demo pattern with borders and text |
 
 ## Networking
 

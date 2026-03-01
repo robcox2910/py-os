@@ -177,6 +177,8 @@ class Shell:
             "timer": self._cmd_timer,
             "benchmark": self._cmd_benchmark,
             "dashboard": self._cmd_dashboard,
+            "fb": self._cmd_fb,
+            "swap": self._cmd_swap,
         }
 
     @property
@@ -3893,3 +3895,173 @@ class Shell:
                 lines.append(f"{indent}  {entry}")
                 continue
             self._dashboard_fs_tree(lines, child_path, depth=depth + 1, max_depth=max_depth)
+
+    # -- fb (framebuffer) command -----------------------------------------------
+
+    def _cmd_fb(self, args: list[str]) -> str:
+        """Display or draw on the framebuffer."""
+        dispatch: dict[str, Callable[[list[str]], str]] = {
+            "render": lambda _a: self._fb_render(),
+            "pixel": self._fb_pixel,
+            "text": self._fb_text,
+            "rect": self._fb_rect,
+            "clear": lambda _a: self._fb_clear(),
+            "demo": lambda _a: self._fb_demo(),
+        }
+        if not args:
+            return self._fb_info()
+        if args[0] not in dispatch:
+            return "Usage: fb [render|pixel|text|rect|clear|demo]"
+        return dispatch[args[0]](args[1:])
+
+    def _fb_info(self) -> str:
+        """Display framebuffer dimensions and status."""
+        try:
+            info: dict[str, object] = self._kernel.syscall(SyscallNumber.SYS_FB_INFO)
+        except SyscallError as e:
+            return f"Error: {e}"
+        lines: list[str] = [
+            "--- Framebuffer ---",
+            f"  Dimensions: {info['width']}x{info['height']}",
+            f"  Status:     {info['status']}",
+        ]
+        return "\n".join(lines)
+
+    def _fb_render(self) -> str:
+        """Render the current framebuffer contents."""
+        try:
+            return self._kernel.syscall(SyscallNumber.SYS_FB_READ)
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _fb_pixel(self, args: list[str]) -> str:
+        """Set a single pixel on the framebuffer."""
+        min_args = 3
+        if len(args) < min_args:
+            return "Usage: fb pixel <x> <y> <char>"
+        try:
+            cmd = f"pixel {args[0]} {args[1]} {args[2]}"
+            self._kernel.syscall(SyscallNumber.SYS_FB_WRITE, command=cmd)
+        except (SyscallError, ValueError) as e:
+            return f"Error: {e}"
+        return f"Set pixel ({args[0]}, {args[1]}) = '{args[2]}'"
+
+    def _fb_text(self, args: list[str]) -> str:
+        """Draw text on the framebuffer."""
+        min_args = 3
+        if len(args) < min_args:
+            return "Usage: fb text <x> <y> <message>"
+        try:
+            msg = " ".join(args[2:])
+            cmd = f"text {args[0]} {args[1]} {msg}"
+            self._kernel.syscall(SyscallNumber.SYS_FB_WRITE, command=cmd)
+        except (SyscallError, ValueError) as e:
+            return f"Error: {e}"
+        return f"Drew text at ({args[0]}, {args[1]})"
+
+    def _fb_rect(self, args: list[str]) -> str:
+        """Fill a rectangle on the framebuffer."""
+        min_args = 5
+        if len(args) < min_args:
+            return "Usage: fb rect <x1> <y1> <x2> <y2> <char>"
+        try:
+            cmd = f"rect {args[0]} {args[1]} {args[2]} {args[3]} {args[4]}"
+            self._kernel.syscall(SyscallNumber.SYS_FB_WRITE, command=cmd)
+        except (SyscallError, ValueError) as e:
+            return f"Error: {e}"
+        return f"Filled rect ({args[0]},{args[1]}) to ({args[2]},{args[3]})"
+
+    def _fb_clear(self) -> str:
+        """Clear the framebuffer."""
+        try:
+            self._kernel.syscall(SyscallNumber.SYS_FB_WRITE, command="clear")
+        except SyscallError as e:
+            return f"Error: {e}"
+        return "Framebuffer cleared"
+
+    def _fb_demo(self) -> str:
+        """Draw a demo pattern on the framebuffer."""
+        try:
+            # Draw a border
+            self._kernel.syscall(SyscallNumber.SYS_FB_WRITE, command="clear")
+            info: dict[str, object] = self._kernel.syscall(SyscallNumber.SYS_FB_INFO)
+            w = int(str(info["width"]))
+            h = int(str(info["height"]))
+            # Top and bottom borders
+            self._kernel.syscall(SyscallNumber.SYS_FB_WRITE, command=f"rect 0 0 {w - 1} 0 #")
+            self._kernel.syscall(
+                SyscallNumber.SYS_FB_WRITE, command=f"rect 0 {h - 1} {w - 1} {h - 1} #"
+            )
+            # Left and right borders
+            self._kernel.syscall(SyscallNumber.SYS_FB_WRITE, command=f"rect 0 0 0 {h - 1} #")
+            self._kernel.syscall(
+                SyscallNumber.SYS_FB_WRITE, command=f"rect {w - 1} 0 {w - 1} {h - 1} #"
+            )
+            # Title text
+            self._kernel.syscall(SyscallNumber.SYS_FB_WRITE, command="text 2 2 PyOS Framebuffer")
+            self._kernel.syscall(SyscallNumber.SYS_FB_WRITE, command="text 2 4 Hello, World!")
+            # Render
+            rendered: str = self._kernel.syscall(SyscallNumber.SYS_FB_READ)
+        except SyscallError as e:
+            return f"Error: {e}"
+        return f"--- Framebuffer Demo ---\n{rendered}"
+
+    # -- swap command -----------------------------------------------------------
+
+    def _cmd_swap(self, args: list[str]) -> str:
+        """Display or manage swap space and page replacement."""
+        if not args:
+            return self._swap_status()
+        match args[0]:
+            case "policy":
+                return self._swap_policy(args[1:])
+            case "demo":
+                return self._swap_demo()
+            case _:
+                return "Usage: swap [policy <fifo|lru|clock>|demo]"
+
+    def _swap_status(self) -> str:
+        """Display swap space status."""
+        try:
+            info: dict[str, object] = self._kernel.syscall(SyscallNumber.SYS_SWAP_INFO)
+        except SyscallError as e:
+            return f"Error: {e}"
+        lines: list[str] = [
+            "--- Swap Status ---",
+            f"  Policy:         {info['policy']}",
+            f"  Swap used:      {info['swap_used']}/{info['swap_total']} pages",
+            f"  Swap free:      {info['swap_free']} pages",
+            f"  Page faults:    {info['page_faults']}",
+            f"  Resident pages: {info['resident_count']}",
+        ]
+        return "\n".join(lines)
+
+    def _swap_policy(self, args: list[str]) -> str:
+        """Change the swap replacement policy."""
+        if not args:
+            return "Usage: swap policy <fifo|lru|clock>"
+        name = args[0]
+        try:
+            self._kernel.syscall(SyscallNumber.SYS_SET_SWAP_POLICY, name=name)
+        except SyscallError as e:
+            return f"Error: {e}"
+        return f"Swap policy changed to {name}"
+
+    def _swap_demo(self) -> str:
+        """Exercise the pager and show before/after statistics."""
+        try:
+            before: dict[str, object] = self._kernel.syscall(SyscallNumber.SYS_SWAP_INFO)
+            result: dict[str, object] = self._kernel.syscall(SyscallNumber.SYS_SWAP_EXERCISE)
+            after: dict[str, object] = self._kernel.syscall(SyscallNumber.SYS_SWAP_INFO)
+        except SyscallError as e:
+            return f"Error: {e}"
+        lines: list[str] = [
+            "--- Swap Demo ---",
+            f"  Policy:          {before['policy']}",
+            f"  Pages accessed:  {result['pages_accessed']}",
+            f"  Faults before:   {result['faults_before']}",
+            f"  Faults after:    {result['faults_after']}",
+            f"  New faults:      {result['new_faults']}",
+            f"  Swap used after: {after['swap_used']}/{after['swap_total']} pages",
+        ]
+        return "\n".join(lines)
