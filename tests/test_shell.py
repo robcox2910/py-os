@@ -635,3 +635,332 @@ class TestShellTimer:
         _kernel, shell = _booted_shell()
         result = shell.execute("timer foobar")
         assert "Usage" in result
+
+
+# -- Socket commands --------------------------------------------------------
+
+SOCKET_PORT = 9090
+SOCKET_ADDR = "10.0.0.1"
+
+
+class TestShellSocketBasics:
+    """Verify socket command dispatch and argument validation."""
+
+    def test_socket_no_args_shows_usage(self) -> None:
+        """Socket with no args should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("socket")
+        assert "Usage" in result
+
+    def test_socket_unknown_subcommand_shows_usage(self) -> None:
+        """Socket with unknown subcommand should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("socket foobar")
+        assert "Usage" in result
+
+    def test_socket_create(self) -> None:
+        """Socket create should return a socket id."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("socket create")
+        assert "Socket" in result
+        assert "created" in result
+
+    def test_socket_bind_too_few_args(self) -> None:
+        """Socket bind without enough args should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("socket bind 1")
+        assert "Usage" in result
+
+    def test_socket_bind_invalid_id(self) -> None:
+        """Socket bind with non-integer id should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("socket bind abc 10.0.0.1 80")
+        assert "Error" in result
+
+    def test_socket_listen_no_args(self) -> None:
+        """Socket listen without id should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("socket listen")
+        assert "Usage" in result
+
+    def test_socket_listen_invalid_id(self) -> None:
+        """Socket listen with non-integer id should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("socket listen abc")
+        assert "Error" in result
+
+    def test_socket_connect_too_few_args(self) -> None:
+        """Socket connect without enough args should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("socket connect 1")
+        assert "Usage" in result
+
+    def test_socket_connect_invalid_id(self) -> None:
+        """Socket connect with non-integer id should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("socket connect abc 10.0.0.1 80")
+        assert "Error" in result
+
+    def test_socket_accept_no_args(self) -> None:
+        """Socket accept without id should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("socket accept")
+        assert "Usage" in result
+
+    def test_socket_accept_invalid_id(self) -> None:
+        """Socket accept with non-integer id should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("socket accept abc")
+        assert "Error" in result
+
+    def test_socket_send_too_few_args(self) -> None:
+        """Socket send without enough args should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("socket send")
+        assert "Usage" in result
+
+    def test_socket_send_invalid_id(self) -> None:
+        """Socket send with non-integer id should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("socket send abc hello")
+        assert "Error" in result
+
+    def test_socket_recv_no_args(self) -> None:
+        """Socket recv without id should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("socket recv")
+        assert "Usage" in result
+
+    def test_socket_recv_invalid_id(self) -> None:
+        """Socket recv with non-integer id should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("socket recv abc")
+        assert "Error" in result
+
+    def test_socket_close_no_args(self) -> None:
+        """Socket close without id should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("socket close")
+        assert "Usage" in result
+
+    def test_socket_close_invalid_id(self) -> None:
+        """Socket close with non-integer id should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("socket close abc")
+        assert "Error" in result
+
+
+class TestShellSocketLifecycle:
+    """Verify socket create, bind, listen, connect, accept, send, recv, close."""
+
+    def test_socket_bind_listen_connect_accept(self) -> None:
+        """Full socket lifecycle: create, bind, listen, connect, accept."""
+        _kernel, shell = _booted_shell()
+        # Create server socket
+        create_result = shell.execute("socket create")
+        server_id = create_result.split()[1]
+
+        # Bind and listen
+        bind_result = shell.execute(f"socket bind {server_id} {SOCKET_ADDR} {SOCKET_PORT}")
+        assert "bound" in bind_result
+        listen_result = shell.execute(f"socket listen {server_id}")
+        assert "listening" in listen_result
+
+        # Create client and connect
+        client_result = shell.execute("socket create")
+        client_id = client_result.split()[1]
+        connect_result = shell.execute(f"socket connect {client_id} {SOCKET_ADDR} {SOCKET_PORT}")
+        assert "connected" in connect_result
+
+        # Accept
+        accept_result = shell.execute(f"socket accept {server_id}")
+        assert "Accepted" in accept_result
+
+    def test_socket_send_and_recv(self) -> None:
+        """Socket send and recv should exchange data."""
+        _kernel, shell = _booted_shell()
+        # Set up server — parse IDs from output
+        server_result = shell.execute("socket create")
+        server_id = server_result.split()[1]
+        shell.execute(f"socket bind {server_id} {SOCKET_ADDR} {SOCKET_PORT}")
+        shell.execute(f"socket listen {server_id}")
+
+        # Connect client
+        client_result = shell.execute("socket create")
+        client_id = client_result.split()[1]
+        shell.execute(f"socket connect {client_id} {SOCKET_ADDR} {SOCKET_PORT}")
+        accept_result = shell.execute(f"socket accept {server_id}")
+        # Parse accepted peer socket id
+        peer_id = accept_result.split()[-1]
+
+        # Send from client, recv on accepted connection
+        send_result = shell.execute(f"socket send {client_id} Hello World")
+        assert "Sent" in send_result
+        assert "bytes" in send_result
+
+        recv_result = shell.execute(f"socket recv {peer_id}")
+        assert "Hello World" in recv_result
+
+    def test_socket_close(self) -> None:
+        """Socket close should close a socket."""
+        _kernel, shell = _booted_shell()
+        create_result = shell.execute("socket create")
+        sock_id = create_result.split()[1]
+        result = shell.execute(f"socket close {sock_id}")
+        assert "closed" in result
+
+    def test_socket_list_empty(self) -> None:
+        """Socket list with no sockets should say so."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("socket list")
+        assert "No sockets" in result
+
+    def test_socket_list_shows_sockets(self) -> None:
+        """Socket list should show created sockets."""
+        _kernel, shell = _booted_shell()
+        shell.execute("socket create")
+        result = shell.execute("socket list")
+        assert "STATE" in result
+
+    def test_socket_send_invalid_connection(self) -> None:
+        """Socket send to non-connected socket should show error."""
+        _kernel, shell = _booted_shell()
+        create_result = shell.execute("socket create")
+        sock_id = create_result.split()[1]
+        result = shell.execute(f"socket send {sock_id} hello")
+        assert "Error" in result
+
+    def test_socket_recv_no_data(self) -> None:
+        """Socket recv on connected socket with no data should return empty."""
+        _kernel, shell = _booted_shell()
+        # Set up connected sockets — parse IDs from output
+        server_result = shell.execute("socket create")
+        server_id = server_result.split()[1]
+        shell.execute(f"socket bind {server_id} {SOCKET_ADDR} {SOCKET_PORT}")
+        shell.execute(f"socket listen {server_id}")
+        client_result = shell.execute("socket create")
+        client_id = client_result.split()[1]
+        shell.execute(f"socket connect {client_id} {SOCKET_ADDR} {SOCKET_PORT}")
+        accept_result = shell.execute(f"socket accept {server_id}")
+        peer_id = accept_result.split()[-1]
+        # Recv without sending — should get no data
+        result = shell.execute(f"socket recv {peer_id}")
+        assert "no data" in result
+
+
+# -- DNS commands -----------------------------------------------------------
+
+
+class TestShellDns:
+    """Verify DNS command operations."""
+
+    def test_dns_no_args_shows_usage(self) -> None:
+        """Dns with no args should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("dns")
+        assert "Usage" in result
+
+    def test_dns_unknown_subcommand_shows_usage(self) -> None:
+        """Dns with unknown subcommand should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("dns foobar")
+        assert "Usage" in result
+
+    def test_dns_register_and_lookup(self) -> None:
+        """Dns register then lookup should resolve the name."""
+        _kernel, shell = _booted_shell()
+        shell.execute("dns register example.com 1.2.3.4")
+        result = shell.execute("dns lookup example.com")
+        assert "1.2.3.4" in result
+
+    def test_dns_register_too_few_args(self) -> None:
+        """Dns register without enough args should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("dns register")
+        assert "Usage" in result
+
+    def test_dns_lookup_no_args(self) -> None:
+        """Dns lookup without args should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("dns lookup")
+        assert "Usage" in result
+
+    def test_dns_lookup_missing_host(self) -> None:
+        """Dns lookup for unregistered host should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("dns lookup nonexistent.com")
+        assert "Error" in result
+
+    def test_dns_remove(self) -> None:
+        """Dns remove should delete a record."""
+        _kernel, shell = _booted_shell()
+        shell.execute("dns register example.com 1.2.3.4")
+        result = shell.execute("dns remove example.com")
+        assert "Removed" in result
+
+    def test_dns_remove_no_args(self) -> None:
+        """Dns remove without args should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("dns remove")
+        assert "Usage" in result
+
+    def test_dns_remove_missing_host(self) -> None:
+        """Dns remove for unregistered host should show error."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("dns remove nonexistent.com")
+        assert "Error" in result
+
+    def test_dns_list_shows_default_localhost(self) -> None:
+        """Dns list should show the default localhost entry."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("dns list")
+        assert "localhost" in result
+        assert "127.0.0.1" in result
+
+    def test_dns_list_with_records(self) -> None:
+        """Dns list should show registered records."""
+        _kernel, shell = _booted_shell()
+        shell.execute("dns register example.com 1.2.3.4")
+        result = shell.execute("dns list")
+        assert "example.com" in result
+        assert "1.2.3.4" in result
+
+    def test_dns_flush(self) -> None:
+        """Dns flush should clear all records."""
+        _kernel, shell = _booted_shell()
+        shell.execute("dns register a.com 1.1.1.1")
+        shell.execute("dns register b.com 2.2.2.2")
+        result = shell.execute("dns flush")
+        assert "Flushed" in result
+
+    def test_dns_demo_runs(self) -> None:
+        """Dns demo should run the full demo sequence."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("dns demo")
+        assert "DNS Demo" in result
+        assert "protocol layering" in result.lower() or "Step" in result
+
+
+# -- HTTP commands ----------------------------------------------------------
+
+
+class TestShellHttp:
+    """Verify HTTP command operations."""
+
+    def test_http_no_args_shows_usage(self) -> None:
+        """Http with no args should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("http")
+        assert "Usage" in result
+
+    def test_http_unknown_subcommand_shows_usage(self) -> None:
+        """Http with unknown subcommand should show usage."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("http foobar")
+        assert "Usage" in result
+
+    def test_http_demo_runs(self) -> None:
+        """Http demo should run the full HTTP demo."""
+        _kernel, shell = _booted_shell()
+        result = shell.execute("http demo")
+        assert "HTTP Demo" in result
