@@ -150,6 +150,12 @@ topic stands on its own.
 - [The Boot Chain](bootloader.md) -- What happens between pressing the power button and seeing a prompt
 - [Interrupts and Timers](interrupts.md) -- How hardware devices get the CPU's attention
 - [TCP: Reliable Delivery](tcp.md) -- How TCP guarantees data arrives complete and in order
+- [Framebuffer](framebuffer.md) -- Drawing pixels and shapes on a virtual screen
+- [TUI Dashboard](tui.md) -- A live terminal dashboard for watching OS internals
+- [Permissions](permissions.md) -- File ownership, groups, and access control lists
+- [Binary Loader](binary-loader.md) -- Loading and running programs
+- [Containers](containers.md) -- Lightweight process isolation with namespaces
+- [Inter-Machine Networking](inter-machine-networking.md) -- Connecting multiple kernels over a virtual network
 - [Interactive Tutorials](tutorials.md) -- Guided lessons that teach OS concepts hands-on
 - [Web UI](web-ui.md) -- Run PyOS from your browser instead of the terminal
 

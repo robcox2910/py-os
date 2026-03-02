@@ -132,3 +132,21 @@ machines working together:
 
 By understanding how machines communicate — packets, bridges, ping,
 DNS — you're learning the building blocks of the internet itself!
+
+## Where to Go Next
+
+- [Devices and Networking](devices-and-networking.md) -- Single-machine networking with sockets and DNS
+- [TCP: Reliable Delivery](tcp.md) -- How TCP guarantees delivery over unreliable networks
+- [Containers](containers.md) -- Lightweight isolation on a single machine
+
+## Key Terms
+
+| Term | Definition |
+|------|-----------|
+| **Packet** | A small chunk of data with a source, destination, and payload that travels across a network |
+| **Bridge** | A device (or software) that connects multiple machines and routes packets between them |
+| **Cluster** | A group of machines connected together that work as one system |
+| **Ping** | A quick "are you there?" message used to check if another machine is reachable |
+| **Pong** | The reply to a ping -- "yes, I'm here!" |
+| **DNS** | Domain Name System -- translates hostnames (like "web-server") into addresses |
+| **Kernel ID** | A unique number assigned to each kernel when it registers with the bridge |

@@ -126,7 +126,7 @@ scheduler = Scheduler(policy=policy)
 You can switch to it from the shell:
 
 ```
-pyos> scheduler aging
+PyOS> scheduler aging
 Scheduler set to Aging Priority (boost=1, max_age=10)
 ```
 
@@ -154,10 +154,10 @@ policy = MLFQPolicy(num_levels=3, base_quantum=2)
 You can switch to MLFQ and trigger boosts from the shell:
 
 ```
-pyos> scheduler mlfq
+PyOS> scheduler mlfq
 Scheduler set to MLFQ (3 levels, base_quantum=2)
 
-pyos> scheduler boost
+PyOS> scheduler boost
 MLFQ boost: all processes reset to level 0
 ```
 
@@ -180,10 +180,10 @@ scheduler = Scheduler(policy=policy)
 You can switch to CFS from the shell:
 
 ```
-pyos> scheduler cfs
+PyOS> scheduler cfs
 Scheduler set to CFS (base_slice=1)
 
-pyos> scheduler cfs 3
+PyOS> scheduler cfs 3
 Scheduler set to CFS (base_slice=3)
 ```
 
@@ -203,7 +203,7 @@ Scheduler set to CFS (base_slice=3)
 You can switch policies at runtime using the `scheduler` shell command:
 
 ```
-pyos> scheduler priority
+PyOS> scheduler priority
 Scheduler set to Priority
 ```
 
@@ -318,11 +318,11 @@ In real Unix, you can check the last command's exit code with `$?`. In PyOS, the
 PyOS comes with a couple of built-in programs you can run:
 
 ```
-pyos> run hello
+PyOS> run hello
 Hello from PyOS!
 [exit code: 0]
 
-pyos> run counter
+PyOS> run counter
 1
 2
 3
@@ -361,17 +361,17 @@ If a process has no parent (or the parent has already been removed), it is an **
 ### Try it in the PyOS shell
 
 ```
-pyos> fork 1
-Forked pid 1 → child pid 2 (parent (fork))
+PyOS> fork 1
+Forked pid 1 → child pid 2 (init (fork))
 
-pyos> wait 1
+PyOS> wait 1
 Collected child pid 2 (exit_code=0, output='hello')
 ```
 
 If the child has not finished yet, you will see:
 
 ```
-pyos> wait 1
+PyOS> wait 1
 Process 1 is now waiting for a child.
 ```
 
@@ -398,7 +398,7 @@ These metrics help answer important questions:
 ### Try it in the PyOS shell
 
 ```
-pyos> perf
+PyOS> perf
 === PyOS Performance Metrics ===
 Context switches:    0
 Processes created:   0
@@ -412,7 +412,7 @@ Throughput:          0.00 procs/sec
 You can also read the raw numbers from the virtual filesystem:
 
 ```
-pyos> cat /proc/stat
+PyOS> cat /proc/stat
 CtxSwitches:    42
 TotalCreated:   10
 TotalCompleted: 7
@@ -425,7 +425,7 @@ Throughput:     2.33 procs/sec
 Or check individual process timing:
 
 ```
-pyos> cat /proc/42/sched
+PyOS> cat /proc/42/sched
 WaitTime:       0.05 seconds
 CpuTime:        0.10 seconds
 ResponseTime:   0.02 seconds
@@ -453,24 +453,24 @@ Each whiteboard has its own line of waiting students and its own scheduling poli
 PyOS supports multiple CPUs through the bootloader or kernel configuration:
 
 ```
-pyos> cpu
+PyOS> cpu
 CPU 0: FCFSPolicy  ready=2  current=pid 1 (init)
 CPU 1: FCFSPolicy  ready=1  current=none
 
-pyos> taskset 3
+PyOS> taskset 3
 Process 3 affinity: CPU 0, 1
 
-pyos> taskset 3 0
+PyOS> taskset 3 0
 Set process 3 affinity to CPU 0
 
-pyos> scheduler balance
+PyOS> scheduler balance
 Balanced: 1 migration(s)
 ```
 
 The `ps` command shows which CPU each process is on:
 
 ```
-pyos> ps
+PyOS> ps
 PID    CPU  STATE       NAME
 1      0    running     init
 2      1    ready       worker-a

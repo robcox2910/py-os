@@ -81,3 +81,12 @@ fb demo         # Draw a demo pattern with borders and text
 - [Devices and Networking](devices-and-networking.md) -- How the OS talks to hardware
 - [The Shell](shell.md) -- The command-line interface to the OS
 - [Memory](memory.md) -- How the OS manages RAM (the framebuffer lives in memory!)
+
+## Key Terms
+
+| Term | Definition |
+|------|-----------|
+| **Framebuffer** | A block of memory that represents every pixel on the screen |
+| **Pixel** | The smallest dot on a screen -- a framebuffer stores one character per pixel |
+| **Resolution** | The width and height of the screen in pixels (e.g. 80x24) |
+| **Rendering** | Drawing shapes and text into the framebuffer so they appear on screen |

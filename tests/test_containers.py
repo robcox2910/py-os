@@ -17,6 +17,7 @@ from py_os.syscalls import SyscallError, SyscallNumber
 
 _FIRST_VPID = 1
 _SECOND_VPID = 2
+_TWO_PROCESSES = 2
 _REAL_PID_A = 10
 _REAL_PID_B = 20
 _REAL_PID_C = 30
@@ -237,7 +238,7 @@ class TestContainer:
         assert c.process_count == 0
         c.add_process(_REAL_PID_A)
         c.add_process(_REAL_PID_B)
-        assert c.process_count == _SECOND_VPID
+        assert c.process_count == _TWO_PROCESSES
 
     def test_has_all_namespaces(self) -> None:
         """Container provides PID, mount, and network namespaces."""

@@ -173,3 +173,21 @@ this process:
 Our PyBin format is a miniature version of the same idea. By understanding
 it, you're learning the fundamentals of how *all* programs get loaded and
 executed on *every* operating system.
+
+## Where to Go Next
+
+- [Processes](processes.md) -- How exec replaces a process's code with a new program
+- [Filesystem](filesystem.md) -- Where binaries live on disk
+- [The Shell](shell.md) -- The `compile` and `run` commands
+
+## Key Terms
+
+| Term | Definition |
+|------|-----------|
+| **Binary** | A file containing machine-readable instructions (as opposed to human-readable source code) |
+| **Loader** | The part of the OS that reads a binary file, checks it, and sets up the process to run it |
+| **Header** | Metadata at the start of a binary: magic number, version, and entry point |
+| **Magic number** | A fixed byte sequence at the start of a file that identifies its format |
+| **Entry point** | The memory address (or function name) where execution begins |
+| **exec** | The system call that replaces a process's code with a new program |
+| **Compiler** | A tool that turns human-readable source code into a binary |

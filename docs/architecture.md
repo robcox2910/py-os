@@ -129,6 +129,9 @@ graph LR
     kernel --> journal[journal.py]
     kernel --> shm[shm.py]
     kernel --> logging[logging.py]
+    kernel --> containers[containers.py]
+    kernel --> bridge[bridge.py]
+    kernel --> binary[binary.py]
     manager --> virtual[virtual.py]
     filesystem --> fd[fd.py]
     repl[repl.py] --> bootloader[bootloader.py]
@@ -152,6 +155,12 @@ graph LR
 | [TCP: Reliable Delivery](concepts/tcp.md) | Three-way handshake, flow control, congestion control, retransmission |
 | [Users and Safety](concepts/users-and-safety.md) | Permissions, signals, logging, deadlock |
 | [Synchronization](concepts/synchronization.md) | Mutex, semaphore, condition variable, reader-writer lock, race conditions, deadlock prevention |
+| [Framebuffer](concepts/framebuffer.md) | Pixel-level graphics, shapes, and image display |
+| [TUI Dashboard](concepts/tui.md) | Live terminal dashboard for OS internals |
+| [Permissions](concepts/permissions.md) | File ownership, permission bits, groups, ACLs |
+| [Binary Loader](concepts/binary-loader.md) | Loading and running programs with exec |
+| [Containers](concepts/containers.md) | PID, mount, and network namespaces for isolation |
+| [Inter-Machine Networking](concepts/inter-machine-networking.md) | Bridges, clusters, cross-machine messaging |
 | [Interactive Tutorials](concepts/tutorials.md) | Guided hands-on lessons using real syscalls |
 | [Web UI](concepts/web-ui.md) | Browser-based terminal via Flask |
 
@@ -186,6 +195,11 @@ Every source file and what it implements.
 | `kernel.py` | `init_pid` | PID of the init process (root of process tree) |
 | `syscalls.py` | `SyscallNumber` | IntEnum of all syscall numbers (1-247) |
 | `syscalls.py` | `SyscallError` | User-facing exception wrapping internal errors |
+| `containers.py` | `ContainerManager` | Lifecycle management for all containers |
+| `containers.py` | `Container` | Isolated environment with PID, mount, and network namespaces |
+| `containers.py` | `PidNamespace` / `MountNamespace` / `NetworkNamespace` | Per-container isolation primitives |
+| `containers.py` | `ContainerState` | CREATED / RUNNING / STOPPED state machine |
+| `containers.py` | `ContainerError` | Exception for container operation failures |
 
 ### Process Management
 
@@ -206,6 +220,9 @@ Every source file and what it implements.
 | `process/signals.py` | `SignalAction` | TERMINATE / STOP / CONTINUE / IGNORE default actions |
 | `process/signals.py` | `DEFAULT_ACTIONS` | Maps every signal to its default action |
 | `process/signals.py` | `UNCATCHABLE` | frozenset of signals that cannot have handlers (SIGKILL, SIGSTOP) |
+| `process/binary.py` | `BinaryLoader` | Load and execute named programs (demo binaries) |
+| `process/binary.py` | `DEMO_PROGRAMS` | Registry of built-in demo programs |
+| `process/binary.py` | `BinaryLoaderError` | Exception for binary loader failures |
 
 ### Memory Management
 
@@ -297,6 +314,11 @@ Every source file and what it implements.
 | `io/tcp.py` | `TcpSegment` | Frozen dataclass for a TCP segment (ports, seq/ack numbers, flags, window, payload) |
 | `io/tcp.py` | `TcpConnection` | One endpoint: state machine, seq tracking, flow control, congestion control (slow start + AIMD), retransmission |
 | `io/tcp.py` | `TcpStack` | Manage multiple TCP connections, listener queues, segment routing, retransmission ticks |
+| `io/bridge.py` | `NetworkBridge` | In-memory packet routing between kernel instances |
+| `io/bridge.py` | `Cluster` | High-level multi-kernel manager for inter-machine communication |
+| `io/bridge.py` | `Packet` | Frozen dataclass for a network packet (src, dst, payload, type) |
+| `io/bridge.py` | `PacketType` | DATA / DNS_QUERY / DNS_RESPONSE / PING / PONG packet types |
+| `io/bridge.py` | `BridgeError` | Exception for bridge operation failures |
 
 ### Synchronization
 

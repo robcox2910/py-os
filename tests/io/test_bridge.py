@@ -15,8 +15,9 @@ from py_os.kernel import ExecutionMode, Kernel
 from py_os.shell import Shell
 from py_os.syscalls import SyscallError, SyscallNumber
 
-_DEFAULT_FRAMES = 64
 _DST_KERNEL_ID = 2
+_TWO_KERNELS = 2
+_TWO_PACKETS = 2
 
 
 def _booted_kernel() -> Kernel:
@@ -85,7 +86,7 @@ class TestNetworkBridge:
         k2 = _booted_kernel()
         bridge.register_kernel(k1)
         bridge.register_kernel(k2)
-        assert bridge.kernel_count == 2  # noqa: PLR2004
+        assert bridge.kernel_count == _TWO_KERNELS
 
     def test_send_and_receive(self) -> None:
         """Send a packet and receive it at the destination."""
@@ -130,7 +131,7 @@ class TestNetworkBridge:
         assert bridge.pending_count(id2) == 0
         bridge.send(Packet(id1, id2, b"a", PacketType.DATA))
         bridge.send(Packet(id1, id2, b"b", PacketType.DATA))
-        assert bridge.pending_count(id2) == 2  # noqa: PLR2004
+        assert bridge.pending_count(id2) == _TWO_PACKETS
 
     def test_unregister_kernel(self) -> None:
         """Unregistering removes the kernel and its queue."""
@@ -151,8 +152,6 @@ class TestNetworkBridge:
 
 
 # -- Cluster tests -------------------------------------------------------------
-
-_TWO_KERNELS = 2
 
 
 class TestCluster:

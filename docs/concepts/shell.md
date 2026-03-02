@@ -113,12 +113,17 @@ Here are the commands grouped by what they do. You don't need to memorize them
 
 | Command     | What it does |
 |-------------|-------------|
-| `mutex`     | Create, acquire, release, or list mutexes |
-| `semaphore` | Create, acquire, release, or list semaphores |
-| `rwlock`    | Create, acquire, release, or list reader-writer locks |
+| `mutex`     | Create or list mutexes |
+| `semaphore` | Create or list semaphores |
+| `rwlock`    | Create or list reader-writer locks |
 | `pi`        | Priority inheritance demo and status |
 | `ordering`  | Deadlock prevention: register ranks, set mode, view violations, demo |
 | `shm`       | Shared memory: create, attach, detach, write, read, list, destroy, demo |
+
+**Networking and System** -- network protocols and system inspection:
+
+| Command     | What it does |
+|-------------|-------------|
 | `dns`       | DNS: register, lookup, remove, list, flush, demo |
 | `socket`    | Raw sockets: create, bind, listen, connect, accept, send, recv, close, list |
 | `http`      | HTTP protocol demo (request/response over sockets) |

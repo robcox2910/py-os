@@ -126,3 +126,22 @@ The idea is the same everywhere: **decide who can do what, and enforce it**.
 | `groups add name` | Create a new group |
 | `groups adduser uid gid` | Add a user to a group |
 | `groups removeuser uid gid` | Remove a user from a group |
+
+## Where to Go Next
+
+- [Users and Safety](users-and-safety.md) -- Users, signals, logging, and deadlocks
+- [Filesystem](filesystem.md) -- How files and directories are organised
+- [The Shell](shell.md) -- The `chmod`, `chown`, and `groups` commands
+
+## Key Terms
+
+| Term | Definition |
+|------|-----------|
+| **Permission bits** | Nine flags (rwxrwxrwx) that control who can read, write, and execute a file |
+| **Owner** | The user who created the file -- they get the first set of permission bits |
+| **Group** | A named collection of users who share the middle set of permission bits |
+| **Other** | Everyone else on the system -- they get the last set of permission bits |
+| **UID** | User Identifier -- a unique number for each user (root is always 0) |
+| **GID** | Group Identifier -- a unique number for each group |
+| **ACL** | Access Control List -- extra fine-grained entries beyond the basic 9 bits |
+| **root** | The superuser (UID 0) who can bypass all permission checks |

@@ -334,3 +334,17 @@ With synchronization in place, you have the tools to build higher-level patterns
 - [Users and Safety](users-and-safety.md) -- Deadlock detection and how the OS keeps things safe
 - [Devices and Networking](devices-and-networking.md) -- IPC pipes and message queues that use these primitives under the hood
 - [The Shell](shell.md) -- The `mutex`, `semaphore`, and `rwlock` shell commands
+
+## Key Terms
+
+| Term | Definition |
+|------|-----------|
+| **Mutex** | A lock that only one thread can hold at a time -- mutual exclusion |
+| **Semaphore** | A counter-based lock that allows up to N threads to enter at once |
+| **Condition variable** | A waiting room where threads sleep until another thread signals them |
+| **Reader-writer lock** | A lock that allows many readers or one writer, but not both |
+| **Race condition** | A bug where two threads access shared data at the same time and produce unpredictable results |
+| **Critical section** | The part of code that accesses shared data and must be protected |
+| **Deadlock** | Two or more threads stuck forever, each waiting for a lock the other holds |
+| **Priority inversion** | When a high-priority thread is blocked because a low-priority thread holds its lock |
+| **Priority inheritance** | Temporarily boosting a lock-holder's priority so higher-priority waiters are not starved |

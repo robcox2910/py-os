@@ -93,6 +93,12 @@ Each guide explains one part of the OS with real-world analogies and simple lang
 | [Users and Safety](docs/concepts/users-and-safety.md) | Permissions, signals, logging, and deadlocks |
 | [Synchronization](docs/concepts/synchronization.md) | Mutexes, semaphores, condition variables, and race conditions |
 | [The Boot Chain](docs/concepts/bootloader.md) | What happens between pressing power and seeing a prompt |
+| [Framebuffer](docs/concepts/framebuffer.md) | Pixel-level graphics, drawing shapes, and displaying images |
+| [TUI Dashboard](docs/concepts/tui.md) | A live terminal dashboard that shows OS internals in real time |
+| [Permissions](docs/concepts/permissions.md) | File ownership, read/write/execute bits, groups, and ACLs |
+| [Binary Loader](docs/concepts/binary-loader.md) | Loading and running programs -- how `exec` works |
+| [Containers](docs/concepts/containers.md) | Lightweight isolation with PID, mount, and network namespaces |
+| [Inter-Machine Networking](docs/concepts/inter-machine-networking.md) | Connecting multiple kernels with bridges and clusters |
 | [Interactive Tutorials](docs/concepts/tutorials.md) | Guided lessons that teach OS concepts hands-on |
 | [Web UI](docs/concepts/web-ui.md) | Browser-based terminal interface |
 

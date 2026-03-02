@@ -143,6 +143,10 @@ class NetworkNamespace:
 
     Each container gets its own socket manager and DNS resolver,
     so network traffic between containers is completely separate.
+
+    Note: Network isolation is not yet wired into kernel exec —
+    containers currently share the host kernel's network stack.
+    This class documents the intended design for future work.
     """
 
     def __init__(self) -> None:
@@ -208,11 +212,27 @@ class Container:
         return self._network_namespace
 
     def start(self) -> None:
-        """Transition to RUNNING state."""
+        """Transition to RUNNING state.
+
+        Raises:
+            ContainerError: If the container is not in CREATED state.
+
+        """
+        if self._state is not ContainerState.CREATED:
+            msg = f"Cannot start container '{self._name}': state is {self._state}"
+            raise ContainerError(msg)
         self._state = ContainerState.RUNNING
 
     def stop(self) -> None:
-        """Transition to STOPPED state."""
+        """Transition to STOPPED state.
+
+        Raises:
+            ContainerError: If the container is not in RUNNING state.
+
+        """
+        if self._state is not ContainerState.RUNNING:
+            msg = f"Cannot stop container '{self._name}': state is {self._state}"
+            raise ContainerError(msg)
         self._state = ContainerState.STOPPED
 
     def add_process(self, real_pid: int) -> int:
@@ -284,7 +304,8 @@ class ContainerManager:
             msg = f"Container '{name}' not found"
             raise ContainerError(msg)
         container = self._containers[name]
-        container.stop()
+        if container.state is ContainerState.RUNNING:
+            container.stop()
         del self._containers[name]
 
     def list_containers(self) -> list[dict[str, str | int]]:

@@ -279,6 +279,16 @@ class SocketManager:
                 return buf.popleft()
         return b""
 
+    def close_socket(self, sock: Socket) -> None:
+        """Close a socket and remove it from all tracking structures."""
+        sock.close()
+        self._sockets.pop(sock.sock_id, None)
+        self._pending.pop(sock.sock_id, None)
+        # Remove any buffers involving this socket
+        stale_keys = [key for key in self._buffers if sock.sock_id in key]
+        for key in stale_keys:
+            del self._buffers[key]
+
     def _find_listener(self, address: str, port: int) -> Socket | None:
         """Find a listening socket matching the address and port."""
         for sock in self._sockets.values():

@@ -727,6 +727,8 @@ source = { editable = "." }
 
 [package.optional-dependencies]
 dev = [
+    { name = "commitizen" },
+    { name = "pip-audit" },
     { name = "pre-commit" },
     { name = "pyright" },
     { name = "pytest" },
@@ -744,16 +746,12 @@ web = [
     { name = "flask" },
 ]
 
-[package.dev-dependencies]
-dev = [
-    { name = "commitizen" },
-    { name = "pip-audit" },
-]
-
 [package.metadata]
 requires-dist = [
+    { name = "commitizen", marker = "extra == 'dev'", specifier = ">=4.4.0" },
     { name = "flask", marker = "extra == 'web'", specifier = ">=3.0" },
     { name = "mkdocs-material", marker = "extra == 'docs'", specifier = ">=9.5" },
+    { name = "pip-audit", marker = "extra == 'dev'", specifier = ">=2.10.0" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.0.1" },
     { name = "pyright", marker = "extra == 'dev'", specifier = ">=1.1.400" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3.4" },
@@ -763,12 +761,6 @@ requires-dist = [
     { name = "textual", marker = "extra == 'tui'", specifier = ">=0.90" },
 ]
 provides-extras = ["dev", "docs", "tui", "web"]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "commitizen", specifier = ">=4.4.0" },
-    { name = "pip-audit", specifier = ">=2.10.0" },
-]
 
 [[package]]
 name = "pyparsing"

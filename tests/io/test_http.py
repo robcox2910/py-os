@@ -34,6 +34,7 @@ STATUS_OK = 200
 STATUS_BAD_REQUEST = 400
 STATUS_NOT_FOUND = 404
 STATUS_INTERNAL_SERVER_ERROR = 500
+MIN_SOCKETS_FOR_PAIR = 2
 
 
 # ---------------------------------------------------------------------------
@@ -373,7 +374,7 @@ class TestSocketSyscalls:
         k.syscall(SyscallNumber.SYS_SOCKET_CREATE)
         k.syscall(SyscallNumber.SYS_SOCKET_CREATE)
         sockets = k.syscall(SyscallNumber.SYS_SOCKET_LIST)
-        assert len(sockets) >= 2  # noqa: PLR2004
+        assert len(sockets) >= MIN_SOCKETS_FOR_PAIR
         k.shutdown()
 
     def test_error_wrapping(self) -> None:

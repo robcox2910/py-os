@@ -26,6 +26,7 @@ from enum import StrEnum
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from py_os.io.dns import DnsResolver
     from py_os.kernel import Kernel
 
 
@@ -99,6 +100,26 @@ class NetworkBridge:
             msg = f"Kernel {kernel_id} not registered"
             raise BridgeError(msg)
         return queue.popleft() if queue else None
+
+    def receive_typed(self, kernel_id: int, packet_type: PacketType) -> Packet | None:
+        """Pop the first packet matching *packet_type* for a kernel.
+
+        Non-matching packets are left in the queue in their original
+        order.  Returns ``None`` when no matching packet is found.
+
+        Raises:
+            BridgeError: If the kernel is not registered.
+
+        """
+        queue = self._queues.get(kernel_id)
+        if queue is None:
+            msg = f"Kernel {kernel_id} not registered"
+            raise BridgeError(msg)
+        for i, pkt in enumerate(queue):
+            if pkt.packet_type is packet_type:
+                del queue[i]
+                return pkt
+        return None
 
     def pending_count(self, kernel_id: int) -> int:
         """Return the number of pending packets for a kernel."""
@@ -227,11 +248,11 @@ class Cluster:
             packet_type=PacketType.PONG,
         )
         self._bridge.send(pong_packet)
-        # Consume the PING from target's queue
-        self._bridge.receive(to_id)
-        # Consume the PONG from sender's queue
-        response = self._bridge.receive(from_id)
-        return response is not None and response.packet_type is PacketType.PONG
+        # Consume the PING from target's queue (skip non-PING packets)
+        self._bridge.receive_typed(to_id, PacketType.PING)
+        # Consume the PONG from sender's queue (skip non-PONG packets)
+        response = self._bridge.receive_typed(from_id, PacketType.PONG)
+        return response is not None
 
     def dns_query(self, _from_id: int, to_id: int, hostname: str) -> str | None:
         """Look up a hostname using another kernel's DNS resolver.
@@ -248,7 +269,7 @@ class Cluster:
         target = self._kernels.get(to_id)
         if target is None:
             return None
-        dns = target.dns_resolver
+        dns: DnsResolver | None = getattr(target, "_dns_resolver", None)
         if dns is None:
             return None
         try:

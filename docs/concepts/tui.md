@@ -78,3 +78,12 @@ pyos-tui
 - [Processes](processes.md) -- Understanding what the process table shows
 - [Memory](memory.md) -- Understanding the memory bar and swap panel
 - [Web UI](web-ui.md) -- The browser-based alternative
+
+## Key Terms
+
+| Term | Definition |
+|------|-----------|
+| **TUI** | Text User Interface -- a graphical-style display built from text characters in the terminal |
+| **Dashboard** | A single screen that shows many pieces of information at once |
+| **Widget** | One panel inside the dashboard (e.g. the process table or memory bar) |
+| **Textual** | The Python library that powers the TUI dashboard |

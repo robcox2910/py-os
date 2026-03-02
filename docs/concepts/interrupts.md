@@ -133,6 +133,21 @@ interrupt unmask 0      # Resume delivery
 tick 1                  # Queued interrupt is now serviced
 ```
 
----
+## Where to Go Next
 
-**Next:** Learn about reliable network delivery in [TCP: Reliable Delivery](tcp.md).
+- [TCP: Reliable Delivery](tcp.md) -- How TCP guarantees data arrives complete and in order
+- [Devices and Networking](devices-and-networking.md) -- Hardware devices and network fundamentals
+- [Processes](processes.md) -- How preemption uses timer interrupts to switch processes
+
+## Key Terms
+
+| Term | Definition |
+|------|-----------|
+| **Interrupt** | A signal from hardware or software that tells the CPU to stop and handle something |
+| **IRQ** | Interrupt Request -- the actual signal sent to the interrupt controller |
+| **Vector** | A number that identifies which device or event is interrupting |
+| **Handler** | A function the OS runs when a specific interrupt fires |
+| **Masking** | Temporarily disabling an interrupt so it is queued but not delivered |
+| **Timer** | A hardware clock that fires an interrupt at regular intervals (ticks) |
+| **Preemption** | Using timer interrupts to forcibly switch the running process, giving everyone a fair turn |
+| **Tick** | One unit of time in the system timer -- the heartbeat of the OS |
