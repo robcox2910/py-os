@@ -274,15 +274,14 @@ class FileSystem:
 
     def _create(self, path: str, file_type: FileType) -> None:
         """Create an inode and link it into its parent directory."""
-        if self.exists(path):
-            msg = f"Already exists: {path}"
-            raise FileExistsError(msg)
-
         parent_path, name = _split_path(path)
         parent = self._resolve(parent_path)
         if parent is None or parent.file_type is not FileType.DIRECTORY:
             msg = f"Parent directory not found: {parent_path or name}"
             raise FileNotFoundError(msg)
+        if name in parent.children:
+            msg = f"Already exists: {path}"
+            raise FileExistsError(msg)
 
         new_inode = _Inode(inode_number=next(self._next_inode), file_type=file_type)
         self._inodes[new_inode.inode_number] = new_inode

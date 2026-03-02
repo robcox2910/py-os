@@ -197,6 +197,23 @@ Or run the built-in demo:
 tcp demo
 ```
 
----
+## Where to Go Next
 
-**Previous:** Learn about hardware events in [Interrupts and Timers](interrupts.md).
+- [Interrupts and Timers](interrupts.md) -- How hardware events get the CPU's attention
+- [Devices and Networking](devices-and-networking.md) -- Sockets, DNS, and HTTP built on top of TCP
+- [The Shell](shell.md) -- The `tcp` shell commands for hands-on experimentation
+
+## Key Terms
+
+| Term | Definition |
+|------|-----------|
+| **TCP** | Transmission Control Protocol -- provides reliable, ordered delivery over an unreliable network |
+| **Three-way handshake** | SYN → SYN-ACK → ACK sequence that opens a connection |
+| **Sequence number** | A counter that numbers each byte (or segment) so the receiver can reassemble them in order |
+| **ACK** | Acknowledgement -- the receiver confirms which bytes it has received |
+| **Flow control** | The receiver tells the sender how much room it has (window size), preventing overflow |
+| **Congestion control** | Adjusting send rate based on network conditions to avoid overloading routers |
+| **Slow start** | Start sending slowly and double the window each round trip until congestion is detected |
+| **AIMD** | Additive Increase / Multiplicative Decrease -- grow the window slowly, cut it in half on loss |
+| **Retransmission** | Resending a segment that was lost or not acknowledged in time |
+| **FIN** | A flag that says "I'm done sending data" -- used to close a connection gracefully |

@@ -20,6 +20,8 @@ CLIENT_PORT = 5000
 SERVER_PORT = 80
 CUSTOM_PORT = 9090
 EXPECTED_SSTHRESH_AFTER_TIMEOUT = 4  # cwnd=8 → ssthresh = 8 // 2
+MIN_SEGMENTS_FOR_SPLIT = 2
+MIN_CONNECTIONS_FOR_PAIR = 2
 
 
 # -- Segment tests ----------------------------------------------------------
@@ -220,7 +222,7 @@ class TestDataTransfer:
         client._cwnd = MAX_SEGMENT_PAYLOAD
         data = b"x" * (MAX_SEGMENT_PAYLOAD + 1)
         segments = client.send(data)
-        assert len(segments) >= 2  # noqa: PLR2004
+        assert len(segments) >= MIN_SEGMENTS_FOR_SPLIT
 
     def test_send_on_closed_returns_empty(self) -> None:
         """Sending on a non-ESTABLISHED connection returns empty."""
@@ -572,7 +574,7 @@ class TestTcpStack:
         stack.listen(port=SERVER_PORT)
         stack.open_connection(client_port=CLIENT_PORT, server_port=SERVER_PORT)
         connections = stack.list_connections()
-        assert len(connections) >= 2  # noqa: PLR2004
+        assert len(connections) >= MIN_CONNECTIONS_FOR_PAIR
 
     def test_tick_advances_all_connections(self) -> None:
         """Stack tick advances retransmission timers for all connections."""

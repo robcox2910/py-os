@@ -18,6 +18,7 @@ from py_os.syscalls import SyscallError, SyscallNumber
 _ADDER_RESULT = 35
 _COUNTER_LINES = 5
 _HALT_OPCODE_VALUE = 8
+_PRINT_AND_HALT = 2
 
 
 def _booted_kernel() -> Kernel:
@@ -147,7 +148,7 @@ class TestBinaryLoader:
         assert header.magic == PYBIN_MAGIC
         assert header.version == PYBIN_VERSION
         assert header.name == "hello"
-        assert len(instructions) == 2  # noqa: PLR2004
+        assert len(instructions) == _PRINT_AND_HALT
 
     def test_parse_invalid_magic_raises(self) -> None:
         """Invalid magic number raises BinaryLoaderError."""

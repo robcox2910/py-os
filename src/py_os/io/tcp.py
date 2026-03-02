@@ -129,6 +129,7 @@ class TcpConnection:
         # Congestion control
         self._cwnd = INITIAL_CWND
         self._ssthresh = INITIAL_SSTHRESH
+        self._cwnd_fractional = 0
 
         # Buffers
         self._send_buffer: deque[bytes] = deque()
@@ -336,7 +337,7 @@ class TcpConnection:
 
         # FIN received — start graceful close (passive side)
         if segment.has_flag(TcpFlag.FIN):
-            self._recv_next = segment.seq_number + 1
+            self._recv_next = segment.seq_number + len(segment.payload) + 1
             self._state = TcpState.CLOSE_WAIT
             ack = self.create_segment(flags=frozenset({TcpFlag.ACK}))
             responses.append(ack)
@@ -514,7 +515,7 @@ class TcpConnection:
         else:
             # Congestion avoidance: additive increase (1/cwnd per ACK)
             # We use integer arithmetic: increment when enough ACKs received
-            self._cwnd_fractional = getattr(self, "_cwnd_fractional", 0) + 1
+            self._cwnd_fractional += 1
             if self._cwnd_fractional >= self._cwnd:
                 self._cwnd += 1
                 self._cwnd_fractional = 0

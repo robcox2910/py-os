@@ -303,11 +303,13 @@ class Kernel:
     @property
     def container_manager(self) -> ContainerManager | None:
         """Return the container manager, or None if not booted."""
+        self._require_kernel_mode()
         return self._container_manager
 
     @property
     def dns_resolver(self) -> DnsResolver | None:
         """Return the DNS resolver, or None if not booted."""
+        self._require_kernel_mode()
         return self._dns_resolver
 
     @property
@@ -2187,7 +2189,7 @@ class Kernel:
             raise SharedMemoryError(msg)
         if offset < 0:
             msg = f"Negative offset: {offset}"
-            raise ValueError(msg)
+            raise SharedMemoryError(msg)
         if offset + len(data) > segment.size:
             msg = f"Write exceeds segment size ({offset + len(data)} > {segment.size})"
             raise SharedMemoryError(msg)
@@ -2229,7 +2231,7 @@ class Kernel:
             raise SharedMemoryError(msg)
         if offset < 0:
             msg = f"Negative offset: {offset}"
-            raise ValueError(msg)
+            raise SharedMemoryError(msg)
 
         if size is None:
             size = segment.size - offset
@@ -3116,9 +3118,9 @@ class Kernel:
             sock_id: The socket to close.
 
         """
-        _sm, sock = self._require_socket(sock_id)
+        sm, sock = self._require_socket(sock_id)
         assert sock is not None  # noqa: S101
-        sock.close()
+        sm.close_socket(sock)
 
     def socket_list(self) -> list[dict[str, object]]:
         """List all sockets managed by the kernel.
@@ -3432,8 +3434,8 @@ class Kernel:
         process = self.create_process(name=program_name, num_pages=1)
         vpid = container.add_process(process.pid)
         self.exec_process(pid=process.pid, program=program)
-        output = program()
-        return {"vpid": vpid, "real_pid": process.pid, "output": output}
+        result = self.run_process(pid=process.pid)
+        return {"vpid": vpid, "real_pid": process.pid, "output": result["output"]}
 
     # -- Cluster operations (opt-in inter-machine networking) ------------------
 

@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main]
   pull_request:
-    branches: [main, develop]
+    branches: [main]
 
 jobs:
   lint:
@@ -81,4 +81,4 @@ jobs:
 
       - name: Run security checks
         run: |
-          uv run pip-audit || true
+          uv run pip-audit

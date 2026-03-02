@@ -47,22 +47,25 @@ On a real Unix system, root can do absolutely anything -- install programs, dele
 ### Try it in the PyOS shell
 
 ```
-pyos> whoami
-alice (uid=1000)
+PyOS> whoami
+root (uid=0)
 
-pyos> adduser bob
-User 'bob' created with uid=1001
+PyOS> adduser alice
+User 'alice' created (uid=1)
 
-pyos> su bob
-Switched to user 'bob'
+PyOS> adduser bob
+User 'bob' created (uid=2)
 
-pyos> whoami
-bob (uid=1001)
+PyOS> su 2
+Switched to bob (uid=2)
+
+PyOS> whoami
+bob (uid=2)
 ```
 
 - `whoami` -- tells you which user you are right now.
 - `adduser` -- creates a new user account.
-- `su` -- short for "switch user." It lets you become a different user, kind of like handing your library card to someone else (except you get it back later).
+- `su` -- short for "switch user." You pass the numeric UID of the user you want to become. It is like handing your library card to someone else (except you get it back later).
 
 ---
 
@@ -140,7 +143,7 @@ Every [system call](kernel-and-syscalls.md) gets logged at the DEBUG level. Boot
 ### Try it in the PyOS shell
 
 ```
-pyos> log
+PyOS> log
 [INFO] System booted at tick 0
 [INFO] User 'root' logged in
 [DEBUG] SYS_CREATE_PROCESS: pid=1 name='init'
@@ -206,12 +209,12 @@ This approach is more permissive -- processes are never told "no" just in case. 
 ### Try it in the PyOS shell
 
 ```
-pyos> resources
+PyOS> resources
 Resource Allocation Table:
   Process 1 holds: [Printer]  waiting for: [Scanner]
   Process 2 holds: [Scanner]  waiting for: [Printer]
 
-pyos> deadlock
+PyOS> deadlock
 Deadlock detected! Processes 1 and 2 are in a circular wait.
 ```
 

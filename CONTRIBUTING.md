@@ -21,8 +21,9 @@ cd py-os
 # Install all dependencies (including dev tools)
 uv sync --all-extras
 
-# Install pre-commit hooks
+# Install pre-commit hooks (linting + commit message validation)
 uv run pre-commit install
+uv run pre-commit install --hook-type commit-msg
 ```
 
 Verify everything works:

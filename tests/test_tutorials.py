@@ -15,6 +15,10 @@ from py_os.syscalls import SyscallError
 from py_os.tutorials import TutorialRunner
 
 EXPECTED_LESSON_COUNT = 9
+_FAIL_ON_SECOND_CALL = 2
+_FAIL_ON_FOURTH_CALL = 4
+_FAIL_ON_THIRD_CALL = 3
+_FAIL_ON_FIFTH_CALL = 5
 
 
 def _booted_kernel() -> Kernel:
@@ -308,7 +312,7 @@ class TestProcessesLessonErrors:
         def _fail_on_second(*args: object, **kwargs: object) -> object:
             nonlocal call_count
             call_count += 1
-            if call_count >= 2:  # noqa: PLR2004
+            if call_count >= _FAIL_ON_SECOND_CALL:
                 raise SyscallError("fail")
             return original(*args, **kwargs)  # type: ignore[arg-type]
 
@@ -338,7 +342,7 @@ class TestMemoryLessonErrors:
         def _fail_on_second(*args: object, **kwargs: object) -> object:
             nonlocal call_count
             call_count += 1
-            if call_count >= 2:  # noqa: PLR2004
+            if call_count >= _FAIL_ON_SECOND_CALL:
                 raise SyscallError("slab fail")
             return original(*args, **kwargs)  # type: ignore[arg-type]
 
@@ -397,7 +401,7 @@ class TestSignalsLessonErrors:
         def _fail_after_first(*args: object, **kwargs: object) -> object:
             nonlocal call_count
             call_count += 1
-            if call_count >= 2:  # noqa: PLR2004
+            if call_count >= _FAIL_ON_SECOND_CALL:
                 raise SyscallError("sig op fail")
             return original(*args, **kwargs)  # type: ignore[arg-type]
 
@@ -456,7 +460,7 @@ class TestNetworkingLessonErrors:
         def _fail_on_client(*args: object, **kwargs: object) -> object:
             nonlocal call_count
             call_count += 1
-            if call_count > 4:  # noqa: PLR2004
+            if call_count > _FAIL_ON_FOURTH_CALL:
                 raise SyscallError("client fail")
             return original(*args, **kwargs)  # type: ignore[arg-type]
 
@@ -501,7 +505,7 @@ class TestTcpLessonErrors:
         def _fail_on_send(*args: object, **kwargs: object) -> object:
             nonlocal call_count
             call_count += 1
-            if call_count > 3:  # noqa: PLR2004
+            if call_count > _FAIL_ON_THIRD_CALL:
                 raise SyscallError("send fail")
             return original(*args, **kwargs)  # type: ignore[arg-type]
 
@@ -519,7 +523,7 @@ class TestTcpLessonErrors:
         def _fail_on_recv(*args: object, **kwargs: object) -> object:
             nonlocal call_count
             call_count += 1
-            if call_count > 4:  # noqa: PLR2004
+            if call_count > _FAIL_ON_FOURTH_CALL:
                 raise SyscallError("recv fail")
             return original(*args, **kwargs)  # type: ignore[arg-type]
 
@@ -537,7 +541,7 @@ class TestTcpLessonErrors:
         def _fail_on_info(*args: object, **kwargs: object) -> object:
             nonlocal call_count
             call_count += 1
-            if call_count > 5:  # noqa: PLR2004
+            if call_count > _FAIL_ON_FIFTH_CALL:
                 raise SyscallError("info fail")
             return original(*args, **kwargs)  # type: ignore[arg-type]
 

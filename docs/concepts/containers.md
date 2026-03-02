@@ -145,3 +145,20 @@ Understanding namespaces — PID isolation, filesystem isolation, network
 isolation — is understanding how modern cloud computing works. Every time
 you use a website, there's a good chance it's running inside a container
 somewhere!
+
+## Where to Go Next
+
+- [Processes](processes.md) -- How processes work inside and outside containers
+- [Filesystem](filesystem.md) -- Mount namespaces build on the filesystem
+- [Inter-Machine Networking](inter-machine-networking.md) -- Connecting containers across machines
+
+## Key Terms
+
+| Term | Definition |
+|------|-----------|
+| **Container** | A lightweight isolated environment that shares the host kernel but has its own view of processes, files, and network |
+| **Namespace** | A mechanism that gives a container its own private copy of a system resource (PIDs, mounts, network) |
+| **PID namespace** | Gives the container its own process IDs -- PID 1 inside may be PID 42 on the host |
+| **Mount namespace** | Gives the container its own filesystem root -- it can only see its own files |
+| **Network namespace** | Gives the container its own sockets and DNS -- network traffic is isolated |
+| **Virtual PID (VPID)** | The process ID as seen inside the container (different from the real PID) |
