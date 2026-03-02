@@ -27,6 +27,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import ClassVar
 
+from py_os.io.bridge import Cluster
 from py_os.io.http import (
     HttpMethod,
     HttpRequest,
@@ -41,6 +42,7 @@ from py_os.io.http import (
 from py_os.io.networking import SocketManager
 from py_os.jobs import JobManager, JobStatus
 from py_os.kernel import Kernel, KernelState
+from py_os.process.binary import DEMO_PROGRAMS, PYBIN_MAGIC, BinaryLoader, BinaryLoaderError
 from py_os.process.signals import Signal
 from py_os.syscalls import SyscallError, SyscallNumber
 from py_os.tutorials import TutorialRunner
@@ -51,6 +53,9 @@ type _Handler = Callable[[list[str]], str]
 # Safety limit for while/for loops — prevents infinite loops in scripts.
 _MAX_LOOP_ITERATIONS = 1000
 _DEFAULT_PAGE_SIZE = 256
+_ASCII_PRINTABLE_MIN = 32
+_ASCII_PRINTABLE_MAX = 127
+_MIN_CONTAINER_EXEC_ARGS = 2
 
 
 @dataclass
@@ -179,6 +184,15 @@ class Shell:
             "dashboard": self._cmd_dashboard,
             "fb": self._cmd_fb,
             "swap": self._cmd_swap,
+            "compile": self._cmd_compile,
+            "hexdump": self._cmd_hexdump,
+            "chmod": self._cmd_chmod,
+            "chown": self._cmd_chown,
+            "getfacl": self._cmd_getfacl,
+            "setfacl": self._cmd_setfacl,
+            "groups": self._cmd_groups,
+            "container": self._cmd_container,
+            "cluster": self._cmd_cluster,
         }
 
     @property
@@ -1080,12 +1094,35 @@ class Shell:
             return f"Error: {e}"
 
     def _cmd_run(self, args: list[str]) -> str:
-        """Create a process, load a built-in program, and run it."""
+        """Create a process, load a built-in or binary program, and run it."""
+        if args and args[0].startswith("/"):
+            return self._run_binary(args[0])
         result = self._create_and_run_program(args)
         if isinstance(result, str):
             return result
         _pid, output, exit_code = result
         return f"{output}\n[exit code: {exit_code}]"
+
+    def _run_binary(self, path: str) -> str:
+        """Load a PyBin binary from the filesystem and run it."""
+        try:
+            data = self._kernel.syscall(SyscallNumber.SYS_READ_FILE, path=path)
+        except SyscallError as e:
+            return f"Error: {e}"
+        try:
+            program = BinaryLoader.load(data)
+        except BinaryLoaderError as e:
+            return f"Error loading binary: {e}"
+        try:
+            result = self._kernel.syscall(SyscallNumber.SYS_CREATE_PROCESS, name=path, num_pages=1)
+            pid: int = result["pid"]
+            self._kernel.syscall(SyscallNumber.SYS_EXEC, pid=pid, program=program)
+            run_result = self._kernel.syscall(SyscallNumber.SYS_RUN, pid=pid)
+            output: str = run_result["output"]
+            exit_code: int = run_result["exit_code"]
+            return f"{output}\n[exit code: {exit_code}]"
+        except SyscallError as e:
+            return f"Error: {e}"
 
     def _run_background(self, args: list[str]) -> str:
         """Run a program in the background, capturing output into a job.
@@ -4065,3 +4102,505 @@ class Shell:
             f"  Swap used after: {after['swap_used']}/{after['swap_total']} pages",
         ]
         return "\n".join(lines)
+
+    # -- ACL / permission commands -----------------------------------------------
+
+    def _cmd_chmod(self, args: list[str]) -> str:
+        """Set file permissions: chmod path rwxrwxrwx."""
+        if len(args) < 2:  # noqa: PLR2004
+            return "Usage: chmod <path> <rwxrwxrwx>"
+        path, mode = args[0], args[1]
+        try:
+            self._kernel.syscall(SyscallNumber.SYS_CHMOD, path=path, mode=mode)
+            return f"Permissions set on {path}: {mode}"
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_chown(self, args: list[str]) -> str:
+        """Change file owner/group: chown path uid [gid]."""
+        if len(args) < 2:  # noqa: PLR2004
+            return "Usage: chown <path> <uid> [gid]"
+        path = args[0]
+        try:
+            uid = int(args[1])
+        except ValueError:
+            return f"Error: invalid uid '{args[1]}'"
+        gid: int | None = None
+        if len(args) >= 3:  # noqa: PLR2004
+            try:
+                gid = int(args[2])
+            except ValueError:
+                return f"Error: invalid gid '{args[2]}'"
+        try:
+            self._kernel.syscall(SyscallNumber.SYS_CHOWN, path=path, uid=uid, gid=gid)
+            msg = f"Owner of {path} set to uid={uid}"
+            if gid is not None:
+                msg += f", gid={gid}"
+            return msg
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_getfacl(self, args: list[str]) -> str:
+        """Display permissions and ACL entries: getfacl path."""
+        if not args:
+            return "Usage: getfacl <path>"
+        path = args[0]
+        try:
+            result: dict[str, object] = self._kernel.syscall(SyscallNumber.SYS_GET_ACL, path=path)
+            lines = [
+                f"# file: {path}",
+                f"# owner: {result['owner_uid']}",
+                f"# group: {result['group_gid']}",
+                f"mode: {result['mode']}",
+            ]
+            acl_list: list[dict[str, object]] = result["acl"]  # type: ignore[assignment]
+            for entry in acl_list:
+                perms = (
+                    ("r" if entry["read"] else "-")
+                    + ("w" if entry["write"] else "-")
+                    + ("x" if entry["execute"] else "-")
+                )
+                lines.append(f"{entry['type']}:{entry['target_id']}:{perms}")
+            return "\n".join(lines)
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_setfacl(self, args: list[str]) -> str:
+        """Add an ACL entry: setfacl path user:uid:rwx or setfacl path group:gid:r-x."""
+        if len(args) < 2:  # noqa: PLR2004
+            return "Usage: setfacl <path> <user|group>:<id>:<rwx>"
+        parsed = self._parse_acl_spec(args[1])
+        if isinstance(parsed, str):
+            return parsed
+        return self._apply_acl_entry(args[0], parsed)
+
+    def _parse_acl_spec(self, spec: str) -> dict[str, object] | str:
+        """Parse an ACL spec string like 'user:1:rwx' into an entry dict."""
+        parts = spec.split(":")
+        expected_parts = 3
+        if len(parts) != expected_parts:
+            return "Error: ACL spec must be type:id:perms (e.g. user:1:rwx)"
+        entry_type, target_id_str, perm_str = parts
+        if entry_type not in {"user", "group"}:
+            return f"Error: type must be 'user' or 'group', got '{entry_type}'"
+        try:
+            target_id = int(target_id_str)
+        except ValueError:
+            return f"Error: invalid id '{target_id_str}'"
+        return {
+            "type": entry_type,
+            "target_id": target_id,
+            "read": "r" in perm_str,
+            "write": "w" in perm_str,
+            "execute": "x" in perm_str,
+        }
+
+    def _apply_acl_entry(self, path: str, new_entry: dict[str, object]) -> str:
+        """Fetch existing ACLs, merge in new_entry, and apply."""
+        try:
+            current: dict[str, object] = self._kernel.syscall(SyscallNumber.SYS_GET_ACL, path=path)
+        except SyscallError as e:
+            return f"Error: {e}"
+        existing: list[dict[str, object]] = current["acl"]  # type: ignore[assignment]
+        updated = [
+            e
+            for e in existing
+            if not (e["type"] == new_entry["type"] and e["target_id"] == new_entry["target_id"])
+        ]
+        updated.append(new_entry)
+        try:
+            self._kernel.syscall(SyscallNumber.SYS_SET_ACL, path=path, entries=updated)
+            spec = f"{new_entry['type']}:{new_entry['target_id']}"
+            perms = (
+                ("r" if new_entry["read"] else "-")
+                + ("w" if new_entry["write"] else "-")
+                + ("x" if new_entry["execute"] else "-")
+            )
+            return f"ACL set on {path}: {spec}:{perms}"
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_groups(self, args: list[str]) -> str:
+        """Manage groups: groups, groups list, groups add NAME, groups adduser UID GID."""
+        if not args:
+            return self._cmd_groups_current()
+        match args[0]:
+            case "list":
+                return self._cmd_groups_list()
+            case "add":
+                return self._cmd_groups_add(args[1:])
+            case "adduser":
+                return self._cmd_groups_adduser(args[1:])
+            case "removeuser":
+                return self._cmd_groups_removeuser(args[1:])
+            case _:
+                return "Usage: groups [list|add NAME|adduser UID GID|removeuser UID GID]"
+
+    def _cmd_groups_current(self) -> str:
+        """Show current user's group memberships."""
+        try:
+            whoami: dict[str, object] = self._kernel.syscall(SyscallNumber.SYS_WHOAMI)
+            uid: int = whoami["uid"]  # type: ignore[assignment]
+            result = self._kernel.syscall(SyscallNumber.SYS_USER_GROUPS, uid=uid)
+            if not result:
+                return "No group memberships"
+            return " ".join(f"{g['name']}({g['gid']})" for g in result)
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_groups_list(self) -> str:
+        """List all groups."""
+        try:
+            result = self._kernel.syscall(SyscallNumber.SYS_LIST_GROUPS)
+            if not result:
+                return "No groups"
+            lines = ["GID  NAME            MEMBERS"]
+            for g in result:
+                members = ", ".join(str(m) for m in g["members"])
+                lines.append(f"{g['gid']:<4} {g['name']:<15} [{members}]")
+            return "\n".join(lines)
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_groups_add(self, args: list[str]) -> str:
+        """Create a group: groups add NAME."""
+        if not args:
+            return "Usage: groups add <name>"
+        name = args[0]
+        try:
+            result = self._kernel.syscall(SyscallNumber.SYS_CREATE_GROUP, name=name)
+            return f"Created group {result['name']} (gid={result['gid']})"
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_groups_adduser(self, args: list[str]) -> str:
+        """Add user to group: groups adduser UID GID."""
+        if len(args) < 2:  # noqa: PLR2004
+            return "Usage: groups adduser <uid> <gid>"
+        try:
+            uid = int(args[0])
+            gid = int(args[1])
+        except ValueError:
+            return "Error: uid and gid must be integers"
+        try:
+            result = self._kernel.syscall(SyscallNumber.SYS_ADD_TO_GROUP, uid=uid, gid=gid)
+            return f"Added uid {uid} to group {result['name']} (gid={gid})"
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_groups_removeuser(self, args: list[str]) -> str:
+        """Remove user from group: groups removeuser UID GID."""
+        if len(args) < 2:  # noqa: PLR2004
+            return "Usage: groups removeuser <uid> <gid>"
+        try:
+            uid = int(args[0])
+            gid = int(args[1])
+        except ValueError:
+            return "Error: uid and gid must be integers"
+        try:
+            result = self._kernel.syscall(SyscallNumber.SYS_REMOVE_FROM_GROUP, uid=uid, gid=gid)
+            return f"Removed uid {uid} from group {result['name']} (gid={gid})"
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    # -- Binary loader commands --------------------------------------------------
+
+    def _cmd_compile(self, args: list[str]) -> str:
+        """Compile a demo program to /bin: compile NAME or compile list."""
+        if not args:
+            return "Usage: compile <name> | compile list"
+        if args[0] == "list":
+            names = sorted(DEMO_PROGRAMS.keys())
+            return "Available demos: " + ", ".join(names)
+        name = args[0]
+        if name not in DEMO_PROGRAMS:
+            return f"Unknown demo: {name}. Use 'compile list' to see options."
+        path = f"/bin/{name}"
+        data = DEMO_PROGRAMS[name]()
+        with contextlib.suppress(SyscallError):
+            self._kernel.syscall(SyscallNumber.SYS_CREATE_FILE, path=path)
+        try:
+            self._kernel.syscall(SyscallNumber.SYS_WRITE_FILE, path=path, data=data)
+            self._kernel.syscall(SyscallNumber.SYS_CHMOD, path=path, mode="rwxr-xr-x")
+            return f"Compiled {name} -> {path} ({len(data)} bytes)"
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_hexdump(self, args: list[str]) -> str:
+        """Show an annotated hex dump of a PyBin file: hexdump PATH."""
+        if not args:
+            return "Usage: hexdump <path>"
+        path = args[0]
+        try:
+            data: bytes = self._kernel.syscall(SyscallNumber.SYS_READ_FILE, path=path)
+        except SyscallError as e:
+            return f"Error: {e}"
+        return self._format_hexdump(data)
+
+    @staticmethod
+    def _format_hexdump(data: bytes) -> str:
+        """Format binary data as an annotated hex dump."""
+        lines: list[str] = []
+        bytes_per_row = 16
+        for offset in range(0, len(data), bytes_per_row):
+            chunk = data[offset : offset + bytes_per_row]
+            hex_part = " ".join(f"{b:02x}" for b in chunk)
+            ascii_part = "".join(
+                chr(b) if _ASCII_PRINTABLE_MIN <= b < _ASCII_PRINTABLE_MAX else "." for b in chunk
+            )
+            lines.append(f"{offset:04x}  {hex_part:<48s}  {ascii_part}")
+        # Add annotation for magic bytes
+        if data[:4] == PYBIN_MAGIC:
+            lines.insert(0, f"PyBin binary ({len(data)} bytes)")
+            lines.insert(1, f"  Magic: {PYBIN_MAGIC!r}")
+        return "\n".join(lines)
+
+    # -- Container commands ----------------------------------------------------
+
+    def _cmd_container(self, args: list[str]) -> str:
+        """Manage containers: create, list, exec, info, destroy, demo."""
+        usage = "Usage: container <create|list|exec|info|destroy|demo> [args]"
+        if not args:
+            return usage
+        subcmds: dict[str, Callable[[list[str]], str]] = {
+            "create": self._cmd_container_create,
+            "list": lambda _: self._cmd_container_list(),
+            "exec": self._cmd_container_exec,
+            "info": self._cmd_container_info,
+            "destroy": self._cmd_container_destroy,
+            "demo": lambda _: self._cmd_container_demo(),
+        }
+        handler = subcmds.get(args[0])
+        if handler is None:
+            return usage
+        return handler(args[1:])
+
+    def _cmd_container_create(self, args: list[str]) -> str:
+        """Create a new container."""
+        if not args:
+            return "Usage: container create <name>"
+        name = args[0]
+        try:
+            result = self._kernel.syscall(SyscallNumber.SYS_CONTAINER_CREATE, name=name)
+            return f"Created container '{result['name']}' (state: {result['state']})"
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_container_list(self) -> str:
+        """List all containers."""
+        try:
+            result = self._kernel.syscall(SyscallNumber.SYS_CONTAINER_LIST)
+        except SyscallError as e:
+            return f"Error: {e}"
+        if not result:
+            return "No containers running"
+        lines = ["NAME        STATE      PROCS  FS_ROOT"]
+        lines.extend(
+            f"{c['name']:<12s}{c['state']:<11s}{c['processes']:<7d}{c['fs_root']}" for c in result
+        )
+        return "\n".join(lines)
+
+    def _cmd_container_exec(self, args: list[str]) -> str:
+        """Execute a program inside a container."""
+        if len(args) < _MIN_CONTAINER_EXEC_ARGS:
+            return "Usage: container exec <name> <program>"
+        name, program_name = args[0], args[1]
+        try:
+            result = self._kernel.syscall(
+                SyscallNumber.SYS_CONTAINER_EXEC,
+                name=name,
+                program_name=program_name,
+            )
+            return f"VPID {result['vpid']} in '{name}':\n{result.get('output', '')}"
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_container_info(self, args: list[str]) -> str:
+        """Show container details."""
+        if not args:
+            return "Usage: container info <name>"
+        name = args[0]
+        try:
+            info = self._kernel.syscall(SyscallNumber.SYS_CONTAINER_INFO, name=name)
+        except SyscallError as e:
+            return f"Error: {e}"
+        lines = [
+            f"Container: {info['name']}",
+            f"  State: {info['state']}",
+            f"  Processes: {info['processes']}",
+            f"  FS root: {info['fs_root']}",
+            f"  PID namespace: {info['pid_namespace']}",
+            f"  Network: {info['network']}",
+        ]
+        return "\n".join(lines)
+
+    def _cmd_container_destroy(self, args: list[str]) -> str:
+        """Destroy a container."""
+        if not args:
+            return "Usage: container destroy <name>"
+        name = args[0]
+        try:
+            self._kernel.syscall(SyscallNumber.SYS_CONTAINER_DESTROY, name=name)
+            return f"Destroyed container '{name}'"
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_container_demo(self) -> str:
+        """Run a container demonstration."""
+        lines = ["=== Container Demo ===", ""]
+        # Create two containers
+        try:
+            self._kernel.syscall(SyscallNumber.SYS_CONTAINER_CREATE, name="web")
+            lines.append("Created container 'web'")
+            self._kernel.syscall(SyscallNumber.SYS_CONTAINER_CREATE, name="db")
+            lines.append("Created container 'db'")
+        except SyscallError as e:
+            lines.append(f"Setup: {e}")
+        # Run programs
+        try:
+            result = self._kernel.syscall(
+                SyscallNumber.SYS_CONTAINER_EXEC,
+                name="web",
+                program_name="hello",
+            )
+            lines.append(f"Ran 'hello' in web -> VPID {result['vpid']}: {result.get('output', '')}")
+        except SyscallError as e:
+            lines.append(f"Exec: {e}")
+        # List
+        try:
+            containers = self._kernel.syscall(SyscallNumber.SYS_CONTAINER_LIST)
+            lines.append(f"\n{len(containers)} container(s) active")
+            lines.extend(f"  {c['name']} ({c['state']})" for c in containers)
+        except SyscallError as e:
+            lines.append(f"List: {e}")
+        # Cleanup
+        for name in ("web", "db"):
+            with contextlib.suppress(SyscallError):
+                self._kernel.syscall(SyscallNumber.SYS_CONTAINER_DESTROY, name=name)
+        lines.append("\nContainers cleaned up.")
+        return "\n".join(lines)
+
+    # -- Cluster commands ------------------------------------------------------
+
+    def _cmd_cluster(self, args: list[str]) -> str:
+        """Manage inter-machine networking: create, add, list, ping, etc."""
+        usage = "Usage: cluster <create|add|remove|send|recv|ping|list|dns|demo> [args]"
+        if not args:
+            return usage
+        subcmds: dict[str, Callable[[list[str]], str]] = {
+            "create": lambda _: self._cmd_cluster_create(),
+            "add": lambda _: self._cmd_cluster_add(),
+            "remove": self._cmd_cluster_remove,
+            "send": self._cmd_cluster_send,
+            "recv": lambda _: self._cmd_cluster_recv(),
+            "ping": self._cmd_cluster_ping,
+            "list": lambda _: self._cmd_cluster_list(),
+            "dns": self._cmd_cluster_dns,
+            "demo": lambda _: self._cmd_cluster_demo(),
+        }
+        handler = subcmds.get(args[0])
+        if handler is None:
+            return usage
+        return handler(args[1:])
+
+    def _cmd_cluster_create(self) -> str:
+        """Initialize a cluster with this kernel."""
+        try:
+            result = self._kernel.syscall(SyscallNumber.SYS_CLUSTER_CREATE)
+            return f"Cluster created. This kernel is ID {result['kernel_id']}"
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_cluster_add(self) -> str:
+        """Add a new kernel to the cluster."""
+        try:
+            result = self._kernel.syscall(SyscallNumber.SYS_CLUSTER_ADD)
+            return f"Added kernel {result['kernel_id']} to cluster"
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_cluster_remove(self, args: list[str]) -> str:
+        """Remove a kernel from the cluster."""
+        if not args:
+            return "Usage: cluster remove <kernel_id>"
+        try:
+            kid = int(args[0])
+            self._kernel.syscall(SyscallNumber.SYS_CLUSTER_REMOVE, kernel_id=kid)
+            return f"Removed kernel {kid} from cluster"
+        except (SyscallError, ValueError) as e:
+            return f"Error: {e}"
+
+    def _cmd_cluster_send(self, args: list[str]) -> str:
+        """Send a message to another kernel."""
+        if len(args) < _MIN_CONTAINER_EXEC_ARGS:
+            return "Usage: cluster send <kernel_id> <message>"
+        try:
+            kid = int(args[0])
+            msg = " ".join(args[1:])
+            self._kernel.syscall(
+                SyscallNumber.SYS_CLUSTER_SEND,
+                to_id=kid,
+                data=msg.encode(),
+            )
+            return f"Sent to kernel {kid}: {msg}"
+        except (SyscallError, ValueError) as e:
+            return f"Error: {e}"
+
+    def _cmd_cluster_recv(self) -> str:
+        """Receive the next message from the cluster."""
+        try:
+            result = self._kernel.syscall(SyscallNumber.SYS_CLUSTER_RECV)
+            data = result.get("data")
+            if data is None:
+                return "No messages"
+            return f"Received: {data.decode()}"
+        except SyscallError as e:
+            return f"Error: {e}"
+
+    def _cmd_cluster_ping(self, args: list[str]) -> str:
+        """Ping another kernel."""
+        if not args:
+            return "Usage: cluster ping <kernel_id>"
+        try:
+            kid = int(args[0])
+            result = self._kernel.syscall(SyscallNumber.SYS_CLUSTER_PING, target_id=kid)
+            status = "reachable" if result["reachable"] else "unreachable"
+            return f"Kernel {kid}: {status}"
+        except (SyscallError, ValueError) as e:
+            return f"Error: {e}"
+
+    def _cmd_cluster_list(self) -> str:
+        """List all kernels in the cluster."""
+        try:
+            result = self._kernel.syscall(SyscallNumber.SYS_CLUSTER_LIST)
+        except SyscallError as e:
+            return f"Error: {e}"
+        if not result:
+            return "No kernels in cluster"
+        lines = ["ID    STATE      PENDING"]
+        lines.extend(f"{k['id']:<6d}{k['state']:<11s}{k['pending']}" for k in result)
+        return "\n".join(lines)
+
+    def _cmd_cluster_dns(self, args: list[str]) -> str:
+        """Cross-kernel DNS lookup."""
+        if len(args) < _MIN_CONTAINER_EXEC_ARGS:
+            return "Usage: cluster dns <kernel_id> <hostname>"
+        try:
+            kid = int(args[0])
+            hostname = args[1]
+            result = self._kernel.syscall(
+                SyscallNumber.SYS_CLUSTER_DNS,
+                target_id=kid,
+                hostname=hostname,
+            )
+            addr = result.get("address")
+            if addr is None:
+                return f"{hostname}: not found on kernel {kid}"
+            return f"{hostname} -> {addr} (via kernel {kid})"
+        except (SyscallError, ValueError) as e:
+            return f"Error: {e}"
+
+    def _cmd_cluster_demo(self) -> str:
+        """Run a cluster demonstration."""
+        cluster = Cluster()
+        return cluster.demo()

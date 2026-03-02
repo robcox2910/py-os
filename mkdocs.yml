@@ -61,3 +61,7 @@ nav:
       - Framebuffer: concepts/framebuffer.md
       - TUI Dashboard: concepts/tui.md
       - Web UI: concepts/web-ui.md
+      - Permissions: concepts/permissions.md
+      - Binary Loader: concepts/binary-loader.md
+      - Containers: concepts/containers.md
+      - Inter-Machine Networking: concepts/inter-machine-networking.md

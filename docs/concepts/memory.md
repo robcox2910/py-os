@@ -92,7 +92,7 @@ this:
 
 That's it. The process said "page 3, position 5" and the OS translated it to
 "frame 20, position 5." This translation happens every single time a process
-touches memory, and it's fast because the hardware helps out.
+touches memory, and modern CPUs have a special cache (called a TLB) that makes this translation very fast -- like having a sticky note with the answer instead of looking it up every time.
 
 ### Isolation: Keeping Students Apart
 

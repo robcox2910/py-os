@@ -397,8 +397,7 @@ pulls data from that buffer.
 This is a simplification, but it teaches the real concept perfectly. Real
 sockets work the same way from the programmer's perspective -- you call
 `send()` and `recv()` and data flows back and forth. The only difference is
-that real sockets push data through network hardware instead of a Python
-`deque`.
+that real sockets push data through actual network cables and hardware instead of through memory on the same computer.
 
 ### The Socket Manager
 

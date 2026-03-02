@@ -771,10 +771,11 @@ class TestKernelJournal:
     """Verify kernel boots with JournaledFileSystem and journal methods."""
 
     def _booted_kernel(self) -> Kernel:
-        """Return a booted kernel."""
+        """Return a booted kernel with a clean journal."""
         k = Kernel()
         k.boot()
         k._execution_mode = ExecutionMode.KERNEL  # tests run as kernel code
+        k.journal_checkpoint()  # clear boot-time transactions
         return k
 
     def test_kernel_filesystem_is_journaled(self) -> None:
@@ -909,9 +910,10 @@ class TestShellJournal:
     """Verify shell journal command with subcommands."""
 
     def _make_shell(self) -> Shell:
-        """Return a shell with a booted kernel."""
+        """Return a shell with a booted kernel and clean journal."""
         k = Kernel()
         k.boot()
+        k.journal_checkpoint()  # clear boot-time transactions
         return Shell(kernel=k)
 
     def test_journal_status_output(self) -> None:

@@ -32,12 +32,15 @@ import contextlib
 from enum import IntEnum
 from typing import Any
 
+from py_os.containers import ContainerError
 from py_os.fs.fd import FdError, FileMode, SeekWhence
+from py_os.io.bridge import BridgeError
 from py_os.io.dns import DnsError
 from py_os.io.networking import SocketError
 from py_os.io.shm import SharedMemoryError
 from py_os.memory.mmap import MmapError
 from py_os.memory.slab import SlabError
+from py_os.process.binary import DEMO_PROGRAMS, BinaryLoader, BinaryLoaderError
 from py_os.process.scheduler import (
     AgingPriorityPolicy,
     CFSPolicy,
@@ -48,7 +51,7 @@ from py_os.process.scheduler import (
 )
 from py_os.process.signals import SignalError
 from py_os.sync.ordering import OrderingMode
-from py_os.users import FilePermissions
+from py_os.users import AclEntry, AclEntryType, FilePermissions
 from py_os.users import PermissionError as OsPermissionError
 
 
@@ -258,6 +261,38 @@ class SyscallNumber(IntEnum):
     SYS_FB_READ = 261
     SYS_FB_INFO = 262
 
+    # Binary loader operations
+    SYS_LOAD_BINARY = 270
+    SYS_LIST_PROGRAMS = 271
+
+    # ACL / permission operations
+    SYS_CHMOD = 280
+    SYS_CHOWN = 281
+    SYS_GET_ACL = 282
+    SYS_SET_ACL = 283
+    SYS_CREATE_GROUP = 284
+    SYS_LIST_GROUPS = 285
+    SYS_ADD_TO_GROUP = 286
+    SYS_REMOVE_FROM_GROUP = 287
+    SYS_USER_GROUPS = 288
+
+    # Container operations
+    SYS_CONTAINER_CREATE = 290
+    SYS_CONTAINER_DESTROY = 291
+    SYS_CONTAINER_EXEC = 292
+    SYS_CONTAINER_LIST = 293
+    SYS_CONTAINER_INFO = 294
+
+    # Cluster operations (inter-machine networking)
+    SYS_CLUSTER_CREATE = 300
+    SYS_CLUSTER_ADD = 301
+    SYS_CLUSTER_REMOVE = 302
+    SYS_CLUSTER_SEND = 303
+    SYS_CLUSTER_RECV = 304
+    SYS_CLUSTER_PING = 305
+    SYS_CLUSTER_LIST = 306
+    SYS_CLUSTER_DNS = 307
+
 
 class SyscallError(Exception):
     """Raised when a system call fails.
@@ -432,6 +467,30 @@ def dispatch_syscall(
         SyscallNumber.SYS_FB_WRITE: _sys_fb_write,
         SyscallNumber.SYS_FB_READ: _sys_fb_read,
         SyscallNumber.SYS_FB_INFO: _sys_fb_info,
+        SyscallNumber.SYS_LOAD_BINARY: _sys_load_binary,
+        SyscallNumber.SYS_LIST_PROGRAMS: _sys_list_programs,
+        SyscallNumber.SYS_CHMOD: _sys_chmod,
+        SyscallNumber.SYS_CHOWN: _sys_chown,
+        SyscallNumber.SYS_GET_ACL: _sys_get_acl,
+        SyscallNumber.SYS_SET_ACL: _sys_set_acl,
+        SyscallNumber.SYS_CREATE_GROUP: _sys_create_group,
+        SyscallNumber.SYS_LIST_GROUPS: _sys_list_groups,
+        SyscallNumber.SYS_ADD_TO_GROUP: _sys_add_to_group,
+        SyscallNumber.SYS_REMOVE_FROM_GROUP: _sys_remove_from_group,
+        SyscallNumber.SYS_USER_GROUPS: _sys_user_groups,
+        SyscallNumber.SYS_CONTAINER_CREATE: _sys_container_create,
+        SyscallNumber.SYS_CONTAINER_DESTROY: _sys_container_destroy,
+        SyscallNumber.SYS_CONTAINER_EXEC: _sys_container_exec,
+        SyscallNumber.SYS_CONTAINER_LIST: _sys_container_list,
+        SyscallNumber.SYS_CONTAINER_INFO: _sys_container_info,
+        SyscallNumber.SYS_CLUSTER_CREATE: _sys_cluster_create,
+        SyscallNumber.SYS_CLUSTER_ADD: _sys_cluster_add,
+        SyscallNumber.SYS_CLUSTER_REMOVE: _sys_cluster_remove,
+        SyscallNumber.SYS_CLUSTER_SEND: _sys_cluster_send,
+        SyscallNumber.SYS_CLUSTER_RECV: _sys_cluster_recv,
+        SyscallNumber.SYS_CLUSTER_PING: _sys_cluster_ping,
+        SyscallNumber.SYS_CLUSTER_LIST: _sys_cluster_list,
+        SyscallNumber.SYS_CLUSTER_DNS: _sys_cluster_dns,
     }
 
     handler = handlers.get(number)
@@ -567,7 +626,7 @@ def _sys_read_file(kernel: Any, **kwargs: Any) -> bytes:
     perms = kernel.file_permissions.get(path)
     if perms is not None:
         try:
-            perms.check_read(uid=kernel.current_uid)
+            perms.check_read(uid=kernel.current_uid, groups=kernel.user_group_ids())
         except OsPermissionError as e:
             raise SyscallError(str(e)) from e
     try:
@@ -584,7 +643,7 @@ def _sys_write_file(kernel: Any, **kwargs: Any) -> None:
     perms = kernel.file_permissions.get(path)
     if perms is not None:
         try:
-            perms.check_write(uid=kernel.current_uid)
+            perms.check_write(uid=kernel.current_uid, groups=kernel.user_group_ids())
         except OsPermissionError as e:
             raise SyscallError(str(e)) from e
     try:
@@ -2054,3 +2113,317 @@ def _sys_swap_exercise(kernel: Any, **_kwargs: Any) -> dict[str, object]:
         "faults_after": faults_after,
         "new_faults": faults_after - faults_before,
     }
+
+
+# -- Binary loader syscall handlers -------------------------------------------
+
+
+def _sys_load_binary(kernel: Any, **kwargs: Any) -> dict[str, Any]:
+    """Read a file, check execute permission, parse as PyBin, return metadata."""
+    assert kernel.filesystem is not None  # noqa: S101
+    path: str = kwargs["path"]
+    # Read the file
+    perms = kernel.file_permissions.get(path)
+    if perms is not None:
+        try:
+            perms.check_execute(uid=kernel.current_uid, groups=kernel.user_group_ids())
+        except OsPermissionError as e:
+            raise SyscallError(str(e)) from e
+    try:
+        data = kernel.filesystem.read(path)
+    except FileNotFoundError as e:
+        msg = f"File not found: {path}"
+        raise SyscallError(msg) from e
+    # Parse binary
+    try:
+        header, _instructions = BinaryLoader.parse(data)
+    except BinaryLoaderError as e:
+        raise SyscallError(str(e)) from e
+    return {
+        "name": header.name,
+        "version": header.version,
+        "num_instructions": header.num_instructions,
+    }
+
+
+def _sys_list_programs(kernel: Any, **_kwargs: Any) -> dict[str, list[str]]:
+    """List built-in demo programs and filesystem binaries in /bin."""
+    assert kernel.filesystem is not None  # noqa: S101
+    builtins = sorted(DEMO_PROGRAMS.keys())
+    fs_programs: list[str] = []
+    with contextlib.suppress(FileNotFoundError):
+        fs_programs = list(kernel.filesystem.list_dir("/bin"))
+    return {"builtins": builtins, "filesystem": sorted(fs_programs)}
+
+
+# -- ACL / permission syscall handlers ----------------------------------------
+
+
+def _sys_chmod(kernel: Any, **kwargs: Any) -> None:
+    """Set permission bits on a file using an rwxrwxrwx string."""
+    path: str = kwargs["path"]
+    mode: str = kwargs["mode"]
+    perms = kernel.file_permissions.get(path)
+    if perms is None:
+        msg = f"No permissions found for: {path}"
+        raise SyscallError(msg)
+    if len(mode) != 9:  # noqa: PLR2004
+        msg = f"Mode must be 9 characters (rwxrwxrwx), got {len(mode)}"
+        raise SyscallError(msg)
+    perms.owner_read = mode[0] == "r"
+    perms.owner_write = mode[1] == "w"
+    perms.owner_execute = mode[2] == "x"
+    perms.group_read = mode[3] == "r"
+    perms.group_write = mode[4] == "w"
+    perms.group_execute = mode[5] == "x"
+    perms.other_read = mode[6] == "r"
+    perms.other_write = mode[7] == "w"
+    perms.other_execute = mode[8] == "x"
+
+
+def _sys_chown(kernel: Any, **kwargs: Any) -> None:
+    """Change the owner uid and/or group gid of a file."""
+    path: str = kwargs["path"]
+    perms = kernel.file_permissions.get(path)
+    if perms is None:
+        msg = f"No permissions found for: {path}"
+        raise SyscallError(msg)
+    uid: int | None = kwargs.get("uid")
+    gid: int | None = kwargs.get("gid")
+    if uid is not None:
+        perms.owner_uid = uid
+    if gid is not None:
+        perms.group_gid = gid
+
+
+def _sys_get_acl(kernel: Any, **kwargs: Any) -> dict[str, Any]:
+    """Return permissions and ACL entries for a path."""
+    path: str = kwargs["path"]
+    perms = kernel.file_permissions.get(path)
+    if perms is None:
+        msg = f"No permissions found for: {path}"
+        raise SyscallError(msg)
+    mode = (
+        ("r" if perms.owner_read else "-")
+        + ("w" if perms.owner_write else "-")
+        + ("x" if perms.owner_execute else "-")
+        + ("r" if perms.group_read else "-")
+        + ("w" if perms.group_write else "-")
+        + ("x" if perms.group_execute else "-")
+        + ("r" if perms.other_read else "-")
+        + ("w" if perms.other_write else "-")
+        + ("x" if perms.other_execute else "-")
+    )
+    acl_list = [
+        {
+            "type": str(e.entry_type),
+            "target_id": e.target_id,
+            "read": e.read,
+            "write": e.write,
+            "execute": e.execute,
+        }
+        for e in perms.acl_entries
+    ]
+    return {
+        "owner_uid": perms.owner_uid,
+        "group_gid": perms.group_gid,
+        "mode": mode,
+        "acl": acl_list,
+    }
+
+
+def _sys_set_acl(kernel: Any, **kwargs: Any) -> None:
+    """Set ACL entries on a path."""
+    path: str = kwargs["path"]
+    perms = kernel.file_permissions.get(path)
+    if perms is None:
+        msg = f"No permissions found for: {path}"
+        raise SyscallError(msg)
+    entries: list[dict[str, Any]] = kwargs["entries"]
+    acl_entries = tuple(
+        AclEntry(
+            entry_type=AclEntryType(e["type"]),
+            target_id=e["target_id"],
+            read=e.get("read", False),
+            write=e.get("write", False),
+            execute=e.get("execute", False),
+        )
+        for e in entries
+    )
+    perms.acl_entries = acl_entries
+
+
+def _sys_create_group(kernel: Any, **kwargs: Any) -> dict[str, Any]:
+    """Create a named group."""
+    assert kernel.user_manager is not None  # noqa: S101
+    name: str = kwargs["name"]
+    try:
+        group = kernel.user_manager.create_group(name)
+    except ValueError as e:
+        raise SyscallError(str(e)) from e
+    return {"gid": group.gid, "name": group.name}
+
+
+def _sys_list_groups(kernel: Any, **_kwargs: Any) -> list[dict[str, Any]]:
+    """List all groups."""
+    assert kernel.user_manager is not None  # noqa: S101
+    return [
+        {"gid": g.gid, "name": g.name, "members": sorted(g.members)}
+        for g in kernel.user_manager.list_groups()
+    ]
+
+
+def _sys_add_to_group(kernel: Any, **kwargs: Any) -> dict[str, Any]:
+    """Add a user to a group."""
+    assert kernel.user_manager is not None  # noqa: S101
+    uid: int = kwargs["uid"]
+    gid: int = kwargs["gid"]
+    try:
+        group = kernel.user_manager.add_to_group(uid, gid)
+    except ValueError as e:
+        raise SyscallError(str(e)) from e
+    return {"gid": group.gid, "name": group.name, "members": sorted(group.members)}
+
+
+def _sys_remove_from_group(kernel: Any, **kwargs: Any) -> dict[str, Any]:
+    """Remove a user from a group."""
+    assert kernel.user_manager is not None  # noqa: S101
+    uid: int = kwargs["uid"]
+    gid: int = kwargs["gid"]
+    try:
+        group = kernel.user_manager.remove_from_group(uid, gid)
+    except ValueError as e:
+        raise SyscallError(str(e)) from e
+    return {"gid": group.gid, "name": group.name, "members": sorted(group.members)}
+
+
+def _sys_user_groups(kernel: Any, **kwargs: Any) -> list[dict[str, Any]]:
+    """List groups for a user."""
+    assert kernel.user_manager is not None  # noqa: S101
+    uid: int = kwargs["uid"]
+    return [{"gid": g.gid, "name": g.name} for g in kernel.user_manager.user_groups(uid)]
+
+
+# -- Container syscall handlers -----------------------------------------------
+
+
+def _sys_container_create(kernel: Any, **kwargs: Any) -> dict[str, Any]:
+    """Create a named container."""
+    name: str = kwargs["name"]
+    try:
+        return dict(kernel.container_create(name))
+    except ContainerError as e:
+        raise SyscallError(str(e)) from e
+
+
+def _sys_container_destroy(kernel: Any, **kwargs: Any) -> None:
+    """Destroy a container."""
+    name: str = kwargs["name"]
+    try:
+        kernel.container_destroy(name)
+    except ContainerError as e:
+        raise SyscallError(str(e)) from e
+
+
+def _sys_container_exec(kernel: Any, **kwargs: Any) -> dict[str, Any]:
+    """Run a program inside a container."""
+    name: str = kwargs["name"]
+    program_name: str = kwargs.get("program_name", "program")
+    program = kwargs.get("program")
+    if program is None:
+        data = DEMO_PROGRAMS.get(program_name)
+        if data is None:
+            msg = f"Unknown program: {program_name}"
+            raise SyscallError(msg)
+        program = BinaryLoader.load(data())
+    try:
+        return dict(kernel.container_exec(name, program=program, program_name=program_name))
+    except ContainerError as e:
+        raise SyscallError(str(e)) from e
+
+
+def _sys_container_list(kernel: Any, **kwargs: Any) -> list[dict[str, Any]]:  # noqa: ARG001
+    """List all containers."""
+    return [dict(c) for c in kernel.container_list()]
+
+
+def _sys_container_info(kernel: Any, **kwargs: Any) -> dict[str, Any]:
+    """Return info about a container."""
+    name: str = kwargs["name"]
+    try:
+        return dict(kernel.container_info(name))
+    except ContainerError as e:
+        raise SyscallError(str(e)) from e
+
+
+# -- Cluster syscall handlers -------------------------------------------------
+
+
+def _sys_cluster_create(kernel: Any, **kwargs: Any) -> dict[str, Any]:  # noqa: ARG001
+    """Initialize a cluster with this kernel."""
+    try:
+        return dict(kernel.cluster_create())
+    except RuntimeError as e:
+        raise SyscallError(str(e)) from e
+
+
+def _sys_cluster_add(kernel: Any, **kwargs: Any) -> dict[str, Any]:  # noqa: ARG001
+    """Add a new kernel to the cluster."""
+    try:
+        return dict(kernel.cluster_add_kernel())
+    except (RuntimeError, BridgeError) as e:
+        raise SyscallError(str(e)) from e
+
+
+def _sys_cluster_remove(kernel: Any, **kwargs: Any) -> None:
+    """Remove a kernel from the cluster."""
+    kernel_id: int = kwargs["kernel_id"]
+    try:
+        kernel.cluster_remove_kernel(kernel_id)
+    except (RuntimeError, BridgeError) as e:
+        raise SyscallError(str(e)) from e
+
+
+def _sys_cluster_send(kernel: Any, **kwargs: Any) -> None:
+    """Send a message to another kernel."""
+    to_id: int = kwargs["to_id"]
+    data: bytes = kwargs["data"]
+    try:
+        kernel.cluster_send(to_id, data)
+    except (RuntimeError, BridgeError) as e:
+        raise SyscallError(str(e)) from e
+
+
+def _sys_cluster_recv(kernel: Any, **kwargs: Any) -> dict[str, Any]:  # noqa: ARG001
+    """Receive the next message from the cluster."""
+    try:
+        return dict(kernel.cluster_recv())
+    except RuntimeError as e:
+        raise SyscallError(str(e)) from e
+
+
+def _sys_cluster_ping(kernel: Any, **kwargs: Any) -> dict[str, Any]:
+    """Ping another kernel in the cluster."""
+    target_id: int = kwargs["target_id"]
+    try:
+        return dict(kernel.cluster_ping(target_id))
+    except (RuntimeError, BridgeError) as e:
+        raise SyscallError(str(e)) from e
+
+
+def _sys_cluster_list(kernel: Any, **kwargs: Any) -> list[dict[str, Any]]:  # noqa: ARG001
+    """List all kernels in the cluster."""
+    try:
+        return [dict(k) for k in kernel.cluster_list()]
+    except RuntimeError as e:
+        raise SyscallError(str(e)) from e
+
+
+def _sys_cluster_dns(kernel: Any, **kwargs: Any) -> dict[str, Any]:
+    """Cross-kernel DNS lookup."""
+    target_id: int = kwargs["target_id"]
+    hostname: str = kwargs["hostname"]
+    try:
+        return dict(kernel.cluster_dns_query(target_id, hostname))
+    except (RuntimeError, BridgeError) as e:
+        raise SyscallError(str(e)) from e
