@@ -1007,6 +1007,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#key-terms" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Terms
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1724,6 +1735,53 @@ inheritance in <code>sync/inheritance.py</code> and deadlock prevention in
 <li><a href="../devices-and-networking/">Devices and Networking</a> -- IPC pipes and message queues that use these primitives under the hood</li>
 <li><a href="../shell/">The Shell</a> -- The <code>mutex</code>, <code>semaphore</code>, and <code>rwlock</code> shell commands</li>
 </ul>
+<h2 id="key-terms">Key Terms</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Definition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Mutex</strong></td>
+<td>A lock that only one thread can hold at a time -- mutual exclusion</td>
+</tr>
+<tr>
+<td><strong>Semaphore</strong></td>
+<td>A counter-based lock that allows up to N threads to enter at once</td>
+</tr>
+<tr>
+<td><strong>Condition variable</strong></td>
+<td>A waiting room where threads sleep until another thread signals them</td>
+</tr>
+<tr>
+<td><strong>Reader-writer lock</strong></td>
+<td>A lock that allows many readers or one writer, but not both</td>
+</tr>
+<tr>
+<td><strong>Race condition</strong></td>
+<td>A bug where two threads access shared data at the same time and produce unpredictable results</td>
+</tr>
+<tr>
+<td><strong>Critical section</strong></td>
+<td>The part of code that accesses shared data and must be protected</td>
+</tr>
+<tr>
+<td><strong>Deadlock</strong></td>
+<td>Two or more threads stuck forever, each waiting for a lock the other holds</td>
+</tr>
+<tr>
+<td><strong>Priority inversion</strong></td>
+<td>When a high-priority thread is blocked because a low-priority thread holds its lock</td>
+</tr>
+<tr>
+<td><strong>Priority inheritance</strong></td>
+<td>Temporarily boosting a lock-holder's priority so higher-priority waiters are not starved</td>
+</tr>
+</tbody>
+</table>
 
 
 

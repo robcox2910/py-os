@@ -795,6 +795,28 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#where-to-go-next" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where to Go Next
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#key-terms" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Terms
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1251,8 +1273,55 @@
 <a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>interrupt unmask 0      # Resume delivery
 <a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>tick 1                  # Queued interrupt is now serviced
 </code></pre></div>
-<hr />
-<p><strong>Next:</strong> Learn about reliable network delivery in <a href="../tcp/">TCP: Reliable Delivery</a>.</p>
+<h2 id="where-to-go-next">Where to Go Next</h2>
+<ul>
+<li><a href="../tcp/">TCP: Reliable Delivery</a> -- How TCP guarantees data arrives complete and in order</li>
+<li><a href="../devices-and-networking/">Devices and Networking</a> -- Hardware devices and network fundamentals</li>
+<li><a href="../processes/">Processes</a> -- How preemption uses timer interrupts to switch processes</li>
+</ul>
+<h2 id="key-terms">Key Terms</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Definition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Interrupt</strong></td>
+<td>A signal from hardware or software that tells the CPU to stop and handle something</td>
+</tr>
+<tr>
+<td><strong>IRQ</strong></td>
+<td>Interrupt Request -- the actual signal sent to the interrupt controller</td>
+</tr>
+<tr>
+<td><strong>Vector</strong></td>
+<td>A number that identifies which device or event is interrupting</td>
+</tr>
+<tr>
+<td><strong>Handler</strong></td>
+<td>A function the OS runs when a specific interrupt fires</td>
+</tr>
+<tr>
+<td><strong>Masking</strong></td>
+<td>Temporarily disabling an interrupt so it is queued but not delivered</td>
+</tr>
+<tr>
+<td><strong>Timer</strong></td>
+<td>A hardware clock that fires an interrupt at regular intervals (ticks)</td>
+</tr>
+<tr>
+<td><strong>Preemption</strong></td>
+<td>Using timer interrupts to forcibly switch the running process, giving everyone a fair turn</td>
+</tr>
+<tr>
+<td><strong>Tick</strong></td>
+<td>One unit of time in the system timer -- the heartbeat of the OS</td>
+</tr>
+</tbody>
+</table>
 
 
 

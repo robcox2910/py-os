@@ -1378,22 +1378,25 @@
 <p>Root is like the school principal. The principal can walk into any classroom, open any locker, and read any file in the school office. There are no locked doors for the principal. In the same way, root can read and write <em>any</em> file on the system, regardless of what the permissions say. Root is sometimes called the <strong>superuser</strong> because they have super-powered access to everything.</p>
 <p>On a real Unix system, root can do absolutely anything -- install programs, delete other users, change system settings, even break the operating system. That is why you should only use root when you truly need it. Running as root all the time is like leaving every door in the school unlocked. It works, but it is asking for trouble.</p>
 <h3 id="try-it-in-the-pyos-shell">Try it in the PyOS shell</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pyos&gt; whoami
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>alice (uid=1000)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>PyOS&gt; whoami
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>root (uid=0)
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>pyos&gt; adduser bob
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>User &#39;bob&#39; created with uid=1001
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>PyOS&gt; adduser alice
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>User &#39;alice&#39; created (uid=1)
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>pyos&gt; su bob
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>Switched to user &#39;bob&#39;
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>PyOS&gt; adduser bob
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>User &#39;bob&#39; created (uid=2)
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>pyos&gt; whoami
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>bob (uid=1001)
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>PyOS&gt; su 2
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>Switched to bob (uid=2)
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>PyOS&gt; whoami
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>bob (uid=2)
 </code></pre></div>
 <ul>
 <li><code>whoami</code> -- tells you which user you are right now.</li>
 <li><code>adduser</code> -- creates a new user account.</li>
-<li><code>su</code> -- short for "switch user." It lets you become a different user, kind of like handing your library card to someone else (except you get it back later).</li>
+<li><code>su</code> -- short for "switch user." You pass the numeric UID of the user you want to become. It is like handing your library card to someone else (except you get it back later).</li>
 </ul>
 <hr />
 <h2 id="signals">Signals</h2>
@@ -1511,7 +1514,7 @@
 <p>Think of it this way. DEBUG is like the security camera footage of a student walking through the hallway -- nothing interesting, but useful if you need to retrace someone's steps. INFO is the morning announcement that school is open. WARNING is a note that the library is almost full and might need to start turning people away. ERROR is the fire alarm going off.</p>
 <p>Every <a href="../kernel-and-syscalls/">system call</a> gets logged at the DEBUG level. Boot events get logged at INFO. This means the log can get very long very quickly, which is why the levels exist -- you can filter for just WARNINGs and ERRORs when you do not need all the tiny details.</p>
 <h3 id="try-it-in-the-pyos-shell_1">Try it in the PyOS shell</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pyos&gt; log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>PyOS&gt; log
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>[INFO] System booted at tick 0
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>[INFO] User &#39;root&#39; logged in
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>[DEBUG] SYS_CREATE_PROCESS: pid=1 name=&#39;init&#39;
@@ -1574,12 +1577,12 @@
 </tbody>
 </table>
 <h3 id="try-it-in-the-pyos-shell_2">Try it in the PyOS shell</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>pyos&gt; resources
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>PyOS&gt; resources
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>Resource Allocation Table:
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>  Process 1 holds: [Printer]  waiting for: [Scanner]
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>  Process 2 holds: [Scanner]  waiting for: [Printer]
 <a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>pyos&gt; deadlock
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>PyOS&gt; deadlock
 <a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>Deadlock detected! Processes 1 and 2 are in a circular wait.
 </code></pre></div>
 <ul>

@@ -1059,6 +1059,28 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#where-to-go-next" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where to Go Next
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#key-terms" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Terms
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1307,6 +1329,55 @@
 <tr>
 <td><code>groups removeuser uid gid</code></td>
 <td>Remove a user from a group</td>
+</tr>
+</tbody>
+</table>
+<h2 id="where-to-go-next">Where to Go Next</h2>
+<ul>
+<li><a href="../users-and-safety/">Users and Safety</a> -- Users, signals, logging, and deadlocks</li>
+<li><a href="../filesystem/">Filesystem</a> -- How files and directories are organised</li>
+<li><a href="../shell/">The Shell</a> -- The <code>chmod</code>, <code>chown</code>, and <code>groups</code> commands</li>
+</ul>
+<h2 id="key-terms">Key Terms</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Definition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Permission bits</strong></td>
+<td>Nine flags (rwxrwxrwx) that control who can read, write, and execute a file</td>
+</tr>
+<tr>
+<td><strong>Owner</strong></td>
+<td>The user who created the file -- they get the first set of permission bits</td>
+</tr>
+<tr>
+<td><strong>Group</strong></td>
+<td>A named collection of users who share the middle set of permission bits</td>
+</tr>
+<tr>
+<td><strong>Other</strong></td>
+<td>Everyone else on the system -- they get the last set of permission bits</td>
+</tr>
+<tr>
+<td><strong>UID</strong></td>
+<td>User Identifier -- a unique number for each user (root is always 0)</td>
+</tr>
+<tr>
+<td><strong>GID</strong></td>
+<td>Group Identifier -- a unique number for each group</td>
+</tr>
+<tr>
+<td><strong>ACL</strong></td>
+<td>Access Control List -- extra fine-grained entries beyond the basic 9 bits</td>
+</tr>
+<tr>
+<td><strong>root</strong></td>
+<td>The superuser (UID 0) who can bypass all permission checks</td>
 </tr>
 </tbody>
 </table>

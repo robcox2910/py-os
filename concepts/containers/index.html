@@ -1092,6 +1092,28 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#where-to-go-next" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where to Go Next
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#key-terms" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Terms
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1277,6 +1299,47 @@ computer, each thinking it has the whole machine to itself.</p>
 isolation — is understanding how modern cloud computing works. Every time
 you use a website, there's a good chance it's running inside a container
 somewhere!</p>
+<h2 id="where-to-go-next">Where to Go Next</h2>
+<ul>
+<li><a href="../processes/">Processes</a> -- How processes work inside and outside containers</li>
+<li><a href="../filesystem/">Filesystem</a> -- Mount namespaces build on the filesystem</li>
+<li><a href="../inter-machine-networking/">Inter-Machine Networking</a> -- Connecting containers across machines</li>
+</ul>
+<h2 id="key-terms">Key Terms</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Definition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Container</strong></td>
+<td>A lightweight isolated environment that shares the host kernel but has its own view of processes, files, and network</td>
+</tr>
+<tr>
+<td><strong>Namespace</strong></td>
+<td>A mechanism that gives a container its own private copy of a system resource (PIDs, mounts, network)</td>
+</tr>
+<tr>
+<td><strong>PID namespace</strong></td>
+<td>Gives the container its own process IDs -- PID 1 inside may be PID 42 on the host</td>
+</tr>
+<tr>
+<td><strong>Mount namespace</strong></td>
+<td>Gives the container its own filesystem root -- it can only see its own files</td>
+</tr>
+<tr>
+<td><strong>Network namespace</strong></td>
+<td>Gives the container its own sockets and DNS -- network traffic is isolated</td>
+</tr>
+<tr>
+<td><strong>Virtual PID (VPID)</strong></td>
+<td>The process ID as seen inside the container (different from the real PID)</td>
+</tr>
+</tbody>
+</table>
 
 
 

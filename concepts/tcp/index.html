@@ -873,6 +873,28 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#where-to-go-next" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where to Go Next
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#key-terms" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Terms
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1371,8 +1393,63 @@
 <p>Or run the built-in demo:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>tcp demo
 </code></pre></div>
-<hr />
-<p><strong>Previous:</strong> Learn about hardware events in <a href="../interrupts/">Interrupts and Timers</a>.</p>
+<h2 id="where-to-go-next">Where to Go Next</h2>
+<ul>
+<li><a href="../interrupts/">Interrupts and Timers</a> -- How hardware events get the CPU's attention</li>
+<li><a href="../devices-and-networking/">Devices and Networking</a> -- Sockets, DNS, and HTTP built on top of TCP</li>
+<li><a href="../shell/">The Shell</a> -- The <code>tcp</code> shell commands for hands-on experimentation</li>
+</ul>
+<h2 id="key-terms">Key Terms</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Definition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>TCP</strong></td>
+<td>Transmission Control Protocol -- provides reliable, ordered delivery over an unreliable network</td>
+</tr>
+<tr>
+<td><strong>Three-way handshake</strong></td>
+<td>SYN → SYN-ACK → ACK sequence that opens a connection</td>
+</tr>
+<tr>
+<td><strong>Sequence number</strong></td>
+<td>A counter that numbers each byte (or segment) so the receiver can reassemble them in order</td>
+</tr>
+<tr>
+<td><strong>ACK</strong></td>
+<td>Acknowledgement -- the receiver confirms which bytes it has received</td>
+</tr>
+<tr>
+<td><strong>Flow control</strong></td>
+<td>The receiver tells the sender how much room it has (window size), preventing overflow</td>
+</tr>
+<tr>
+<td><strong>Congestion control</strong></td>
+<td>Adjusting send rate based on network conditions to avoid overloading routers</td>
+</tr>
+<tr>
+<td><strong>Slow start</strong></td>
+<td>Start sending slowly and double the window each round trip until congestion is detected</td>
+</tr>
+<tr>
+<td><strong>AIMD</strong></td>
+<td>Additive Increase / Multiplicative Decrease -- grow the window slowly, cut it in half on loss</td>
+</tr>
+<tr>
+<td><strong>Retransmission</strong></td>
+<td>Resending a segment that was lost or not acknowledged in time</td>
+</tr>
+<tr>
+<td><strong>FIN</strong></td>
+<td>A flag that says "I'm done sending data" -- used to close a connection gracefully</td>
+</tr>
+</tbody>
+</table>
 
 
 

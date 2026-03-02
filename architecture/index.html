@@ -1388,6 +1388,9 @@
     kernel --&gt; journal[journal.py]
     kernel --&gt; shm[shm.py]
     kernel --&gt; logging[logging.py]
+    kernel --&gt; containers[containers.py]
+    kernel --&gt; bridge[bridge.py]
+    kernel --&gt; binary[binary.py]
     manager --&gt; virtual[virtual.py]
     filesystem --&gt; fd[fd.py]
     repl[repl.py] --&gt; bootloader[bootloader.py]
@@ -1449,6 +1452,30 @@
 <tr>
 <td><a href="../concepts/synchronization/">Synchronization</a></td>
 <td>Mutex, semaphore, condition variable, reader-writer lock, race conditions, deadlock prevention</td>
+</tr>
+<tr>
+<td><a href="../concepts/framebuffer/">Framebuffer</a></td>
+<td>Pixel-level graphics, shapes, and image display</td>
+</tr>
+<tr>
+<td><a href="../concepts/tui/">TUI Dashboard</a></td>
+<td>Live terminal dashboard for OS internals</td>
+</tr>
+<tr>
+<td><a href="../concepts/permissions/">Permissions</a></td>
+<td>File ownership, permission bits, groups, ACLs</td>
+</tr>
+<tr>
+<td><a href="../concepts/binary-loader/">Binary Loader</a></td>
+<td>Loading and running programs with exec</td>
+</tr>
+<tr>
+<td><a href="../concepts/containers/">Containers</a></td>
+<td>PID, mount, and network namespaces for isolation</td>
+</tr>
+<tr>
+<td><a href="../concepts/inter-machine-networking/">Inter-Machine Networking</a></td>
+<td>Bridges, clusters, cross-machine messaging</td>
 </tr>
 <tr>
 <td><a href="../concepts/tutorials/">Interactive Tutorials</a></td>
@@ -1574,6 +1601,31 @@
 <td><code>SyscallError</code></td>
 <td>User-facing exception wrapping internal errors</td>
 </tr>
+<tr>
+<td><code>containers.py</code></td>
+<td><code>ContainerManager</code></td>
+<td>Lifecycle management for all containers</td>
+</tr>
+<tr>
+<td><code>containers.py</code></td>
+<td><code>Container</code></td>
+<td>Isolated environment with PID, mount, and network namespaces</td>
+</tr>
+<tr>
+<td><code>containers.py</code></td>
+<td><code>PidNamespace</code> / <code>MountNamespace</code> / <code>NetworkNamespace</code></td>
+<td>Per-container isolation primitives</td>
+</tr>
+<tr>
+<td><code>containers.py</code></td>
+<td><code>ContainerState</code></td>
+<td>CREATED / RUNNING / STOPPED state machine</td>
+</tr>
+<tr>
+<td><code>containers.py</code></td>
+<td><code>ContainerError</code></td>
+<td>Exception for container operation failures</td>
+</tr>
 </tbody>
 </table>
 <h3 id="process-management">Process Management</h3>
@@ -1660,6 +1712,21 @@
 <td><code>process/signals.py</code></td>
 <td><code>UNCATCHABLE</code></td>
 <td>frozenset of signals that cannot have handlers (SIGKILL, SIGSTOP)</td>
+</tr>
+<tr>
+<td><code>process/binary.py</code></td>
+<td><code>BinaryLoader</code></td>
+<td>Load and execute named programs (demo binaries)</td>
+</tr>
+<tr>
+<td><code>process/binary.py</code></td>
+<td><code>DEMO_PROGRAMS</code></td>
+<td>Registry of built-in demo programs</td>
+</tr>
+<tr>
+<td><code>process/binary.py</code></td>
+<td><code>BinaryLoaderError</code></td>
+<td>Exception for binary loader failures</td>
 </tr>
 </tbody>
 </table>
@@ -2063,6 +2130,31 @@
 <td><code>io/tcp.py</code></td>
 <td><code>TcpStack</code></td>
 <td>Manage multiple TCP connections, listener queues, segment routing, retransmission ticks</td>
+</tr>
+<tr>
+<td><code>io/bridge.py</code></td>
+<td><code>NetworkBridge</code></td>
+<td>In-memory packet routing between kernel instances</td>
+</tr>
+<tr>
+<td><code>io/bridge.py</code></td>
+<td><code>Cluster</code></td>
+<td>High-level multi-kernel manager for inter-machine communication</td>
+</tr>
+<tr>
+<td><code>io/bridge.py</code></td>
+<td><code>Packet</code></td>
+<td>Frozen dataclass for a network packet (src, dst, payload, type)</td>
+</tr>
+<tr>
+<td><code>io/bridge.py</code></td>
+<td><code>PacketType</code></td>
+<td>DATA / DNS_QUERY / DNS_RESPONSE / PING / PONG packet types</td>
+</tr>
+<tr>
+<td><code>io/bridge.py</code></td>
+<td><code>BridgeError</code></td>
+<td>Exception for bridge operation failures</td>
 </tr>
 </tbody>
 </table>

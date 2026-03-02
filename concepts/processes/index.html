@@ -1664,7 +1664,7 @@
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">scheduler</span> <span class="o">=</span> <span class="n">Scheduler</span><span class="p">(</span><span class="n">policy</span><span class="o">=</span><span class="n">policy</span><span class="p">)</span>
 </code></pre></div>
 <p>You can switch to it from the shell:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>pyos&gt; scheduler aging
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>PyOS&gt; scheduler aging
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>Scheduler set to Aging Priority (boost=1, max_age=10)
 </code></pre></div>
 <h3 id="multilevel-feedback-queue-mlfq">Multilevel Feedback Queue (MLFQ)</h3>
@@ -1683,10 +1683,10 @@
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="c1"># Quanta: level 0 = 2, level 1 = 4, level 2 = 8</span>
 </code></pre></div>
 <p>You can switch to MLFQ and trigger boosts from the shell:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>pyos&gt; scheduler mlfq
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>PyOS&gt; scheduler mlfq
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>Scheduler set to MLFQ (3 levels, base_quantum=2)
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>pyos&gt; scheduler boost
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>PyOS&gt; scheduler boost
 <a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>MLFQ boost: all processes reset to level 0
 </code></pre></div>
 <h3 id="completely-fair-scheduler-cfs">Completely Fair Scheduler (CFS)</h3>
@@ -1699,10 +1699,10 @@
 <a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="n">scheduler</span> <span class="o">=</span> <span class="n">Scheduler</span><span class="p">(</span><span class="n">policy</span><span class="o">=</span><span class="n">policy</span><span class="p">)</span>
 </code></pre></div>
 <p>You can switch to CFS from the shell:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>pyos&gt; scheduler cfs
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>PyOS&gt; scheduler cfs
 <a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>Scheduler set to CFS (base_slice=1)
 <a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>pyos&gt; scheduler cfs 3
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>PyOS&gt; scheduler cfs 3
 <a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>Scheduler set to CFS (base_slice=3)
 </code></pre></div>
 <blockquote>
@@ -1765,7 +1765,7 @@
 </tbody>
 </table>
 <p>You can switch policies at runtime using the <code>scheduler</code> shell command:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>pyos&gt; scheduler priority
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>PyOS&gt; scheduler priority
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>Scheduler set to Priority
 </code></pre></div>
 <h3 id="the-strategy-pattern">The Strategy Pattern</h3>
@@ -1885,11 +1885,11 @@
 <p>In real Unix, you can check the last command's exit code with <code>$?</code>. In PyOS, the exit code is stored on the process object after execution.</p>
 <h3 id="try-it-in-the-pyos-shell">Try it in the PyOS shell</h3>
 <p>PyOS comes with a couple of built-in programs you can run:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>pyos&gt; run hello
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>PyOS&gt; run hello
 <a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>Hello from PyOS!
 <a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>[exit code: 0]
 <a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>
-<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>pyos&gt; run counter
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>PyOS&gt; run counter
 <a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>1
 <a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>2
 <a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>3
@@ -1914,14 +1914,14 @@
 <h3 id="what-happens-to-orphans">What happens to orphans?</h3>
 <p>If a process has no parent (or the parent has already been removed), it is an <strong>orphan</strong>. Orphans are cleaned up immediately when they terminate -- no zombie stage needed, because nobody is going to collect them.</p>
 <h3 id="try-it-in-the-pyos-shell_1">Try it in the PyOS shell</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>pyos&gt; fork 1
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>Forked pid 1 → child pid 2 (parent (fork))
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>PyOS&gt; fork 1
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>Forked pid 1 → child pid 2 (init (fork))
 <a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>pyos&gt; wait 1
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>PyOS&gt; wait 1
 <a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>Collected child pid 2 (exit_code=0, output=&#39;hello&#39;)
 </code></pre></div>
 <p>If the child has not finished yet, you will see:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>pyos&gt; wait 1
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>PyOS&gt; wait 1
 <a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>Process 1 is now waiting for a child.
 </code></pre></div>
 <hr />
@@ -1964,7 +1964,7 @@
 - "Is the system getting work done?" (throughput — completed processes per second)
 - "Does the system feel responsive?" (low average response time)</p>
 <h3 id="try-it-in-the-pyos-shell_2">Try it in the PyOS shell</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>pyos&gt; perf
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>PyOS&gt; perf
 <a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>=== PyOS Performance Metrics ===
 <a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>Context switches:    0
 <a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>Processes created:   0
@@ -1975,7 +1975,7 @@
 <a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a>Throughput:          0.00 procs/sec
 </code></pre></div>
 <p>You can also read the raw numbers from the virtual filesystem:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>pyos&gt; cat /proc/stat
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>PyOS&gt; cat /proc/stat
 <a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>CtxSwitches:    42
 <a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>TotalCreated:   10
 <a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>TotalCompleted: 7
@@ -1985,7 +1985,7 @@
 <a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>Throughput:     2.33 procs/sec
 </code></pre></div>
 <p>Or check individual process timing:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>pyos&gt; cat /proc/42/sched
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>PyOS&gt; cat /proc/42/sched
 <a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>WaitTime:       0.05 seconds
 <a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>CpuTime:        0.10 seconds
 <a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>ResponseTime:   0.02 seconds
@@ -2004,21 +2004,21 @@
 </ul>
 <h3 id="try-it-in-the-pyos-shell_3">Try it in the PyOS shell</h3>
 <p>PyOS supports multiple CPUs through the bootloader or kernel configuration:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>pyos&gt; cpu
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>PyOS&gt; cpu
 <a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>CPU 0: FCFSPolicy  ready=2  current=pid 1 (init)
 <a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>CPU 1: FCFSPolicy  ready=1  current=none
 <a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>
-<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>pyos&gt; taskset 3
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>PyOS&gt; taskset 3
 <a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>Process 3 affinity: CPU 0, 1
 <a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a>
-<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a>pyos&gt; taskset 3 0
+<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a>PyOS&gt; taskset 3 0
 <a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a>Set process 3 affinity to CPU 0
 <a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a>
-<a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a>pyos&gt; scheduler balance
+<a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a>PyOS&gt; scheduler balance
 <a id="__codelineno-18-12" name="__codelineno-18-12" href="#__codelineno-18-12"></a>Balanced: 1 migration(s)
 </code></pre></div>
 <p>The <code>ps</code> command shows which CPU each process is on:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>pyos&gt; ps
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>PyOS&gt; ps
 <a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>PID    CPU  STATE       NAME
 <a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>1      0    running     init
 <a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>2      1    ready       worker-a
