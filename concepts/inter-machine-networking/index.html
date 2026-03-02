@@ -10,13 +10,11 @@
       
       
       
-        <link rel="canonical" href="https://robcox2910.github.io/py-os/concepts/framebuffer/">
+        <link rel="canonical" href="https://robcox2910.github.io/py-os/concepts/inter-machine-networking/">
       
       
-        <link rel="prev" href="../tutorials/">
+        <link rel="prev" href="../containers/">
       
-      
-        <link rel="next" href="../tui/">
       
       
         
@@ -27,7 +25,7 @@
     
     
       
-        <title>Framebuffer - PyOS</title>
+        <title>Inter-Machine Networking - PyOS</title>
       
     
     
@@ -78,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#framebuffer-the-screen-inside-the-computer" class="md-skip">
+        <a href="#inter-machine-networking" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Framebuffer
+              Inter-Machine Networking
             
           </span>
         </div>
@@ -785,37 +783,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Framebuffer
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../framebuffer/" class="md-nav__link">
         
   
   
@@ -831,103 +802,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#the-whiteboard-analogy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Whiteboard Analogy
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#pixels-vs-characters" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Pixels vs Characters
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#how-drawing-works" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How Drawing Works
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#out-of-bounds-no-problem" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Out of Bounds? No Problem
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#gpu-memory-in-real-computers" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        GPU Memory in Real Computers
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#try-it-yourself" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Try It Yourself
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#where-to-go-next" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Where to Go Next
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1077,10 +951,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../inter-machine-networking/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inter-Machine Networking
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1096,6 +997,159 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-is-a-cluster" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Is a Cluster?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-network-bridge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Network Bridge
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#packets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Packets
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Packets">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#packet-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Packet Types
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-can-clusters-do" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Can Clusters Do?
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What Can Clusters Do?">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#send-messages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Send Messages
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ping
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cross-machine-dns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cross-Machine DNS
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#try-it-in-the-shell" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Try It in the Shell
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-real-networks-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How Real Networks Work
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-does-this-matter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why Does This Matter?
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1128,71 +1182,157 @@
   
 
 
-<h1 id="framebuffer-the-screen-inside-the-computer">Framebuffer: The Screen Inside the Computer</h1>
-<h2 id="the-whiteboard-analogy">The Whiteboard Analogy</h2>
-<p>Imagine a whiteboard hanging on the wall. It's divided into a grid of tiny squares
--- rows and columns. Each square can hold one letter, one number, or one symbol.
-When you write on the whiteboard, you're filling in squares. When you erase, you
-set squares back to blank.</p>
-<p>That whiteboard is a <strong>framebuffer</strong> -- a chunk of memory that holds everything
-currently shown on the screen. Every character you see in a terminal, every pixel
-in a game, lives somewhere in a framebuffer.</p>
-<h2 id="pixels-vs-characters">Pixels vs Characters</h2>
-<p>In a graphical OS like Windows or macOS, each square in the framebuffer holds a
-<strong>pixel</strong> -- a tiny dot of colour. A typical screen might be 1920 pixels wide and
-1080 pixels tall. That's over two million pixels, each stored as a colour value
-(red, green, blue).</p>
-<p>PyOS keeps things simpler. Our framebuffer is a <strong>character grid</strong> -- each cell
-holds one ASCII character. The default display is 40 columns wide and 12 rows
-tall. It's like a tiny terminal window inside the OS.</p>
-<h2 id="how-drawing-works">How Drawing Works</h2>
-<p>Drawing on the framebuffer means changing what's stored in the grid cells:</p>
-<ul>
-<li><strong>set_pixel(x, y, char)</strong> -- put a character at one position</li>
-<li><strong>draw_text(x, y, text)</strong> -- write a string of characters starting at a position</li>
-<li><strong>fill_rect(x1, y1, x2, y2, char)</strong> -- fill a rectangle with one character</li>
-<li><strong>clear()</strong> -- reset everything to spaces</li>
-</ul>
-<p>When you ask the framebuffer to <strong>render</strong>, it reads the grid and produces a
-bordered ASCII picture:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>+----------------------------------------+
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>|                                        |
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>|  PyOS Framebuffer                      |
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>|                                        |
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>|  Hello, World!                         |
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>|                                        |
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>+----------------------------------------+
+<h1 id="inter-machine-networking">Inter-Machine Networking</h1>
+<h2 id="what-is-a-cluster">What Is a Cluster?</h2>
+<p>Imagine a computer lab at school. Every computer has its own screen,
+keyboard, and memory — but they're all connected by cables to a central
+switch. Any computer can send a message to any other.</p>
+<p>That's a <strong>cluster</strong>: a group of computers (or in our case, PyOS kernels)
+connected by a network so they can work together.</p>
+<p>In the real world, clusters power everything from Google search to
+weather forecasting. Instead of one giant computer, you connect many
+smaller ones and split the work between them.</p>
+<h2 id="the-network-bridge">The Network Bridge</h2>
+<p>The bridge is the <strong>switch</strong> in our computer lab analogy. It sits in
+the middle and routes messages between kernels.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>┌──────────┐         ┌──────────┐         ┌──────────┐
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>│ Kernel 1 │◄───────►│  Bridge  │◄───────►│ Kernel 2 │
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>│ (web)    │         │  (switch)│         │ (db)     │
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>└──────────┘         └──────────┘         └──────────┘
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>                          ▲
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>                          │
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>                     ┌──────────┐
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>                     │ Kernel 3 │
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>                     │ (cache)  │
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>                     └──────────┘
 </code></pre></div>
-<h2 id="out-of-bounds-no-problem">Out of Bounds? No Problem</h2>
-<p>What happens if you try to draw outside the grid -- say, at column 100 when the
-display is only 40 columns wide? The framebuffer silently ignores it. No error,
-no crash. This is called <strong>clipping</strong>, and real GPUs do the same thing. If a game
-draws a character that's half off the edge of the screen, the GPU just skips the
-invisible part.</p>
-<h2 id="gpu-memory-in-real-computers">GPU Memory in Real Computers</h2>
-<p>In a real computer, the framebuffer lives in <strong>video RAM</strong> (VRAM) on the graphics
-card. The GPU reads this memory many times per second (usually 60 or more) and
-sends the result to your monitor. That's why changing what's in the framebuffer
-instantly changes what you see on screen.</p>
-<p>Modern GPUs have their own processors and can draw complex 3D graphics, apply
-textures, and run shader programs -- all by writing the results into the
-framebuffer. But at the most basic level, it's still just a grid of values that
-gets displayed on screen.</p>
-<h2 id="try-it-yourself">Try It Yourself</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>fb              # Show framebuffer info (dimensions, status)
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>fb render       # Display the current screen contents
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>fb pixel 5 3 X  # Place an &#39;X&#39; at column 5, row 3
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>fb text 2 1 Hi  # Write &quot;Hi&quot; starting at column 2, row 1
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>fb rect 0 0 9 4 #  # Fill a 10x5 rectangle with &#39;#&#39;
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>fb clear        # Wipe the screen
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>fb demo         # Draw a demo pattern with borders and text
-</code></pre></div>
-<h2 id="where-to-go-next">Where to Go Next</h2>
+<p>Each kernel <strong>registers</strong> with the bridge and gets an ID. When one
+kernel wants to talk to another, it creates a <strong>packet</strong> and hands it
+to the bridge, which drops it in the destination kernel's inbox.</p>
+<h2 id="packets">Packets</h2>
+<p>A <strong>packet</strong> is like an envelope in the post. It has:</p>
 <ul>
-<li><a href="../devices-and-networking/">Devices and Networking</a> -- How the OS talks to hardware</li>
-<li><a href="../shell/">The Shell</a> -- The command-line interface to the OS</li>
-<li><a href="../memory/">Memory</a> -- How the OS manages RAM (the framebuffer lives in memory!)</li>
+<li><strong>From</strong>: which kernel sent it (source ID)</li>
+<li><strong>To</strong>: which kernel should receive it (destination ID)</li>
+<li><strong>Contents</strong>: the actual data (payload)</li>
+<li><strong>Type</strong>: what kind of message it is</li>
 </ul>
+<h3 id="packet-types">Packet Types</h3>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>What It's For</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>DATA</code></td>
+<td>Regular messages between kernels</td>
+</tr>
+<tr>
+<td><code>PING</code></td>
+<td>"Are you there?" check</td>
+</tr>
+<tr>
+<td><code>PONG</code></td>
+<td>"Yes, I'm here!" reply</td>
+</tr>
+<tr>
+<td><code>DNS_QUERY</code></td>
+<td>"What's the IP for this hostname?"</td>
+</tr>
+<tr>
+<td><code>DNS_RESPONSE</code></td>
+<td>"Here's the IP address!"</td>
+</tr>
+</tbody>
+</table>
+<h2 id="what-can-clusters-do">What Can Clusters Do?</h2>
+<h3 id="send-messages">Send Messages</h3>
+<p>Any kernel can send a message (bytes) to any other kernel in the cluster.
+This is the foundation of all inter-machine communication.</p>
+<h3 id="ping">Ping</h3>
+<p>Ping is the simplest network test: "Can I reach you?" One kernel sends
+a <code>PING</code> packet, and the other replies with <code>PONG</code>. If you get a pong
+back, the other machine is alive and connected.</p>
+<p>This is exactly what the <code>ping</code> command does on a real computer!</p>
+<h3 id="cross-machine-dns">Cross-Machine DNS</h3>
+<p>Each kernel has its own DNS resolver (phone book for hostnames).
+With a cluster, you can ask <em>another</em> kernel to look up a hostname
+for you. This is like calling a friend and asking them to look up a
+phone number in their contacts.</p>
+<h2 id="try-it-in-the-shell">Try It in the Shell</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>PyOS&gt; cluster create              # Initialize a cluster
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>Cluster created. This kernel is ID 1
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>PyOS&gt; cluster add                 # Add a second kernel
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>Added kernel 2 to cluster
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>PyOS&gt; cluster list                # See all kernels
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>ID    STATE      PENDING
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>1     running    0
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>2     running    0
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>PyOS&gt; cluster ping 2              # Check if kernel 2 is reachable
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>Kernel 2: reachable
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>PyOS&gt; cluster send 2 Hello!       # Send a message
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>Sent to kernel 2: Hello!
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>PyOS&gt; cluster demo                # Run a full demonstration
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>=== Cluster Demo ===
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>Created kernel 1 and kernel 2
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>...
+</code></pre></div>
+<h2 id="how-real-networks-work">How Real Networks Work</h2>
+<p>Our cluster is a simplified version of real networking, but the
+concepts are the same:</p>
+<table>
+<thead>
+<tr>
+<th>Our Concept</th>
+<th>Real-World Equivalent</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>NetworkBridge</code></td>
+<td>Network switch / router</td>
+</tr>
+<tr>
+<td><code>Packet</code></td>
+<td>TCP/IP packet</td>
+</tr>
+<tr>
+<td><code>Cluster</code></td>
+<td>Server cluster (like a Kubernetes cluster)</td>
+</tr>
+<tr>
+<td><code>PING</code>/<code>PONG</code></td>
+<td>ICMP Echo Request/Reply</td>
+</tr>
+<tr>
+<td>Cross-kernel DNS</td>
+<td>DNS forwarding / recursive lookup</td>
+</tr>
+</tbody>
+</table>
+<p>The main difference is that our packets travel through Python objects
+in memory, while real packets travel through copper cables, fibre optic
+lines, or radio waves. But the <em>idea</em> — addressing, routing, and
+message delivery — is identical.</p>
+<h2 id="why-does-this-matter">Why Does This Matter?</h2>
+<p>Almost nothing on the internet runs on a single computer anymore.
+Every large website, app, or service is actually a <strong>cluster</strong> of
+machines working together:</p>
+<ul>
+<li><strong>Google</strong> uses millions of servers in clusters around the world</li>
+<li><strong>Netflix</strong> streams video from clusters close to your location</li>
+<li><strong>Games</strong> use clusters to handle millions of players at once</li>
+</ul>
+<p>By understanding how machines communicate — packets, bridges, ping,
+DNS — you're learning the building blocks of the internet itself!</p>
 
 
 

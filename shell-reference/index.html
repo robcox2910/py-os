@@ -459,6 +459,28 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#containers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Containers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cluster-inter-machine-networking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cluster (Inter-Machine Networking)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#synchronization" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1077,6 +1099,118 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/permissions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Permissions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/binary-loader/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Binary Loader
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/containers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Containers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/inter-machine-networking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inter-Machine Networking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1159,6 +1293,22 @@
 <tr>
 <td><code>run prog [p]</code></td>
 <td>Run a built-in program with optional priority</td>
+</tr>
+<tr>
+<td><code>run /path</code></td>
+<td>Load and execute a binary file from the filesystem</td>
+</tr>
+<tr>
+<td><code>compile name</code></td>
+<td>Build a demo program into <code>/bin</code></td>
+</tr>
+<tr>
+<td><code>compile list</code></td>
+<td>List available demo programs</td>
+</tr>
+<tr>
+<td><code>hexdump path</code></td>
+<td>Show an annotated hex dump of a binary file</td>
 </tr>
 <tr>
 <td><code>kill pid</code></td>
@@ -1388,6 +1538,42 @@
 <td><code>su uid</code></td>
 <td>Switch to another user</td>
 </tr>
+<tr>
+<td><code>chmod path mode</code></td>
+<td>Set file permissions (e.g. <code>rwxr-xr--</code>)</td>
+</tr>
+<tr>
+<td><code>chown path uid [gid]</code></td>
+<td>Change file owner and/or group</td>
+</tr>
+<tr>
+<td><code>getfacl path</code></td>
+<td>Show permissions and ACL entries for a file</td>
+</tr>
+<tr>
+<td><code>setfacl path spec</code></td>
+<td>Add an ACL entry (e.g. <code>user:1:rwx</code> or <code>group:2:r-x</code>)</td>
+</tr>
+<tr>
+<td><code>groups</code></td>
+<td>Show current user's group memberships</td>
+</tr>
+<tr>
+<td><code>groups list</code></td>
+<td>List all groups and their members</td>
+</tr>
+<tr>
+<td><code>groups add name</code></td>
+<td>Create a new group</td>
+</tr>
+<tr>
+<td><code>groups adduser uid gid</code></td>
+<td>Add a user to a group</td>
+</tr>
+<tr>
+<td><code>groups removeuser uid gid</code></td>
+<td>Remove a user from a group</td>
+</tr>
 </tbody>
 </table>
 <h2 id="environment">Environment</h2>
@@ -1515,6 +1701,88 @@
 <tr>
 <td><code>tcp cmd</code></td>
 <td>TCP connections (listen, connect, send, recv, close, info, list, demo)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="containers">Containers</h2>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>container create name</code></td>
+<td>Create a new container with isolated namespaces</td>
+</tr>
+<tr>
+<td><code>container list</code></td>
+<td>List all containers (name, state, processes, fs root)</td>
+</tr>
+<tr>
+<td><code>container exec name prog</code></td>
+<td>Run a program inside a container</td>
+</tr>
+<tr>
+<td><code>container info name</code></td>
+<td>Show container namespace details</td>
+</tr>
+<tr>
+<td><code>container destroy name</code></td>
+<td>Destroy a container and clean up</td>
+</tr>
+<tr>
+<td><code>container demo</code></td>
+<td>Run a container demonstration</td>
+</tr>
+</tbody>
+</table>
+<h2 id="cluster-inter-machine-networking">Cluster (Inter-Machine Networking)</h2>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cluster create</code></td>
+<td>Initialize a cluster with this kernel</td>
+</tr>
+<tr>
+<td><code>cluster add</code></td>
+<td>Add a new kernel to the cluster</td>
+</tr>
+<tr>
+<td><code>cluster remove id</code></td>
+<td>Remove a kernel from the cluster</td>
+</tr>
+<tr>
+<td><code>cluster list</code></td>
+<td>List all kernels (ID, state, pending packets)</td>
+</tr>
+<tr>
+<td><code>cluster send id msg</code></td>
+<td>Send a message to another kernel</td>
+</tr>
+<tr>
+<td><code>cluster recv</code></td>
+<td>Receive the next message</td>
+</tr>
+<tr>
+<td><code>cluster ping id</code></td>
+<td>Check if a kernel is reachable</td>
+</tr>
+<tr>
+<td><code>cluster dns id host</code></td>
+<td>Look up a hostname on another kernel</td>
+</tr>
+<tr>
+<td><code>cluster demo</code></td>
+<td>Run a cluster demonstration</td>
 </tr>
 </tbody>
 </table>

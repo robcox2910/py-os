@@ -1411,6 +1411,118 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../permissions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Permissions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../binary-loader/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Binary Loader
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../containers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Containers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../inter-machine-networking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inter-Machine Networking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1761,8 +1873,7 @@ pulls data from that buffer.</p>
 <p>This is a simplification, but it teaches the real concept perfectly. Real
 sockets work the same way from the programmer's perspective -- you call
 <code>send()</code> and <code>recv()</code> and data flows back and forth. The only difference is
-that real sockets push data through network hardware instead of a Python
-<code>deque</code>.</p>
+that real sockets push data through actual network cables and hardware instead of through memory on the same computer.</p>
 <h3 id="the-socket-manager">The Socket Manager</h3>
 <p>Just like the <code>DeviceManager</code> keeps track of all devices, the <code>SocketManager</code>
 keeps track of all sockets. It handles the behind-the-scenes work that a real

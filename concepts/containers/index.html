@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://robcox2910.github.io/py-os/concepts/framebuffer/">
+        <link rel="canonical" href="https://robcox2910.github.io/py-os/concepts/containers/">
       
       
-        <link rel="prev" href="../tutorials/">
+        <link rel="prev" href="../binary-loader/">
       
       
-        <link rel="next" href="../tui/">
+        <link rel="next" href="../inter-machine-networking/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Framebuffer - PyOS</title>
+        <title>Containers - PyOS</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#framebuffer-the-screen-inside-the-computer" class="md-skip">
+        <a href="#containers" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Framebuffer
+              Containers
             
           </span>
         </div>
@@ -785,37 +785,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Framebuffer
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../framebuffer/" class="md-nav__link">
         
   
   
@@ -831,103 +804,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#the-whiteboard-analogy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Whiteboard Analogy
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#pixels-vs-characters" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Pixels vs Characters
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#how-drawing-works" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How Drawing Works
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#out-of-bounds-no-problem" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Out of Bounds? No Problem
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#gpu-memory-in-real-computers" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        GPU Memory in Real Computers
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#try-it-yourself" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Try It Yourself
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#where-to-go-next" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Where to Go Next
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1049,10 +925,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../containers/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Containers
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1068,6 +971,131 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-is-a-container" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Is a Container?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#real-world-containers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Real-World Containers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-three-namespaces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Three Namespaces
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The Three Namespaces">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-pid-namespace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. PID Namespace
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-mount-namespace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Mount Namespace
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-network-namespace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Network Namespace
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#container-lifecycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Container Lifecycle
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#try-it-in-the-shell" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Try It in the Shell
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-does-this-matter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why Does This Matter?
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1128,71 +1156,127 @@
   
 
 
-<h1 id="framebuffer-the-screen-inside-the-computer">Framebuffer: The Screen Inside the Computer</h1>
-<h2 id="the-whiteboard-analogy">The Whiteboard Analogy</h2>
-<p>Imagine a whiteboard hanging on the wall. It's divided into a grid of tiny squares
--- rows and columns. Each square can hold one letter, one number, or one symbol.
-When you write on the whiteboard, you're filling in squares. When you erase, you
-set squares back to blank.</p>
-<p>That whiteboard is a <strong>framebuffer</strong> -- a chunk of memory that holds everything
-currently shown on the screen. Every character you see in a terminal, every pixel
-in a game, lives somewhere in a framebuffer.</p>
-<h2 id="pixels-vs-characters">Pixels vs Characters</h2>
-<p>In a graphical OS like Windows or macOS, each square in the framebuffer holds a
-<strong>pixel</strong> -- a tiny dot of colour. A typical screen might be 1920 pixels wide and
-1080 pixels tall. That's over two million pixels, each stored as a colour value
-(red, green, blue).</p>
-<p>PyOS keeps things simpler. Our framebuffer is a <strong>character grid</strong> -- each cell
-holds one ASCII character. The default display is 40 columns wide and 12 rows
-tall. It's like a tiny terminal window inside the OS.</p>
-<h2 id="how-drawing-works">How Drawing Works</h2>
-<p>Drawing on the framebuffer means changing what's stored in the grid cells:</p>
+<h1 id="containers">Containers</h1>
+<h2 id="what-is-a-container">What Is a Container?</h2>
+<p>Imagine your school has a big building with classrooms, a library, and a
+canteen. Now imagine the school needs more space — but instead of building
+a whole new school, they put <strong>portable classrooms</strong> in the car park.</p>
+<p>Each portable classroom has:</p>
 <ul>
-<li><strong>set_pixel(x, y, char)</strong> -- put a character at one position</li>
-<li><strong>draw_text(x, y, text)</strong> -- write a string of characters starting at a position</li>
-<li><strong>fill_rect(x1, y1, x2, y2, char)</strong> -- fill a rectangle with one character</li>
-<li><strong>clear()</strong> -- reset everything to spaces</li>
+<li>Its own <strong>door number</strong> (even though the school still tracks rooms globally)</li>
+<li>Its own <strong>storage cupboard</strong> (separate from the main building's storage)</li>
+<li>Its own <strong>phone line</strong> (so calls don't mix with the main office)</li>
 </ul>
-<p>When you ask the framebuffer to <strong>render</strong>, it reads the grid and produces a
-bordered ASCII picture:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>+----------------------------------------+
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>|                                        |
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>|  PyOS Framebuffer                      |
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>|                                        |
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>|  Hello, World!                         |
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>|                                        |
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>+----------------------------------------+
-</code></pre></div>
-<h2 id="out-of-bounds-no-problem">Out of Bounds? No Problem</h2>
-<p>What happens if you try to draw outside the grid -- say, at column 100 when the
-display is only 40 columns wide? The framebuffer silently ignores it. No error,
-no crash. This is called <strong>clipping</strong>, and real GPUs do the same thing. If a game
-draws a character that's half off the edge of the screen, the GPU just skips the
-invisible part.</p>
-<h2 id="gpu-memory-in-real-computers">GPU Memory in Real Computers</h2>
-<p>In a real computer, the framebuffer lives in <strong>video RAM</strong> (VRAM) on the graphics
-card. The GPU reads this memory many times per second (usually 60 or more) and
-sends the result to your monitor. That's why changing what's in the framebuffer
-instantly changes what you see on screen.</p>
-<p>Modern GPUs have their own processors and can draw complex 3D graphics, apply
-textures, and run shader programs -- all by writing the results into the
-framebuffer. But at the most basic level, it's still just a grid of values that
-gets displayed on screen.</p>
-<h2 id="try-it-yourself">Try It Yourself</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>fb              # Show framebuffer info (dimensions, status)
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>fb render       # Display the current screen contents
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>fb pixel 5 3 X  # Place an &#39;X&#39; at column 5, row 3
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>fb text 2 1 Hi  # Write &quot;Hi&quot; starting at column 2, row 1
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>fb rect 0 0 9 4 #  # Fill a 10x5 rectangle with &#39;#&#39;
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>fb clear        # Wipe the screen
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>fb demo         # Draw a demo pattern with borders and text
-</code></pre></div>
-<h2 id="where-to-go-next">Where to Go Next</h2>
+<p>But they all share the same building — the same electricity, the same
+caretaker, and the same headteacher.</p>
+<p><strong>That's exactly what containers are.</strong> A container is a lightweight,
+isolated environment that runs inside the main operating system (the
+"school building"). Each container gets its own private view of the system,
+even though they all share the same kernel.</p>
+<h2 id="real-world-containers">Real-World Containers</h2>
+<p>You've probably heard of <strong>Docker</strong> — it's the most popular container
+tool in the world. Companies use containers to:</p>
 <ul>
-<li><a href="../devices-and-networking/">Devices and Networking</a> -- How the OS talks to hardware</li>
-<li><a href="../shell/">The Shell</a> -- The command-line interface to the OS</li>
-<li><a href="../memory/">Memory</a> -- How the OS manages RAM (the framebuffer lives in memory!)</li>
+<li>Run websites without them interfering with each other</li>
+<li>Test software in clean, isolated environments</li>
+<li>Package applications so they work the same everywhere</li>
 </ul>
+<p>Under the hood, Docker uses <strong>Linux namespaces</strong> — the same concept
+our PyOS containers implement!</p>
+<h2 id="the-three-namespaces">The Three Namespaces</h2>
+<p>A container gets its isolation from three <strong>namespaces</strong>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>┌─────────────────────────────────────────────────────────┐
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>│                     Host Kernel                          │
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>│                                                          │
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>│  ┌─────────────────────┐   ┌─────────────────────┐      │
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>│  │   Container &quot;web&quot;    │   │   Container &quot;db&quot;     │      │
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>│  │                      │   │                      │      │
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>│  │  PID Namespace       │   │  PID Namespace       │      │
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>│  │  ├── VPID 1 (init)   │   │  ├── VPID 1 (init)   │      │
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>│  │  └── VPID 2 (worker) │   │  └── VPID 2 (query)  │      │
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>│  │                      │   │                      │      │
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>│  │  Mount Namespace     │   │  Mount Namespace     │      │
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>│  │  / → /containers/web │   │  / → /containers/db  │      │
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>│  │                      │   │                      │      │
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>│  │  Network Namespace   │   │  Network Namespace   │      │
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>│  │  (own sockets + DNS) │   │  (own sockets + DNS) │      │
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>│  └─────────────────────┘   └─────────────────────┘      │
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>└─────────────────────────────────────────────────────────┘
+</code></pre></div>
+<h3 id="1-pid-namespace">1. PID Namespace</h3>
+<p>Every container has its own numbering for processes. The first process
+inside a container is always <strong>PID 1</strong> — just like a freshly booted
+computer.</p>
+<p>But the kernel still tracks the "real" PID. So a process might be:</p>
+<ul>
+<li><strong>VPID 1</strong> inside the container (the container thinks it's the first process)</li>
+<li><strong>Real PID 47</strong> in the kernel (the kernel knows the truth)</li>
+</ul>
+<p>Think of it like a hotel: Room 1 in every building is "Room 1" to the
+guests, but the hotel chain tracks them as "Building A Room 1",
+"Building B Room 1", etc.</p>
+<h3 id="2-mount-namespace">2. Mount Namespace</h3>
+<p>Each container has its own <strong>filesystem root</strong>. When a process inside
+the container asks for <code>/data/file.txt</code>, the kernel translates that to
+something like <code>/containers/web/data/file.txt</code> on the real filesystem.</p>
+<p>The container can't see files outside its root — it's like having your
+own private filing cabinet that only you can access.</p>
+<h3 id="3-network-namespace">3. Network Namespace</h3>
+<p>Each container gets its own:</p>
+<ul>
+<li><strong>Socket manager</strong> — for creating network connections</li>
+<li><strong>DNS resolver</strong> — for looking up hostnames</li>
+</ul>
+<p>This means two containers can both listen on the same port without
+conflicting, because their network stacks are completely separate.</p>
+<h2 id="container-lifecycle">Container Lifecycle</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>CREATED  ──&gt;  RUNNING  ──&gt;  STOPPED
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>   │                           │
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>   └── (never started) ────────┘
+</code></pre></div>
+<ol>
+<li><strong>CREATED</strong> — The container exists but hasn't run anything yet</li>
+<li><strong>RUNNING</strong> — At least one process is executing inside</li>
+<li><strong>STOPPED</strong> — The container has been shut down</li>
+</ol>
+<h2 id="try-it-in-the-shell">Try It in the Shell</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>PyOS&gt; container create web          # Create a new container
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>Created container &#39;web&#39; (state: created)
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>PyOS&gt; container create db           # Create another one
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>Created container &#39;db&#39; (state: created)
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>PyOS&gt; container list                # See all containers
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>NAME        STATE      PROCS  FS_ROOT
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>web         created    0      /containers/web
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>db          created    0      /containers/db
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>PyOS&gt; container exec web hello      # Run a program inside
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>VPID 1 in &#39;web&#39;:
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>Hello from PyBin!
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>PyOS&gt; container info web            # See namespace details
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>Container: web
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>  State: running
+<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>  Processes: 1
+<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>  FS root: /containers/web
+<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a>  PID namespace: [1]
+<a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a>  Network: {&#39;sockets&#39;: 0, &#39;dns_records&#39;: 0}
+<a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a>
+<a id="__codelineno-2-24" name="__codelineno-2-24" href="#__codelineno-2-24"></a>PyOS&gt; container destroy web         # Clean up
+<a id="__codelineno-2-25" name="__codelineno-2-25" href="#__codelineno-2-25"></a>Destroyed container &#39;web&#39;
+<a id="__codelineno-2-26" name="__codelineno-2-26" href="#__codelineno-2-26"></a>
+<a id="__codelineno-2-27" name="__codelineno-2-27" href="#__codelineno-2-27"></a>PyOS&gt; container demo                # Run a full demonstration
+</code></pre></div>
+<h2 id="why-does-this-matter">Why Does This Matter?</h2>
+<p>Containers changed how the entire internet works. Before containers,
+every website needed its own server (or at least its own virtual machine).
+Containers let you run hundreds of isolated applications on the same
+computer, each thinking it has the whole machine to itself.</p>
+<p>Understanding namespaces — PID isolation, filesystem isolation, network
+isolation — is understanding how modern cloud computing works. Every time
+you use a website, there's a good chance it's running inside a container
+somewhere!</p>
 
 
 

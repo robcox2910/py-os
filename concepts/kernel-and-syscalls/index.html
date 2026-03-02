@@ -1178,6 +1178,118 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../permissions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Permissions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../binary-loader/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Binary Loader
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../containers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Containers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../inter-machine-networking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inter-Machine Networking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1576,7 +1688,9 @@ handler, captures the result (or error), formats a log entry with the syscall
 name, arguments, and return value, and appends it to a ring buffer (capped at
 1,000 entries).</p>
 <p>Strace management syscalls (enable, disable, log, clear) and the read-log
-syscall are excluded from tracing to avoid infinite loops and noise.</p>
+syscall are excluded from tracing to avoid infinite loops and noise (if we
+traced the tracing commands themselves, they'd endlessly trace each other --
+like pointing two mirrors at each other!).</p>
 <h3 id="strace-syscall-numbers">Strace syscall numbers</h3>
 <table>
 <thead>

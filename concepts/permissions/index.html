@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://robcox2910.github.io/py-os/concepts/framebuffer/">
+        <link rel="canonical" href="https://robcox2910.github.io/py-os/concepts/permissions/">
       
       
-        <link rel="prev" href="../tutorials/">
+        <link rel="prev" href="../web-ui/">
       
       
-        <link rel="next" href="../tui/">
+        <link rel="next" href="../binary-loader/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Framebuffer - PyOS</title>
+        <title>Permissions - PyOS</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#framebuffer-the-screen-inside-the-computer" class="md-skip">
+        <a href="#permissions-groups-and-acls" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Framebuffer
+              Permissions
             
           </span>
         </div>
@@ -785,37 +785,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Framebuffer
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../framebuffer/" class="md-nav__link">
         
   
   
@@ -831,103 +804,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#the-whiteboard-analogy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Whiteboard Analogy
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#pixels-vs-characters" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Pixels vs Characters
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#how-drawing-works" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How Drawing Works
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#out-of-bounds-no-problem" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Out of Bounds? No Problem
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#gpu-memory-in-real-computers" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        GPU Memory in Real Computers
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#try-it-yourself" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Try It Yourself
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#where-to-go-next" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Where to Go Next
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -993,10 +869,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../permissions/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Permissions
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1012,6 +915,154 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-are-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Are Permissions?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#owner-group-and-others" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Owner, Group, and Others
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#groups-like-school-clubs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Groups — Like School Clubs
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Groups — Like School Clubs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#try-it-in-pyos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Try it in PyOS
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-execute-bit-like-a-key-to-start-a-machine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Execute Bit — Like a Key to Start a Machine
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The Execute Bit — Like a Key to Start a Machine">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#try-it-in-pyos_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Try it in PyOS
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#acls-the-detailed-guest-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ACLs — The Detailed Guest List
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ACLs — The Detailed Guest List">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#try-it-in-pyos_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Try it in PyOS
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#real-world-connection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Real-World Connection
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#shell-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shell Commands
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1128,71 +1179,137 @@
   
 
 
-<h1 id="framebuffer-the-screen-inside-the-computer">Framebuffer: The Screen Inside the Computer</h1>
-<h2 id="the-whiteboard-analogy">The Whiteboard Analogy</h2>
-<p>Imagine a whiteboard hanging on the wall. It's divided into a grid of tiny squares
--- rows and columns. Each square can hold one letter, one number, or one symbol.
-When you write on the whiteboard, you're filling in squares. When you erase, you
-set squares back to blank.</p>
-<p>That whiteboard is a <strong>framebuffer</strong> -- a chunk of memory that holds everything
-currently shown on the screen. Every character you see in a terminal, every pixel
-in a game, lives somewhere in a framebuffer.</p>
-<h2 id="pixels-vs-characters">Pixels vs Characters</h2>
-<p>In a graphical OS like Windows or macOS, each square in the framebuffer holds a
-<strong>pixel</strong> -- a tiny dot of colour. A typical screen might be 1920 pixels wide and
-1080 pixels tall. That's over two million pixels, each stored as a colour value
-(red, green, blue).</p>
-<p>PyOS keeps things simpler. Our framebuffer is a <strong>character grid</strong> -- each cell
-holds one ASCII character. The default display is 40 columns wide and 12 rows
-tall. It's like a tiny terminal window inside the OS.</p>
-<h2 id="how-drawing-works">How Drawing Works</h2>
-<p>Drawing on the framebuffer means changing what's stored in the grid cells:</p>
+<h1 id="permissions-groups-and-acls">Permissions, Groups, and ACLs</h1>
+<h2 id="what-are-permissions">What Are Permissions?</h2>
+<p>Imagine you have a diary. You probably don't want everyone to be able to read it, right? And you <em>definitely</em> don't want anyone else writing in it!</p>
+<p>That's exactly what <strong>file permissions</strong> do in an operating system. Every file has rules about who can:</p>
 <ul>
-<li><strong>set_pixel(x, y, char)</strong> -- put a character at one position</li>
-<li><strong>draw_text(x, y, text)</strong> -- write a string of characters starting at a position</li>
-<li><strong>fill_rect(x1, y1, x2, y2, char)</strong> -- fill a rectangle with one character</li>
-<li><strong>clear()</strong> -- reset everything to spaces</li>
+<li><strong>Read</strong> it (look at what's inside)</li>
+<li><strong>Write</strong> to it (change what's inside)</li>
+<li><strong>Execute</strong> it (run it as a program)</li>
 </ul>
-<p>When you ask the framebuffer to <strong>render</strong>, it reads the grid and produces a
-bordered ASCII picture:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>+----------------------------------------+
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>|                                        |
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>|  PyOS Framebuffer                      |
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>|                                        |
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>|  Hello, World!                         |
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>|                                        |
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>+----------------------------------------+
+<h2 id="owner-group-and-others">Owner, Group, and Others</h2>
+<p>Every file has three levels of access, like three circles around it:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a> ┌──────────────────────────────┐
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a> │         Others (o)           │
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a> │   ┌──────────────────────┐   │
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a> │   │      Group (g)       │   │
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a> │   │   ┌──────────────┐   │   │
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a> │   │   │  Owner (u)   │   │   │
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a> │   │   └──────────────┘   │   │
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a> │   └──────────────────────┘   │
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a> └──────────────────────────────┘
 </code></pre></div>
-<h2 id="out-of-bounds-no-problem">Out of Bounds? No Problem</h2>
-<p>What happens if you try to draw outside the grid -- say, at column 100 when the
-display is only 40 columns wide? The framebuffer silently ignores it. No error,
-no crash. This is called <strong>clipping</strong>, and real GPUs do the same thing. If a game
-draws a character that's half off the edge of the screen, the GPU just skips the
-invisible part.</p>
-<h2 id="gpu-memory-in-real-computers">GPU Memory in Real Computers</h2>
-<p>In a real computer, the framebuffer lives in <strong>video RAM</strong> (VRAM) on the graphics
-card. The GPU reads this memory many times per second (usually 60 or more) and
-sends the result to your monitor. That's why changing what's in the framebuffer
-instantly changes what you see on screen.</p>
-<p>Modern GPUs have their own processors and can draw complex 3D graphics, apply
-textures, and run shader programs -- all by writing the results into the
-framebuffer. But at the most basic level, it's still just a grid of values that
-gets displayed on screen.</p>
-<h2 id="try-it-yourself">Try It Yourself</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>fb              # Show framebuffer info (dimensions, status)
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>fb render       # Display the current screen contents
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>fb pixel 5 3 X  # Place an &#39;X&#39; at column 5, row 3
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>fb text 2 1 Hi  # Write &quot;Hi&quot; starting at column 2, row 1
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>fb rect 0 0 9 4 #  # Fill a 10x5 rectangle with &#39;#&#39;
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>fb clear        # Wipe the screen
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>fb demo         # Draw a demo pattern with borders and text
-</code></pre></div>
-<h2 id="where-to-go-next">Where to Go Next</h2>
 <ul>
-<li><a href="../devices-and-networking/">Devices and Networking</a> -- How the OS talks to hardware</li>
-<li><a href="../shell/">The Shell</a> -- The command-line interface to the OS</li>
-<li><a href="../memory/">Memory</a> -- How the OS manages RAM (the framebuffer lives in memory!)</li>
+<li><strong>Owner</strong> — the person who created the file. They usually get full control.</li>
+<li><strong>Group</strong> — a set of users who share access. Think of a school club: everyone in the Art Club can use the art supplies.</li>
+<li><strong>Others</strong> — everyone else on the system.</li>
 </ul>
+<p>Each level gets its own read, write, and execute flags. We write them as a 9-character string:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>rwxr-xr--
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>│││││││││
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>│││││││└┘── Others:  r-- (read only)
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>│││││└┘──── Group:   r-x (read + execute)
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>│││└┘────── Owner:   rwx (read + write + execute)
+</code></pre></div>
+<h2 id="groups-like-school-clubs">Groups — Like School Clubs</h2>
+<p>A <strong>group</strong> is a named collection of users. Just like how your school might have a Robotics Club and a Drama Club, an OS can have groups like <code>devs</code> (developers) or <code>admins</code> (administrators).</p>
+<p>The cool thing is that one person can be in multiple groups, just like you might be in both the Robotics Club and the Chess Club.</p>
+<p>When a file belongs to a group, every member of that group gets the group's permissions. So if the <code>devs</code> group has read access to a config file, every developer can read it.</p>
+<h3 id="try-it-in-pyos">Try it in PyOS</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>groups add devs          # Create a group called &quot;devs&quot;
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>adduser alice            # Create a user
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>groups adduser 1 1       # Add alice (uid 1) to devs (gid 1)
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>groups list              # See all groups and members
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>groups                   # See your current groups
+</code></pre></div>
+<h2 id="the-execute-bit-like-a-key-to-start-a-machine">The Execute Bit — Like a Key to Start a Machine</h2>
+<p>Reading a file is like looking at a recipe card. Writing to a file is like changing the recipe. But <strong>executing</strong> a file is like actually <em>cooking</em> the recipe — turning it into something that runs.</p>
+<p>Not every file should be executable. A text document? No need to run that. But a program? That needs the execute bit turned on, like a key that unlocks the ability to run it.</p>
+<p>Without the execute bit, a file is just data sitting there. With it, the file becomes something the computer can actually run as a program.</p>
+<h3 id="try-it-in-pyos_1">Try it in PyOS</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>touch /myprogram                         # Create a file
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>chmod /myprogram rwxr-xr-x               # Owner, group, and others can execute
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>chmod /myprogram rw-r--r--               # Nobody can execute (just read/write)
+</code></pre></div>
+<h2 id="acls-the-detailed-guest-list">ACLs — The Detailed Guest List</h2>
+<p>Regular permissions (owner/group/others) are like a simple rule: "members only" or "everyone welcome." But sometimes you need more control.</p>
+<p><strong>Access Control Lists (ACLs)</strong> are like a detailed guest list at a party:</p>
+<ul>
+<li>"Alice can come in and eat cake" (specific user, read + write)</li>
+<li>"Everyone in the Chess Club can watch" (specific group, read only)</li>
+<li>"Bob is <em>not</em> allowed, even though he's in the Chess Club" (user override)</li>
+</ul>
+<p>ACLs let you set permissions for <em>specific</em> users or groups, without changing the general rules. They take priority over the regular permissions:</p>
+<ol>
+<li><strong>User ACL</strong> — checked first (most specific)</li>
+<li><strong>Group ACL</strong> — checked next</li>
+<li><strong>Owner permissions</strong> — if you're the owner</li>
+<li><strong>Group permissions</strong> — if you're in the file's group</li>
+<li><strong>Other permissions</strong> — everyone else</li>
+</ol>
+<p>And the <strong>root</strong> user (uid 0)? They always get in, no matter what. Root is like the school principal — every door is open.</p>
+<h3 id="try-it-in-pyos_2">Try it in PyOS</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>touch /secret.txt                        # Create a file
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>setfacl /secret.txt user:1:rwx           # Give alice (uid 1) full access
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>setfacl /secret.txt group:2:r--          # Give group 2 read-only
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>getfacl /secret.txt                      # See all permissions + ACLs
+</code></pre></div>
+<h2 id="real-world-connection">Real-World Connection</h2>
+<p>Every operating system uses permissions:</p>
+<ul>
+<li><strong>Linux/macOS</strong> use exactly this model: <code>rwxrwxrwx</code> plus ACLs</li>
+<li><strong>Windows</strong> uses a similar system called NTFS permissions</li>
+<li><strong>Phone apps</strong> ask for permissions too — camera, microphone, contacts</li>
+</ul>
+<p>The idea is the same everywhere: <strong>decide who can do what, and enforce it</strong>.</p>
+<h2 id="shell-commands">Shell Commands</h2>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>chmod path rwxrwxrwx</code></td>
+<td>Set the 9-bit permissions on a file</td>
+</tr>
+<tr>
+<td><code>chown path uid [gid]</code></td>
+<td>Change who owns a file (and its group)</td>
+</tr>
+<tr>
+<td><code>getfacl path</code></td>
+<td>Show all permissions and ACL entries</td>
+</tr>
+<tr>
+<td><code>setfacl path type:id:rwx</code></td>
+<td>Add an ACL entry for a user or group</td>
+</tr>
+<tr>
+<td><code>groups</code></td>
+<td>Show your current group memberships</td>
+</tr>
+<tr>
+<td><code>groups list</code></td>
+<td>List all groups</td>
+</tr>
+<tr>
+<td><code>groups add name</code></td>
+<td>Create a new group</td>
+</tr>
+<tr>
+<td><code>groups adduser uid gid</code></td>
+<td>Add a user to a group</td>
+</tr>
+<tr>
+<td><code>groups removeuser uid gid</code></td>
+<td>Remove a user from a group</td>
+</tr>
+</tbody>
+</table>
 
 
 

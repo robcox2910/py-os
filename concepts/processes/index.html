@@ -1384,6 +1384,118 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../permissions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Permissions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../binary-loader/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Binary Loader
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../containers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Containers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../inter-machine-networking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inter-Machine Networking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1565,7 +1677,7 @@
 <li><strong>Judges always serve the highest level first</strong> (lowest number = highest priority).</li>
 <li><strong>Periodic boost</strong> resets everyone to level 0 to prevent starvation.</li>
 </ol>
-<p>This means short I/O-bound processes (like typing in a text editor) stay at level 0 and get fast response times, while long CPU-bound processes (like video encoding) naturally sink to lower levels with longer quanta -- less context-switching overhead for them.</p>
+<p>This means short I/O-bound processes (like typing in a text editor) stay at level 0 and get fast response times, while long CPU-bound processes (like rendering a complex game scene) naturally sink to lower levels with longer quanta -- less context-switching overhead for them.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># MLFQ with 3 levels, base quantum of 2</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">policy</span> <span class="o">=</span> <span class="n">MLFQPolicy</span><span class="p">(</span><span class="n">num_levels</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">base_quantum</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="c1"># Quanta: level 0 = 2, level 1 = 4, level 2 = 8</span>

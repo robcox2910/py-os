@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://robcox2910.github.io/py-os/concepts/framebuffer/">
+        <link rel="canonical" href="https://robcox2910.github.io/py-os/concepts/binary-loader/">
       
       
-        <link rel="prev" href="../tutorials/">
+        <link rel="prev" href="../permissions/">
       
       
-        <link rel="next" href="../tui/">
+        <link rel="next" href="../containers/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Framebuffer - PyOS</title>
+        <title>Binary Loader - PyOS</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#framebuffer-the-screen-inside-the-computer" class="md-skip">
+        <a href="#binary-programs-and-the-loader" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Framebuffer
+              Binary Loader
             
           </span>
         </div>
@@ -785,37 +785,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Framebuffer
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../framebuffer/" class="md-nav__link">
         
   
   
@@ -831,103 +804,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#the-whiteboard-analogy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Whiteboard Analogy
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#pixels-vs-characters" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Pixels vs Characters
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#how-drawing-works" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How Drawing Works
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#out-of-bounds-no-problem" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Out of Bounds? No Problem
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#gpu-memory-in-real-computers" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        GPU Memory in Real Computers
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#try-it-yourself" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Try It Yourself
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#where-to-go-next" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Where to Go Next
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1021,10 +897,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../binary-loader/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Binary Loader
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1040,6 +943,142 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-is-a-binary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Is a Binary?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#real-binary-formats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Real Binary Formats
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#our-format-pybin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Our Format: PyBin
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Our Format: PyBin">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-header" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Header
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#instructions-bytecode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Instructions (Bytecode)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-the-loader-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How the Loader Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-builder" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Builder
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#permission-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Permission Check
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#try-it-in-the-shell" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Try It in the Shell
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-does-this-matter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why Does This Matter?
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1128,71 +1167,216 @@
   
 
 
-<h1 id="framebuffer-the-screen-inside-the-computer">Framebuffer: The Screen Inside the Computer</h1>
-<h2 id="the-whiteboard-analogy">The Whiteboard Analogy</h2>
-<p>Imagine a whiteboard hanging on the wall. It's divided into a grid of tiny squares
--- rows and columns. Each square can hold one letter, one number, or one symbol.
-When you write on the whiteboard, you're filling in squares. When you erase, you
-set squares back to blank.</p>
-<p>That whiteboard is a <strong>framebuffer</strong> -- a chunk of memory that holds everything
-currently shown on the screen. Every character you see in a terminal, every pixel
-in a game, lives somewhere in a framebuffer.</p>
-<h2 id="pixels-vs-characters">Pixels vs Characters</h2>
-<p>In a graphical OS like Windows or macOS, each square in the framebuffer holds a
-<strong>pixel</strong> -- a tiny dot of colour. A typical screen might be 1920 pixels wide and
-1080 pixels tall. That's over two million pixels, each stored as a colour value
-(red, green, blue).</p>
-<p>PyOS keeps things simpler. Our framebuffer is a <strong>character grid</strong> -- each cell
-holds one ASCII character. The default display is 40 columns wide and 12 rows
-tall. It's like a tiny terminal window inside the OS.</p>
-<h2 id="how-drawing-works">How Drawing Works</h2>
-<p>Drawing on the framebuffer means changing what's stored in the grid cells:</p>
+<h1 id="binary-programs-and-the-loader">Binary Programs and the Loader</h1>
+<h2 id="what-is-a-binary">What Is a Binary?</h2>
+<p>When you write a program, you write it in a language that <strong>people</strong> can read.
+But a computer doesn't understand English — it only understands numbers.</p>
+<p>A <strong>binary file</strong> is a program that's been translated into a sequence of
+numbers (bytes) that the computer can decode and run. It's the final form of
+every program on your machine — from your web browser to a simple calculator.</p>
+<p>Think of it like this:</p>
 <ul>
-<li><strong>set_pixel(x, y, char)</strong> -- put a character at one position</li>
-<li><strong>draw_text(x, y, text)</strong> -- write a string of characters starting at a position</li>
-<li><strong>fill_rect(x1, y1, x2, y2, char)</strong> -- fill a rectangle with one character</li>
-<li><strong>clear()</strong> -- reset everything to spaces</li>
+<li>A <strong>recipe book</strong> is written in English so a person can follow it.</li>
+<li>A <strong>barcode</strong> encodes that same recipe as numbers so a machine can scan it.</li>
 </ul>
-<p>When you ask the framebuffer to <strong>render</strong>, it reads the grid and produces a
-bordered ASCII picture:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>+----------------------------------------+
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>|                                        |
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>|  PyOS Framebuffer                      |
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>|                                        |
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>|  Hello, World!                         |
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>|                                        |
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>+----------------------------------------+
+<p>The binary file is the barcode. The <strong>loader</strong> is the scanner that reads it,
+checks it makes sense, and tells the kitchen (CPU) what to cook.</p>
+<h2 id="real-binary-formats">Real Binary Formats</h2>
+<p>Real operating systems use specific binary formats:</p>
+<table>
+<thead>
+<tr>
+<th>OS</th>
+<th>Format</th>
+<th>Magic Bytes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Linux</td>
+<td>ELF</td>
+<td><code>\x7fELF</code></td>
+</tr>
+<tr>
+<td>Windows</td>
+<td>PE</td>
+<td><code>MZ</code></td>
+</tr>
+<tr>
+<td>macOS</td>
+<td>Mach-O</td>
+<td><code>\xfe\xed\xfa\xce</code></td>
+</tr>
+</tbody>
+</table>
+<p>The <strong>magic bytes</strong> are the first few bytes of the file. They're like a
+name tag that says "I'm a valid program!" — if the loader doesn't see the
+right magic, it refuses to load the file.</p>
+<h2 id="our-format-pybin">Our Format: PyBin</h2>
+<p>PyOS uses a simplified format called <strong>PyBin</strong>. It works the same way as
+ELF or PE, just much simpler:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>┌─────────────────────────────────────────────────┐
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>│                  PyBin File                      │
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>├──────────┬──────────────────────────────────────┤
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>│  Header  │  Magic: PYBN  │  Version: 1          │
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>│          │  Name length  │  Program name (UTF-8) │
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>│          │  Instruction count                    │
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>├──────────┼──────────────────────────────────────┤
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>│  Code    │  Instruction 1 (opcode + arguments)  │
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>│          │  Instruction 2 (opcode + arguments)  │
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>│          │  ...                                  │
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>│          │  HALT                                 │
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>└──────────┴──────────────────────────────────────┘
 </code></pre></div>
-<h2 id="out-of-bounds-no-problem">Out of Bounds? No Problem</h2>
-<p>What happens if you try to draw outside the grid -- say, at column 100 when the
-display is only 40 columns wide? The framebuffer silently ignores it. No error,
-no crash. This is called <strong>clipping</strong>, and real GPUs do the same thing. If a game
-draws a character that's half off the edge of the screen, the GPU just skips the
-invisible part.</p>
-<h2 id="gpu-memory-in-real-computers">GPU Memory in Real Computers</h2>
-<p>In a real computer, the framebuffer lives in <strong>video RAM</strong> (VRAM) on the graphics
-card. The GPU reads this memory many times per second (usually 60 or more) and
-sends the result to your monitor. That's why changing what's in the framebuffer
-instantly changes what you see on screen.</p>
-<p>Modern GPUs have their own processors and can draw complex 3D graphics, apply
-textures, and run shader programs -- all by writing the results into the
-framebuffer. But at the most basic level, it's still just a grid of values that
-gets displayed on screen.</p>
-<h2 id="try-it-yourself">Try It Yourself</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>fb              # Show framebuffer info (dimensions, status)
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>fb render       # Display the current screen contents
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>fb pixel 5 3 X  # Place an &#39;X&#39; at column 5, row 3
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>fb text 2 1 Hi  # Write &quot;Hi&quot; starting at column 2, row 1
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>fb rect 0 0 9 4 #  # Fill a 10x5 rectangle with &#39;#&#39;
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>fb clear        # Wipe the screen
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>fb demo         # Draw a demo pattern with borders and text
-</code></pre></div>
-<h2 id="where-to-go-next">Where to Go Next</h2>
+<h3 id="the-header">The Header</h3>
+<p>Every PyBin file starts with a <strong>header</strong> — metadata about the program:</p>
+<ol>
+<li><strong>Magic number</strong> (<code>PYBN</code>) — 4 bytes that identify it as a PyBin file</li>
+<li><strong>Version</strong> — so the loader knows which format to expect</li>
+<li><strong>Name</strong> — the program's name (like "hello" or "counter")</li>
+<li><strong>Instruction count</strong> — how many instructions follow</li>
+</ol>
+<h3 id="instructions-bytecode">Instructions (Bytecode)</h3>
+<p>After the header come the instructions — the actual steps the program
+follows. Each instruction has:</p>
 <ul>
-<li><a href="../devices-and-networking/">Devices and Networking</a> -- How the OS talks to hardware</li>
-<li><a href="../shell/">The Shell</a> -- The command-line interface to the OS</li>
-<li><a href="../memory/">Memory</a> -- How the OS manages RAM (the framebuffer lives in memory!)</li>
+<li>An <strong>opcode</strong> — a number that says <em>what</em> to do</li>
+<li><strong>Arguments</strong> — extra information the instruction needs</li>
 </ul>
+<p>Here are all the opcodes:</p>
+<table>
+<thead>
+<tr>
+<th>Opcode</th>
+<th>Name</th>
+<th>What It Does</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>PRINT</td>
+<td>Display a value</td>
+<td><code>PRINT "Hello!"</code></td>
+</tr>
+<tr>
+<td>2</td>
+<td>SET</td>
+<td>Store a number in a variable</td>
+<td><code>SET x 42</code></td>
+</tr>
+<tr>
+<td>3</td>
+<td>ADD</td>
+<td>Add two variables</td>
+<td><code>ADD result a b</code></td>
+</tr>
+<tr>
+<td>4</td>
+<td>SUB</td>
+<td>Subtract two variables</td>
+<td><code>SUB result a b</code></td>
+</tr>
+<tr>
+<td>5</td>
+<td>LOAD</td>
+<td>Store a string in a variable</td>
+<td><code>LOAD msg "hi"</code></td>
+</tr>
+<tr>
+<td>6</td>
+<td>CONCAT</td>
+<td>Join two strings</td>
+<td><code>CONCAT full first last</code></td>
+</tr>
+<tr>
+<td>7</td>
+<td>LOOP</td>
+<td>Repeat the next N instructions</td>
+<td><code>LOOP 3</code></td>
+</tr>
+<tr>
+<td>8</td>
+<td>HALT</td>
+<td>Stop the program</td>
+<td><code>HALT</code></td>
+</tr>
+</tbody>
+</table>
+<p>Think of opcodes like action words in a recipe:
+"<strong>Chop</strong> the onion" — <em>chop</em> is the opcode, <em>onion</em> is the argument.</p>
+<h2 id="how-the-loader-works">How the Loader Works</h2>
+<p>Loading a binary is like opening a recipe card and cooking:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>┌──────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>│  Read    │ ──&gt; │  Check   │ ──&gt; │  Parse   │ ──&gt; │ Execute  │
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>│  file    │     │  magic   │     │  header  │     │  code    │
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>│  bytes   │     │  number  │     │  + code  │     │          │
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>└──────────┘     └──────────┘     └──────────┘     └──────────┘
+</code></pre></div>
+<ol>
+<li><strong>Read</strong> the file from disk as raw bytes</li>
+<li><strong>Check</strong> the magic number — is it really <code>PYBN</code>?</li>
+<li><strong>Parse</strong> the header to learn the program's name and size</li>
+<li><strong>Execute</strong> each instruction in order, until <code>HALT</code></li>
+</ol>
+<p>If anything goes wrong (wrong magic, file too short, unknown opcode),
+the loader raises an error instead of crashing.</p>
+<h2 id="the-builder">The Builder</h2>
+<p>The <code>BinaryBuilder</code> lets you create PyBin programs using a friendly API
+instead of crafting raw bytes by hand:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">py_os.process.binary</span><span class="w"> </span><span class="kn">import</span> <span class="n">BinaryBuilder</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">data</span> <span class="o">=</span> <span class="p">(</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="n">BinaryBuilder</span><span class="p">(</span><span class="s2">&quot;hello&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="o">.</span><span class="n">print</span><span class="p">(</span><span class="s2">&quot;Hello from PyBin!&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="o">.</span><span class="n">halt</span><span class="p">()</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span class="o">.</span><span class="n">build</span><span class="p">()</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="p">)</span>
+</code></pre></div>
+<p>Don't worry if the Python code looks complex -- the important thing is the
+<em>idea</em>: the builder creates instructions step by step, then packs them into
+a binary file.</p>
+<p>This produces the exact same bytes as if you'd written them manually --
+but it's much easier to read and get right!</p>
+<h2 id="permission-check">Permission Check</h2>
+<p>Before the loader executes a binary, it checks that the file has
+<strong>execute permission</strong> (the <code>x</code> bit). Without it, the OS refuses to
+run the program — even if the file contains valid bytecode.</p>
+<p>This is an important security feature. Just because a file <em>contains</em>
+instructions doesn't mean you should be allowed to <em>run</em> them. Think of
+it like a locked door: the key (execute permission) decides who can enter.</p>
+<p>See <a href="../permissions/">Permissions</a> for more about how permissions work.</p>
+<h2 id="try-it-in-the-shell">Try It in the Shell</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>PyOS&gt; compile list           # See available demo programs
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>PyOS&gt; compile hello          # Build the hello binary in /bin
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>PyOS&gt; run /bin/hello         # Load and execute it
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>Hello from PyBin!
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>PyOS&gt; hexdump /bin/hello     # See the raw bytes
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>PyBin binary (33 bytes)
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>  Magic: b&#39;PYBN&#39;
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>0000  50 59 42 4e 01 00 05 00 ...  PYBN....
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>PyOS&gt; compile counter        # Build the counter program
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>PyOS&gt; run /bin/counter       # Run it
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>1
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>2
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>3
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>4
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>5
+</code></pre></div>
+<h2 id="why-does-this-matter">Why Does This Matter?</h2>
+<p>Every program you've ever used — games, browsers, editors — went through
+this process:</p>
+<ol>
+<li>Someone wrote <strong>source code</strong> (human-readable)</li>
+<li>A <strong>compiler</strong> turned it into <strong>binary</strong> (machine-readable)</li>
+<li>The OS <strong>loader</strong> read the binary, checked it, and ran it</li>
+</ol>
+<p>Our PyBin format is a miniature version of the same idea. By understanding
+it, you're learning the fundamentals of how <em>all</em> programs get loaded and
+executed on <em>every</em> operating system.</p>
 
 
 
