@@ -1,14 +1,35 @@
 # PyOS
 
-A simulated operating system built in Python for learning. If you know basic Python and are curious about how computers actually work under the hood, this project is for you.
+## The School Principal of Your Computer
 
-Every module mirrors a real OS subsystem -- processes, memory, filesystems, networking -- built piece by piece using test-driven development.
+Imagine a busy school with hundreds of students, dozens of classrooms,
+a library, a cafeteria, and a gym. Without a **principal**, it would
+be chaos -- everyone fighting over rooms, no one knowing when lunch
+is, books going missing.
 
-## What Will I Learn?
+An **operating system** is the principal of your computer. It decides
+which programs get to run (scheduling), where things are stored
+(memory and filesystems), and how programs talk to each other
+(networking). PyOS builds a mini version of one so you can see all
+the pieces and how they fit together.
 
-Ever wondered what happens when you open a program, save a file, or connect to the internet? An operating system makes all of that work. PyOS builds a mini version of one so you can see the pieces and how they fit together.
+## Our Building Blocks
 
-Start here: **[What Is an Operating System?](concepts/what-is-an-os.md)**
+| Concept | Analogy | What It Does |
+|---------|---------|-------------|
+| **Processes** | Students | Programs that are running |
+| **Memory** | Lockers | Where programs store their stuff |
+| **Filesystem** | The library | Where files and folders are kept |
+| **Kernel** | The principal's office | The brain that runs everything |
+| **Shell** | The intercom | How you talk to the OS |
+| **Networking** | The phone system | How computers talk to each other |
+| **Scheduling** | The class timetable | Who gets to run and when |
+| **Synchronization** | Hall passes | Preventing two programs from crashing into each other |
+
+## Let's Start!
+
+Head to **[What Is an Operating System?](concepts/what-is-an-os.md)**
+to begin your journey.
 
 ## Quick Start
 
