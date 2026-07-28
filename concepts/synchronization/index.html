@@ -1379,6 +1379,7 @@
 </code></pre></div>
 <h3 id="writer-preference">Writer-Preference</h3>
 <p>Notice that Thread D was blocked even though it was a reader. This is <strong>writer-preference</strong>: when a writer is waiting in line, new readers queue behind it rather than jumping ahead. Without this rule, a steady stream of readers could starve the writer forever -- the writer would never get a turn.</p>
+<p><strong>Caveat:</strong> unlike the mutex and semaphore (which serve waiters in FIFO order and are starvation-free), the <code>ReadWriteLock</code> is <em>not</em> starvation-free for readers. It deliberately favours writers, so a steady stream of writers can keep new readers waiting indefinitely -- a trade-off you accept in exchange for never starving writers.</p>
 <p><strong>Shell usage:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>rwlock create db_lock
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>rwlock list

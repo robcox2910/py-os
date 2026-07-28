@@ -1237,16 +1237,16 @@
 <li>Advances the timer counter by one.</li>
 <li>If the counter reaches the interval, the timer <strong>fires</strong> -- it sends an interrupt to the controller.</li>
 <li>The controller delivers all pending interrupts to their handlers.</li>
-<li>The timer handler checks if the current process has used up its time slice. If so, it <strong>preempts</strong> the process (moves it to the back of the ready queue) and lets the next process run.</li>
+<li>The timer handler checks if the current process has used up its time slice. If so, it <strong>preempts</strong> the process -- moving it from RUNNING back to the ready queue -- so the next dispatch runs a different process. <code>tick()</code> reports this by returning <code>preempted: True</code>.</li>
 </ol>
 <h2 id="timer-driven-preemption">Timer-Driven Preemption</h2>
 <p>Without a timer, a process could hog the CPU forever. The timer makes <strong>preemptive scheduling</strong> possible:</p>
 <ol>
 <li>The scheduler gives a process a <strong>quantum</strong> (a fixed number of ticks to run).</li>
 <li>The timer counts ticks.</li>
-<li>When ticks reach the quantum, the timer fires and the kernel switches to the next process.</li>
+<li>When ticks reach the quantum, the timer fires and the kernel <strong>preempts</strong> the running process, moving it to the back of the ready queue so the next dispatch runs someone else.</li>
 </ol>
-<p>This is how Round Robin, MLFQ, and CFS schedulers ensure fairness -- no single process can monopolise the CPU.</p>
+<p>This is how Round Robin, MLFQ, and CFS schedulers ensure fairness -- no single process can monopolise the CPU. Non-preemptive policies (FCFS and Priority) have no quantum, so the timer never preempts them.</p>
 <h2 id="how-interrupts-fit-in-the-big-picture">How Interrupts Fit in the Big Picture</h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>┌─────────────────────────────────────────────────┐
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>│                    Kernel                        │
