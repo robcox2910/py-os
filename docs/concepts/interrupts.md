@@ -84,7 +84,7 @@ Each tick:
 1. Advances the timer counter by one.
 2. If the counter reaches the interval, the timer **fires** -- it sends an interrupt to the controller.
 3. The controller delivers all pending interrupts to their handlers.
-4. The timer handler checks if the current process has used up its time slice. If so, it **preempts** the process (moves it to the back of the ready queue) and lets the next process run.
+4. The timer handler checks if the current process has used up its time slice. If so, it **preempts** the process -- moving it from RUNNING back to the ready queue -- so the next dispatch runs a different process. `tick()` reports this by returning `preempted: True`.
 
 ## Timer-Driven Preemption
 
@@ -92,9 +92,9 @@ Without a timer, a process could hog the CPU forever. The timer makes **preempti
 
 1. The scheduler gives a process a **quantum** (a fixed number of ticks to run).
 2. The timer counts ticks.
-3. When ticks reach the quantum, the timer fires and the kernel switches to the next process.
+3. When ticks reach the quantum, the timer fires and the kernel **preempts** the running process, moving it to the back of the ready queue so the next dispatch runs someone else.
 
-This is how Round Robin, MLFQ, and CFS schedulers ensure fairness -- no single process can monopolise the CPU.
+This is how Round Robin, MLFQ, and CFS schedulers ensure fairness -- no single process can monopolise the CPU. Non-preemptive policies (FCFS and Priority) have no quantum, so the timer never preempts them.
 
 ## How Interrupts Fit in the Big Picture
 
