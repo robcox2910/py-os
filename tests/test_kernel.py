@@ -332,3 +332,75 @@ class TestKernelMmapErrors:
         with pytest.raises(MmapError, match="no virtual memory"):
             kernel.mmap_file(pid=proc.pid, path="/vm_test.txt")
         kernel.shutdown()
+
+
+class TestWaitReadyQueue:
+    """Verify that a parent blocking in wait() leaves the ready queue."""
+
+    def test_blocked_parent_removed_from_ready_queue(self) -> None:
+        """A WAITING parent must not remain in the scheduler ready queue.
+
+        Regression: previously the blocked parent stayed in the ready
+        queue, so the next dispatch picked a WAITING process and crashed
+        with "Cannot dispatch: process N is waiting".
+        """
+        kernel = Kernel()
+        kernel.boot()
+        with kernel.kernel_mode():
+            parent = kernel.create_process(name="parent", num_pages=1)
+            kernel.fork_process(parent_pid=parent.pid)
+
+            # Parent blocks waiting for its still-running child
+            result = kernel.wait_process(parent_pid=parent.pid)
+            assert result is None
+            assert parent.state is ProcessState.WAITING
+
+            sched = kernel.scheduler
+            assert sched is not None
+            ready_pids = {p.pid for p in sched.cpu_scheduler(0).ready_processes}
+            assert parent.pid not in ready_pids
+
+            # Dispatching every remaining ready process must not raise.
+            for _ in range(sched.cpu_ready_count(0)):
+                sched.dispatch()
+
+    def test_woken_parent_returns_to_ready_queue(self) -> None:
+        """When a child terminates, the woken parent becomes schedulable."""
+        kernel = Kernel()
+        kernel.boot()
+        with kernel.kernel_mode():
+            parent = kernel.create_process(name="parent", num_pages=1)
+            child = kernel.fork_process(parent_pid=parent.pid)
+            kernel.exec_process(pid=child.pid, program=lambda: "done")
+
+            kernel.wait_process(parent_pid=parent.pid)
+            assert parent.state is ProcessState.WAITING
+
+            # Child terminates -> parent is woken and re-added to the queue
+            kernel.run_process(pid=child.pid)
+            assert parent.state is ProcessState.READY
+
+            sched = kernel.scheduler
+            assert sched is not None
+            ready_pids = {p.pid for p in sched.cpu_scheduler(0).ready_processes}
+            assert parent.pid in ready_pids
+
+    def test_waitpid_blocked_parent_removed_from_ready_queue(self) -> None:
+        """Waitpid on a specific child also removes the parent from ready."""
+        kernel = Kernel()
+        kernel.boot()
+        with kernel.kernel_mode():
+            parent = kernel.create_process(name="parent", num_pages=1)
+            child = kernel.fork_process(parent_pid=parent.pid)
+
+            result = kernel.waitpid_process(parent_pid=parent.pid, child_pid=child.pid)
+            assert result is None
+            assert parent.state is ProcessState.WAITING
+
+            sched = kernel.scheduler
+            assert sched is not None
+            ready_pids = {p.pid for p in sched.cpu_scheduler(0).ready_processes}
+            assert parent.pid not in ready_pids
+
+            for _ in range(sched.cpu_ready_count(0)):
+                sched.dispatch()

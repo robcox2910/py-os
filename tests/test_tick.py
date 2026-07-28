@@ -81,6 +81,59 @@ class TestTimerFiring:
             assert fire_count == EXPECTED_FIRES
 
 
+class TestTimerPreemption:
+    """Test timer-driven preemption on quantum expiry."""
+
+    def test_quantum_expiry_preempts(self) -> None:
+        """A time-sliced policy preempts the running process at quantum end.
+
+        With Round Robin (quantum=2) and the default timer interval (5),
+        the first timer fire finds the quantum exhausted and preempts.
+        """
+        kernel = Kernel()
+        kernel.boot()
+        kernel.syscall(SyscallNumber.SYS_SET_SCHEDULER, policy="rr", quantum=2)
+        kernel.syscall(SyscallNumber.SYS_CREATE_PROCESS, name="p", num_pages=1)
+        # Dispatch so there is a RUNNING process to preempt.
+        kernel.syscall(SyscallNumber.SYS_DISPATCH)
+
+        result = kernel.syscall(SyscallNumber.SYS_TICK, count=5)
+        assert result["preempted"] is True
+
+    def test_running_process_returned_to_ready_queue(self) -> None:
+        """The preempted process is moved back to the ready queue."""
+        kernel = Kernel()
+        kernel.boot()
+        kernel.syscall(SyscallNumber.SYS_SET_SCHEDULER, policy="rr", quantum=2)
+        with kernel.kernel_mode():
+            sched = kernel.scheduler
+            assert sched is not None
+            running = sched.dispatch()
+            assert running is not None
+            assert sched.current is running
+
+        kernel.syscall(SyscallNumber.SYS_TICK, count=5)
+
+        with kernel.kernel_mode():
+            sched = kernel.scheduler
+            assert sched is not None
+            # After preemption there is no running process, and the
+            # preempted one is back in the ready queue.
+            assert sched.current is None
+            ready_pids = {p.pid for p in sched.cpu_scheduler(0).ready_processes}
+            assert running.pid in ready_pids
+
+    def test_fcfs_never_preempts(self) -> None:
+        """Non-preemptive policies (FCFS) never report a preemption."""
+        kernel = Kernel()
+        kernel.boot()
+        kernel.syscall(SyscallNumber.SYS_CREATE_PROCESS, name="p", num_pages=1)
+        kernel.syscall(SyscallNumber.SYS_DISPATCH)
+
+        result = kernel.syscall(SyscallNumber.SYS_TICK, count=10)
+        assert result["preempted"] is False
+
+
 class TestTickSyscall:
     """Test the SYS_TICK syscall."""
 

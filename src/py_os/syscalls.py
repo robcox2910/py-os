@@ -39,6 +39,7 @@ from py_os.io.bridge import BridgeError
 from py_os.io.dns import DnsError
 from py_os.io.networking import SocketError
 from py_os.io.shm import SharedMemoryError
+from py_os.memory.manager import OutOfMemoryError
 from py_os.memory.mmap import MmapError
 from py_os.memory.slab import SlabError
 from py_os.process.binary import DEMO_PROGRAMS, BinaryLoader, BinaryLoaderError
@@ -342,7 +343,13 @@ def _sys_create_process(kernel: Any, **kwargs: Any) -> dict[str, Any]:
     name: str = kwargs["name"]
     num_pages: int = kwargs["num_pages"]
     priority: int = kwargs.get("priority", 0)
-    process = kernel.create_process(name=name, num_pages=num_pages, priority=priority)
+    # OutOfMemoryError is NOT a subclass of MemoryError, so it must be caught
+    # explicitly here — otherwise a raw kernel exception would escape to
+    # user-space, breaking the promise that syscalls only raise SyscallError.
+    try:
+        process = kernel.create_process(name=name, num_pages=num_pages, priority=priority)
+    except OutOfMemoryError as e:
+        raise SyscallError(str(e)) from e
     return {"pid": process.pid, "name": process.name, "state": process.state}
 
 

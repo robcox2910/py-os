@@ -652,6 +652,26 @@ class MultiCPUScheduler:
         """
         return sum(s.purge_terminated() for s in self._schedulers)
 
+    def extract_from_ready(self, pid: int) -> Process | None:
+        """Remove a process by PID from whichever CPU's ready queue holds it.
+
+        Used when a process leaves the READY state outside of normal
+        dispatch (e.g. a parent blocking in ``wait``), so a later
+        dispatch never tries to run a process that is no longer ready.
+
+        Args:
+            pid: The PID to search for and remove.
+
+        Returns:
+            The removed process, or None if it was not in any ready queue.
+
+        """
+        for sched in self._schedulers:
+            proc = sched.extract_from_ready(pid)
+            if proc is not None:
+                return proc
+        return None
+
     def cpu_scheduler(self, cpu_id: int) -> Scheduler:
         """Return the per-CPU scheduler for *cpu_id*."""
         return self._schedulers[cpu_id]

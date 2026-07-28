@@ -90,6 +90,20 @@ class TestSyscallProcessOps:
         with pytest.raises(SyscallError, match="not found"):
             kernel.syscall(SyscallNumber.SYS_TERMINATE_PROCESS, pid=999)
 
+    def test_create_process_out_of_memory_wrapped(self) -> None:
+        """OutOfMemoryError must be wrapped in SyscallError, not leaked.
+
+        OutOfMemoryError is not a subclass of MemoryError, so it would
+        otherwise escape to user-space and break the syscall contract.
+        """
+        kernel = _booted_kernel()
+        with pytest.raises(SyscallError):
+            kernel.syscall(
+                SyscallNumber.SYS_CREATE_PROCESS,
+                name="hog",
+                num_pages=DEFAULT_TOTAL_FRAMES + 1,
+            )
+
 
 class TestSyscallFileOps:
     """Verify file-system-related system calls."""

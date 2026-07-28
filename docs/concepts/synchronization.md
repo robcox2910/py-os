@@ -106,6 +106,8 @@ Thread C: release_write  -> D wakes up (reader gets in)
 
 Notice that Thread D was blocked even though it was a reader. This is **writer-preference**: when a writer is waiting in line, new readers queue behind it rather than jumping ahead. Without this rule, a steady stream of readers could starve the writer forever -- the writer would never get a turn.
 
+**Caveat:** unlike the mutex and semaphore (which serve waiters in FIFO order and are starvation-free), the `ReadWriteLock` is *not* starvation-free for readers. It deliberately favours writers, so a steady stream of writers can keep new readers waiting indefinitely -- a trade-off you accept in exchange for never starving writers.
+
 **Shell usage:**
 ```
 rwlock create db_lock

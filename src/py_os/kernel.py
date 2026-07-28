@@ -191,6 +191,9 @@ class Kernel:
         self._framebuffer: Framebuffer | None = None
         self._tick_count: int = 0
         self._ticks_since_dispatch: int = 0
+        # Set True by _on_timer_interrupt when a running process's quantum
+        # expires; read (and cleared) once per tick() to report preemption.
+        self._preemption_pending: bool = False
 
         # DNS resolver — phone book for hostname → IP resolution
         self._dns_resolver: DnsResolver | None = None
@@ -204,9 +207,7 @@ class Kernel:
         # Performance metrics — track process lifecycle statistics
         self._total_created: int = 0
         self._total_completed: int = 0
-        self._total_wait_time: float = 0.0
-        self._total_turnaround_time: float = 0.0
-        self._total_response_time: float = 0.0
+        self._total_wait_time = self._total_turnaround_time = self._total_response_time = 0.0
 
         # Boot log — dmesg-style messages from subsystem initialisation
         self._boot_log: list[str] = []
@@ -577,6 +578,7 @@ class Kernel:
         self._device_manager.register(self._timer)
         self._tick_count = 0
         self._ticks_since_dispatch = 0
+        self._preemption_pending = False
         self._boot_log.append("[OK] Interrupt controller + timer")
 
         # TCP stack — reliable transport layer
@@ -739,6 +741,7 @@ class Kernel:
         self._socket_manager = self._tcp_stack = self._dns_resolver = None
         self._interrupt_controller = self._timer = None
         self._tick_count = self._ticks_since_dispatch = 0
+        self._preemption_pending = False
 
         # Reset performance metrics and strace state
         self._total_created = self._total_completed = 0
@@ -1824,12 +1827,16 @@ class Kernel:
         self._tick_count += 1
         self._ticks_since_dispatch += 1
 
+        # Clear the flag so it reflects only this tick's interrupt servicing.
+        self._preemption_pending = False
+
         # Timer may fire and raise VECTOR_TIMER
         self._timer.tick()
 
-        # Service all pending interrupts (timer + I/O)
-        preempted = self._preemption_pending
+        # Service all pending interrupts (timer + I/O).  The timer handler
+        # (_on_timer_interrupt) sets _preemption_pending if the quantum expired.
         serviced = self._interrupt_controller.service_pending()
+        preempted = self._preemption_pending
 
         if self._tcp_stack is not None:
             self._tcp_stack.tick()
@@ -1840,16 +1847,15 @@ class Kernel:
             "preempted": preempted,
         }
 
-    @property
-    def _preemption_pending(self) -> bool:
-        """Check whether preemption should happen (used by tick)."""
-        return False  # Set to True by _on_timer_interrupt
-
     def _on_timer_interrupt(self, _irq: InterruptRequest) -> None:
         """Handle a timer interrupt — preempt if the quantum is exhausted.
 
         For time-sliced policies (Round Robin, MLFQ, CFS), the quantum
         determines how many ticks a process gets before being preempted.
+        When the running process has used up its slice, it is moved back
+        to the ready queue and ``_preemption_pending`` is set so ``tick()``
+        can report that a preemption happened.  Non-preemptive policies
+        (FCFS, Priority) have no quantum, so nothing happens.
         """
         assert self._scheduler is not None  # noqa: S101
 
@@ -1867,6 +1873,11 @@ class Kernel:
 
         if quantum is not None and self._ticks_since_dispatch >= quantum:
             self._ticks_since_dispatch = 0
+            self._preemption_pending = True
+            # Honor the preemption: return the running process (if any) to
+            # the ready queue so the next dispatch picks someone else.
+            if self._scheduler.current is not None:
+                self._scheduler.preempt()
 
     def raise_io_interrupt(self, *, data: object = None) -> None:
         """Raise an I/O completion interrupt.
@@ -1926,6 +1937,11 @@ class Kernel:
         if target in {-1, child.pid}:
             parent.wake()
             parent.wait_target = None
+            # The parent was removed from the ready queue when it blocked
+            # (see wait_process/waitpid_process); make it runnable again.
+            if self._scheduler is not None:
+                self._scheduler.extract_from_ready(parent.pid)
+                self._scheduler.add(parent)
 
     def _collect_child(self, child: Process) -> dict[str, Any]:
         """Reap a zombie child and remove it from the process table.
@@ -2377,9 +2393,14 @@ class Kernel:
                 return self._collect_child(child)
 
         # No terminated child yet — block the parent
+        assert self._scheduler is not None  # noqa: S101
         parent.dispatch()
         parent.wait()
         parent.wait_target = -1
+        # A WAITING process must not sit in the ready queue, or the next
+        # dispatch would try to run it and crash.  Remove it now; it is
+        # re-added when a child terminates (see _notify_waiting_parent).
+        self._scheduler.extract_from_ready(parent_pid)
         return None
 
     def waitpid_process(self, *, parent_pid: int, child_pid: int) -> dict[str, Any] | None:
@@ -2418,9 +2439,13 @@ class Kernel:
             return self._collect_child(child)
 
         # Block the parent until this specific child terminates
+        assert self._scheduler is not None  # noqa: S101
         parent.dispatch()
         parent.wait()
         parent.wait_target = child_pid
+        # Remove the now-WAITING parent from the ready queue so a later
+        # dispatch does not try to run it; it is re-added on wake.
+        self._scheduler.extract_from_ready(parent_pid)
         return None
 
     # -- Strace — syscall tracing -----------------------------------------------
