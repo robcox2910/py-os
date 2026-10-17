@@ -4,18 +4,19 @@ site_description: A simulated operating system built in Python for learning OS c
 repo_url: https://github.com/robcox2910/py-os
 repo_name: robcox2910/py-os
 
+# theme:start
 theme:
   name: material
   palette:
     - scheme: default
-      primary: indigo
-      accent: teal
+      primary: deep-purple
+      accent: amber
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
     - scheme: slate
-      primary: indigo
-      accent: teal
+      primary: deep-purple
+      accent: amber
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
@@ -25,6 +26,7 @@ theme:
     - navigation.expand
     - toc.integrate
     - search.highlight
+# theme:end
 
 markdown_extensions:
   - pymdownx.highlight:
@@ -65,3 +67,27 @@ nav:
       - Binary Loader: concepts/binary-loader.md
       - Containers: concepts/containers.md
       - Inter-Machine Networking: concepts/inter-machine-networking.md
+  # series-nav:start
+  - The series:
+      - Series home: https://robcox2910.github.io/
+      - "[You are here] PyOS": https://robcox2910.github.io/py-os/
+      - Pebble: https://robcox2910.github.io/pebble-lang/
+      - PyDB: https://robcox2910.github.io/pydb/
+      - PyKV: https://robcox2910.github.io/pykv/
+      - PyDocDB: https://robcox2910.github.io/pydoc-db/
+      - PyGraphDB: https://robcox2910.github.io/pygraphdb/
+      - PyTSDB: https://robcox2910.github.io/pytsdb/
+      - PyVecDB: https://robcox2910.github.io/pyvecdb/
+      - PyColDB: https://robcox2910.github.io/pycoldb/
+      - PyCrypt: https://robcox2910.github.io/pycrypt/
+      - PyNet: https://robcox2910.github.io/pynet/
+      - PyWeb: https://robcox2910.github.io/pyweb/
+      - PyGit: https://robcox2910.github.io/pygit/
+      - PySearch: https://robcox2910.github.io/pysearch/
+      - PyMQ: https://robcox2910.github.io/pymq/
+      - PyLLM: https://robcox2910.github.io/pyllm/
+      - PyStack: https://robcox2910.github.io/pystack/
+  # series-nav:end
+
+exclude_docs: |
+  superpowers/
