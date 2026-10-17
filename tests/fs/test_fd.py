@@ -26,8 +26,9 @@ class TestFdDataStructures:
 
     def test_fd_error_is_an_exception(self) -> None:
         """FdError should be a standard exception."""
+        msg = "bad fd"
         with pytest.raises(FdError, match="bad fd"):
-            raise FdError("bad fd")
+            raise FdError(msg)
 
     def test_seek_whence_values(self) -> None:
         """SeekWhence should have set, cur, and end members."""

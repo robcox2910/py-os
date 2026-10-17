@@ -34,9 +34,9 @@ from enum import StrEnum
 from itertools import count
 
 
-# We define our own PermissionError to avoid shadowing the built-in.
-# In a real OS this would be EACCES / EPERM.
-class PermissionError(Exception):
+# We define our own permission error, named so it does not shadow the
+# built-in PermissionError.  In a real OS this would be EACCES / EPERM.
+class OsPermissionError(Exception):
     """Raised when a user lacks permission for an operation."""
 
 
@@ -347,7 +347,7 @@ class FilePermissions:
             groups: The user's group memberships (gids).
 
         Raises:
-            PermissionError: If access is denied.
+            OsPermissionError: If access is denied.
 
         """
         if uid == ROOT_UID:
@@ -357,7 +357,7 @@ class FilePermissions:
         if user_acl is not None:
             if not user_acl.read:
                 msg = "Read permission denied (ACL)"
-                raise PermissionError(msg)
+                raise OsPermissionError(msg)
             return
         # 2. Check group-specific ACLs
         group_acls = self._find_group_acls(groups)
@@ -365,23 +365,23 @@ class FilePermissions:
             if any(acl.read for acl in group_acls):
                 return
             msg = "Read permission denied (group ACL)"
-            raise PermissionError(msg)
+            raise OsPermissionError(msg)
         # 3. Check owner
         if uid == self.owner_uid:
             if not self.owner_read:
                 msg = "Read permission denied (owner)"
-                raise PermissionError(msg)
+                raise OsPermissionError(msg)
             return
         # 4. Check file group
         if groups is not None and self.group_gid is not None and self.group_gid in groups:
             if not self.group_read:
                 msg = "Read permission denied (group)"
-                raise PermissionError(msg)
+                raise OsPermissionError(msg)
             return
         # 5. Check other
         if not self.other_read:
             msg = "Read permission denied"
-            raise PermissionError(msg)
+            raise OsPermissionError(msg)
 
     def check_write(self, *, uid: int, groups: frozenset[int] | None = None) -> None:
         """Raise if the uid lacks write permission.
@@ -391,7 +391,7 @@ class FilePermissions:
             groups: The user's group memberships (gids).
 
         Raises:
-            PermissionError: If access is denied.
+            OsPermissionError: If access is denied.
 
         """
         if uid == ROOT_UID:
@@ -401,7 +401,7 @@ class FilePermissions:
         if user_acl is not None:
             if not user_acl.write:
                 msg = "Write permission denied (ACL)"
-                raise PermissionError(msg)
+                raise OsPermissionError(msg)
             return
         # 2. Check group-specific ACLs
         group_acls = self._find_group_acls(groups)
@@ -409,23 +409,23 @@ class FilePermissions:
             if any(acl.write for acl in group_acls):
                 return
             msg = "Write permission denied (group ACL)"
-            raise PermissionError(msg)
+            raise OsPermissionError(msg)
         # 3. Check owner
         if uid == self.owner_uid:
             if not self.owner_write:
                 msg = "Write permission denied (owner)"
-                raise PermissionError(msg)
+                raise OsPermissionError(msg)
             return
         # 4. Check file group
         if groups is not None and self.group_gid is not None and self.group_gid in groups:
             if not self.group_write:
                 msg = "Write permission denied (group)"
-                raise PermissionError(msg)
+                raise OsPermissionError(msg)
             return
         # 5. Check other
         if not self.other_write:
             msg = "Write permission denied"
-            raise PermissionError(msg)
+            raise OsPermissionError(msg)
 
     def check_execute(self, *, uid: int, groups: frozenset[int] | None = None) -> None:
         """Raise if the uid lacks execute permission.
@@ -435,7 +435,7 @@ class FilePermissions:
             groups: The user's group memberships (gids).
 
         Raises:
-            PermissionError: If access is denied.
+            OsPermissionError: If access is denied.
 
         """
         if uid == ROOT_UID:
@@ -445,7 +445,7 @@ class FilePermissions:
         if user_acl is not None:
             if not user_acl.execute:
                 msg = "Execute permission denied (ACL)"
-                raise PermissionError(msg)
+                raise OsPermissionError(msg)
             return
         # 2. Check group-specific ACLs
         group_acls = self._find_group_acls(groups)
@@ -453,20 +453,20 @@ class FilePermissions:
             if any(acl.execute for acl in group_acls):
                 return
             msg = "Execute permission denied (group ACL)"
-            raise PermissionError(msg)
+            raise OsPermissionError(msg)
         # 3. Check owner
         if uid == self.owner_uid:
             if not self.owner_execute:
                 msg = "Execute permission denied (owner)"
-                raise PermissionError(msg)
+                raise OsPermissionError(msg)
             return
         # 4. Check file group
         if groups is not None and self.group_gid is not None and self.group_gid in groups:
             if not self.group_execute:
                 msg = "Execute permission denied (group)"
-                raise PermissionError(msg)
+                raise OsPermissionError(msg)
             return
         # 5. Check other
         if not self.other_execute:
             msg = "Execute permission denied"
-            raise PermissionError(msg)
+            raise OsPermissionError(msg)

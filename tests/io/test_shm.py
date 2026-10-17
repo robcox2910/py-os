@@ -74,8 +74,9 @@ class TestSharedMemorySegment:
 
     def test_shared_memory_error(self) -> None:
         """SharedMemoryError is a standalone exception."""
+        msg = "boom"
         with pytest.raises(SharedMemoryError, match="boom"):
-            raise SharedMemoryError("boom")
+            raise SharedMemoryError(msg)
 
 
 # ── Cycle 2: shm_create ─────────────────────────────────────────────
