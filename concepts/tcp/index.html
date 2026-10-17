@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.3">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -1228,11 +1228,11 @@
 <p>Before two computers can exchange data, they need to agree to start a conversation. TCP uses a <strong>three-way handshake</strong>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Client                         Server
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  |                              |
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>  |--- SYN (seq=0) ------------&gt;|   &quot;Hey, want to talk?&quot;
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>  |--- SYN (seq=0) ------------&gt;|   "Hey, want to talk?"
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>  |                              |
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>  |&lt;-- SYN+ACK (seq=0, ack=1) --|   &quot;Sure, let&#39;s talk!&quot;
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>  |&lt;-- SYN+ACK (seq=0, ack=1) --|   "Sure, let's talk!"
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>  |                              |
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>  |--- ACK (ack=1) ------------&gt;|   &quot;Great, we&#39;re connected!&quot;
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>  |--- ACK (ack=1) ------------&gt;|   "Great, we're connected!"
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>  |                              |
 </code></pre></div>
 <ul>
@@ -1250,14 +1250,14 @@
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>  |                                |
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>  |--- data (seq=1, 5 bytes) ----&gt;|
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>  |                                |
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>  |&lt;-- ACK (ack=6) ---------------|   &quot;Got it, send byte 6 next&quot;
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>  |&lt;-- ACK (ack=6) ---------------|   "Got it, send byte 6 next"
 <a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>  |                                |
 </code></pre></div>
 <p>If the sender does not get an ACK within a timeout, it <strong>retransmits</strong> the data.</p>
 <h2 id="flow-control-the-sliding-window">Flow Control: The Sliding Window</h2>
 <p>The receiver advertises a <strong>receive window</strong> -- the number of segments it can accept right now. The sender must not send more than this window allows.</p>
 <p>Think of it like a mailbox with limited space. If the mailbox is full, the postman waits until you empty it before delivering more.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Receiver says: &quot;window_size = 8&quot;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Receiver says: "window_size = 8"
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>→ Sender can have at most 8 segments in flight at once
 </code></pre></div>
 <h2 id="congestion-control-dont-flood-the-network">Congestion Control: Don't Flood the Network</h2>
@@ -1313,11 +1313,11 @@
 <p>When both sides are done, they close the connection with a <strong>four-way close</strong>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>Client                         Server
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>  |                              |
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>  |--- FIN ----------------------&gt;|   &quot;I&#39;m done sending&quot;
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>  |&lt;-- ACK ----------------------|   &quot;OK, I heard you&quot;
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>  |--- FIN ----------------------&gt;|   "I'm done sending"
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>  |&lt;-- ACK ----------------------|   "OK, I heard you"
 <a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>  |                              |
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>  |&lt;-- FIN ----------------------|   &quot;I&#39;m done too&quot;
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>  |--- ACK ----------------------&gt;|   &quot;OK, goodbye&quot;
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>  |&lt;-- FIN ----------------------|   "I'm done too"
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>  |--- ACK ----------------------&gt;|   "OK, goodbye"
 <a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>  |                              |
 </code></pre></div>
 <p>After the final ACK, the connection enters <strong>TIME_WAIT</strong> briefly to handle any delayed segments, then closes.</p>
@@ -1384,7 +1384,7 @@
 <p>Or experiment manually:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>tcp listen 80              # Server listens on port 80
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>tcp connect 5000 80        # Client connects from port 5000
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>tcp send 2 &quot;Hello!&quot;        # Send data on connection 2
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>tcp send 2 "Hello!"        # Send data on connection 2
 <a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>tcp recv 3                 # Receive data on connection 3
 <a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>tcp info 2                 # See congestion/flow control state
 <a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>tcp close 2                # Graceful close
@@ -1502,7 +1502,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["content.code.copy", "navigation.sections", "navigation.expand", "toc.integrate", "search.highlight"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

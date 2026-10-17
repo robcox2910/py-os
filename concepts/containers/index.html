@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.3">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -1211,7 +1211,7 @@ our PyOS containers implement!</p>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>│                     Host Kernel                          │
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>│                                                          │
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>│  ┌─────────────────────┐   ┌─────────────────────┐      │
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>│  │   Container &quot;web&quot;    │   │   Container &quot;db&quot;     │      │
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>│  │   Container "web"    │   │   Container "db"     │      │
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>│  │                      │   │                      │      │
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>│  │  PID Namespace       │   │  PID Namespace       │      │
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>│  │  ├── VPID 1 (init)   │   │  ├── VPID 1 (init)   │      │
@@ -1263,10 +1263,10 @@ conflicting, because their network stacks are completely separate.</p>
 </ol>
 <h2 id="try-it-in-the-shell">Try It in the Shell</h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>PyOS&gt; container create web          # Create a new container
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>Created container &#39;web&#39; (state: created)
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>Created container 'web' (state: created)
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>PyOS&gt; container create db           # Create another one
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>Created container &#39;db&#39; (state: created)
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>Created container 'db' (state: created)
 <a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
 <a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>PyOS&gt; container list                # See all containers
 <a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>NAME        STATE      PROCS  FS_ROOT
@@ -1274,7 +1274,7 @@ conflicting, because their network stacks are completely separate.</p>
 <a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>db          created    0      /containers/db
 <a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>
 <a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>PyOS&gt; container exec web hello      # Run a program inside
-<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>VPID 1 in &#39;web&#39;:
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>VPID 1 in 'web':
 <a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>Hello from PyBin!
 <a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>
 <a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>PyOS&gt; container info web            # See namespace details
@@ -1283,10 +1283,10 @@ conflicting, because their network stacks are completely separate.</p>
 <a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>  Processes: 1
 <a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>  FS root: /containers/web
 <a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a>  PID namespace: [1]
-<a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a>  Network: {&#39;sockets&#39;: 0, &#39;dns_records&#39;: 0}
+<a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a>  Network: {'sockets': 0, 'dns_records': 0}
 <a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a>
 <a id="__codelineno-2-24" name="__codelineno-2-24" href="#__codelineno-2-24"></a>PyOS&gt; container destroy web         # Clean up
-<a id="__codelineno-2-25" name="__codelineno-2-25" href="#__codelineno-2-25"></a>Destroyed container &#39;web&#39;
+<a id="__codelineno-2-25" name="__codelineno-2-25" href="#__codelineno-2-25"></a>Destroyed container 'web'
 <a id="__codelineno-2-26" name="__codelineno-2-26" href="#__codelineno-2-26"></a>
 <a id="__codelineno-2-27" name="__codelineno-2-27" href="#__codelineno-2-27"></a>PyOS&gt; container demo                # Run a full demonstration
 </code></pre></div>
@@ -1392,7 +1392,7 @@ somewhere!</p>
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["content.code.copy", "navigation.sections", "navigation.expand", "toc.integrate", "search.highlight"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

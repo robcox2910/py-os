@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.3">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -1825,7 +1825,7 @@
 <h3 id="why-threads-are-cheap">Why threads are cheap</h3>
 <p>When you fork, the <a href="../kernel-and-syscalls/">kernel</a> has to copy all of the parent's <a href="../memory/">memory</a> into new physical frames. That takes time and space. When you create a thread, no new memory is allocated at all. The thread just uses the memory that the process already has. That is why threads are called "lightweight."</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># Creating a thread inside a process -- no memory cost</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="n">worker</span> <span class="o">=</span> <span class="n">process</span><span class="o">.</span><span class="n">create_thread</span><span class="p">(</span><span class="s2">&quot;worker-1&quot;</span><span class="p">)</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="n">worker</span> <span class="o">=</span> <span class="n">process</span><span class="o">.</span><span class="n">create_thread</span><span class="p">(</span><span class="s2">"worker-1"</span><span class="p">)</span>
 </code></pre></div>
 <h3 id="why-sharing-is-tricky">Why sharing is tricky</h3>
 <p>Sharing sounds great, but it comes with a catch. If both pairs of hands try to erase and write in the same spot at the same time, you get a mess. One hand erases while the other is writing, and the result is garbled nonsense.</p>
@@ -1918,7 +1918,7 @@
 <a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>Forked pid 1 → child pid 2 (init (fork))
 <a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>
 <a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>PyOS&gt; wait 1
-<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>Collected child pid 2 (exit_code=0, output=&#39;hello&#39;)
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>Collected child pid 2 (exit_code=0, output='hello')
 </code></pre></div>
 <p>If the child has not finished yet, you will see:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>PyOS&gt; wait 1
@@ -2217,7 +2217,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["content.code.copy", "navigation.sections", "navigation.expand", "toc.integrate", "search.highlight"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

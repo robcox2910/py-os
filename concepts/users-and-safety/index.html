@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.3">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -1382,10 +1382,10 @@
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>root (uid=0)
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>PyOS&gt; adduser alice
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>User &#39;alice&#39; created (uid=1)
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>User 'alice' created (uid=1)
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>PyOS&gt; adduser bob
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>User &#39;bob&#39; created (uid=2)
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>User 'bob' created (uid=2)
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>PyOS&gt; su 2
 <a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>Switched to bob (uid=2)
@@ -1467,7 +1467,7 @@
 <p>In real Unix, programs use SIGUSR1 and SIGUSR2 for things like telling a server to reload its configuration file or triggering a status dump. They are completely up to the programmer.</p>
 <h3 id="signal-handlers">Signal Handlers</h3>
 <p>Here is where it gets interesting. A process can set up a <strong>signal handler</strong> -- a function that runs automatically when a specific signal arrives. Think of it like telling a friend: "If someone taps me on the left shoulder, remind me to save my work before I turn around."</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># &quot;When I receive SIGTERM, run my cleanup function first&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># "When I receive SIGTERM, run my cleanup function first"</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">kernel</span><span class="o">.</span><span class="n">register_signal_handler</span><span class="p">(</span><span class="n">pid</span><span class="p">,</span> <span class="n">SIGTERM</span><span class="p">,</span> <span class="n">my_cleanup_function</span><span class="p">)</span>
 </code></pre></div>
 <p>When SIGTERM arrives, instead of the default action (terminating the process), the handler runs <em>instead</em>. The process stays alive. Maybe the handler saves a file. Maybe it sends a goodbye message. Maybe it decides to keep running. The handler <strong>replaces</strong> the default action -- this is exactly how real Unix works.</p>
@@ -1516,9 +1516,9 @@
 <h3 id="try-it-in-the-pyos-shell_1">Try it in the PyOS shell</h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>PyOS&gt; log
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>[INFO] System booted at tick 0
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>[INFO] User &#39;root&#39; logged in
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>[DEBUG] SYS_CREATE_PROCESS: pid=1 name=&#39;init&#39;
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>[DEBUG] SYS_EXEC: pid=1 program=&#39;hello&#39;
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>[INFO] User 'root' logged in
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>[DEBUG] SYS_CREATE_PROCESS: pid=1 name='init'
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>[DEBUG] SYS_EXEC: pid=1 program='hello'
 <a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>[WARNING] Memory usage at 85%
 </code></pre></div>
 <p>The <code>log</code> command shows you the kernel's log. It is like pulling up the security footage and scrolling through it. When something goes wrong and you are not sure why, the log is your best friend.</p>
@@ -1735,7 +1735,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["content.code.copy", "navigation.sections", "navigation.expand", "toc.integrate", "search.highlight"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>
