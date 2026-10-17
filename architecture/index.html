@@ -1366,7 +1366,7 @@
 <h2 id="module-dependency-graph">Module Dependency Graph</h2>
 <p>How the source modules import from each other.</p>
 <pre class="mermaid"><code>graph LR
-    shell[shell.py] --&gt; syscalls[syscalls.py]
+    shell[shell/] --&gt; syscalls[syscalls.py]
     syscalls --&gt; kernel[kernel.py]
     kernel --&gt; scheduler[scheduler.py]
     kernel --&gt; manager[manager.py]
@@ -1925,14 +1925,24 @@
 </thead>
 <tbody>
 <tr>
-<td><code>shell.py</code></td>
+<td><code>shell/__init__.py</code></td>
 <td><code>Shell</code></td>
-<td>Command interpreter with pipes, redirection (<code>&gt;</code>, <code>&gt;&gt;</code>, <code>&lt;</code>, <code>2&gt;</code>), scripting (if/else, while/for loops), job control, background execution (<code>&amp;</code>)</td>
+<td>The command interpreter: combines every command group below with the shell engine</td>
 </tr>
 <tr>
-<td><code>shell.py</code></td>
-<td><code>_Redirections</code></td>
+<td><code>shell/base.py</code></td>
+<td><code>ShellBase</code></td>
+<td>The engine: pipes, redirection (<code>&gt;</code>, <code>&gt;&gt;</code>, <code>&lt;</code>, <code>2&gt;</code>), scripting (if/else, while/for loops), job control, background execution (<code>&amp;</code>), and the dispatch table built from each group's <code>COMMANDS</code></td>
+</tr>
+<tr>
+<td><code>shell/base.py</code></td>
+<td><code>Redirections</code></td>
 <td>Parsed I/O redirection operators from a command string</td>
+</tr>
+<tr>
+<td><code>shell/commands/*.py</code></td>
+<td><code>FileCommands</code>, <code>ProcessCommands</code>, <code>MemoryCommands</code>, ...</td>
+<td>One module per topic (basics, files, users, processes, memory, sync, devices, network, isolation, learn), each with its commands and a <code>COMMANDS</code> table</td>
 </tr>
 <tr>
 <td><code>completer.py</code></td>
