@@ -76,6 +76,7 @@ exclude = ["src/py_os/_version.py"]
 
 [tool.ruff.lint]
 select = [
+    "C90",    # mccabe (cyclomatic complexity) -- keep functions small enough to follow
     "E",      # pycodestyle errors
     "W",      # pycodestyle warnings
     "F",      # pyflakes
@@ -112,6 +113,9 @@ ignore = [
 
 [tool.ruff.lint.pylint]
 max-args = 9
+
+[tool.ruff.lint.mccabe]
+max-complexity = 15
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = [
