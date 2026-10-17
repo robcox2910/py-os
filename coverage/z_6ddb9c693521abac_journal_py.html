@@ -67,7 +67,7 @@
             <a id="nextFileLink" class="nav" href="z_6ddb9c693521abac_persistence_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.13.4">coverage.py v7.13.4</a>,
-            created at 2026-10-17 13:54 +0000
+            created at 2026-10-17 20:03 +0000
         </p>
         <aside class="hidden">
             <button type="button" class="button_next_chunk" data-shortcut="j"></button>
@@ -615,9 +615,9 @@
     <p class="pln"><span class="n"><a id="t531" href="#t531">531</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t532" href="#t532">532</a></span><span class="t"><span class="str">        """</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t533" href="#t533">533</a></span><span class="t">        <span class="nam">jfs</span> <span class="op">=</span> <span class="nam">object</span><span class="op">.</span><span class="nam">__new__</span><span class="op">(</span><span class="nam">cls</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run"><span class="n"><a id="t534" href="#t534">534</a></span><span class="t">        <span class="nam">jfs</span><span class="op">.</span><span class="nam">_fs</span> <span class="op">=</span> <span class="nam">FileSystem</span><span class="op">.</span><span class="nam">from_dict</span><span class="op">(</span><span class="nam">data</span><span class="op">[</span><span class="str">"fs"</span><span class="op">]</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run"><span class="n"><a id="t535" href="#t535">535</a></span><span class="t">        <span class="nam">jfs</span><span class="op">.</span><span class="nam">_journal</span> <span class="op">=</span> <span class="nam">Journal</span><span class="op">.</span><span class="nam">from_dict</span><span class="op">(</span><span class="nam">data</span><span class="op">[</span><span class="str">"journal"</span><span class="op">]</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run"><span class="n"><a id="t536" href="#t536">536</a></span><span class="t">        <span class="nam">jfs</span><span class="op">.</span><span class="nam">_checkpoint</span> <span class="op">=</span> <span class="nam">data</span><span class="op">.</span><span class="nam">get</span><span class="op">(</span><span class="str">"checkpoint"</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t534" href="#t534">534</a></span><span class="t">        <span class="nam">jfs</span><span class="op">.</span><span class="nam">_fs</span> <span class="op">=</span> <span class="nam">FileSystem</span><span class="op">.</span><span class="nam">from_dict</span><span class="op">(</span><span class="nam">data</span><span class="op">[</span><span class="str">"fs"</span><span class="op">]</span><span class="op">)</span>  <span class="com"># noqa: SLF001 -- same-class alternate constructor</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t535" href="#t535">535</a></span><span class="t">        <span class="nam">jfs</span><span class="op">.</span><span class="nam">_journal</span> <span class="op">=</span> <span class="nam">Journal</span><span class="op">.</span><span class="nam">from_dict</span><span class="op">(</span><span class="nam">data</span><span class="op">[</span><span class="str">"journal"</span><span class="op">]</span><span class="op">)</span>  <span class="com"># noqa: SLF001 -- same-class alternate constructor</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t536" href="#t536">536</a></span><span class="t">        <span class="nam">jfs</span><span class="op">.</span><span class="nam">_checkpoint</span> <span class="op">=</span> <span class="nam">data</span><span class="op">.</span><span class="nam">get</span><span class="op">(</span><span class="str">"checkpoint"</span><span class="op">)</span>  <span class="com"># noqa: SLF001 -- same-class alternate constructor</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t537" href="#t537">537</a></span><span class="t">        <span class="key">return</span> <span class="nam">jfs</span>&nbsp;</span><span class="r"></span></p>
 </main>
 <footer>
@@ -628,7 +628,7 @@
             <a class="nav" href="z_6ddb9c693521abac_persistence_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.13.4">coverage.py v7.13.4</a>,
-            created at 2026-10-17 13:54 +0000
+            created at 2026-10-17 20:03 +0000
         </p>
     </div>
 </footer>
