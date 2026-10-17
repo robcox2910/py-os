@@ -452,9 +452,10 @@ class ShellBase:
                     self._kernel.syscall(
                         SyscallNumber.SYS_WRITE_FILE, path=path, data=content.encode()
                     )
-            return ""  # Output was redirected; return empty
         except SyscallError as e:
             return f"Error: {e}"
+        else:
+            return ""  # Output was redirected; return empty
 
     def _execute_single(self, command: str, *, background: bool = False) -> str:
         """Execute a single (non-piped) command."""
@@ -518,9 +519,10 @@ class ShellBase:
             run_result = self._kernel.syscall(SyscallNumber.SYS_RUN, pid=pid)
             output: str = run_result["output"]
             exit_code: int = run_result["exit_code"]
-            return (pid, output, exit_code)
         except SyscallError as e:
             return f"Error: {e}"
+        else:
+            return (pid, output, exit_code)
 
     def _run_background(self, args: list[str]) -> str:
         """Run a program in the background, capturing output into a job.

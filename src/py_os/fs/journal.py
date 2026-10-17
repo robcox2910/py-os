@@ -531,7 +531,7 @@ class JournaledFileSystem:
 
         """
         jfs = object.__new__(cls)
-        jfs._fs = FileSystem.from_dict(data["fs"])
-        jfs._journal = Journal.from_dict(data["journal"])
-        jfs._checkpoint = data.get("checkpoint")
+        jfs._fs = FileSystem.from_dict(data["fs"])  # noqa: SLF001 -- same-class alternate constructor
+        jfs._journal = Journal.from_dict(data["journal"])  # noqa: SLF001 -- same-class alternate constructor
+        jfs._checkpoint = data.get("checkpoint")  # noqa: SLF001 -- same-class alternate constructor
         return jfs

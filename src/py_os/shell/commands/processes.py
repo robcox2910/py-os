@@ -246,9 +246,10 @@ class ProcessCommands(ShellBase):
             run_result = self._kernel.syscall(SyscallNumber.SYS_RUN, pid=pid)
             output: str = run_result["output"]
             exit_code: int = run_result["exit_code"]
-            return f"{output}\n[exit code: {exit_code}]"
         except SyscallError as e:
             return f"Error: {e}"
+        else:
+            return f"{output}\n[exit code: {exit_code}]"
 
     def _cmd_scheduler(self, args: list[str]) -> str:  # noqa: PLR0911
         """Show or switch the scheduling policy."""

@@ -274,7 +274,7 @@ class Cluster:
             return None
         try:
             return dns.lookup(hostname)
-        except Exception:
+        except Exception:  # noqa: BLE001 -- a failed lookup of any kind just means "not found"
             return None
 
     def list_kernels(self) -> list[dict[str, object]]:

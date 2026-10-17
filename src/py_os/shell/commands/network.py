@@ -21,6 +21,8 @@ from py_os.syscalls import SyscallError, SyscallNumber
 # A table of sub-commands: word typed by the user -> the method that handles it.
 type _SubcommandTable = dict[str, Callable[[list[str]], str]]
 
+_NEVER_ACCEPTED = "the server never accepted the connection"
+
 
 class NetworkCommands(ShellBase):
     """Shell commands for DNS, sockets, TCP and HTTP."""
@@ -61,9 +63,10 @@ class NetworkCommands(ShellBase):
         hostname = args[0]
         try:
             address: str = self._kernel.syscall(SyscallNumber.SYS_DNS_LOOKUP, hostname=hostname)
-            return f"{hostname} -> {address}"
         except SyscallError as e:
             return f"Error: {e}"
+        else:
+            return f"{hostname} -> {address}"
 
     def _cmd_dns_remove(self, args: list[str]) -> str:
         """Remove a DNS record."""
@@ -72,9 +75,10 @@ class NetworkCommands(ShellBase):
         hostname = args[0]
         try:
             self._kernel.syscall(SyscallNumber.SYS_DNS_REMOVE, hostname=hostname)
-            return f"Removed {hostname}"
         except SyscallError as e:
             return f"Error: {e}"
+        else:
+            return f"Removed {hostname}"
 
     def _cmd_dns_list(self) -> str:
         """List all DNS records."""
@@ -138,7 +142,7 @@ class NetworkCommands(ShellBase):
             sm.connect(client, address="localhost", port=dns_port)
             peer = sm.accept(server)
             if peer is None:
-                raise RuntimeError("the server never accepted the connection")
+                raise RuntimeError(_NEVER_ACCEPTED)
             lines.append("Step 3: Client connects to the DNS server")
             lines.append("")
 
@@ -237,9 +241,10 @@ class NetworkCommands(ShellBase):
             return "Error: id must be an integer"
         try:
             self._kernel.syscall(SyscallNumber.SYS_SOCKET_LISTEN, sock_id=sock_id)
-            return f"Socket {sock_id} listening"
         except SyscallError as e:
             return f"Error: {e}"
+        else:
+            return f"Socket {sock_id} listening"
 
     def _cmd_socket_connect(self, args: list[str]) -> str:
         """Connect a socket to a listener."""
@@ -317,9 +322,10 @@ class NetworkCommands(ShellBase):
             return "Error: id must be an integer"
         try:
             self._kernel.syscall(SyscallNumber.SYS_SOCKET_CLOSE, sock_id=sock_id)
-            return f"Socket {sock_id} closed"
         except SyscallError as e:
             return f"Error: {e}"
+        else:
+            return f"Socket {sock_id} closed"
 
     def _cmd_socket_list(self) -> str:
         """List all sockets."""
@@ -415,7 +421,7 @@ class NetworkCommands(ShellBase):
             # Step 5: Server accepts
             peer = self._kernel.syscall(SyscallNumber.SYS_SOCKET_ACCEPT, sock_id=srv_id)
             if peer is None:
-                raise RuntimeError("the server never accepted the connection")
+                raise RuntimeError(_NEVER_ACCEPTED)
             peer_id = peer["sock_id"]
             sock_ids.append(peer_id)
             lines.append(f"Step 5: Server accepted connection (peer socket {peer_id})")
@@ -566,9 +572,10 @@ class NetworkCommands(ShellBase):
             return "Error: port must be an integer"
         try:
             listener_id: int = self._kernel.syscall(SyscallNumber.SYS_TCP_LISTEN, port=port)
-            return f"Listening on port {port} (listener_id={listener_id})"
         except SyscallError as e:
             return f"Error: {e}"
+        else:
+            return f"Listening on port {port} (listener_id={listener_id})"
 
     def _cmd_tcp_connect(self, args: list[str]) -> str:
         """Open a TCP connection."""
@@ -604,9 +611,10 @@ class NetworkCommands(ShellBase):
             sent: int = self._kernel.syscall(
                 SyscallNumber.SYS_TCP_SEND, conn_id=conn_id, data=data.encode()
             )
-            return f"Sent {sent} bytes on connection {conn_id}"
         except SyscallError as e:
             return f"Error: {e}"
+        else:
+            return f"Sent {sent} bytes on connection {conn_id}"
 
     def _cmd_tcp_recv(self, args: list[str]) -> str:
         """Receive data from a TCP connection."""
@@ -634,9 +642,10 @@ class NetworkCommands(ShellBase):
             return "Error: conn_id must be an integer"
         try:
             self._kernel.syscall(SyscallNumber.SYS_TCP_CLOSE, conn_id=conn_id)
-            return f"Connection {conn_id} closed"
         except SyscallError as e:
             return f"Error: {e}"
+        else:
+            return f"Connection {conn_id} closed"
 
     def _cmd_tcp_info(self, args: list[str]) -> str:
         """Show TCP connection info."""
