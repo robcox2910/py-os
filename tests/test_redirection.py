@@ -6,7 +6,7 @@ feature that reuses existing file I/O syscalls.
 """
 
 from py_os.kernel import ExecutionMode, Kernel
-from py_os.shell import Shell, _Redirections
+from py_os.shell import Redirections, Shell
 from py_os.syscalls import SyscallNumber
 
 
@@ -31,7 +31,7 @@ class TestRedirectionParsing:
         _kernel, shell = _booted_shell()
         cmd, redir = shell._parse_redirections("echo hello world")
         assert cmd == "echo hello world"
-        assert redir == _Redirections()
+        assert redir == Redirections()
 
     def test_stdout_redirect(self) -> None:
         """``>`` extracts the stdout target file."""
