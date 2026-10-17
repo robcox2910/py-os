@@ -5,37 +5,12 @@ on:
     branches: [main]
   workflow_dispatch: {}
 
-permissions:
-  contents: write
-  pages: write
-
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v7
-        with:
-          version: "latest"
-
-      - name: Set up Python
-        run: uv python install 3.14
-
-      - name: Install dependencies
-        run: uv sync --all-extras
-
-      - name: Run tests with HTML coverage
-        run: uv run pytest --cov-report=html:docs/coverage
-
-      - name: Build docs
-        run: uv run mkdocs build --strict
-
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./site
+  docs:
+    uses: robcox2910/robcox2910.github.io/.github/workflows/docs.yml@v1
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    with:
+      coverage-report: true
