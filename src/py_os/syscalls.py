@@ -304,6 +304,16 @@ class SyscallError(Exception):
     """
 
 
+def _missing_subsystem(name: str) -> SyscallError:
+    """Build the error a syscall reports when a kernel subsystem is missing.
+
+    User programs only ever see ``SyscallError``, so even this "should never
+    happen" case is reported that way, naming the missing piece.
+    """
+    msg = f"The kernel's {name} is not available"
+    return SyscallError(msg)
+
+
 def dispatch_syscall(
     kernel: Any,
     number: SyscallNumber,
@@ -441,7 +451,8 @@ def _sys_waitpid(kernel: Any, **kwargs: Any) -> dict[str, Any] | None:
 
 def _sys_create_file(kernel: Any, **kwargs: Any) -> None:
     """Create a file and assign ownership to the current user."""
-    assert kernel.filesystem is not None  # noqa: S101
+    if kernel.filesystem is None:
+        raise _missing_subsystem("filesystem")
     path: str = kwargs["path"]
     try:
         kernel.filesystem.create_file(path)
@@ -452,7 +463,8 @@ def _sys_create_file(kernel: Any, **kwargs: Any) -> None:
 
 def _sys_create_dir(kernel: Any, **kwargs: Any) -> None:
     """Create a directory and assign ownership to the current user."""
-    assert kernel.filesystem is not None  # noqa: S101
+    if kernel.filesystem is None:
+        raise _missing_subsystem("filesystem")
     path: str = kwargs["path"]
     try:
         kernel.filesystem.create_dir(path)
@@ -463,7 +475,8 @@ def _sys_create_dir(kernel: Any, **kwargs: Any) -> None:
 
 def _sys_read_file(kernel: Any, **kwargs: Any) -> bytes:
     """Read file contents (with permission check)."""
-    assert kernel.filesystem is not None  # noqa: S101
+    if kernel.filesystem is None:
+        raise _missing_subsystem("filesystem")
     path: str = kwargs["path"]
     perms = kernel.file_permissions.get(path)
     if perms is not None:
@@ -480,7 +493,8 @@ def _sys_read_file(kernel: Any, **kwargs: Any) -> bytes:
 
 def _sys_write_file(kernel: Any, **kwargs: Any) -> None:
     """Write data to a file (with permission check)."""
-    assert kernel.filesystem is not None  # noqa: S101
+    if kernel.filesystem is None:
+        raise _missing_subsystem("filesystem")
     path: str = kwargs["path"]
     perms = kernel.file_permissions.get(path)
     if perms is not None:
@@ -496,7 +510,8 @@ def _sys_write_file(kernel: Any, **kwargs: Any) -> None:
 
 def _sys_delete_file(kernel: Any, **kwargs: Any) -> None:
     """Delete a file or directory and clean up permissions."""
-    assert kernel.filesystem is not None  # noqa: S101
+    if kernel.filesystem is None:
+        raise _missing_subsystem("filesystem")
     path: str = kwargs["path"]
     parent = path.rsplit("/", 1)[0] or "/"
     parent_perms = kernel.file_permissions.get(parent)
@@ -514,7 +529,8 @@ def _sys_delete_file(kernel: Any, **kwargs: Any) -> None:
 
 def _sys_list_dir(kernel: Any, **kwargs: Any) -> list[str]:
     """List directory contents."""
-    assert kernel.filesystem is not None  # noqa: S101
+    if kernel.filesystem is None:
+        raise _missing_subsystem("filesystem")
     try:
         return kernel.filesystem.list_dir(kwargs["path"])
     except FileNotFoundError as e:
@@ -618,7 +634,8 @@ def _sys_seek(kernel: Any, **kwargs: Any) -> dict[str, int]:
 
 def _sys_memory_info(kernel: Any, **_kwargs: Any) -> dict[str, int]:
     """Return memory statistics."""
-    assert kernel.memory is not None  # noqa: S101
+    if kernel.memory is None:
+        raise _missing_subsystem("memory")
     return {
         "total_frames": kernel.memory.total_frames,
         "free_frames": kernel.memory.free_frames,
@@ -643,8 +660,10 @@ def _sys_mmap(kernel: Any, **kwargs: Any) -> dict[str, Any]:
     except MmapError as e:
         raise SyscallError(str(e)) from e
     process = kernel.processes.get(pid)
-    assert process is not None  # noqa: S101
-    assert process.virtual_memory is not None  # noqa: S101
+    if process is None:
+        raise _missing_subsystem("process")
+    if process.virtual_memory is None:
+        raise _missing_subsystem("virtual memory")
     start_vpn = virtual_address // process.virtual_memory.page_size
     region = kernel.mmap_regions(pid)[start_vpn]
     return {"virtual_address": virtual_address, "num_pages": region.num_pages}
@@ -712,15 +731,18 @@ def _sys_slab_info(kernel: Any, **_kwargs: Any) -> dict[str, dict[str, Any]]:
 
 def _sys_whoami(kernel: Any, **_kwargs: Any) -> dict[str, Any]:
     """Return the current user's info."""
-    assert kernel.user_manager is not None  # noqa: S101
+    if kernel.user_manager is None:
+        raise _missing_subsystem("user manager")
     user = kernel.user_manager.get_user(kernel.current_uid)
-    assert user is not None  # noqa: S101
+    if user is None:
+        raise _missing_subsystem("user")
     return {"uid": user.uid, "username": user.username}
 
 
 def _sys_create_user(kernel: Any, **kwargs: Any) -> dict[str, Any]:
     """Create a new user."""
-    assert kernel.user_manager is not None  # noqa: S101
+    if kernel.user_manager is None:
+        raise _missing_subsystem("user manager")
     username: str = kwargs["username"]
     try:
         user = kernel.user_manager.create_user(username)
@@ -731,13 +753,15 @@ def _sys_create_user(kernel: Any, **kwargs: Any) -> dict[str, Any]:
 
 def _sys_list_users(kernel: Any, **_kwargs: Any) -> list[dict[str, Any]]:
     """List all users."""
-    assert kernel.user_manager is not None  # noqa: S101
+    if kernel.user_manager is None:
+        raise _missing_subsystem("user manager")
     return [{"uid": u.uid, "username": u.username} for u in kernel.user_manager.list_users()]
 
 
 def _sys_switch_user(kernel: Any, **kwargs: Any) -> None:
     """Switch the current user."""
-    assert kernel.user_manager is not None  # noqa: S101
+    if kernel.user_manager is None:
+        raise _missing_subsystem("user manager")
     uid: int = kwargs["uid"]
     user = kernel.user_manager.get_user(uid)
     if user is None:
@@ -751,7 +775,8 @@ def _sys_switch_user(kernel: Any, **kwargs: Any) -> None:
 
 def _sys_device_read(kernel: Any, **kwargs: Any) -> bytes:
     """Read from a named device."""
-    assert kernel.device_manager is not None  # noqa: S101
+    if kernel.device_manager is None:
+        raise _missing_subsystem("device manager")
     name: str = kwargs["device"]
     device = kernel.device_manager.get(name)
     if device is None:
@@ -762,7 +787,8 @@ def _sys_device_read(kernel: Any, **kwargs: Any) -> bytes:
 
 def _sys_device_write(kernel: Any, **kwargs: Any) -> None:
     """Write to a named device."""
-    assert kernel.device_manager is not None  # noqa: S101
+    if kernel.device_manager is None:
+        raise _missing_subsystem("device manager")
     name: str = kwargs["device"]
     data: bytes = kwargs["data"]
     device = kernel.device_manager.get(name)
@@ -777,7 +803,8 @@ def _sys_device_write(kernel: Any, **kwargs: Any) -> None:
 
 def _sys_list_devices(kernel: Any, **_kwargs: Any) -> list[str]:
     """List all registered device names."""
-    assert kernel.device_manager is not None  # noqa: S101
+    if kernel.device_manager is None:
+        raise _missing_subsystem("device manager")
     return kernel.device_manager.list_devices()
 
 
@@ -786,7 +813,8 @@ def _sys_list_devices(kernel: Any, **_kwargs: Any) -> list[str]:
 
 def _sys_read_log(kernel: Any, **_kwargs: Any) -> list[str]:
     """Return recent log entries as formatted strings."""
-    assert kernel.logger is not None  # noqa: S101
+    if kernel.logger is None:
+        raise _missing_subsystem("logger")
     return [str(entry) for entry in kernel.logger.entries]
 
 
@@ -815,25 +843,29 @@ def _sys_register_handler(kernel: Any, **kwargs: Any) -> str:
 
 def _sys_get_env(kernel: Any, **kwargs: Any) -> str | None:
     """Get an environment variable."""
-    assert kernel.env is not None  # noqa: S101
+    if kernel.env is None:
+        raise _missing_subsystem("env")
     return kernel.env.get(kwargs["key"])
 
 
 def _sys_set_env(kernel: Any, **kwargs: Any) -> None:
     """Set an environment variable."""
-    assert kernel.env is not None  # noqa: S101
+    if kernel.env is None:
+        raise _missing_subsystem("env")
     kernel.env.set(kwargs["key"], kwargs["value"])
 
 
 def _sys_list_env(kernel: Any, **_kwargs: Any) -> list[tuple[str, str]]:
     """List all environment variables."""
-    assert kernel.env is not None  # noqa: S101
+    if kernel.env is None:
+        raise _missing_subsystem("env")
     return kernel.env.items()
 
 
 def _sys_delete_env(kernel: Any, **kwargs: Any) -> None:
     """Delete an environment variable."""
-    assert kernel.env is not None  # noqa: S101
+    if kernel.env is None:
+        raise _missing_subsystem("env")
     try:
         kernel.env.delete(kwargs["key"])
     except KeyError as e:
@@ -845,11 +877,16 @@ def _sys_delete_env(kernel: Any, **kwargs: Any) -> None:
 
 def _sys_sysinfo(kernel: Any, **_kwargs: Any) -> dict[str, Any]:
     """Aggregate system status from all subsystems."""
-    assert kernel.memory is not None  # noqa: S101
-    assert kernel.device_manager is not None  # noqa: S101
-    assert kernel.user_manager is not None  # noqa: S101
-    assert kernel.env is not None  # noqa: S101
-    assert kernel.logger is not None  # noqa: S101
+    if kernel.memory is None:
+        raise _missing_subsystem("memory")
+    if kernel.device_manager is None:
+        raise _missing_subsystem("device manager")
+    if kernel.user_manager is None:
+        raise _missing_subsystem("user manager")
+    if kernel.env is None:
+        raise _missing_subsystem("env")
+    if kernel.logger is None:
+        raise _missing_subsystem("logger")
 
     user = kernel.user_manager.get_user(kernel.current_uid)
     return {
@@ -869,7 +906,8 @@ def _sys_sysinfo(kernel: Any, **_kwargs: Any) -> dict[str, Any]:
 
 def _sys_detect_deadlock(kernel: Any, **_kwargs: Any) -> dict[str, Any]:
     """Run deadlock detection and return results."""
-    assert kernel.resource_manager is not None  # noqa: S101
+    if kernel.resource_manager is None:
+        raise _missing_subsystem("resource manager")
     deadlocked = kernel.resource_manager.detect_deadlock()
     return {"deadlocked": deadlocked}
 
@@ -1115,7 +1153,8 @@ def _sys_set_scheduler(kernel: Any, **kwargs: Any) -> str:
 
 def _sys_scheduler_boost(kernel: Any, **_kwargs: Any) -> str:
     """Trigger an MLFQ priority boost — reset all processes to level 0."""
-    assert kernel.scheduler is not None  # noqa: S101
+    if kernel.scheduler is None:
+        raise _missing_subsystem("scheduler")
     policy = kernel.scheduler.policy
     if not isinstance(policy, MLFQPolicy):
         msg = "Boost requires MLFQ policy"
@@ -1450,7 +1489,8 @@ def _sys_shutdown(kernel: Any, **_kwargs: Any) -> None:
 
 def _sys_scheduler_info(kernel: Any, **_kwargs: Any) -> dict[str, str | int]:
     """Return scheduler policy name and parameters."""
-    assert kernel.scheduler is not None  # noqa: S101
+    if kernel.scheduler is None:
+        raise _missing_subsystem("scheduler")
     policy = kernel.scheduler.policy
     match policy:
         case FCFSPolicy():
@@ -1472,7 +1512,8 @@ def _sys_scheduler_info(kernel: Any, **_kwargs: Any) -> dict[str, str | int]:
 
 def _sys_lstat(kernel: Any, **kwargs: Any) -> dict[str, Any]:
     """Return file metadata without following symlinks."""
-    assert kernel.filesystem is not None  # noqa: S101
+    if kernel.filesystem is None:
+        raise _missing_subsystem("filesystem")
     path: str = kwargs["path"]
     try:
         info = kernel.filesystem.lstat(path)
@@ -1607,7 +1648,8 @@ def _sys_destroy_mutex(kernel: Any, **kwargs: Any) -> None:
 
 def _sys_dispatch(kernel: Any, **_kwargs: Any) -> dict[str, Any] | None:
     """Dispatch the next process from the scheduler."""
-    assert kernel.scheduler is not None  # noqa: S101
+    if kernel.scheduler is None:
+        raise _missing_subsystem("scheduler")
     process = kernel.scheduler.dispatch()
     if process is None:
         return None
@@ -1665,7 +1707,8 @@ def _sys_boot_info(kernel: Any, **_kwargs: Any) -> dict[str, Any]:
 def _sys_cpu_info(kernel: Any, **_kwargs: Any) -> list[dict[str, Any]]:
     """Return per-CPU scheduler information."""
     sched = kernel.scheduler
-    assert sched is not None  # noqa: S101
+    if sched is None:
+        raise _missing_subsystem("sched")
     result: list[dict[str, Any]] = []
     for cpu_id in range(sched.num_cpus):
         current = sched.cpu_current(cpu_id)
@@ -1684,7 +1727,8 @@ def _sys_cpu_info(kernel: Any, **_kwargs: Any) -> list[dict[str, Any]]:
 def _sys_set_affinity(kernel: Any, **kwargs: Any) -> None:
     """Set CPU affinity for a process."""
     sched = kernel.scheduler
-    assert sched is not None  # noqa: S101
+    if sched is None:
+        raise _missing_subsystem("sched")
     pid: int = kwargs["pid"]
     cpus: list[int] = kwargs["cpus"]
     if pid not in kernel.processes:
@@ -1696,7 +1740,8 @@ def _sys_set_affinity(kernel: Any, **kwargs: Any) -> None:
 def _sys_get_affinity(kernel: Any, **kwargs: Any) -> list[int]:
     """Return CPU affinity for a process."""
     sched = kernel.scheduler
-    assert sched is not None  # noqa: S101
+    if sched is None:
+        raise _missing_subsystem("sched")
     pid: int = kwargs["pid"]
     if pid not in kernel.processes:
         msg = f"Process {pid} not found"
@@ -1707,7 +1752,8 @@ def _sys_get_affinity(kernel: Any, **kwargs: Any) -> list[int]:
 def _sys_balance(kernel: Any, **_kwargs: Any) -> dict[str, Any]:
     """Trigger load balancing across CPUs."""
     sched = kernel.scheduler
-    assert sched is not None  # noqa: S101
+    if sched is None:
+        raise _missing_subsystem("sched")
     moved = sched.balance()
     return {
         "migrations": [(pid, from_cpu, to_cpu) for pid, from_cpu, to_cpu in moved],
@@ -1718,7 +1764,8 @@ def _sys_balance(kernel: Any, **_kwargs: Any) -> dict[str, Any]:
 def _sys_migrate(kernel: Any, **kwargs: Any) -> dict[str, bool]:
     """Migrate a process between CPUs."""
     sched = kernel.scheduler
-    assert sched is not None  # noqa: S101
+    if sched is None:
+        raise _missing_subsystem("sched")
     pid: int = kwargs["pid"]
     from_cpu: int = kwargs["from_cpu"]
     to_cpu: int = kwargs["to_cpu"]
@@ -1969,7 +2016,8 @@ def _sys_swap_exercise(kernel: Any, **_kwargs: Any) -> dict[str, object]:
 
 def _sys_load_binary(kernel: Any, **kwargs: Any) -> dict[str, Any]:
     """Read a file, check execute permission, parse as PyBin, return metadata."""
-    assert kernel.filesystem is not None  # noqa: S101
+    if kernel.filesystem is None:
+        raise _missing_subsystem("filesystem")
     path: str = kwargs["path"]
     # Read the file
     perms = kernel.file_permissions.get(path)
@@ -1997,7 +2045,8 @@ def _sys_load_binary(kernel: Any, **kwargs: Any) -> dict[str, Any]:
 
 def _sys_list_programs(kernel: Any, **_kwargs: Any) -> dict[str, list[str]]:
     """List built-in demo programs and filesystem binaries in /bin."""
-    assert kernel.filesystem is not None  # noqa: S101
+    if kernel.filesystem is None:
+        raise _missing_subsystem("filesystem")
     builtins = sorted(DEMO_PROGRAMS.keys())
     fs_programs: list[str] = []
     with contextlib.suppress(FileNotFoundError):
@@ -2104,7 +2153,8 @@ def _sys_set_acl(kernel: Any, **kwargs: Any) -> None:
 
 def _sys_create_group(kernel: Any, **kwargs: Any) -> dict[str, Any]:
     """Create a named group."""
-    assert kernel.user_manager is not None  # noqa: S101
+    if kernel.user_manager is None:
+        raise _missing_subsystem("user manager")
     name: str = kwargs["name"]
     try:
         group = kernel.user_manager.create_group(name)
@@ -2115,7 +2165,8 @@ def _sys_create_group(kernel: Any, **kwargs: Any) -> dict[str, Any]:
 
 def _sys_list_groups(kernel: Any, **_kwargs: Any) -> list[dict[str, Any]]:
     """List all groups."""
-    assert kernel.user_manager is not None  # noqa: S101
+    if kernel.user_manager is None:
+        raise _missing_subsystem("user manager")
     return [
         {"gid": g.gid, "name": g.name, "members": sorted(g.members)}
         for g in kernel.user_manager.list_groups()
@@ -2124,7 +2175,8 @@ def _sys_list_groups(kernel: Any, **_kwargs: Any) -> list[dict[str, Any]]:
 
 def _sys_add_to_group(kernel: Any, **kwargs: Any) -> dict[str, Any]:
     """Add a user to a group."""
-    assert kernel.user_manager is not None  # noqa: S101
+    if kernel.user_manager is None:
+        raise _missing_subsystem("user manager")
     uid: int = kwargs["uid"]
     gid: int = kwargs["gid"]
     try:
@@ -2136,7 +2188,8 @@ def _sys_add_to_group(kernel: Any, **kwargs: Any) -> dict[str, Any]:
 
 def _sys_remove_from_group(kernel: Any, **kwargs: Any) -> dict[str, Any]:
     """Remove a user from a group."""
-    assert kernel.user_manager is not None  # noqa: S101
+    if kernel.user_manager is None:
+        raise _missing_subsystem("user manager")
     uid: int = kwargs["uid"]
     gid: int = kwargs["gid"]
     try:
@@ -2148,7 +2201,8 @@ def _sys_remove_from_group(kernel: Any, **kwargs: Any) -> dict[str, Any]:
 
 def _sys_user_groups(kernel: Any, **kwargs: Any) -> list[dict[str, Any]]:
     """List groups for a user."""
-    assert kernel.user_manager is not None  # noqa: S101
+    if kernel.user_manager is None:
+        raise _missing_subsystem("user manager")
     uid: int = kwargs["uid"]
     return [{"gid": g.gid, "name": g.name} for g in kernel.user_manager.user_groups(uid)]
 

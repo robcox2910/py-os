@@ -2524,7 +2524,8 @@ class Shell:
             client = sm.create_socket()
             sm.connect(client, address="localhost", port=dns_port)
             peer = sm.accept(server)
-            assert peer is not None  # noqa: S101
+            if peer is None:
+                raise RuntimeError("the server never accepted the connection")
             lines.append("Step 3: Client connects to the DNS server")
             lines.append("")
 
@@ -2804,7 +2805,8 @@ class Shell:
 
             # Step 5: Server accepts
             peer = self._kernel.syscall(SyscallNumber.SYS_SOCKET_ACCEPT, sock_id=srv_id)
-            assert peer is not None  # noqa: S101
+            if peer is None:
+                raise RuntimeError("the server never accepted the connection")
             peer_id = peer["sock_id"]
             sock_ids.append(peer_id)
             lines.append(f"Step 5: Server accepted connection (peer socket {peer_id})")
