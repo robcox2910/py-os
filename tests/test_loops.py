@@ -9,7 +9,7 @@ using ``_collect_block()`` for block collection and recursive
 import pytest
 
 from py_os.kernel import ExecutionMode, Kernel
-from py_os.shell import _MAX_LOOP_ITERATIONS, Shell
+from py_os.shell import MAX_LOOP_ITERATIONS, Shell
 from py_os.syscalls import SyscallNumber
 
 _END_SIMPLE = 3
@@ -378,7 +378,7 @@ done"""
         assert any("syntax" in r.lower() or "in" in r.lower() for r in results)
 
     def test_max_iterations_enforced(self) -> None:
-        """Infinite loops are stopped at _MAX_LOOP_ITERATIONS."""
+        """Infinite loops are stopped at MAX_LOOP_ITERATIONS."""
         kernel, shell = _booted_shell()
         # Create a file that always exists (never removed in loop body)
         kernel.syscall(SyscallNumber.SYS_CREATE_FILE, path="/infinite")
@@ -392,7 +392,7 @@ done"""
         assert any("iterations" in r.lower() or "limit" in r.lower() for r in results)
         # Should not exceed the limit
         tick_count = sum(1 for r in results if r == "tick")
-        assert tick_count == _MAX_LOOP_ITERATIONS
+        assert tick_count == MAX_LOOP_ITERATIONS
 
     def test_body_error_does_not_stop_loop(self) -> None:
         """An error in the loop body doesn't break the loop."""

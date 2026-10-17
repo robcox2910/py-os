@@ -107,7 +107,7 @@ How the source modules import from each other.
 
 ```mermaid
 graph LR
-    shell[shell.py] --> syscalls[syscalls.py]
+    shell[shell/] --> syscalls[syscalls.py]
     syscalls --> kernel[kernel.py]
     kernel --> scheduler[scheduler.py]
     kernel --> manager[manager.py]
@@ -270,8 +270,10 @@ Every source file and what it implements.
 
 | File | Class/Function | Purpose |
 |------|---------------|---------|
-| `shell.py` | `Shell` | Command interpreter with pipes, redirection (`>`, `>>`, `<`, `2>`), scripting (if/else, while/for loops), job control, background execution (`&`) |
-| `shell.py` | `_Redirections` | Parsed I/O redirection operators from a command string |
+| `shell/__init__.py` | `Shell` | The command interpreter: combines every command group below with the shell engine |
+| `shell/base.py` | `ShellBase` | The engine: pipes, redirection (`>`, `>>`, `<`, `2>`), scripting (if/else, while/for loops), job control, background execution (`&`), and the dispatch table built from each group's `COMMANDS` |
+| `shell/base.py` | `Redirections` | Parsed I/O redirection operators from a command string |
+| `shell/commands/*.py` | `FileCommands`, `ProcessCommands`, `MemoryCommands`, ... | One module per topic (basics, files, users, processes, memory, sync, devices, network, isolation, learn), each with its commands and a `COMMANDS` table |
 | `completer.py` | `Completer` | Context-aware tab completion for commands, subcommands, paths, programs, env vars, signals |
 | `users.py` | `UserManager` | User registry with auto-incrementing UIDs |
 | `users.py` | `FilePermissions` | Per-file owner/other read/write permission bits |
