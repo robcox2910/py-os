@@ -71,9 +71,10 @@ class DeviceCommands(ShellBase):
             return f"Error: invalid vector '{args[1]}'"
         try:
             self._kernel.syscall(syscall, vector=vector)
-            return f"Vector {vector} {action}ed"
         except SyscallError as e:
             return f"Error: {e}"
+        else:
+            return f"Vector {vector} {action}ed"
 
     def _interrupt_list(self) -> str:
         """Format the interrupt vector table."""

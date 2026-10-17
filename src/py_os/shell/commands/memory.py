@@ -57,9 +57,10 @@ class MemoryCommands(ShellBase):
                 pid=pid,
                 virtual_address=address,
             )
-            return f"Unmapped address {address}"
         except SyscallError as e:
             return f"Error: {e}"
+        else:
+            return f"Unmapped address {address}"
 
     def _cmd_msync(self, args: list[str]) -> str:
         """Sync a shared mapping's data back to the file."""
@@ -85,9 +86,10 @@ class MemoryCommands(ShellBase):
             vpn = address // DEFAULT_PAGE_SIZE
             region = regions.get(vpn)
             path_info = f" to {region.path}" if region else ""
-            return f"Synced address {address}{path_info}"
         except SyscallError as e:
             return f"Error: {e}"
+        else:
+            return f"Synced address {address}{path_info}"
 
     def _cmd_slabcreate(self, args: list[str]) -> str:
         """Create a named slab cache with a given object size."""
@@ -150,9 +152,10 @@ class MemoryCommands(ShellBase):
                 slab_index=slab_index,
                 slot_index=slot_index,
             )
-            return f"Freed '{name}' slab {slab_index}, slot {slot_index}"
         except SyscallError as e:
             return f"Error: {e}"
+        else:
+            return f"Freed '{name}' slab {slab_index}, slot {slot_index}"
 
     def _cmd_slabinfo(self, _args: list[str]) -> str:
         """Show slab cache statistics."""
@@ -243,9 +246,10 @@ class MemoryCommands(ShellBase):
             return f"Error: invalid PID '{args[1]}'"
         try:
             self._kernel.syscall(SyscallNumber.SYS_SHM_DETACH, name=name, pid=pid)
-            return f"Detached pid {pid} from '{name}'"
         except SyscallError as e:
             return f"Error: {e}"
+        else:
+            return f"Detached pid {pid} from '{name}'"
 
     def _cmd_shm_write(self, args: list[str]) -> str:
         """Write data to a shared memory segment."""

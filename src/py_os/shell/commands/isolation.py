@@ -98,9 +98,10 @@ class IsolationCommands(ShellBase):
         name = args[0]
         try:
             self._kernel.syscall(SyscallNumber.SYS_CONTAINER_DESTROY, name=name)
-            return f"Destroyed container '{name}'"
         except SyscallError as e:
             return f"Error: {e}"
+        else:
+            return f"Destroyed container '{name}'"
 
     def _cmd_container_demo(self) -> str:
         """Run a container demonstration."""
@@ -181,9 +182,10 @@ class IsolationCommands(ShellBase):
         try:
             kid = int(args[0])
             self._kernel.syscall(SyscallNumber.SYS_CLUSTER_REMOVE, kernel_id=kid)
-            return f"Removed kernel {kid} from cluster"
         except (SyscallError, ValueError) as e:
             return f"Error: {e}"
+        else:
+            return f"Removed kernel {kid} from cluster"
 
     def _cmd_cluster_send(self, args: list[str]) -> str:
         """Send a message to another kernel."""
@@ -197,9 +199,10 @@ class IsolationCommands(ShellBase):
                 to_id=kid,
                 data=msg.encode(),
             )
-            return f"Sent to kernel {kid}: {msg}"
         except (SyscallError, ValueError) as e:
             return f"Error: {e}"
+        else:
+            return f"Sent to kernel {kid}: {msg}"
 
     def _cmd_cluster_recv(self) -> str:
         """Receive the next message from the cluster."""
@@ -220,9 +223,10 @@ class IsolationCommands(ShellBase):
             kid = int(args[0])
             result = self._kernel.syscall(SyscallNumber.SYS_CLUSTER_PING, target_id=kid)
             status = "reachable" if result["reachable"] else "unreachable"
-            return f"Kernel {kid}: {status}"
         except (SyscallError, ValueError) as e:
             return f"Error: {e}"
+        else:
+            return f"Kernel {kid}: {status}"
 
     def _cmd_cluster_list(self) -> str:
         """List all kernels in the cluster."""
@@ -251,9 +255,10 @@ class IsolationCommands(ShellBase):
             addr = result.get("address")
             if addr is None:
                 return f"{hostname}: not found on kernel {kid}"
-            return f"{hostname} -> {addr} (via kernel {kid})"
         except (SyscallError, ValueError) as e:
             return f"Error: {e}"
+        else:
+            return f"{hostname} -> {addr} (via kernel {kid})"
 
     def _cmd_cluster_demo(self) -> str:
         """Run a cluster demonstration."""

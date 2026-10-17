@@ -174,6 +174,20 @@ def _parse_headers(lines: list[bytes], start_index: int) -> dict[str, str]:
     return headers
 
 
+def _split_start_line(line: str, min_parts: int, kind: str) -> list[str]:
+    """Split an HTTP start line into its space-separated parts.
+
+    Raises:
+        HttpError: If the line has fewer than ``min_parts`` parts.
+
+    """
+    parts = line.split(" ", maxsplit=2)
+    if len(parts) < min_parts:
+        msg = f"Malformed {kind} line: {line}"
+        raise HttpError(msg)
+    return parts
+
+
 def parse_request(data: bytes) -> HttpRequest:
     """Parse raw bytes into an HttpRequest.
 
@@ -189,10 +203,7 @@ def parse_request(data: bytes) -> HttpRequest:
 
         lines = header_section.split(b"\r\n")
         request_line = lines[0].decode()
-        parts = request_line.split(" ", maxsplit=2)
-        if len(parts) < _MIN_REQUEST_LINE_PARTS:
-            msg = f"Malformed request line: {request_line}"
-            raise HttpError(msg)
+        parts = _split_start_line(request_line, _MIN_REQUEST_LINE_PARTS, "request")
 
         method = HttpMethod(parts[0])
         path = parts[1]
@@ -258,10 +269,7 @@ def parse_response(data: bytes) -> HttpResponse:
 
         lines = header_section.split(b"\r\n")
         status_line = lines[0].decode()
-        parts = status_line.split(" ", maxsplit=2)
-        if len(parts) < _MIN_STATUS_LINE_PARTS:
-            msg = f"Malformed status line: {status_line}"
-            raise HttpError(msg)
+        parts = _split_start_line(status_line, _MIN_STATUS_LINE_PARTS, "status")
 
         status = HttpStatus(int(parts[1]))
         headers = _parse_headers(lines, start_index=1)

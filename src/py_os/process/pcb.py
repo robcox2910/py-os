@@ -252,7 +252,7 @@ class Process:
         try:
             self._output = self._program()
             self._exit_code = 0
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 -- a program may fail in any way; capture it as output
             self._output = str(e)
             self._exit_code = 1
 

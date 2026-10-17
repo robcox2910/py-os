@@ -10,7 +10,7 @@ from py_os.users import (
     AclEntryType,
     FilePermissions,
     Group,
-    PermissionError,
+    OsPermissionError,
     UserManager,
 )
 
@@ -208,7 +208,7 @@ class TestFilePermissionsExecute:
     def test_owner_execute_denied(self) -> None:
         """Owner cannot execute when owner_execute is False."""
         perms = FilePermissions(owner_uid=1, owner_execute=False)
-        with pytest.raises(PermissionError, match="Execute permission denied"):
+        with pytest.raises(OsPermissionError, match="Execute permission denied"):
             perms.check_execute(uid=1)
 
     def test_other_execute_allowed(self) -> None:
@@ -219,7 +219,7 @@ class TestFilePermissionsExecute:
     def test_other_execute_denied(self) -> None:
         """Other users cannot execute when other_execute is False."""
         perms = FilePermissions(owner_uid=1)
-        with pytest.raises(PermissionError, match="Execute permission denied"):
+        with pytest.raises(OsPermissionError, match="Execute permission denied"):
             perms.check_execute(uid=2)
 
     def test_root_bypasses_execute(self) -> None:
@@ -244,7 +244,7 @@ class TestFilePermissionsGroups:
         """Group member denied read when group_read is False."""
         gid = 1
         perms = FilePermissions(owner_uid=1, group_gid=gid, group_read=False, other_read=False)
-        with pytest.raises(PermissionError, match="Read permission denied"):
+        with pytest.raises(OsPermissionError, match="Read permission denied"):
             perms.check_read(uid=2, groups=frozenset({gid}))
 
     def test_group_write_allowed(self) -> None:
@@ -276,7 +276,7 @@ class TestFilePermissionsAcl:
         """User ACL entry denies read even when other_read is True."""
         acl = AclEntry(entry_type=AclEntryType.USER, target_id=_TARGET_ID, read=False)
         perms = FilePermissions(owner_uid=1, other_read=True, acl_entries=(acl,))
-        with pytest.raises(PermissionError, match="ACL"):
+        with pytest.raises(OsPermissionError, match="ACL"):
             perms.check_read(uid=_TARGET_ID)
 
     def test_group_acl_grants_write(self) -> None:
@@ -289,7 +289,7 @@ class TestFilePermissionsAcl:
         """Group ACL denies write to group members."""
         acl = AclEntry(entry_type=AclEntryType.GROUP, target_id=_TARGET_GID, write=False)
         perms = FilePermissions(owner_uid=1, other_write=True, acl_entries=(acl,))
-        with pytest.raises(PermissionError, match="group ACL"):
+        with pytest.raises(OsPermissionError, match="group ACL"):
             perms.check_write(uid=_TARGET_ID, groups=frozenset({_TARGET_GID}))
 
     def test_user_acl_overrides_group_acl(self) -> None:

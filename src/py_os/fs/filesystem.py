@@ -574,8 +574,8 @@ class FileSystem:
         serialized format produced by ``to_dict()``.
         """
         fs = object.__new__(cls)
-        fs._root_ino = data["root_ino"]
-        fs._inodes = {}
+        fs._root_ino = data["root_ino"]  # noqa: SLF001 -- same-class alternate constructor
+        fs._inodes = {}  # noqa: SLF001 -- same-class alternate constructor
         max_ino = -1
         for ino_data in data["inodes"].values():
             inode = _Inode(
@@ -585,7 +585,7 @@ class FileSystem:
                 children=ino_data.get("children", {}),
                 link_count=ino_data.get("link_count", 1),
             )
-            fs._inodes[inode.inode_number] = inode
+            fs._inodes[inode.inode_number] = inode  # noqa: SLF001 -- same-class alternate constructor
             max_ino = max(max_ino, inode.inode_number)
-        fs._next_inode = count(start=max_ino + 1)
+        fs._next_inode = count(start=max_ino + 1)  # noqa: SLF001 -- same-class alternate constructor
         return fs

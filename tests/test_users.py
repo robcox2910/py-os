@@ -7,8 +7,7 @@ Together they form the access control foundation of the OS.
 
 import pytest
 
-from py_os.users import FilePermissions, User, UserManager
-from py_os.users import PermissionError as OsPermissionError
+from py_os.users import FilePermissions, OsPermissionError, User, UserManager
 
 ROOT_UID = 0
 

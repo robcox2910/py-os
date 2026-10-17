@@ -131,9 +131,10 @@ class FileCommands(ShellBase):
             return f"Error: invalid fd '{args[1]}'"
         try:
             self._kernel.syscall(SyscallNumber.SYS_CLOSE, pid=pid, fd=fd)
-            return f"Closed fd {fd} for pid {pid}"
         except SyscallError as e:
             return f"Error: {e}"
+        else:
+            return f"Closed fd {fd} for pid {pid}"
 
     def _cmd_readfd(self, args: list[str]) -> str:
         """Read bytes from a file descriptor."""
@@ -336,9 +337,10 @@ class FileCommands(ShellBase):
         path, mode = args[0], args[1]
         try:
             self._kernel.syscall(SyscallNumber.SYS_CHMOD, path=path, mode=mode)
-            return f"Permissions set on {path}: {mode}"
         except SyscallError as e:
             return f"Error: {e}"
+        else:
+            return f"Permissions set on {path}: {mode}"
 
     def _cmd_chown(self, args: list[str]) -> str:
         """Change file owner/group: chown path uid [gid]."""
@@ -360,9 +362,10 @@ class FileCommands(ShellBase):
             msg = f"Owner of {path} set to uid={uid}"
             if gid is not None:
                 msg += f", gid={gid}"
-            return msg
         except SyscallError as e:
             return f"Error: {e}"
+        else:
+            return msg
 
     def _cmd_getfacl(self, args: list[str]) -> str:
         """Display permissions and ACL entries: getfacl path."""
@@ -440,9 +443,10 @@ class FileCommands(ShellBase):
                 + ("w" if new_entry["write"] else "-")
                 + ("x" if new_entry["execute"] else "-")
             )
-            return f"ACL set on {path}: {spec}:{perms}"
         except SyscallError as e:
             return f"Error: {e}"
+        else:
+            return f"ACL set on {path}: {spec}:{perms}"
 
     def _cmd_hexdump(self, args: list[str]) -> str:
         """Show an annotated hex dump of a PyBin file: hexdump PATH."""

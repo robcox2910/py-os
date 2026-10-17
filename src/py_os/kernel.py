@@ -29,7 +29,7 @@ Shutdown sequence (reverse order):
 from contextlib import AbstractContextManager, contextmanager, suppress
 from enum import StrEnum
 from time import monotonic
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, NoReturn
 
 from py_os.containers import ContainerManager
 from py_os.env import Environment
@@ -127,8 +127,8 @@ class ExecutionMode(StrEnum):
     KERNEL = "kernel"
 
 
-def _missing_subsystem(name: str) -> RuntimeError:
-    """Build the error for a subsystem that should exist but doesn't.
+def _raise_missing_subsystem(name: str) -> NoReturn:
+    """Raise the error for a subsystem that should exist but doesn't.
 
     While the kernel is running, every subsystem (scheduler, memory,
     filesystem, ...) is set up. If one is ever missing, something has gone
@@ -136,7 +136,7 @@ def _missing_subsystem(name: str) -> RuntimeError:
     crashing later with a puzzling "'NoneType' has no attribute" error.
     """
     msg = f"The kernel's {name} is not set up -- is the kernel running?"
-    return RuntimeError(msg)
+    raise RuntimeError(msg)
 
 
 class KernelModeError(RuntimeError):
@@ -480,7 +480,7 @@ class Kernel:
         """
         self._require_running()
         if self._scheduler is None:
-            raise _missing_subsystem("scheduler")
+            _raise_missing_subsystem("scheduler")
 
         old = self._scheduler
         new = MultiCPUScheduler(
@@ -545,7 +545,7 @@ class Kernel:
         execute permission for everyone.
         """
         if self._filesystem is None:
-            raise _missing_subsystem("filesystem")
+            _raise_missing_subsystem("filesystem")
         with suppress(FileExistsError):
             self._filesystem.create_dir("/bin")
         for name, factory in DEMO_PROGRAMS.items():
@@ -796,9 +796,9 @@ class Kernel:
         """
         self._require_running()
         if self._memory is None:
-            raise _missing_subsystem("memory")
+            _raise_missing_subsystem("memory")
         if self._scheduler is None:
-            raise _missing_subsystem("scheduler")
+            _raise_missing_subsystem("scheduler")
 
         process = Process(name=name, priority=priority, parent_pid=self._init_pid)
         frames = self._memory.allocate(process.pid, num_pages=num_pages)
@@ -839,9 +839,9 @@ class Kernel:
         """
         self._require_running()
         if self._memory is None:
-            raise _missing_subsystem("memory")
+            _raise_missing_subsystem("memory")
         if self._scheduler is None:
-            raise _missing_subsystem("scheduler")
+            _raise_missing_subsystem("scheduler")
 
         parent = self._processes.get(parent_pid)
         if parent is None:
@@ -939,7 +939,7 @@ class Kernel:
         """
         memory = self._memory
         if memory is None:
-            raise _missing_subsystem("memory")
+            _raise_missing_subsystem("memory")
 
         def cow_handler(vpn: int) -> tuple[int, bytearray]:
             old_frame = vm.page_table.translate(vpn)
@@ -963,7 +963,7 @@ class Kernel:
         """
         self._require_running()
         if self._filesystem is None:
-            raise _missing_subsystem("filesystem")
+            _raise_missing_subsystem("filesystem")
         self._filesystem.link(target_path, link_path)
 
     def symlink_file(self, target_path: str, link_path: str) -> None:
@@ -976,7 +976,7 @@ class Kernel:
         """
         self._require_running()
         if self._filesystem is None:
-            raise _missing_subsystem("filesystem")
+            _raise_missing_subsystem("filesystem")
         self._filesystem.symlink(target_path, link_path)
 
     def readlink_file(self, path: str) -> str:
@@ -991,7 +991,7 @@ class Kernel:
         """
         self._require_running()
         if self._filesystem is None:
-            raise _missing_subsystem("filesystem")
+            _raise_missing_subsystem("filesystem")
         return self._filesystem.readlink(path)
 
     # -- File descriptor operations --------------------------------------------
@@ -1016,7 +1016,7 @@ class Kernel:
         """
         self._require_running()
         if self._filesystem is None:
-            raise _missing_subsystem("filesystem")
+            _raise_missing_subsystem("filesystem")
 
         if pid not in self._processes:
             msg = f"Process {pid} not found"
@@ -1077,7 +1077,7 @@ class Kernel:
         """
         self._require_running()
         if self._filesystem is None:
-            raise _missing_subsystem("filesystem")
+            _raise_missing_subsystem("filesystem")
 
         table = self._fd_tables.get(pid)
         if table is None:
@@ -1113,7 +1113,7 @@ class Kernel:
         """
         self._require_running()
         if self._filesystem is None:
-            raise _missing_subsystem("filesystem")
+            _raise_missing_subsystem("filesystem")
 
         table = self._fd_tables.get(pid)
         if table is None:
@@ -1154,7 +1154,7 @@ class Kernel:
         """
         self._require_running()
         if self._filesystem is None:
-            raise _missing_subsystem("filesystem")
+            _raise_missing_subsystem("filesystem")
 
         table = self._fd_tables.get(pid)
         if table is None:
@@ -1213,7 +1213,7 @@ class Kernel:
         """
         self._require_running()
         if self._slab_allocator is None:
-            raise _missing_subsystem("slab allocator")
+            _raise_missing_subsystem("slab allocator")
         return self._slab_allocator.create_cache(name, obj_size=obj_size)
 
     def slab_alloc(self, cache_name: str) -> tuple[str, int, int]:
@@ -1228,7 +1228,7 @@ class Kernel:
         """
         self._require_running()
         if self._slab_allocator is None:
-            raise _missing_subsystem("slab allocator")
+            _raise_missing_subsystem("slab allocator")
         return self._slab_allocator.allocate(cache_name)
 
     def slab_free(self, cache_name: str, slab_index: int, slot_index: int) -> None:
@@ -1242,7 +1242,7 @@ class Kernel:
         """
         self._require_running()
         if self._slab_allocator is None:
-            raise _missing_subsystem("slab allocator")
+            _raise_missing_subsystem("slab allocator")
         self._slab_allocator.free(cache_name, slab_index, slot_index)
 
     def slab_info(self) -> dict[str, dict[str, object]]:
@@ -1254,7 +1254,7 @@ class Kernel:
         """
         self._require_running()
         if self._slab_allocator is None:
-            raise _missing_subsystem("slab allocator")
+            _raise_missing_subsystem("slab allocator")
         return self._slab_allocator.info()
 
     # -- Memory-mapped files (mmap) -------------------------------------------
@@ -1299,9 +1299,9 @@ class Kernel:
         """
         self._require_running()
         if self._memory is None:
-            raise _missing_subsystem("memory")
+            _raise_missing_subsystem("memory")
         if self._filesystem is None:
-            raise _missing_subsystem("filesystem")
+            _raise_missing_subsystem("filesystem")
 
         process = self._processes.get(pid)
         if process is None:
@@ -1401,7 +1401,7 @@ class Kernel:
 
         """
         if self._memory is None:
-            raise _missing_subsystem("memory")
+            _raise_missing_subsystem("memory")
 
         for i in range(num_pages):
             cache_key = (inode_number, file_offset + i * page_size)
@@ -1439,9 +1439,9 @@ class Kernel:
         """
         self._require_running()
         if self._memory is None:
-            raise _missing_subsystem("memory")
+            _raise_missing_subsystem("memory")
         if self._filesystem is None:
-            raise _missing_subsystem("filesystem")
+            _raise_missing_subsystem("filesystem")
 
         if pid not in self._processes:
             msg = f"Process {pid} not found"
@@ -1497,7 +1497,7 @@ class Kernel:
 
         """
         if self._filesystem is None:
-            raise _missing_subsystem("filesystem")
+            _raise_missing_subsystem("filesystem")
 
         # Assemble the mapped bytes from physical storage
         chunks: list[bytes] = []
@@ -1531,7 +1531,7 @@ class Kernel:
         """
         self._require_running()
         if self._filesystem is None:
-            raise _missing_subsystem("filesystem")
+            _raise_missing_subsystem("filesystem")
 
         if pid not in self._processes:
             msg = f"Process {pid} not found"
@@ -1762,7 +1762,7 @@ class Kernel:
     def _terminate_and_cleanup(self, process: Process, *, force: bool = False) -> None:
         """Terminate a process and clean up all associated resources."""
         if self._memory is None:
-            raise _missing_subsystem("memory")
+            _raise_missing_subsystem("memory")
         if force:
             process.force_terminate()
         else:
@@ -1801,7 +1801,7 @@ class Kernel:
         """
         self._require_running()
         if self._scheduler is None:
-            raise _missing_subsystem("scheduler")
+            _raise_missing_subsystem("scheduler")
         self._total_created = 0
         self._total_completed = 0
         self._total_wait_time = 0.0
@@ -1821,14 +1821,14 @@ class Kernel:
         """
         self._require_running()
         if self._scheduler is None:
-            raise _missing_subsystem("scheduler")
+            _raise_missing_subsystem("scheduler")
         return self._scheduler.purge_terminated()
 
     def perf_metrics(self) -> dict[str, float | int]:
         """Aggregate performance metrics from all subsystems."""
         self._require_running()
         if self._scheduler is None:
-            raise _missing_subsystem("scheduler")
+            _raise_missing_subsystem("scheduler")
         completed = self._total_completed
         avg_wait = self._total_wait_time / completed if completed else 0.0
         avg_turnaround = self._total_turnaround_time / completed if completed else 0.0
@@ -1863,9 +1863,9 @@ class Kernel:
         """
         self._require_running()
         if self._timer is None:
-            raise _missing_subsystem("timer")
+            _raise_missing_subsystem("timer")
         if self._interrupt_controller is None:
-            raise _missing_subsystem("interrupt controller")
+            _raise_missing_subsystem("interrupt controller")
 
         self._tick_count += 1
         self._ticks_since_dispatch += 1
@@ -1901,7 +1901,7 @@ class Kernel:
         (FCFS, Priority) have no quantum, so nothing happens.
         """
         if self._scheduler is None:
-            raise _missing_subsystem("scheduler")
+            _raise_missing_subsystem("scheduler")
 
         policy = self._scheduler.policy
         quantum: int | None = None
@@ -1935,7 +1935,7 @@ class Kernel:
         """
         self._require_running()
         if self._interrupt_controller is None:
-            raise _missing_subsystem("interrupt controller")
+            _raise_missing_subsystem("interrupt controller")
 
         # Register I/O vector if needed
         with suppress(ValueError):
@@ -2093,7 +2093,7 @@ class Kernel:
         """
         self._require_running()
         if self._memory is None:
-            raise _missing_subsystem("memory")
+            _raise_missing_subsystem("memory")
 
         if name in self._shared_memory:
             msg = f"Shared memory '{name}' already exists"
@@ -2148,7 +2148,7 @@ class Kernel:
         """
         self._require_running()
         if self._memory is None:
-            raise _missing_subsystem("memory")
+            _raise_missing_subsystem("memory")
 
         segment = self._shared_memory.get(name)
         if segment is None:
@@ -2203,7 +2203,7 @@ class Kernel:
         """
         self._require_running()
         if self._memory is None:
-            raise _missing_subsystem("memory")
+            _raise_missing_subsystem("memory")
 
         segment = self._shared_memory.get(name)
         if segment is None:
@@ -2363,7 +2363,7 @@ class Kernel:
         Called when a segment has no attachments and should be freed.
         """
         if self._memory is None:
-            raise _missing_subsystem("memory")
+            _raise_missing_subsystem("memory")
 
         segment = self._shared_memory.get(name)
         if segment is None:
@@ -2443,7 +2443,7 @@ class Kernel:
 
         # No terminated child yet — block the parent
         if self._scheduler is None:
-            raise _missing_subsystem("scheduler")
+            _raise_missing_subsystem("scheduler")
         parent.dispatch()
         parent.wait()
         parent.wait_target = -1
@@ -2490,7 +2490,7 @@ class Kernel:
 
         # Block the parent until this specific child terminates
         if self._scheduler is None:
-            raise _missing_subsystem("scheduler")
+            _raise_missing_subsystem("scheduler")
         parent.dispatch()
         parent.wait()
         parent.wait_target = child_pid
@@ -2646,7 +2646,7 @@ class Kernel:
         """
         self._require_running()
         if self._sync_manager is None:
-            raise _missing_subsystem("sync manager")
+            _raise_missing_subsystem("sync manager")
         return self._sync_manager.create_mutex(name)
 
     def acquire_mutex(self, name: str, *, tid: int, pid: int | None = None) -> bool:
@@ -2663,7 +2663,7 @@ class Kernel:
         """
         self._require_running()
         if self._sync_manager is None:
-            raise _missing_subsystem("sync manager")
+            _raise_missing_subsystem("sync manager")
 
         # Ordering check before acquire
         if (
@@ -2702,7 +2702,7 @@ class Kernel:
         """
         self._require_running()
         if self._sync_manager is None:
-            raise _missing_subsystem("sync manager")
+            _raise_missing_subsystem("sync manager")
         mutex = self._sync_manager.get_mutex(name)
         next_tid = mutex.release(tid)
         if pid is not None and self._pi_manager is not None:
@@ -2724,7 +2724,7 @@ class Kernel:
         """
         self._require_running()
         if self._sync_manager is None:
-            raise _missing_subsystem("sync manager")
+            _raise_missing_subsystem("sync manager")
         return self._sync_manager.create_semaphore(name, count=count)
 
     def acquire_semaphore(self, name: str, *, tid: int, pid: int | None = None) -> bool:
@@ -2741,7 +2741,7 @@ class Kernel:
         """
         self._require_running()
         if self._sync_manager is None:
-            raise _missing_subsystem("sync manager")
+            _raise_missing_subsystem("sync manager")
 
         if (
             pid is not None
@@ -2771,7 +2771,7 @@ class Kernel:
         """
         self._require_running()
         if self._sync_manager is None:
-            raise _missing_subsystem("sync manager")
+            _raise_missing_subsystem("sync manager")
         sem = self._sync_manager.get_semaphore(name)
         result = sem.release()
         if pid is not None and self._ordering_manager is not None:
@@ -2791,7 +2791,7 @@ class Kernel:
         """
         self._require_running()
         if self._sync_manager is None:
-            raise _missing_subsystem("sync manager")
+            _raise_missing_subsystem("sync manager")
         return self._sync_manager.create_condition(name, mutex_name=mutex_name)
 
     def condition_wait(self, name: str, *, tid: int) -> None:
@@ -2804,7 +2804,7 @@ class Kernel:
         """
         self._require_running()
         if self._sync_manager is None:
-            raise _missing_subsystem("sync manager")
+            _raise_missing_subsystem("sync manager")
         cond = self._sync_manager.get_condition(name)
         cond.wait(tid)
 
@@ -2820,7 +2820,7 @@ class Kernel:
         """
         self._require_running()
         if self._sync_manager is None:
-            raise _missing_subsystem("sync manager")
+            _raise_missing_subsystem("sync manager")
         cond = self._sync_manager.get_condition(name)
         return cond.notify()
 
@@ -2836,7 +2836,7 @@ class Kernel:
         """
         self._require_running()
         if self._sync_manager is None:
-            raise _missing_subsystem("sync manager")
+            _raise_missing_subsystem("sync manager")
         cond = self._sync_manager.get_condition(name)
         return cond.notify_all()
 
@@ -2854,7 +2854,7 @@ class Kernel:
         """
         self._require_running()
         if self._sync_manager is None:
-            raise _missing_subsystem("sync manager")
+            _raise_missing_subsystem("sync manager")
         return self._sync_manager.create_rwlock(name)
 
     def acquire_read_lock(self, name: str, *, tid: int, pid: int | None = None) -> bool:
@@ -2871,7 +2871,7 @@ class Kernel:
         """
         self._require_running()
         if self._sync_manager is None:
-            raise _missing_subsystem("sync manager")
+            _raise_missing_subsystem("sync manager")
 
         if (
             pid is not None
@@ -2902,7 +2902,7 @@ class Kernel:
         """
         self._require_running()
         if self._sync_manager is None:
-            raise _missing_subsystem("sync manager")
+            _raise_missing_subsystem("sync manager")
 
         if (
             pid is not None
@@ -2933,7 +2933,7 @@ class Kernel:
         """
         self._require_running()
         if self._sync_manager is None:
-            raise _missing_subsystem("sync manager")
+            _raise_missing_subsystem("sync manager")
         rwl = self._sync_manager.get_rwlock(name)
         result = rwl.release_read(tid)
         if pid is not None and self._ordering_manager is not None:
@@ -2954,7 +2954,7 @@ class Kernel:
         """
         self._require_running()
         if self._sync_manager is None:
-            raise _missing_subsystem("sync manager")
+            _raise_missing_subsystem("sync manager")
         rwl = self._sync_manager.get_rwlock(name)
         result = rwl.release_write(tid)
         if pid is not None and self._ordering_manager is not None:
@@ -2979,7 +2979,7 @@ class Kernel:
         """
         self._require_running()
         if self._dns_resolver is None:
-            raise _missing_subsystem("dns resolver")
+            _raise_missing_subsystem("dns resolver")
         return self._dns_resolver.register(hostname, address)
 
     def dns_lookup(self, hostname: str) -> str:
@@ -2997,7 +2997,7 @@ class Kernel:
         """
         self._require_running()
         if self._dns_resolver is None:
-            raise _missing_subsystem("dns resolver")
+            _raise_missing_subsystem("dns resolver")
         return self._dns_resolver.lookup(hostname)
 
     def dns_remove(self, hostname: str) -> None:
@@ -3012,7 +3012,7 @@ class Kernel:
         """
         self._require_running()
         if self._dns_resolver is None:
-            raise _missing_subsystem("dns resolver")
+            _raise_missing_subsystem("dns resolver")
         self._dns_resolver.remove(hostname)
 
     def dns_list(self) -> list[dict[str, str]]:
@@ -3025,7 +3025,7 @@ class Kernel:
         """
         self._require_running()
         if self._dns_resolver is None:
-            raise _missing_subsystem("dns resolver")
+            _raise_missing_subsystem("dns resolver")
         return [
             {"hostname": r.hostname, "address": r.address}
             for r in self._dns_resolver.list_records()
@@ -3040,7 +3040,7 @@ class Kernel:
         """
         self._require_running()
         if self._dns_resolver is None:
-            raise _missing_subsystem("dns resolver")
+            _raise_missing_subsystem("dns resolver")
         return self._dns_resolver.flush()
 
     # -- Journal operations --------------------------------------------------
@@ -3054,21 +3054,21 @@ class Kernel:
         """
         self._require_running()
         if self._filesystem is None:
-            raise _missing_subsystem("filesystem")
+            _raise_missing_subsystem("filesystem")
         return self._filesystem.journal_status()
 
     def journal_checkpoint(self) -> None:
         """Take a journal checkpoint — snapshot the current filesystem state."""
         self._require_running()
         if self._filesystem is None:
-            raise _missing_subsystem("filesystem")
+            _raise_missing_subsystem("filesystem")
         self._filesystem.checkpoint()
 
     def journal_crash(self) -> None:
         """Simulate a crash — abort active transactions, restore from checkpoint."""
         self._require_running()
         if self._filesystem is None:
-            raise _missing_subsystem("filesystem")
+            _raise_missing_subsystem("filesystem")
         self._filesystem.simulate_crash()
 
     def journal_recover(self) -> int:
@@ -3080,7 +3080,7 @@ class Kernel:
         """
         self._require_running()
         if self._filesystem is None:
-            raise _missing_subsystem("filesystem")
+            _raise_missing_subsystem("filesystem")
         return self._filesystem.recover()
 
     # -- Socket operations ---------------------------------------------------
@@ -3457,7 +3457,7 @@ class Kernel:
         """
         mgr = self._require_container_manager()
         if self._filesystem is None:
-            raise _missing_subsystem("filesystem")
+            _raise_missing_subsystem("filesystem")
         fs_root = f"/containers/{name}"
         with suppress(FileExistsError):
             self._filesystem.create_dir("/containers")
@@ -3599,7 +3599,7 @@ class Kernel:
         """
         cluster = self._require_cluster()
         if self._cluster_kernel_id is None:
-            raise _missing_subsystem("cluster kernel id")
+            _raise_missing_subsystem("cluster kernel id")
         cluster.send_message(self._cluster_kernel_id, to_id, data)
 
     def cluster_recv(self) -> dict[str, object]:
@@ -3611,7 +3611,7 @@ class Kernel:
         """
         cluster = self._require_cluster()
         if self._cluster_kernel_id is None:
-            raise _missing_subsystem("cluster kernel id")
+            _raise_missing_subsystem("cluster kernel id")
         data = cluster.receive_message(self._cluster_kernel_id)
         return {"data": data}
 
@@ -3627,7 +3627,7 @@ class Kernel:
         """
         cluster = self._require_cluster()
         if self._cluster_kernel_id is None:
-            raise _missing_subsystem("cluster kernel id")
+            _raise_missing_subsystem("cluster kernel id")
         reachable = cluster.ping(self._cluster_kernel_id, target_id)
         return {"reachable": reachable, "target": target_id}
 
@@ -3654,6 +3654,6 @@ class Kernel:
         """
         cluster = self._require_cluster()
         if self._cluster_kernel_id is None:
-            raise _missing_subsystem("cluster kernel id")
+            _raise_missing_subsystem("cluster kernel id")
         result = cluster.dns_query(self._cluster_kernel_id, target_id, hostname)
         return {"hostname": hostname, "address": result}

@@ -313,7 +313,8 @@ class TestProcessesLessonErrors:
             nonlocal call_count
             call_count += 1
             if call_count >= _FAIL_ON_SECOND_CALL:
-                raise SyscallError("fail")
+                msg = "fail"
+                raise SyscallError(msg)
             return original(*args, **kwargs)  # type: ignore[arg-type]
 
         with patch.object(kernel, "syscall", side_effect=_fail_on_second):
@@ -343,7 +344,8 @@ class TestMemoryLessonErrors:
             nonlocal call_count
             call_count += 1
             if call_count >= _FAIL_ON_SECOND_CALL:
-                raise SyscallError("slab fail")
+                msg = "slab fail"
+                raise SyscallError(msg)
             return original(*args, **kwargs)  # type: ignore[arg-type]
 
         with patch.object(kernel, "syscall", side_effect=_fail_on_second):
@@ -402,7 +404,8 @@ class TestSignalsLessonErrors:
             nonlocal call_count
             call_count += 1
             if call_count >= _FAIL_ON_SECOND_CALL:
-                raise SyscallError("sig op fail")
+                msg = "sig op fail"
+                raise SyscallError(msg)
             return original(*args, **kwargs)  # type: ignore[arg-type]
 
         with patch.object(kernel, "syscall", side_effect=_fail_after_first):
@@ -435,7 +438,8 @@ class TestNetworkingLessonErrors:
         def _fail_first_two(*_args: object, **_kwargs: object) -> object:
             nonlocal call_count
             call_count += 1
-            raise SyscallError("dns fail")
+            msg = "dns fail"
+            raise SyscallError(msg)
 
         with patch.object(kernel, "syscall", side_effect=_fail_first_two):
             output = runner.run("networking")
@@ -461,7 +465,8 @@ class TestNetworkingLessonErrors:
             nonlocal call_count
             call_count += 1
             if call_count > _FAIL_ON_FOURTH_CALL:
-                raise SyscallError("client fail")
+                msg = "client fail"
+                raise SyscallError(msg)
             return original(*args, **kwargs)  # type: ignore[arg-type]
 
         with patch.object(kernel, "syscall", side_effect=_fail_on_client):
@@ -506,7 +511,8 @@ class TestTcpLessonErrors:
             nonlocal call_count
             call_count += 1
             if call_count > _FAIL_ON_THIRD_CALL:
-                raise SyscallError("send fail")
+                msg = "send fail"
+                raise SyscallError(msg)
             return original(*args, **kwargs)  # type: ignore[arg-type]
 
         with patch.object(kernel, "syscall", side_effect=_fail_on_send):
@@ -524,7 +530,8 @@ class TestTcpLessonErrors:
             nonlocal call_count
             call_count += 1
             if call_count > _FAIL_ON_FOURTH_CALL:
-                raise SyscallError("recv fail")
+                msg = "recv fail"
+                raise SyscallError(msg)
             return original(*args, **kwargs)  # type: ignore[arg-type]
 
         with patch.object(kernel, "syscall", side_effect=_fail_on_recv):
@@ -542,7 +549,8 @@ class TestTcpLessonErrors:
             nonlocal call_count
             call_count += 1
             if call_count > _FAIL_ON_FIFTH_CALL:
-                raise SyscallError("info fail")
+                msg = "info fail"
+                raise SyscallError(msg)
             return original(*args, **kwargs)  # type: ignore[arg-type]
 
         with patch.object(kernel, "syscall", side_effect=_fail_on_info):

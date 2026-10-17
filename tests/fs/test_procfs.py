@@ -44,8 +44,9 @@ class TestProcErrorAndInit:
 
     def test_proc_error_is_exception(self) -> None:
         """ProcError should be a standard exception."""
+        msg = "oops"
         with pytest.raises(ProcError, match="oops"):
-            raise ProcError("oops")
+            raise ProcError(msg)
 
     def test_procfs_creates_and_stores_kernel(self) -> None:
         """ProcFilesystem should store a reference to its kernel."""
