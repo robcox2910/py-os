@@ -473,7 +473,9 @@ class SlabAllocator:
 
         """
         cache = self._get_cache(name)
-        # Free all backing frames back to the memory manager
+        # Free all backing frames back to the memory manager, and take them
+        # out of the kernel's page table so it no longer claims them
         for frame in cache.frames():
             self._memory.decrement_refcount(frame)
+            self._memory.unshare_frame(pid=self._kernel_pid, frame=frame)
         del self._caches[name]
