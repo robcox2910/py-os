@@ -38,8 +38,10 @@ model check (more on that below) is in `tests/test_model.py`.
 
 ## A Property from PyOS
 
-PyOS has four disk scheduling policies: FCFS, SSTF, SCAN and C-SCAN. Each one picks a different *order* for the disk
-arm to visit the cylinders it's been asked for. But whatever the order, no
+PyOS has four disk scheduling policies: FCFS, SSTF, SCAN and C-SCAN (SCAN
+and C-SCAN can each start by sweeping up or down, so that's six to test).
+Each one picks a different *order* for the disk arm to visit the cylinders
+it's been asked for. But whatever the order, no
 request may be lost and none may be made up. Here's the property:
 
 ```python
@@ -118,7 +120,7 @@ Notice what the test *doesn't* say. It never says "with the head at 53, SSTF
 goes to 65 first". It doesn't need to know any answers. It only needs a rule
 that's always true. That also means FCFS, which just keeps the arrival order,
 passes it, and that's fine: being *clever* is a different rule. **A
-do-nothing scheduler that returns an empty list fails this on its very first
+do-nothing scheduler that returns an empty list fails as soon as there's one
 request.**
 
 PyOS has three more properties:
@@ -277,7 +279,8 @@ sweep now takes only requests *above* the head, the `down` sweep only those
 *below* it, and a request *at* the head falls in the gap.
 
 Only `test_disk_policies_serve_every_request_exactly_once` fails. The other
-properties and the model check stay green: they never touch the disk. **The example tests all still pass. Only the property notices.** Every
+properties and the model check stay green: they never touch the disk.
+**The example tests all still pass. Only the property notices.** Every
 example in `tests/io/test_disk_scheduling.py` uses a head that isn't one of
 the requests, like the textbook's head at 53.
 
@@ -328,10 +331,24 @@ uses when it gives frames back:
             self._memory.unshare_frame(pid=self._kernel_pid, frame=frame)  # was: missing
 ```
 
-The shrunk input also became an ordinary example test,
-`test_destroy_cache_removes_frames_from_kernel_page_table` in
+The shrunk input also became an ordinary example test in
 `tests/memory/test_slab.py`, so this bug can never sneak back in, even if
-someone deletes the property.
+someone deletes the property:
+
+```python
+    def test_destroy_cache_removes_frames_from_kernel_page_table(self) -> None:
+        mm = MemoryManager(total_frames=TOTAL_FRAMES)
+        alloc = SlabAllocator(memory=mm, page_size=PAGE_SIZE, kernel_pid=KERNEL_PID)
+        alloc.create_cache("tmp", obj_size=1)
+        alloc.allocate("tmp")
+        alloc.destroy_cache("tmp")
+        assert mm.pages_for(KERNEL_PID) == []
+        mm.free(KERNEL_PID)
+        assert mm.free_frames == TOTAL_FRAMES
+```
+
+Hunting for more bugs like it turned up a second one with the same missing
+`unshare_frame`, in copy-on-write after `fork`. That one is fixed now too.
 
 ## Run It Yourself
 

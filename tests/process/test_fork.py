@@ -304,6 +304,44 @@ class TestCopyOnWriteFork:
         expected_double = 2
         assert kernel.memory.refcount(frame) == expected_double
 
+    def test_cow_write_removes_old_frame_from_child_page_table(self) -> None:
+        """After a COW copy, the child's page table holds only its new frame.
+
+        Otherwise the child's exit drops the old frame's refcount a second
+        time and frees it while the parent still has it mapped.
+        """
+        kernel = _booted_kernel()
+        assert kernel.memory is not None
+        parent = kernel.create_process(name="parent", num_pages=1)
+        parent_frame = kernel.memory.pages_for(parent.pid)[0]
+
+        child = kernel.fork_process(parent_pid=parent.pid)
+        assert child.virtual_memory is not None
+        child.virtual_memory.write(virtual_address=0, data=b"x")
+        assert parent_frame not in kernel.memory.pages_for(child.pid)
+
+        kernel.send_signal(child.pid, Signal.SIGKILL)
+
+        assert kernel.memory.pages_for(parent.pid) == [parent_frame]
+        assert kernel.memory.refcount(parent_frame) == 1
+
+    def test_page_tables_match_refcounts_after_both_sides_write(self) -> None:
+        """Every frame in a page table is allocated once both sides have copied."""
+        kernel = _booted_kernel()
+        assert kernel.memory is not None
+        parent = kernel.create_process(name="parent", num_pages=1)
+        child = kernel.fork_process(parent_pid=parent.pid)
+        assert parent.virtual_memory is not None
+        assert child.virtual_memory is not None
+
+        child.virtual_memory.write(virtual_address=0, data=b"c")
+        parent.virtual_memory.write(virtual_address=0, data=b"p")
+
+        for pid in (parent.pid, child.pid):
+            frames = kernel.memory.pages_for(pid)
+            assert len(frames) == 1
+            assert kernel.memory.refcount(frames[0]) == 1
+
     def test_shared_frame_count_after_fork(self) -> None:
         """shared_frame_count should reflect number of shared frames."""
         kernel = _booted_kernel()
