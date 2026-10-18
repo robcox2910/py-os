@@ -1,3 +1,8 @@
+---
+title: "How a command-line shell works: pipes and redirection"
+description: "How a shell reads your commands, runs them, and connects them with pipes and redirection, explained simply with a working shell in Python."
+---
+
 # The Shell
 
 You know how when you walk into a hotel, you don't just wander into the back

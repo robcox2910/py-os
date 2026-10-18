@@ -1,3 +1,8 @@
+---
+title: "How virtual memory and paging work"
+description: "How an operating system hands out and protects memory: page tables, swapping and the slab allocator, explained simply with working Python code."
+---
+
 # Memory: How the OS Hands Out and Protects Memory
 
 When a [process](processes.md) runs, it needs somewhere to keep its stuff -- the
