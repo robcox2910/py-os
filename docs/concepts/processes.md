@@ -1,3 +1,8 @@
+---
+title: "How processes and CPU scheduling work"
+description: "What a process is and how an OS shares the CPU with round robin, priority, MLFQ and CFS schedulers, explained simply with working Python code."
+---
+
 # Processes
 
 Everything your computer does -- running a game, playing music, loading a web page -- happens inside a **process**. This page explains what processes are, how they take turns using the CPU, and how they are born, run, and finish.

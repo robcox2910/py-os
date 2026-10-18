@@ -1,3 +1,8 @@
+---
+title: "What is an operating system? Explained simply"
+description: "What an operating system does and why every computer needs one, explained with everyday analogies and a working OS written in Python."
+---
+
 # What Is an Operating System?
 
 You turn on your computer, click some stuff, maybe open a game or a browser.

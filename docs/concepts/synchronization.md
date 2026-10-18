@@ -1,3 +1,8 @@
+---
+title: "Race conditions, locks and semaphores explained"
+description: "Why threads clash over shared data and how locks, semaphores and other primitives prevent race conditions and deadlock, with Python examples."
+---
+
 # Synchronization
 
 When multiple threads share data, things can go wrong fast. Without coordination, two threads might update the same variable at the same time, creating a **race condition** -- the result depends on which thread happens to run first.

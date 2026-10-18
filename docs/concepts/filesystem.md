@@ -1,3 +1,8 @@
+---
+title: "How a filesystem works: inodes, directories and journaling"
+description: "How an OS stores files: inodes, directories, hard and soft links, and a journal for crash safety, explained simply with working Python code."
+---
+
 # The Filesystem
 
 You use files every day. Your homework, your photos, your game saves -- they all

@@ -1,3 +1,8 @@
+---
+title: "What is a kernel? System calls explained"
+description: "What the kernel does and how programs ask it for help through system calls, explained simply with a working kernel written in Python."
+---
+
 # The Kernel and System Calls
 
 In the [What Is an Operating System?](what-is-an-os.md) page we said the kernel is
