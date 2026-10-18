@@ -930,7 +930,8 @@ class Kernel:
 
         The handler is a closure that captures the PID and memory manager.
         When a COW page is written, it allocates a fresh frame, copies
-        the data, and decrements the old frame's refcount.
+        the data, then drops the old frame's refcount and removes it from
+        this process's page table (the other sharers still hold it).
 
         Args:
             pid: The process ID that owns this address space.
@@ -947,6 +948,7 @@ class Kernel:
             old_storage = vm.physical_storage(old_frame)
             new_storage = bytearray(old_storage)
             memory.decrement_refcount(old_frame)
+            memory.unshare_frame(pid=pid, frame=old_frame)
             return (new_frame, new_storage)
 
         vm.cow_fault_handler = cow_handler
