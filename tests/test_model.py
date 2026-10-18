@@ -35,6 +35,7 @@ from hypothesis.stateful import (
     RuleBasedStateMachine,
     invariant,
     multiple,
+    precondition,
     rule,
 )
 
@@ -133,6 +134,39 @@ class MemoryManagerMachine(RuleBasedStateMachine):
         if frame not in self.model.get(pid, []):
             self.memory.unshare_frame(pid=pid, frame=frame)
             return
+        self.memory.decrement_refcount(frame)
+        self.memory.unshare_frame(pid=pid, frame=frame)
+        self.model[pid].remove(frame)
+
+    def someone_holds_a_frame(self) -> bool:
+        """Say whether any process holds at least one frame, according to the dict."""
+        return any(self.model.values())
+
+    def draw_a_held_frame(self, data: st.DataObject) -> tuple[int, int]:
+        """Pick a process that holds frames, and one of the frames it holds."""
+        holders = sorted(pid for pid, table in self.model.items() if table)
+        pid = data.draw(st.sampled_from(holders), label="pid")
+        frame = data.draw(st.sampled_from(self.model[pid]), label="frame")
+        return pid, frame
+
+    # The two rules below aim at one tricky case: a process that holds the
+    # *same* frame twice. Random PIDs and frames only rarely line up like
+    # that, so these rules pick a frame the process already has.
+
+    @precondition(someone_holds_a_frame)
+    @rule(data=st.data())
+    def share_again(self, data: st.DataObject) -> None:
+        """Share a frame with a process that already holds it, so it holds it twice."""
+        pid, frame = self.draw_a_held_frame(data)
+        self.memory.increment_refcount(frame)
+        self.memory.share_frame(pid=pid, frame=frame)
+        self.model[pid].append(frame)
+
+    @precondition(someone_holds_a_frame)
+    @rule(data=st.data())
+    def unshare_held(self, data: st.DataObject) -> None:
+        """Take back one copy of a frame a process holds; any other copy stays."""
+        pid, frame = self.draw_a_held_frame(data)
         self.memory.decrement_refcount(frame)
         self.memory.unshare_frame(pid=pid, frame=frame)
         self.model[pid].remove(frame)
