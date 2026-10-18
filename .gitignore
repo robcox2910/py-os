@@ -65,3 +65,6 @@ site/
 .mypy_cache/
 .ruff_cache/
 .claude/settings.local.json
+
+# Hypothesis example database (local thorough runs)
+.hypothesis/
