@@ -118,8 +118,11 @@ def test_slab_write_then_read_gives_back_each_objects_bytes(
         slabs.write(*handle, data)
 
     for handle, data in zip(handles, objects, strict=True):
+        read_back = slabs.read(*handle)
+        # bytes, not a bytearray view of the slab that a later write could change.
+        assert type(read_back) is bytes
         # A fresh slot is all zero bytes, and a write only covers its own length.
-        assert slabs.read(*handle) == data + bytes(obj_size - len(data))
+        assert read_back == data + bytes(obj_size - len(data))
 
 
 # -- Slab caches give back every frame they took ------------------------------
