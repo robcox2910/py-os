@@ -933,6 +933,11 @@ class Kernel:
         the data, then drops the old frame's refcount and removes it from
         this process's page table (the other sharers still hold it).
 
+        If nobody else holds the frame any more (its refcount is 1, say
+        because the other side already copied away), there is nothing to
+        protect: the handler hands back the same frame and storage, so the
+        write happens in place and needs no free frame.
+
         Args:
             pid: The process ID that owns this address space.
             vm: The virtual memory to install the handler on.
@@ -944,8 +949,10 @@ class Kernel:
 
         def cow_handler(vpn: int) -> tuple[int, bytearray]:
             old_frame = vm.page_table.translate(vpn)
-            new_frame = memory.allocate_one(pid)
             old_storage = vm.physical_storage(old_frame)
+            if memory.refcount(old_frame) == 1:
+                return (old_frame, old_storage)
+            new_frame = memory.allocate_one(pid)
             new_storage = bytearray(old_storage)
             memory.decrement_refcount(old_frame)
             memory.unshare_frame(pid=pid, frame=old_frame)

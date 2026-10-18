@@ -342,6 +342,51 @@ class TestCopyOnWriteFork:
             assert len(frames) == 1
             assert kernel.memory.refcount(frames[0]) == 1
 
+    def test_cow_write_with_refcount_one_makes_no_copy(self) -> None:
+        """A COW page nobody else holds any more is written in place.
+
+        The child copied away, so the parent's page is still flagged COW
+        but its frame has refcount 1. Copying it would waste a frame.
+        """
+        kernel = _booted_kernel()
+        assert kernel.memory is not None
+        parent = kernel.create_process(name="parent", num_pages=1)
+        parent_frame = kernel.memory.pages_for(parent.pid)[0]
+        child = kernel.fork_process(parent_pid=parent.pid)
+        assert parent.virtual_memory is not None
+        assert child.virtual_memory is not None
+        child.virtual_memory.write(virtual_address=0, data=b"c")
+        assert parent.virtual_memory.is_cow(virtual_page=0)
+        assert kernel.memory.refcount(parent_frame) == 1
+        free_before = kernel.memory.free_frames
+
+        parent.virtual_memory.write(virtual_address=0, data=b"p")
+
+        assert kernel.memory.free_frames == free_before
+        assert kernel.memory.pages_for(parent.pid) == [parent_frame]
+        assert kernel.memory.refcount(parent_frame) == 1
+        assert not parent.virtual_memory.is_cow(virtual_page=0)
+        assert parent.virtual_memory.read(virtual_address=0, size=1) == b"p"
+        assert child.virtual_memory.read(virtual_address=0, size=1) == b"c"
+
+    def test_cow_write_with_refcount_one_needs_no_free_frame(self) -> None:
+        """With memory full, writing a COW page nobody else holds still works."""
+        kernel = _booted_kernel()
+        assert kernel.memory is not None
+        parent = kernel.create_process(name="parent", num_pages=1)
+        child = kernel.fork_process(parent_pid=parent.pid)
+        assert parent.virtual_memory is not None
+        assert child.virtual_memory is not None
+        child.virtual_memory.write(virtual_address=0, data=b"c")
+        hog = kernel.create_process(name="hog", num_pages=kernel.memory.free_frames)
+        assert hog.pid != parent.pid
+        assert kernel.memory.free_frames == 0
+
+        parent.virtual_memory.write(virtual_address=0, data=b"p")
+
+        assert parent.virtual_memory.read(virtual_address=0, size=1) == b"p"
+        assert kernel.memory.free_frames == 0
+
     def test_shared_frame_count_after_fork(self) -> None:
         """shared_frame_count should reflect number of shared frames."""
         kernel = _booted_kernel()
