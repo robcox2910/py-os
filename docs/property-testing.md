@@ -11,25 +11,24 @@ every floor someone pressed (the disk arm and its cylinders).
 
 How would you check the school works? The usual way: give one student two
 lockers, see two lockers with their name on, and smile. That's an
-**example test**. It's useful, but it only tells you about the one
-student you thought of.
+**example test**. It only tells you about the one student you thought of.
 
-Now imagine a caretaker. All night they play out thousands of made-up school
-days: a student with no lockers, a student who asks for more lockers than
-exist, two students sharing one, the lift called to the floor it's on. For
-each one they check a single rule, such as:
+Now imagine a caretaker who plays out thousands of made-up school days all
+night: a student with no lockers, one who asks for more lockers than exist,
+two sharing one, the lift called to the floor it's on. For each they check a
+single rule, such as:
 
 > Whatever floors are pressed, the lift stops at every one of them exactly once.
 
-That rule is a **property**. It doesn't say which floor comes first. It says
+That rule is a **property**. It doesn't say which floor comes first, only
 something that must be true for *every* set of button presses.
 
 When the caretaker finds something that breaks the rule, they don't just
 write "something went wrong on Tuesday, with forty students". They play the
 day again with less and less -- fewer students, fewer buttons, smaller
-numbers -- checking it still goes wrong each time, until it's as simple as it
-can be. That boiling-down is called **shrinking**, and it's the best part:
-the smallest failing input usually points straight at the bug.
+numbers -- until it's as simple as it can be and still goes wrong. That
+boiling-down is called **shrinking**, and the smallest failing input usually
+points straight at the bug.
 
 In Python, the caretaker is a library called
 [Hypothesis](https://hypothesis.readthedocs.io/). PyOS's property tests live
@@ -40,9 +39,8 @@ model check (more on that below) is in `tests/test_model.py`.
 
 PyOS has four disk scheduling policies: FCFS, SSTF, SCAN and C-SCAN (SCAN
 and C-SCAN can each start by sweeping up or down, so that's six to test).
-Each one picks a different *order* for the disk arm to visit the cylinders
-it's been asked for. But whatever the order, no
-request may be lost and none may be made up. Here's the property:
+Each picks a different *order* for the disk arm to visit the cylinders it's
+been asked for, but no request may be lost and none may be made up:
 
 ```python
 # SCANPolicy and CSCANPolicy default to a disk with cylinders 0 to 199.
@@ -93,33 +91,30 @@ def test_disk_policies_serve_every_request_exactly_once(
 Line by line:
 
 - **`cylinders()`, `requests_and_head()` and `disk_policy_names()`** are
-  **strategies**: recipes for making random inputs. Each one is a named
-  function with a docstring, so the test reads like a sentence.
-  `st.integers(min_value=0, max_value=199)` makes any cylinder on the disk,
-  and `st.lists(...)` makes a list of them: empty, one request, the same
-  cylinder twice, forty of them.
-- **`DISK_POLICIES`** gives each policy a name like `"SCAN up"`. Hypothesis
-  picks a *name*, so when a test fails it can print which policy it was.
+  **strategies**: recipes for making random inputs, each a named function so
+  the test reads like a sentence. `st.integers(min_value=0, max_value=199)`
+  makes any cylinder, and `st.lists(...)` makes a list of them: empty, one
+  request, the same cylinder twice, forty of them.
+- **`DISK_POLICIES`** names each policy (`"SCAN up"`), so a failing test can
+  print which one it was.
 - **`@st.composite`** lets one strategy use another. `requests_and_head()`
-  first draws the list of requests, then picks the head. The comment says
-  why: half the time, it puts the head *on* one of the requests. One
-  version of this test, with a plain random head, missed the bug in
-  "Try It Yourself" below in its normal 100-example run, because a random
-  head hardly ever lands on a requested cylinder. **A property only finds
-  what its strategy can make.**
+  draws the requests, then the head -- half the time *on* one of the
+  requests. A version with a plain random head missed the bug in "Try It
+  Yourself" below in its normal 100-example run, because a random head
+  hardly ever lands on a requested cylinder. **A property only finds what
+  its strategy can make.**
 - **`@given(...)`** runs the test many times (100 in a normal run), each
   time with a fresh policy, list and head.
-- **The docstring** says the rule in plain English. If you can't say the rule
-  in one sentence, it probably isn't a good property yet.
+- **The docstring** says the rule in plain English. If you can't say it in one
+  sentence, it probably isn't a good property yet.
 - **The `assert`** is the rule itself. Sorting both lists throws away the
-  order, so what's left is "the same cylinders, the same number of times".
-  `sorted` is Python's own sort, which we already trust, and it's not how
-  any of the policies work.
+  order, leaving "the same cylinders, the same number of times". `sorted` is
+  Python's own sort, which we trust, and it's not how any policy works.
 
-Notice what the test *doesn't* say. It never says "with the head at 53, SSTF
-goes to 65 first". It doesn't need to know any answers. It only needs a rule
-that's always true. That also means FCFS, which just keeps the arrival order,
-passes it, and that's fine: being *clever* is a different rule. **A
+Notice what the test *doesn't* say: never "with the head at 53, SSTF goes to
+65 first". It needs no answers, only a rule that's always true. FCFS, which
+just keeps the arrival order, passes it, and that's fine: being *clever* is a
+different rule. **A
 do-nothing scheduler that returns an empty list fails as soon as there's one
 request.**
 
@@ -127,7 +122,7 @@ PyOS has three more properties:
 
 | Rule | Test |
 |---|---|
-| Write each object into its own new slot; each slot reads back its bytes, padded with zeros | `test_slab_write_then_read_gives_back_each_objects_bytes` |
+| Write each object into its own new slot; each slot reads back its bytes (as `bytes`), padded with zeros | `test_slab_write_then_read_gives_back_each_objects_bytes` |
 | After a cache is destroyed, memory looks exactly as it did before the cache was made | `test_destroying_a_slab_cache_gives_back_every_frame` |
 | Picking until the queue is empty gives the processes in priority order, oldest first on a tie | `test_priority_policy_picks_most_important_first_and_oldest_on_ties` |
 
@@ -137,18 +132,17 @@ checks the [priority scheduler](concepts/processes.md) against Python's
 
 ## Checking Against a Model
 
-A property checks one action. But the memory manager is something you change
-step by step: hand out frames, share one when a process forks, take one back,
-free everything when a process exits. Bugs often hide in the *order* of
-steps -- freeing a process that never had any memory, or sharing a frame
-that's already been given back.
+A property checks one action. But the memory manager changes step by step:
+hand out frames, share one on fork, take one back, free everything on exit.
+Bugs often hide in the *order* of steps -- freeing a process that never had
+memory, or sharing a frame that's already been given back.
 
-So the caretaker has a second trick. They carry a clipboard, and write down
-by hand which student holds which locker. After every single step in the
-hallway, they compare the lockers with the clipboard. If the hallway ever
-disagrees with the clipboard, something's wrong with the principal.
+So the caretaker carries a clipboard, noting by hand which student holds
+which locker, and after every step compares the lockers with it. If the
+hallway ever disagrees with the clipboard, something's wrong with the
+principal.
 
-That clipboard is a **model**: something simple that we already trust. For
+That clipboard is a **model**: something simple we already trust. For
 `MemoryManager`, the model is a plain Python `dict` from each PID to the list
 of frames in its page table. Here's the heart of `tests/test_model.py`:
 
@@ -197,40 +191,39 @@ TestMemoryManagerModel = cast(
 
 Piece by piece:
 
-- **`RuleBasedStateMachine`** is Hypothesis's tool for testing things that
-  change step by step. Hypothesis makes up a random **story** of steps and
-  plays it.
-- **`self.memory` and `self.model`** are the hallway and the clipboard. Every
-  story starts with all 8 frames free and an empty dict.
-- **`frames_in_use()`** works out everything else from the clipboard. If
-  process 1 and process 2 both list frame 3, frame 3's refcount must be 2. A
-  frame nobody lists must be free.
-- **Each `@rule`** is one kind of step. It does the same thing to the
-  manager and to the dict. `allocate_one` also checks the manager's *answer*:
-  the frame it hands out must be one nobody holds. And when memory is full,
-  `pytest.raises` checks that the manager refuses with `OutOfMemoryError`.
-  The real file has rules to allocate several frames at once, share a frame
-  (as `fork` does), unshare one, and free a whole process.
+- **`RuleBasedStateMachine`** is Hypothesis's tool for things that change
+  step by step: it makes up a random **story** of steps and plays it.
+- **`self.memory` and `self.model`** are the hallway and the clipboard, and
+  start with all 8 frames free and an empty dict.
+- **`frames_in_use()`** works out everything else from the clipboard: if
+  processes 1 and 2 both list frame 3, its refcount must be 2, and a frame
+  nobody lists must be free.
+- **Each `@rule`** is one kind of step, done to both the manager and the
+  dict. `allocate_one` also checks the manager's *answer*: the frame must be
+  one nobody holds, and when memory is full, `pytest.raises` checks the
+  manager refuses with `OutOfMemoryError`. The real file has rules to
+  allocate several frames, share a frame (as `fork` does), unshare one, and
+  free a whole process.
 - **`frames = Bundle("frames")`** is a bag of frame numbers handed out
   earlier in the story. `allocate_one` puts its frame in the bag
   (`target=frames`, and `multiple(frame)` means "add this one";
   `multiple()` means "add nothing"). The share and unshare rules pick either
   a frame from the bag or any frame at all, so they try frames that are in
-  use *and* frames that aren't.
-- **The `@invariant()`** runs after every single step and compares
-  everything: every process's page table, every frame's refcount, and the
-  free count. (The real one also checks `shared_frame_count`.)
+  use *and* frames that aren't. Two more rules, `share_again` and
+  `unshare_held`, pick a frame the process *already* holds: random picks
+  rarely give one process the same frame twice, and an `unshare_frame` that
+  took away every copy slipped past without them.
+- **The `@invariant()`** runs after every step and compares every page
+  table, every refcount, and the free count. (The real one also checks `shared_frame_count`.)
 - **`TestMemoryManagerModel = ...TestCase`** turns the machine into a test
-  that pytest can find and run. One run plays 100 random stories. The
-  `@settings(stateful_step_count=20)` above the class keeps each story to
-  20 steps: they find the same bugs as Hypothesis's default of 50, in a
-  fraction of the time.
+  pytest can run: 100 random stories. `@settings(stateful_step_count=20)`
+  keeps each story to 20 steps, which find the same bugs as the default 50
+  in a fraction of the time.
 
 The `dict` is a good model because it's obviously right and it's *not*
-`MemoryManager`'s code. The real manager keeps a free set and a refcount
-table; the clipboard keeps neither, it just counts. If we built the model by
-copying the manager, any bug would be in both, and they'd agree perfectly
-about the wrong answer.
+`MemoryManager`'s code: no free set, no refcount table, it just counts. A
+model copied from the manager would share its bugs, and the two would agree
+perfectly about the wrong answer.
 
 ## Try It Yourself
 
@@ -271,18 +264,17 @@ E           requests_and_head=([0], 0),
 E       )
 ```
 
-Look at how small that is. Hypothesis tried long lists of requests on all six
-policies, then shrank the failure all the way down to **one request, on the
-cylinder the arm is already sitting on**. The lift is on floor 0, someone on
-floor 0 presses the button, and the lift never opens its doors. The `up`
+Look how small that is. Hypothesis tried long lists of requests on all six
+policies, then shrank the failure to **one request, on the cylinder the arm
+is already on**: the lift is on floor 0, someone on floor 0 presses the
+button, and the doors never open. The `up`
 sweep now takes only requests *above* the head, the `down` sweep only those
 *below* it, and a request *at* the head falls in the gap.
 
-Only `test_disk_policies_serve_every_request_exactly_once` fails. The other
-properties and the model check stay green: they never touch the disk.
-**The example tests all still pass. Only the property notices.** Every
-example in `tests/io/test_disk_scheduling.py` uses a head that isn't one of
-the requests, like the textbook's head at 53.
+Only `test_disk_policies_serve_every_request_exactly_once` fails; the rest
+never touch the disk. **The example tests all still pass. Only the property
+notices.** Every example in `tests/io/test_disk_scheduling.py` uses a head
+that isn't one of the requests, like the textbook's head at 53.
 
 Put the line back to `r >= head` and run the tests again. They pass.
 
@@ -309,18 +301,17 @@ Make a slab cache, allocate **one** object, destroy the cache, and the
 kernel's page table still lists frame 0, whatever the object size.
 
 Here's why. A slab cache borrows its frames from the memory manager,
-charged to the kernel's PID. `destroy_cache` gave each one back by dropping
-its refcount, which put the frame back on the free list. But it never took
-the frame out of the kernel's page table. So frame 0 was free *and* claimed
+charged to the kernel's PID. `destroy_cache` dropped each one's refcount,
+which put it back on the free list, but never took it out of the kernel's
+page table. So frame 0 was free *and* claimed
 by the kernel at the same time: a locker that's empty on the principal's
 list but still has the kernel's name on the door. If the kernel's memory
 were ever freed, it would "free" frame 0 again, even if a process had been
 given it in the meantime.
 
 The example test did check that frames came back:
-`mm.free_frames > free_before`. And they did! The free count was right. What
-was wrong was a *different* part of the picture, which no example asked
-about. The property's rule was "memory looks exactly as it did before", so
+`mm.free_frames > free_before`. And they did! What was wrong was a
+*different* part of the picture, which no example asked about. The property's rule was "memory looks exactly as it did before", so
 it checked both.
 
 The fix was one line, the same pair of calls that shared memory already
@@ -348,7 +339,10 @@ someone deletes the property:
 ```
 
 Hunting for more bugs like it turned up a second one with the same missing
-`unshare_frame`, in copy-on-write after `fork`. That one is fixed now too.
+`unshare_frame`, in copy-on-write after `fork`. Reviewing that fix found a
+third: a write to a copy-on-write page that nobody else held any more (its
+refcount already 1) still made a copy, and failed with `OutOfMemoryError`
+when memory was full. Now it writes in place. All three are fixed.
 
 ## Run It Yourself
 
@@ -359,8 +353,8 @@ every time):
 uv run pytest tests/test_properties.py tests/test_model.py --no-cov
 ```
 
-The `--no-cov` turns off the coverage check, which expects the *whole* test
-suite to run and would fail on two files.
+`--no-cov` turns off the coverage check, which expects the *whole* suite
+and would fail on two files.
 
 Run them the long way (2,000 random examples each, different every run) to
 hunt for rarer bugs. It takes about 40 seconds:
@@ -369,10 +363,10 @@ hunt for rarer bugs. It takes about 40 seconds:
 uv run pytest tests/test_properties.py tests/test_model.py --no-cov --hypothesis-profile=thorough
 ```
 
-The normal run uses a fixed seed, so it tries the same inputs every time and a
-passing build means the same thing on every computer. The thorough run is
-random, so each time you run it the caretaker plays a brand-new set of school
-days. Both settings live in `conftest.py` at the top of the project.
+The normal run uses a fixed seed, so it tries the same inputs every time and
+a passing build means the same on every computer. The thorough run is
+random: each time, the caretaker plays a brand-new set of school days. Both
+settings live in `conftest.py` at the top of the project.
 
 ## Your Turn
 
