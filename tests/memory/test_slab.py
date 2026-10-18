@@ -356,6 +356,23 @@ class TestSlabAllocator:
         with pytest.raises(SlabError, match="not found"):
             alloc.allocate("tmp")
 
+    def test_destroy_cache_removes_frames_from_kernel_page_table(self) -> None:
+        """Destroying a cache should take its frames out of the kernel's page table too.
+
+        Found by ``test_destroying_a_slab_cache_gives_back_every_frame`` in
+        ``tests/test_properties.py``: the frame went back on the free list
+        but stayed in the kernel's page table, so freeing the kernel PID
+        afterwards hit a frame it no longer owned.
+        """
+        mm = MemoryManager(total_frames=TOTAL_FRAMES)
+        alloc = SlabAllocator(memory=mm, page_size=PAGE_SIZE, kernel_pid=KERNEL_PID)
+        alloc.create_cache("tmp", obj_size=1)
+        alloc.allocate("tmp")
+        alloc.destroy_cache("tmp")
+        assert mm.pages_for(KERNEL_PID) == []
+        mm.free(KERNEL_PID)
+        assert mm.free_frames == TOTAL_FRAMES
+
     def test_destroy_unknown_cache_raises(self) -> None:
         """Destroying an unknown cache should raise SlabError."""
         mm = MemoryManager(total_frames=TOTAL_FRAMES)
