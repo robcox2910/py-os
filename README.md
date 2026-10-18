@@ -2,7 +2,6 @@
 
 **Build your own operating system in Python -- then play with it.**
 
-[![PyPI](https://img.shields.io/pypi/v/pyos-learn)](https://pypi.org/project/pyos-learn/)
 [![Python 3.14+](https://img.shields.io/badge/python-3.14%2B-blue)](https://www.python.org/downloads/)
 [![CI](https://github.com/robcox2910/py-os/actions/workflows/ci.yml/badge.svg)](https://github.com/robcox2910/py-os/actions/workflows/ci.yml)
 [![Docs](https://github.com/robcox2910/py-os/actions/workflows/docs.yml/badge.svg)](https://robcox2910.github.io/py-os/)
