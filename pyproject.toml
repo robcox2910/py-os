@@ -1,5 +1,5 @@
 [project]
-name = "pyos-learn"
+name = "fromscratch-pyos"
 dynamic = ["version"]
 description = "A simulated operating system built in Python for learning OS concepts"
 readme = "README.md"
