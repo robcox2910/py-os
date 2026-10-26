@@ -38,7 +38,7 @@ The web server exposes three endpoints:
 Install the optional ``web`` extra, then start the server:
 
 ```bash
-pip install pyos-learn[web]
+pip install fromscratch-pyos[web]
 pyos-web
 ```
 

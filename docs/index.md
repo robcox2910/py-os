@@ -39,14 +39,14 @@ to begin your journey.
 ## Quick Start
 
 ```bash
-pip install pyos-learn
+pip install fromscratch-pyos
 pyos
 ```
 
 Want the browser-based terminal too?
 
 ```bash
-pip install pyos-learn[web]
+pip install fromscratch-pyos[web]
 pyos-web
 ```
 
@@ -95,7 +95,7 @@ For the full command listing, see [Shell Reference](shell-reference.md).
 PyOS includes an optional browser-based terminal. Install Flask and start the server:
 
 ```bash
-pip install pyos-learn[web]
+pip install fromscratch-pyos[web]
 pyos-web
 ```
 

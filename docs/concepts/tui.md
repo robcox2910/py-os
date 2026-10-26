@@ -59,7 +59,7 @@ The dashboard:
 
 ```bash
 # Install with the TUI extra
-pip install pyos-learn[tui]
+pip install fromscratch-pyos[tui]
 
 # Launch the dashboard
 pyos-tui
