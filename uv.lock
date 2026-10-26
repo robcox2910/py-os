@@ -277,6 +277,49 @@ wheels = [
 ]
 
 [[package]]
+name = "fromscratch-pyos"
+source = { editable = "." }
+
+[package.optional-dependencies]
+dev = [
+    { name = "commitizen" },
+    { name = "hypothesis" },
+    { name = "pip-audit" },
+    { name = "pre-commit" },
+    { name = "pyright" },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+    { name = "pytest-cov" },
+    { name = "ruff" },
+]
+docs = [
+    { name = "mkdocs-material" },
+]
+tui = [
+    { name = "textual" },
+]
+web = [
+    { name = "flask" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "commitizen", marker = "extra == 'dev'", specifier = ">=4.4.0" },
+    { name = "flask", marker = "extra == 'web'", specifier = ">=3.0" },
+    { name = "hypothesis", marker = "extra == 'dev'", specifier = ">=6.170" },
+    { name = "mkdocs-material", marker = "extra == 'docs'", specifier = ">=9.5" },
+    { name = "pip-audit", marker = "extra == 'dev'", specifier = ">=2.10.0" },
+    { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.0.1" },
+    { name = "pyright", marker = "extra == 'dev'", specifier = ">=1.1.400" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3.4" },
+    { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.24" },
+    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=6.0.0" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.9.3" },
+    { name = "textual", marker = "extra == 'tui'", specifier = ">=0.90" },
+]
+provides-extras = ["dev", "docs", "tui", "web"]
+
+[[package]]
 name = "ghp-import"
 version = "2.1.0"
 source = { registry = "https://pypi.org/simple" }
@@ -810,49 +853,6 @@ sdist = { url = "https://files.pythonhosted.org/packages/f3/fe/ac50ee24a80a1b344
 wheels = [
     { url = "https://files.pythonhosted.org/packages/8a/d0/758afe732c2da502c051b4d03ff88daa3c0fc1a1e671e6c5a6318177bab4/pymdown_extensions-12.3-py3-none-any.whl", hash = "sha256:345493a8e3497e24382902903a1c43a28e34a52f2b7571a1c9641429b820ca74", size = 277597, upload-time = "2026-10-14T22:40:41.543Z" },
 ]
-
-[[package]]
-name = "pyos-learn"
-source = { editable = "." }
-
-[package.optional-dependencies]
-dev = [
-    { name = "commitizen" },
-    { name = "hypothesis" },
-    { name = "pip-audit" },
-    { name = "pre-commit" },
-    { name = "pyright" },
-    { name = "pytest" },
-    { name = "pytest-asyncio" },
-    { name = "pytest-cov" },
-    { name = "ruff" },
-]
-docs = [
-    { name = "mkdocs-material" },
-]
-tui = [
-    { name = "textual" },
-]
-web = [
-    { name = "flask" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "commitizen", marker = "extra == 'dev'", specifier = ">=4.4.0" },
-    { name = "flask", marker = "extra == 'web'", specifier = ">=3.0" },
-    { name = "hypothesis", marker = "extra == 'dev'", specifier = ">=6.170" },
-    { name = "mkdocs-material", marker = "extra == 'docs'", specifier = ">=9.5" },
-    { name = "pip-audit", marker = "extra == 'dev'", specifier = ">=2.10.0" },
-    { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.0.1" },
-    { name = "pyright", marker = "extra == 'dev'", specifier = ">=1.1.400" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3.4" },
-    { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.24" },
-    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=6.0.0" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.9.3" },
-    { name = "textual", marker = "extra == 'tui'", specifier = ">=0.90" },
-]
-provides-extras = ["dev", "docs", "tui", "web"]
 
 [[package]]
 name = "pyparsing"
