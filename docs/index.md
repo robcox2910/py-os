@@ -3,7 +3,7 @@ title: "Build your own operating system in Python"
 description: "A working operating system simulator in Python: processes, schedulers, virtual memory, a filesystem and networking, with a shell to explore it all."
 ---
 
-# PyOS
+# PyOS: Build your own operating system in Python
 
 ## The School Principal of Your Computer
 
