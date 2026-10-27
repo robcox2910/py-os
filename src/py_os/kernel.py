@@ -1658,7 +1658,8 @@ class Kernel:
         """Terminate a process and free its resources.
 
         The kernel coordinates cleanup across subsystems:
-        1. Terminate the process (RUNNING → TERMINATED).
+        1. Terminate the process from whatever live state it is in
+           (READY, RUNNING or WAITING → TERMINATED), like SIGKILL.
         2. Free its memory frames.
         3. Keep as zombie if a living parent exists, else delete.
 
@@ -1673,7 +1674,7 @@ class Kernel:
 
         process = self._processes.get(pid)
         if process is not None:
-            self._terminate_and_cleanup(process)
+            self._terminate_and_cleanup(process, force=True)
 
     def register_signal_handler(
         self,
@@ -1786,6 +1787,10 @@ class Kernel:
         if self._ordering_manager is not None:
             self._ordering_manager.remove_process(pid)
         self._record_completion(process)
+        # A finished process must leave the ready queue too, or the next
+        # dispatch (say, after switching scheduler) would pick a dead process.
+        if self._scheduler is not None:
+            self._scheduler.purge_terminated()
         self._zombie_or_delete(process)
 
     # -- Performance metrics ---------------------------------------------------
