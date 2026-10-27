@@ -18,6 +18,7 @@ and testable.  The ``run()`` function is the I/O entrypoint.
 """
 
 import readline
+from importlib.metadata import PackageNotFoundError, version
 
 from py_os.bootloader import Bootloader
 from py_os.completer import Completer
@@ -40,11 +41,20 @@ def format_boot_log(boot_log: list[str]) -> str:
     """
     border = "=" * _BANNER_WIDTH
     header = (
-        f"\n  {border}\n            PyOS v0.1.0\n     A simulated operating system\n  {border}\n\n"
+        f"\n  {border}\n            PyOS v{_installed_version()}\n"
+        f"     A simulated operating system\n  {border}\n\n"
     )
     body = "\n".join(f"  {msg}" for msg in boot_log)
     footer = "\nKernel running. Type 'help' for commands, 'exit' to quit.\n"
     return header + body + footer
+
+
+def _installed_version() -> str:
+    """Return the version of PyOS that is installed, or "dev" when it isn't installed."""
+    try:
+        return version("fromscratch-pyos")
+    except PackageNotFoundError:  # pragma: no cover - only when run from a bare checkout
+        return "dev"
 
 
 def build_prompt(kernel: Kernel) -> str:
