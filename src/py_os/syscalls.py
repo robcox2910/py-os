@@ -43,6 +43,7 @@ from py_os.memory.manager import OutOfMemoryError
 from py_os.memory.mmap import MmapError
 from py_os.memory.slab import SlabError
 from py_os.process.binary import DEMO_PROGRAMS, BinaryLoader, BinaryLoaderError
+from py_os.process.pcb import ProcessState
 from py_os.process.scheduler import (
     AgingPriorityPolicy,
     CFSPolicy,
@@ -367,6 +368,10 @@ def _sys_terminate_process(kernel: Any, **kwargs: Any) -> None:
     pid: int = kwargs["pid"]
     if pid not in kernel.processes:
         msg = f"Process {pid} not found"
+        raise SyscallError(msg)
+    state = kernel.processes[pid].state
+    if state in {ProcessState.TERMINATED, ProcessState.NEW}:
+        msg = f"Process {pid} can't be killed: it is {state.value}"
         raise SyscallError(msg)
     kernel.terminate_process(pid=pid)
 

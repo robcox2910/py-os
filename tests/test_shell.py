@@ -271,6 +271,24 @@ class TestShellKill:
         result = shell.execute(f"kill {process.pid}")
         assert "terminated" in result.lower() or "killed" in result.lower()
 
+    def test_kill_ready_process(self) -> None:
+        """Kill works on a process that is waiting its turn, not just the running one."""
+        kernel, shell = _booted_shell()
+        assert kernel.scheduler is not None
+        waiting_before = kernel.scheduler.ready_count
+        process = kernel.create_process(name="victim", num_pages=NUM_PAGES)
+        result = shell.execute(f"kill {process.pid}")
+        assert "terminated" in result.lower()
+        assert kernel.scheduler.ready_count == waiting_before
+
+    def test_kill_finished_process_is_an_error_not_a_crash(self) -> None:
+        """Killing a process twice reports an error instead of crashing the shell."""
+        kernel, shell = _booted_shell()
+        process = kernel.create_process(name="victim", num_pages=NUM_PAGES)
+        shell.execute(f"kill {process.pid}")
+        result = shell.execute(f"kill {process.pid}")
+        assert result.lower().startswith("error")
+
     def test_kill_missing_arg(self) -> None:
         """Kill without a PID should produce a usage error."""
         _kernel, shell = _booted_shell()
@@ -1749,3 +1767,17 @@ class TestShellPipeRedirectErrors:
         _kernel, shell = _booted_shell()
         result = shell.execute("cat <")
         assert "Error" in result or "Missing" in result
+
+
+class TestSchedulerSwitchAfterRun:
+    """A finished program must not be left behind for the next scheduler."""
+
+    def test_switch_policy_after_run(self) -> None:
+        """Running a program and then switching scheduler works."""
+        kernel, shell = _booted_shell()
+        assert kernel.scheduler is not None
+        waiting_before = kernel.scheduler.ready_count
+        shell.execute("run hello")
+        assert kernel.scheduler.ready_count == waiting_before
+        result = shell.execute("scheduler rr 2")
+        assert "round robin" in result.lower() or "rr" in result.lower()

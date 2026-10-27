@@ -8,6 +8,7 @@ we test the components it depends on rather than the loop itself:
 """
 
 from collections.abc import Callable
+from importlib.metadata import version
 from unittest.mock import patch
 
 from py_os.kernel import ExecutionMode, Kernel, KernelState
@@ -70,6 +71,11 @@ class TestREPLHelpers:
         assert "PyOS" in banner
         assert "[POST]" in banner
         assert "[OK] Scheduler" in banner
+
+    def test_banner_shows_installed_version(self) -> None:
+        """The banner names the version that is really installed, not a fixed one."""
+        banner = format_boot_log([])
+        assert f"PyOS v{version('fromscratch-pyos')}" in banner
 
     def test_boot_banner_dynamic(self) -> None:
         """The boot banner built from real boot log should contain OS info."""
